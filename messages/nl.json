@@ -1,0 +1,104 @@
+{
+  "site": {
+    "tagline": "Tweedehands binnen handbereik"
+  },
+  "nav": {
+    "home": "Home",
+    "catalogue": "Hele collectie",
+    "brands": "Merken",
+    "categories": "Categorieën",
+    "about": "Over ons",
+    "account": "Mijn account",
+    "cart": "Winkelmand",
+    "favorites": "Favorieten",
+    "search": "Zoeken",
+    "openMenu": "Menu openen",
+    "closeMenu": "Menu sluiten",
+    "skipToContent": "Naar de inhoud",
+    "language": "Taal"
+  },
+  "home": {
+    "intro": "Tweedehands kleding, stuk voor stuk uitgezocht. Elk item is uniek: eenmaal verkocht, komt het niet terug.",
+    "newArrivals": "Nieuwste stuks",
+    "emptyCatalogue": "Op dit moment staan er geen items online.",
+    "emptyCatalogueHint": "De eerste stuks komen binnenkort.",
+    "howItWorks": {
+      "title": "Hoe het werkt",
+      "sourcingTitle": "Inkoop",
+      "sourcingBody": "De stuks worden één voor één gezocht op rommelmarkten, vlooienmarkten en in tweedehandswinkels.",
+      "selectionTitle": "Selectie",
+      "selectionBody": "Elk kledingstuk wordt gewassen, gecontroleerd en opgemeten. De werkelijke maten in centimeters staan op de productpagina, samen met eventuele gebreken.",
+      "shippingTitle": "Verzending",
+      "shippingBody": "Verzonden binnen 48 werkuren vanuit Frankrijk, naar een afhaalpunt of naar uw adres."
+    }
+  },
+  "auth": {
+    "signIn": "Inloggen",
+    "signUp": "Account aanmaken",
+    "signOut": "Uitloggen",
+    "email": "E-mailadres",
+    "password": "Wachtwoord",
+    "firstName": "Voornaam",
+    "lastName": "Achternaam",
+    "passwordHint": "Minimaal 12 tekens.",
+    "submitSignIn": "Inloggen",
+    "submitSignUp": "Account aanmaken",
+    "magicLink": "Ontvang een inloglink per e-mail",
+    "magicLinkSent": "Als er een account bestaat voor dit adres, is er zojuist een inloglink verstuurd.",
+    "noAccount": "Nog geen account?",
+    "hasAccount": "Heeft u al een account?",
+    "forgotPassword": "Wachtwoord vergeten",
+    "marketingConsent": "Ik ontvang graag nieuwe stuks per e-mail. U kunt zich op elk moment afmelden.",
+    "signInTitle": "Inloggen",
+    "signUpTitle": "Account aanmaken",
+    "errors": {
+      "invalidCredentials": "Onjuist e-mailadres of wachtwoord.",
+      "emailTaken": "Er bestaat al een account voor dit adres.",
+      "invalidEmail": "Ongeldig e-mailadres.",
+      "passwordTooShort": "Het wachtwoord moet minstens 12 tekens bevatten.",
+      "required": "Dit veld is verplicht.",
+      "banned": "Dit account is geschorst.",
+      "rateLimited": "Te veel pogingen. Probeer het over enkele minuten opnieuw.",
+      "generic": "De handeling is niet voltooid. Probeer het opnieuw."
+    }
+  },
+  "account": {
+    "title": "Mijn account",
+    "greeting": "Hallo {name}",
+    "orders": "Bestellingen",
+    "offers": "Mijn biedingen",
+    "favorites": "Favorieten",
+    "messages": "Berichten",
+    "returns": "Retouren",
+    "alerts": "Maatmeldingen",
+    "addresses": "Adressen",
+    "settings": "Instellingen"
+  },
+  "footer": {
+    "legalNotice": "Juridische informatie",
+    "terms": "Algemene verkoopvoorwaarden",
+    "privacy": "Privacybeleid",
+    "cookies": "Cookies",
+    "shipping": "Levering",
+    "returns": "Retouren en herroeping",
+    "contact": "Contact",
+    "about": "Over ons",
+    "mediator": "Consumentenbemiddelaar",
+    "vatNotice": "Btw niet van toepassing, art. 293 B van de Franse belastingwet",
+    "withdrawalNotice": "Herroepingsrecht van 14 dagen vanaf ontvangst."
+  },
+  "common": {
+    "loading": "Laden",
+    "error": "Er is een fout opgetreden.",
+    "retry": "Opnieuw proberen",
+    "close": "Sluiten",
+    "cancel": "Annuleren",
+    "confirm": "Bevestigen",
+    "save": "Opslaan",
+    "back": "Terug",
+    "free": "Gratis",
+    "sold": "Verkocht",
+    "reserved": "Wordt gekocht",
+    "unavailable": "Niet beschikbaar"
+  }
+}

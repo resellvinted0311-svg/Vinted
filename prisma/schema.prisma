@@ -1,0 +1,1101 @@
+// Nina & Diego — schéma de données
+//
+// Conventions :
+//  - tous les montants sont des entiers en centimes d'euro (jamais de Float) ;
+//  - createdAt / updatedAt sur chaque modèle ;
+//  - index explicite sur chaque clé étrangère (Prisma ne les crée pas seul en
+//    PostgreSQL) ainsi que sur les colonnes de filtrage chaud ;
+//  - les champs privés (costCents, floorPriceCents, internalNotes) ne sortent
+//    jamais d'une réponse publique : voir lib/db/selectors.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Énumérations
+// ---------------------------------------------------------------------------
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum ArticleStatus {
+  DRAFT
+  SCHEDULED
+  AVAILABLE
+  RESERVED
+  SOLD
+  ARCHIVED
+}
+
+enum ArticleCondition {
+  NEW_WITH_TAGS
+  NEW_WITHOUT_TAGS
+  VERY_GOOD
+  GOOD
+  FAIR
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  COUNTERED
+  REJECTED
+  EXPIRED
+  VOIDED
+  CONSUMED
+}
+
+enum PriceSource {
+  LIST
+  OFFER
+  BUNDLE
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  LABEL_SENT
+  IN_TRANSIT
+  RECEIVED
+  REFUNDED
+  REJECTED
+}
+
+enum SenderType {
+  CUSTOMER
+  ADMIN
+}
+
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
+enum PromoType {
+  PERCENT
+  FIXED
+  FREE_SHIPPING
+}
+
+// ---------------------------------------------------------------------------
+// Comptes & authentification (Auth.js v5, sessions en base)
+// ---------------------------------------------------------------------------
+
+model User {
+  id String @id @default(cuid())
+
+  email String @unique
+
+  /// Nom de colonne conforme au brief ; le nom de champ Prisma `emailVerified`
+  /// est imposé par @auth/prisma-adapter.
+  emailVerified DateTime? @map("emailVerifiedAt")
+
+  passwordHash String?
+  firstName    String?
+  lastName     String?
+
+  /// Colonnes de compatibilité @auth/prisma-adapter (jamais affichées :
+  /// l'interface utilise firstName / lastName).
+  name  String?
+  image String?
+
+  locale String @default("fr")
+  role   Role   @default(CUSTOMER)
+
+  marketingConsent   Boolean   @default(false)
+  marketingConsentAt DateTime?
+
+  bannedAt   DateTime?
+  lastSeenAt DateTime?
+
+  /// Anonymisation RGPD : la ligne est conservée pour l'obligation comptable
+  /// mais vidée de ses données personnelles.
+  anonymizedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  addresses         Address[]
+  carts             Cart[]
+  orders            Order[]
+  offers            Offer[]
+  favorites         Favorite[]
+  sizeAlerts        SizeAlert[]
+  conversations     Conversation[]
+  messages          Message[]
+  reviews           Review[]
+  pushSubscriptions PushSubscription[]
+  auditLogs         AuditLog[]
+
+  @@index([role])
+  @@index([createdAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expires])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  createdAt DateTime @default(now())
+
+  @@unique([identifier, token])
+  @@index([expires])
+}
+
+/// Jetons à usage unique hors Auth.js : vérification d'adresse et
+/// réinitialisation de mot de passe. Le jeton est stocké haché.
+model UserToken {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([type])
+}
+
+model Address {
+  id     String  @id @default(cuid())
+  userId String
+  label  String?
+
+  firstName  String
+  lastName   String
+  line1      String
+  line2      String?
+  postalCode String
+  city       String
+  /// ISO 3166-1 alpha-2
+  country    String
+  phone      String?
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isDefault])
+}
+
+// ---------------------------------------------------------------------------
+// Catalogue
+// ---------------------------------------------------------------------------
+
+model Category {
+  id       String  @id @default(cuid())
+  slug     String  @unique
+  parentId String?
+  position Int     @default(0)
+
+  /// Grille de poids par défaut (grammes), pré-remplit Article.weightGrams.
+  defaultWeightGrams Int?
+
+  /// Clés de mesures pertinentes pour cette catégorie (chest, waist, inseam…).
+  measurementKeys String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryTree")
+
+  translations CategoryTranslation[]
+  articles     Article[]
+  sizeAlerts   SizeAlert[]
+
+  @@index([parentId])
+  @@index([position])
+}
+
+model CategoryTranslation {
+  categoryId String
+  locale     String
+
+  name           String
+  seoTitle       String?
+  seoDescription String?
+  /// Texte éditorial unique de la page catégorie (SEO).
+  editorialBody  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([categoryId, locale])
+  @@index([locale])
+  @@index([categoryId])
+}
+
+model Brand {
+  id       String  @id @default(cuid())
+  slug     String  @unique
+  name     String
+  logoUrl  String?
+  isLuxury Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  articles   Article[]
+  sizeAlerts SizeAlert[]
+
+  @@index([name])
+  @@index([isLuxury])
+}
+
+model Article {
+  id String @id @default(cuid())
+
+  /// Référence interne, ex. ART-000142
+  sku  String @unique
+  slug String @unique
+
+  brandId    String?
+  categoryId String
+
+  condition      ArticleCondition
+  /// Taille telle qu'elle figure sur l'étiquette : "M", "42", "38 EU"
+  sizeLabel      String
+  /// Forme canonique pour les filtres et les alertes taille.
+  sizeNormalized String?
+  color          String?
+  material       String?
+  fit            String?
+
+  priceCents        Int
+  /// Prix barré, renseigné lors d'une baisse automatique.
+  comparePriceCents Int?
+  /// PRIVÉ — jamais exposé publiquement.
+  costCents         Int
+  /// PRIVÉ — plancher de négociation calculé, jamais franchi sans confirmation.
+  floorPriceCents   Int
+
+  weightGrams Int
+
+  status      ArticleStatus @default(DRAFT)
+  scheduledAt DateTime?
+  publishedAt DateTime?
+
+  /// Propriétaire du verrou de stock : identifiant utilisateur OU jeton de
+  /// session invité. Volontairement pas une clé étrangère.
+  reservedById  String?
+  reservedUntil DateTime?
+  soldAt        DateTime?
+
+  viewCount Int @default(0)
+
+  allowOffers    Boolean   @default(true)
+  /// Offres bloquées jusqu'à cette date (publishedAt + 7 jours par défaut).
+  offersOpenAt   DateTime?
+  /// Refus automatique en dessous de ce montant.
+  minOfferCents  Int?
+
+  autoDropEnabled  Boolean   @default(true)
+  lastPriceDropAt  DateTime?
+
+  sourcedAt     DateTime?
+  /// PRIVÉ — provenance interne, ex. "réderie Albert 12/04".
+  sourcedFrom   String?
+  /// PRIVÉ
+  internalNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand    Brand?   @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  translations   ArticleTranslation[]
+  images         ArticleImage[]
+  measurements   ArticleMeasurement[]
+  offers         Offer[]
+  favorites      Favorite[]
+  guestFavorites GuestFavorite[]      @relation("GuestFavoriteArticle")
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  conversations  Conversation[]
+
+  @@index([status])
+  @@index([publishedAt])
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([reservedUntil])
+  @@index([reservedById])
+  @@index([scheduledAt])
+  @@index([soldAt])
+  @@index([sizeNormalized])
+  @@index([priceCents])
+  // Chemin chaud du catalogue : filtrage par statut + catégorie, tri par prix.
+  @@index([status, categoryId, priceCents])
+  @@index([status, publishedAt])
+}
+
+model ArticleTranslation {
+  articleId String
+  locale    String
+
+  title       String
+  description String @db.Text
+
+  isMachineTranslated Boolean @default(true)
+
+  /// Vecteur de recherche plein texte, maintenu par trigger (voir migration).
+  /// Non manipulable depuis Prisma : c'est volontaire.
+  searchVector Unsupported("tsvector")?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, locale])
+  @@index([locale])
+  @@index([articleId])
+}
+
+model ArticleImage {
+  id        String  @id @default(cuid())
+  articleId String
+  url       String
+  blurhash  String?
+  width     Int
+  height    Int
+  position  Int
+  alt       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId])
+  @@index([articleId, position])
+}
+
+model ArticleMeasurement {
+  articleId String
+  /// shoulders | chest | waist | hips | length | sleeve | inseam | footLength
+  key       String
+  valueCm   Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, key])
+  @@index([articleId])
+}
+
+model Favorite {
+  userId    String
+  articleId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, articleId])
+  @@index([articleId])
+  @@index([userId])
+}
+
+/// Favoris d'un visiteur non connecté : rattachés au jeton de session panier,
+/// jamais au localStorage. Fusionnés dans Favorite à l'inscription.
+model GuestFavorite {
+  sessionToken String
+  articleId    String
+
+  createdAt DateTime @default(now())
+
+  article Article @relation("GuestFavoriteArticle", fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([sessionToken, articleId])
+  @@index([articleId])
+}
+
+model SizeAlert {
+  id            String   @id @default(cuid())
+  userId        String
+  categoryId    String?
+  brandId       String?
+  sizes         String[]
+  maxPriceCents Int?
+  active        Boolean  @default(true)
+
+  lastNotifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  brand    Brand?    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([active])
+}
+
+// ---------------------------------------------------------------------------
+// Offres
+// ---------------------------------------------------------------------------
+
+model Offer {
+  id        String  @id @default(cuid())
+  articleId String
+  userId    String?
+  /// Offre déposée sans compte : l'identité est l'adresse e-mail.
+  guestEmail String?
+
+  amountCents Int
+  status      OfferStatus @default(PENDING)
+
+  counterAmountCents Int?
+  /// Chaîne de négociation.
+  parentOfferId      String?
+
+  /// Délai de réponse : 48 h.
+  expiresAt       DateTime
+  /// Validité du prix négocié après acceptation : 24 h.
+  priceValidUntil DateTime?
+  respondedAt     DateTime?
+
+  /// AUTO_BELOW_MIN | MANUAL | ARTICLE_SOLD
+  rejectionReason String?
+
+  /// Trace : l'admin a franchi le plancher en connaissance de cause.
+  acceptedBelowFloor Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  article     Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  parentOffer Offer?     @relation("OfferChain", fields: [parentOfferId], references: [id], onDelete: SetNull)
+  counters    Offer[]    @relation("OfferChain")
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+
+  @@index([articleId])
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([parentOfferId])
+  @@index([guestEmail])
+  @@index([priceValidUntil])
+  // Chemin chaud : « les offres encore vivantes de cet acheteur sur cet article ».
+  @@index([articleId, userId, status])
+  @@index([status, expiresAt])
+}
+
+// ---------------------------------------------------------------------------
+// Panier
+// ---------------------------------------------------------------------------
+
+model Cart {
+  id           String  @id @default(cuid())
+  userId       String?
+  /// Cookie httpOnly — le panier n'existe jamais en localStorage.
+  sessionToken String  @unique
+  locale       String  @default("fr")
+
+  /// Relance panier abandonné.
+  remindedAt      DateTime?
+  secondRemindedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  cartId    String
+  articleId String
+  offerId   String?
+
+  /// Instantané d'affichage — TOUJOURS revalidé côté serveur avant paiement.
+  unitPriceCents Int
+  priceSource    PriceSource
+
+  addedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  offer   Offer?  @relation(fields: [offerId], references: [id], onDelete: SetNull)
+
+  @@unique([cartId, articleId])
+  @@index([cartId])
+  @@index([articleId])
+  @@index([offerId])
+}
+
+// ---------------------------------------------------------------------------
+// Commandes
+// ---------------------------------------------------------------------------
+
+model Order {
+  id          String  @id @default(cuid())
+  /// CMD-2026-000123
+  orderNumber String  @unique
+  userId      String?
+  email       String
+  locale      String
+
+  status OrderStatus @default(PENDING_PAYMENT)
+
+  subtotalCents Int
+  discountCents Int @default(0)
+  shippingCents Int
+  totalCents    Int
+
+  /// Coût transporteur réel, pour le suivi de marge sur le port.
+  shippingCostCents Int?
+
+  promoCodeId String?
+
+  shippingAddress Json
+  billingAddress  Json
+
+  shippingCarrierCode String
+  shippingServiceCode String
+  servicePointId      String?
+  servicePointData    Json?
+
+  stripeSessionId       String? @unique
+  stripePaymentIntentId String? @unique
+
+  paidAt      DateTime?
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+  cancelledAt DateTime?
+
+  invoiceNumber String? @unique
+  invoiceUrl    String?
+
+  customerNote String?
+
+  /// Preuve d'acceptation des CGV, horodatée et versionnée (obligation légale).
+  cgvVersion    String?
+  cgvAcceptedAt DateTime?
+
+  /// Montant total remboursé, pour distinguer REFUNDED de PARTIALLY_REFUNDED.
+  refundedCents Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  promoCode PromoCode?  @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+
+  items         OrderItem[]
+  shipments     Shipment[]
+  returns       ReturnRequest[]
+  conversations Conversation[]
+  review        Review?
+
+  @@index([userId])
+  @@index([status])
+  @@index([email])
+  @@index([promoCodeId])
+  @@index([createdAt])
+  @@index([paidAt])
+  @@index([status, createdAt])
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  articleId String
+
+  titleSnapshot String
+  imageSnapshot String
+
+  unitPriceCents Int
+  /// PRIVÉ — permet le calcul de marge a posteriori.
+  costCentsSnapshot Int
+
+  offerId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Restrict)
+  offer   Offer?  @relation(fields: [offerId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([articleId])
+  @@index([offerId])
+}
+
+// ---------------------------------------------------------------------------
+// Expédition
+// ---------------------------------------------------------------------------
+
+model Shipment {
+  id      String @id @default(cuid())
+  orderId String
+
+  provider    String
+  carrierCode String
+  serviceCode String
+
+  trackingNumber String?
+  trackingUrl    String?
+  labelUrl       String?
+
+  costCents   Int?
+  weightGrams Int
+  status      String
+
+  /// Référence côté transporteur, pour le suivi et l'annulation d'étiquette.
+  providerRef String?
+  /// Référence publique de suivi, exposée sur /suivi/[trackingRef].
+  trackingRef String? @unique
+
+  lastPolledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order  Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  events ShipmentEvent[]
+
+  @@index([orderId])
+  @@index([trackingNumber])
+  @@index([status])
+  @@index([providerRef])
+}
+
+model ShipmentEvent {
+  id         String   @id @default(cuid())
+  shipmentId String
+  code       String
+  label      String
+  occurredAt DateTime
+  raw        Json
+
+  createdAt DateTime @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@unique([shipmentId, code, occurredAt])
+  @@index([shipmentId])
+  @@index([occurredAt])
+}
+
+model ReturnRequest {
+  id           String   @id @default(cuid())
+  orderId      String
+  orderItemIds String[]
+
+  reason  String
+  comment String?
+
+  status ReturnStatus @default(REQUESTED)
+
+  labelUrl       String?
+  trackingNumber String?
+
+  refundCents Int?
+  /// Part du remboursement correspondant au port aller (obligation légale).
+  refundShippingCents Int @default(0)
+  /// Frais de retour retenus au client, si les CGV le prévoient.
+  returnFeeCents      Int @default(0)
+
+  stripeRefundId String? @unique
+
+  requestedAt DateTime  @default(now())
+  receivedAt  DateTime?
+  refundedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([status])
+  @@index([requestedAt])
+}
+
+// ---------------------------------------------------------------------------
+// Messagerie
+// ---------------------------------------------------------------------------
+
+model Conversation {
+  id         String  @id @default(cuid())
+  userId     String?
+  guestEmail String?
+  articleId  String?
+  orderId    String?
+  subject    String?
+
+  lastMessageAt DateTime
+
+  unreadForAdmin Boolean @default(false)
+  unreadForUser  Boolean @default(false)
+
+  closedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article? @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  order   Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  messages Message[]
+
+  @@index([userId])
+  @@index([articleId])
+  @@index([orderId])
+  @@index([lastMessageAt])
+  @@index([unreadForAdmin])
+  @@index([guestEmail])
+}
+
+model Message {
+  id             String     @id @default(cuid())
+  conversationId String
+  senderType     SenderType
+  senderId       String?
+
+  body        String @db.Text
+  attachments Json?
+
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User?        @relation(fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([conversationId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Avis
+// ---------------------------------------------------------------------------
+
+model Review {
+  id      String @id @default(cuid())
+  orderId String @unique
+  userId  String
+
+  /// 1 à 5, contrainte CHECK posée en migration.
+  rating Int
+  body   String? @db.Text
+
+  status ReviewStatus @default(PENDING)
+  /// Droit de réponse du vendeur.
+  reply  String?      @db.Text
+
+  publishedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([status, publishedAt])
+}
+
+// ---------------------------------------------------------------------------
+// Promotions
+// ---------------------------------------------------------------------------
+
+model PromoCode {
+  id   String    @id @default(cuid())
+  code String    @unique
+  type PromoType
+  /// Pourcentage (0-100) pour PERCENT, centimes pour FIXED, ignoré pour FREE_SHIPPING.
+  value Int
+
+  minSubtotalCents Int  @default(0)
+  maxUses          Int?
+  usedCount        Int  @default(0)
+  perUserLimit     Int  @default(1)
+
+  startsAt DateTime?
+  endsAt   DateTime?
+  active   Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+
+  @@index([active])
+  @@index([startsAt, endsAt])
+}
+
+// ---------------------------------------------------------------------------
+// Expédition — grille tarifaire
+// ---------------------------------------------------------------------------
+
+model ShippingZone {
+  id   String @id @default(cuid())
+  /// FR, EU1, EU2, EUROPE_NON_EU, FR_CORSE, FR_DOM
+  code String @unique
+  name String
+  /// Codes ISO 3166-1 alpha-2. La Corse et les DOM sont discriminés par code
+  /// postal (voir lib/domain/shipping.ts), jamais par une distance.
+  countries String[]
+
+  freeShippingThresholdCents Int?
+  position                   Int
+
+  /// Préfixes de code postal qui rattachent une adresse à cette zone en
+  /// priorité sur le pays (Corse : 20xxx, DOM : 971xx…).
+  postalPrefixes String[] @default([])
+
+  /// Documents douaniers requis (CN22/CN23) hors UE.
+  requiresCustoms Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rates ShippingRate[]
+
+  @@index([position])
+}
+
+model ShippingRate {
+  id     String @id @default(cuid())
+  zoneId String
+
+  carrierCode String
+  serviceCode String
+  label       String
+
+  maxWeightGrams Int
+  priceCents     Int
+
+  deliveryDaysMin Int
+  deliveryDaysMax Int
+
+  requiresServicePoint Boolean @default(false)
+  active               Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  zone ShippingZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  @@unique([zoneId, carrierCode, serviceCode, maxWeightGrams])
+  @@index([zoneId])
+  @@index([active])
+  @@index([zoneId, active, maxWeightGrams])
+}
+
+// ---------------------------------------------------------------------------
+// Marketing & notifications
+// ---------------------------------------------------------------------------
+
+model NewsletterSubscriber {
+  id     String @id @default(cuid())
+  email  String @unique
+  locale String
+
+  consentAt DateTime
+  /// signup_checkbox | footer_form | checkout
+  consentSource String
+  /// Preuve de consentement (RGPD).
+  consentIp     String?
+
+  /// Double opt-in : tant que confirmedAt est nul, aucun envoi.
+  confirmedAt    DateTime?
+  unsubscribedAt DateTime?
+
+  token String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([unsubscribedAt])
+  @@index([confirmedAt])
+}
+
+model PushSubscription {
+  id       String  @id @default(cuid())
+  userId   String?
+  endpoint String  @unique
+  keys     Json
+  locale   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Infrastructure
+// ---------------------------------------------------------------------------
+
+/// Idempotence des webhooks : la contrainte unique (provider, externalId) est
+/// la garantie qu'un événement rejoué n'est jamais traité deux fois.
+model WebhookEvent {
+  id         String @id @default(cuid())
+  provider   String
+  externalId String
+
+  payload     Json
+  processedAt DateTime?
+  error       String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([provider, externalId])
+  @@index([processedAt])
+}
+
+model Job {
+  id      String   @id @default(cuid())
+  type    String
+  payload Json
+  runAt   DateTime
+
+  attempts    Int       @default(0)
+  lastError   String?
+  completedAt DateTime?
+  /// Verrou de traitement, évite qu'un cron concurrent reprenne le même job.
+  lockedAt    DateTime?
+  lockedBy    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([runAt, completedAt])
+  @@index([type])
+}
+
+model AuditLog {
+  id      String  @id @default(cuid())
+  actorId String?
+
+  action   String
+  entity   String
+  entityId String
+
+  before Json?
+  after  Json?
+
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Setting {
+  key   String @id
+  value Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Compteur atomique pour les séquences sans trou : numéros de commande et
+/// numéros de facture (obligation comptable).
+model Counter {
+  key   String @id
+  value Int    @default(0)
+
+  updatedAt DateTime @updatedAt
+}

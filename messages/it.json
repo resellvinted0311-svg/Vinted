@@ -1,0 +1,104 @@
+{
+  "site": {
+    "tagline": "La seconda mano a portata di mano"
+  },
+  "nav": {
+    "home": "Home",
+    "catalogue": "Tutto il catalogo",
+    "brands": "Marchi",
+    "categories": "Categorie",
+    "about": "Chi siamo",
+    "account": "Il mio account",
+    "cart": "Carrello",
+    "favorites": "Preferiti",
+    "search": "Cerca",
+    "openMenu": "Apri il menu",
+    "closeMenu": "Chiudi il menu",
+    "skipToContent": "Vai al contenuto",
+    "language": "Lingua"
+  },
+  "home": {
+    "intro": "Abbigliamento di seconda mano selezionato pezzo per pezzo. Ogni capo è unico: una volta venduto, non torna.",
+    "newArrivals": "Ultimi arrivi",
+    "emptyCatalogue": "Nessun capo online al momento.",
+    "emptyCatalogueHint": "I primi pezzi arrivano presto.",
+    "howItWorks": {
+      "title": "Come funziona",
+      "sourcingTitle": "Ricerca",
+      "sourcingBody": "I capi vengono cercati uno per uno nei mercatini, nelle fiere dell'usato e nei negozi conto terzi.",
+      "selectionTitle": "Selezione",
+      "selectionBody": "Ogni capo viene lavato, controllato e misurato. Le misure reali in centimetri sono indicate nella scheda, insieme agli eventuali difetti.",
+      "shippingTitle": "Spedizione",
+      "shippingBody": "Spedizione entro 48 ore lavorative dalla Francia, in punto di ritiro o a domicilio."
+    }
+  },
+  "auth": {
+    "signIn": "Accedi",
+    "signUp": "Crea un account",
+    "signOut": "Esci",
+    "email": "Indirizzo e-mail",
+    "password": "Password",
+    "firstName": "Nome",
+    "lastName": "Cognome",
+    "passwordHint": "Almeno 12 caratteri.",
+    "submitSignIn": "Accedi",
+    "submitSignUp": "Crea l'account",
+    "magicLink": "Ricevi un link di accesso via e-mail",
+    "magicLinkSent": "Se esiste un account per questo indirizzo, è appena stato inviato un link di accesso.",
+    "noAccount": "Non hai ancora un account?",
+    "hasAccount": "Hai già un account?",
+    "forgotPassword": "Password dimenticata",
+    "marketingConsent": "Desidero ricevere le novità via e-mail. È possibile disiscriversi in qualsiasi momento.",
+    "signInTitle": "Accesso",
+    "signUpTitle": "Crea un account",
+    "errors": {
+      "invalidCredentials": "Indirizzo e-mail o password non corretti.",
+      "emailTaken": "Esiste già un account per questo indirizzo.",
+      "invalidEmail": "Indirizzo e-mail non valido.",
+      "passwordTooShort": "La password deve contenere almeno 12 caratteri.",
+      "required": "Questo campo è obbligatorio.",
+      "banned": "Questo account è sospeso.",
+      "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
+      "generic": "L'operazione non è andata a buon fine. Riprova."
+    }
+  },
+  "account": {
+    "title": "Il mio account",
+    "greeting": "Ciao {name}",
+    "orders": "Ordini",
+    "offers": "Le mie offerte",
+    "favorites": "Preferiti",
+    "messages": "Messaggi",
+    "returns": "Resi",
+    "alerts": "Avvisi taglia",
+    "addresses": "Indirizzi",
+    "settings": "Impostazioni"
+  },
+  "footer": {
+    "legalNotice": "Note legali",
+    "terms": "Condizioni generali di vendita",
+    "privacy": "Informativa sulla privacy",
+    "cookies": "Cookie",
+    "shipping": "Spedizione",
+    "returns": "Resi e recesso",
+    "contact": "Contatti",
+    "about": "Chi siamo",
+    "mediator": "Mediatore del consumo",
+    "vatNotice": "IVA non applicabile, art. 293 B del CGI francese",
+    "withdrawalNotice": "Diritto di recesso di 14 giorni dalla ricezione."
+  },
+  "common": {
+    "loading": "Caricamento",
+    "error": "Si è verificato un errore.",
+    "retry": "Riprova",
+    "close": "Chiudi",
+    "cancel": "Annulla",
+    "confirm": "Conferma",
+    "save": "Salva",
+    "back": "Indietro",
+    "free": "Gratuita",
+    "sold": "Venduto",
+    "reserved": "In corso di acquisto",
+    "unavailable": "Non disponibile"
+  }
+}

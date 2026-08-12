@@ -1,0 +1,229 @@
+@import 'tailwindcss';
+
+/* ===========================================================================
+   Nina & Diego — jetons de design
+
+   La direction artistique passe par la matière et la retenue : fond crème,
+   bordures fines plutôt qu'ombres portées, rayons faibles, aucune icône ni
+   dégradé évoquant l'écologie. La photo produit est le seul élément qui a le
+   droit d'occuper tout le cadre.
+   =========================================================================== */
+
+:root {
+  /* Couleurs — thème clair (référence) */
+  --paper: #faf8f4;
+  --surface: #ffffff;
+  --ink: #1c1b18;
+  --muted: #6b6960;
+  --sand: #e5dfd4;
+  --moss: #2f4a3c;
+  --clay: #b5654a;
+  --success: #3b6e4f;
+  --warning: #a9762a;
+  --danger: #9b3b32;
+
+  /* Dérivés — calculés à la main pour garder le contraste AA */
+  --paper-raised: #f4f1ea;
+  --sand-strong: #cfc6b6;
+  --ink-inverse: #faf8f4;
+  --moss-hover: #263b30;
+  --clay-hover: #9c5540;
+  --focus-ring: #2f4a3c;
+
+  /* Typographie — échelle modulaire ratio 1.25, six tailles, pas une de plus.
+     Préfixe `fs-` pour ne pas entrer en collision avec l'espace de noms
+     `--text-*` que Tailwind v4 réserve à ses utilitaires. */
+  --fs-xs: 0.8rem;
+  --fs-base: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5625rem;
+  --fs-2xl: 1.953rem;
+  --fs-3xl: 2.441rem;
+
+  /* Rayons — volontairement faibles */
+  --r-input: 2px;
+  --r-card: 4px;
+
+  /* Mouvement */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Thème sombre : inversion crème/encre. Les tokens sont prévus pour, même si
+   le mode sombre n'est pas la priorité de la V1. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #14140f;
+    --surface: #1c1b18;
+    --ink: #f2eee6;
+    --muted: #a3a096;
+    --sand: #33312b;
+    --moss: #7fa78f;
+    --clay: #d08a6f;
+    --success: #6fa383;
+    --warning: #d0a05a;
+    --danger: #d47a70;
+
+    --paper-raised: #1a1915;
+    --sand-strong: #4a473f;
+    --ink-inverse: #14140f;
+    --moss-hover: #98bda6;
+    --clay-hover: #e0a189;
+    --focus-ring: #7fa78f;
+  }
+}
+
+:root[data-theme='dark'] {
+  --paper: #14140f;
+  --surface: #1c1b18;
+  --ink: #f2eee6;
+  --muted: #a3a096;
+  --sand: #33312b;
+  --moss: #7fa78f;
+  --clay: #d08a6f;
+  --success: #6fa383;
+  --warning: #d0a05a;
+  --danger: #d47a70;
+
+  --paper-raised: #1a1915;
+  --sand-strong: #4a473f;
+  --ink-inverse: #14140f;
+  --moss-hover: #98bda6;
+  --clay-hover: #e0a189;
+  --focus-ring: #7fa78f;
+}
+
+/* `inline` fait émettre var(--x) plutôt que la valeur littérale : c'est ce qui
+   permet au thème de basculer à l'exécution sans recompiler les utilitaires. */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-inverse: var(--ink-inverse);
+  --color-muted: var(--muted);
+  --color-sand: var(--sand);
+  --color-sand-strong: var(--sand-strong);
+  --color-moss: var(--moss);
+  --color-moss-hover: var(--moss-hover);
+  --color-clay: var(--clay);
+  --color-clay-hover: var(--clay-hover);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs: var(--fs-xs);
+  --text-base: var(--fs-base);
+  --text-lg: var(--fs-lg);
+  --text-xl: var(--fs-xl);
+  --text-2xl: var(--fs-2xl);
+  --text-3xl: var(--fs-3xl);
+
+  --radius-input: var(--r-input);
+  --radius-card: var(--r-card);
+}
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* ===========================================================================
+   Base
+   =========================================================================== */
+
+@layer base {
+  * {
+    border-color: var(--sand);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+    font-size: var(--fs-base);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-fraunces), Georgia, serif;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  /* Les données chiffrées s'alignent en colonne : prix, tailles, totaux. */
+  .tabular,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* Focus visible sur tout élément interactif, sans exception. */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 1px;
+  }
+
+  /* On ne retire jamais le focus : on ne le duplique pas non plus au clic. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: var(--moss);
+    color: var(--ink-inverse);
+  }
+
+  /* Aucune animation décorative, et rien du tout si la personne l'a demandé. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Zone de clic minimale de 44px sans grossir visuellement la cible. */
+  .tap-target {
+    position: relative;
+  }
+
+  .tap-target::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+  }
+
+  .skip-link:focus {
+    left: 0.5rem;
+    top: 0.5rem;
+  }
+}

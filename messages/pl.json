@@ -1,0 +1,104 @@
+{
+  "site": {
+    "tagline": "Druga ręka w zasięgu ręki"
+  },
+  "nav": {
+    "home": "Strona główna",
+    "catalogue": "Cały katalog",
+    "brands": "Marki",
+    "categories": "Kategorie",
+    "about": "O nas",
+    "account": "Moje konto",
+    "cart": "Koszyk",
+    "favorites": "Ulubione",
+    "search": "Szukaj",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
+    "skipToContent": "Przejdź do treści",
+    "language": "Język"
+  },
+  "home": {
+    "intro": "Odzież z drugiej ręki wybierana sztuka po sztuce. Każdy przedmiot jest jedyny w swoim rodzaju: po sprzedaży nie wraca.",
+    "newArrivals": "Ostatnio dodane",
+    "emptyCatalogue": "Obecnie nie ma żadnych przedmiotów.",
+    "emptyCatalogueHint": "Pierwsze sztuki pojawią się wkrótce.",
+    "howItWorks": {
+      "title": "Jak to działa",
+      "sourcingTitle": "Pozyskiwanie",
+      "sourcingBody": "Ubrania wyszukiwane są pojedynczo na pchlich targach, wyprzedażach garażowych i w komisach.",
+      "selectionTitle": "Selekcja",
+      "selectionBody": "Każde ubranie jest prane, sprawdzane i mierzone. Rzeczywiste wymiary w centymetrach są podane na karcie produktu, wraz z ewentualnymi wadami.",
+      "shippingTitle": "Wysyłka",
+      "shippingBody": "Wysyłka w ciągu 48 godzin roboczych z Francji, do punktu odbioru lub pod wskazany adres."
+    }
+  },
+  "auth": {
+    "signIn": "Zaloguj się",
+    "signUp": "Załóż konto",
+    "signOut": "Wyloguj się",
+    "email": "Adres e-mail",
+    "password": "Hasło",
+    "firstName": "Imię",
+    "lastName": "Nazwisko",
+    "passwordHint": "Minimum 12 znaków.",
+    "submitSignIn": "Zaloguj się",
+    "submitSignUp": "Załóż konto",
+    "magicLink": "Otrzymaj link do logowania e-mailem",
+    "magicLinkSent": "Jeśli konto dla tego adresu istnieje, link do logowania został właśnie wysłany.",
+    "noAccount": "Nie masz jeszcze konta?",
+    "hasAccount": "Masz już konto?",
+    "forgotPassword": "Nie pamiętam hasła",
+    "marketingConsent": "Chcę otrzymywać informacje o nowościach e-mailem. Rezygnacja możliwa w każdej chwili.",
+    "signInTitle": "Logowanie",
+    "signUpTitle": "Załóż konto",
+    "errors": {
+      "invalidCredentials": "Nieprawidłowy adres e-mail lub hasło.",
+      "emailTaken": "Konto dla tego adresu już istnieje.",
+      "invalidEmail": "Nieprawidłowy adres e-mail.",
+      "passwordTooShort": "Hasło musi mieć co najmniej 12 znaków.",
+      "required": "To pole jest wymagane.",
+      "banned": "To konto jest zawieszone.",
+      "rateLimited": "Zbyt wiele prób. Spróbuj ponownie za kilka minut.",
+      "generic": "Operacja nie została ukończona. Spróbuj ponownie."
+    }
+  },
+  "account": {
+    "title": "Moje konto",
+    "greeting": "Dzień dobry, {name}",
+    "orders": "Zamówienia",
+    "offers": "Moje oferty",
+    "favorites": "Ulubione",
+    "messages": "Wiadomości",
+    "returns": "Zwroty",
+    "alerts": "Powiadomienia o rozmiarze",
+    "addresses": "Adresy",
+    "settings": "Ustawienia"
+  },
+  "footer": {
+    "legalNotice": "Informacje prawne",
+    "terms": "Ogólne warunki sprzedaży",
+    "privacy": "Polityka prywatności",
+    "cookies": "Pliki cookie",
+    "shipping": "Dostawa",
+    "returns": "Zwroty i odstąpienie od umowy",
+    "contact": "Kontakt",
+    "about": "O nas",
+    "mediator": "Mediator konsumencki",
+    "vatNotice": "VAT nie ma zastosowania, art. 293 B francuskiego kodeksu podatkowego",
+    "withdrawalNotice": "Prawo odstąpienia od umowy w ciągu 14 dni od otrzymania."
+  },
+  "common": {
+    "loading": "Wczytywanie",
+    "error": "Wystąpił błąd.",
+    "retry": "Spróbuj ponownie",
+    "close": "Zamknij",
+    "cancel": "Anuluj",
+    "confirm": "Potwierdź",
+    "save": "Zapisz",
+    "back": "Wstecz",
+    "free": "Bezpłatna",
+    "sold": "Sprzedane",
+    "reserved": "W trakcie zakupu",
+    "unavailable": "Niedostępne"
+  }
+}

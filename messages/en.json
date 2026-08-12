@@ -1,0 +1,104 @@
+{
+  "site": {
+    "tagline": "Second-hand, within reach"
+  },
+  "nav": {
+    "home": "Home",
+    "catalogue": "All items",
+    "brands": "Brands",
+    "categories": "Categories",
+    "about": "About",
+    "account": "My account",
+    "cart": "Basket",
+    "favorites": "Favourites",
+    "search": "Search",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "skipToContent": "Skip to content",
+    "language": "Language"
+  },
+  "home": {
+    "intro": "Second-hand clothing selected piece by piece. Every item is unique: once sold, it does not come back.",
+    "newArrivals": "Latest arrivals",
+    "emptyCatalogue": "No items online at the moment.",
+    "emptyCatalogueHint": "The first pieces are coming soon.",
+    "howItWorks": {
+      "title": "How it works",
+      "sourcingTitle": "Sourcing",
+      "sourcingBody": "Pieces are found one by one at flea markets, car boot sales and second-hand shops.",
+      "selectionTitle": "Selection",
+      "selectionBody": "Every garment is washed, checked and measured. Actual measurements in centimetres are listed on the item page, along with any flaws.",
+      "shippingTitle": "Shipping",
+      "shippingBody": "Dispatched within 48 working hours from France, to a pickup point or to your address."
+    }
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Create an account",
+    "signOut": "Sign out",
+    "email": "Email address",
+    "password": "Password",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "passwordHint": "12 characters minimum.",
+    "submitSignIn": "Sign in",
+    "submitSignUp": "Create account",
+    "magicLink": "Get a sign-in link by email",
+    "magicLinkSent": "If an account exists for this address, a sign-in link has just been sent.",
+    "noAccount": "No account yet?",
+    "hasAccount": "Already have an account?",
+    "forgotPassword": "Forgotten password",
+    "marketingConsent": "I would like to receive new arrivals by email. You can unsubscribe at any time.",
+    "signInTitle": "Sign in",
+    "signUpTitle": "Create an account",
+    "errors": {
+      "invalidCredentials": "Incorrect email address or password.",
+      "emailTaken": "An account already exists for this address.",
+      "invalidEmail": "Invalid email address.",
+      "passwordTooShort": "The password must be at least 12 characters long.",
+      "required": "This field is required.",
+      "banned": "This account is suspended.",
+      "rateLimited": "Too many attempts. Try again in a few minutes.",
+      "generic": "The operation did not complete. Try again."
+    }
+  },
+  "account": {
+    "title": "My account",
+    "greeting": "Hello {name}",
+    "orders": "Orders",
+    "offers": "My offers",
+    "favorites": "Favourites",
+    "messages": "Messages",
+    "returns": "Returns",
+    "alerts": "Size alerts",
+    "addresses": "Addresses",
+    "settings": "Settings"
+  },
+  "footer": {
+    "legalNotice": "Legal notice",
+    "terms": "Terms and conditions of sale",
+    "privacy": "Privacy policy",
+    "cookies": "Cookies",
+    "shipping": "Delivery",
+    "returns": "Returns and withdrawal",
+    "contact": "Contact",
+    "about": "About",
+    "mediator": "Consumer mediator",
+    "vatNotice": "VAT not applicable, art. 293 B of the French General Tax Code",
+    "withdrawalNotice": "14-day right of withdrawal from the date of receipt."
+  },
+  "common": {
+    "loading": "Loading",
+    "error": "Something went wrong.",
+    "retry": "Try again",
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "back": "Back",
+    "free": "Free",
+    "sold": "Sold",
+    "reserved": "Being purchased",
+    "unavailable": "Unavailable"
+  }
+}

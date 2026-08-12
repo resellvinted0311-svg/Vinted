@@ -1,0 +1,104 @@
+{
+  "site": {
+    "tagline": "Second Hand in Reichweite"
+  },
+  "nav": {
+    "home": "Startseite",
+    "catalogue": "Gesamter Katalog",
+    "brands": "Marken",
+    "categories": "Kategorien",
+    "about": "Über uns",
+    "account": "Mein Konto",
+    "cart": "Warenkorb",
+    "favorites": "Favoriten",
+    "search": "Suchen",
+    "openMenu": "Menü öffnen",
+    "closeMenu": "Menü schließen",
+    "skipToContent": "Zum Inhalt springen",
+    "language": "Sprache"
+  },
+  "home": {
+    "intro": "Second-Hand-Kleidung, Stück für Stück ausgewählt. Jedes Teil ist ein Einzelstück: einmal verkauft, kommt es nicht zurück.",
+    "newArrivals": "Neu eingetroffen",
+    "emptyCatalogue": "Derzeit sind keine Artikel online.",
+    "emptyCatalogueHint": "Die ersten Stücke folgen in Kürze.",
+    "howItWorks": {
+      "title": "So funktioniert es",
+      "sourcingTitle": "Einkauf",
+      "sourcingBody": "Die Stücke werden einzeln auf Flohmärkten, Trödelmärkten und in Second-Hand-Läden gesucht.",
+      "selectionTitle": "Auswahl",
+      "selectionBody": "Jedes Kleidungsstück wird gewaschen, geprüft und vermessen. Die tatsächlichen Maße in Zentimetern stehen auf der Artikelseite, ebenso etwaige Mängel.",
+      "shippingTitle": "Versand",
+      "shippingBody": "Versand innerhalb von 48 Werkstunden aus Frankreich, an eine Paketstation oder an Ihre Adresse."
+    }
+  },
+  "auth": {
+    "signIn": "Anmelden",
+    "signUp": "Konto erstellen",
+    "signOut": "Abmelden",
+    "email": "E-Mail-Adresse",
+    "password": "Passwort",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "passwordHint": "Mindestens 12 Zeichen.",
+    "submitSignIn": "Anmelden",
+    "submitSignUp": "Konto erstellen",
+    "magicLink": "Anmeldelink per E-Mail erhalten",
+    "magicLinkSent": "Falls für diese Adresse ein Konto besteht, wurde soeben ein Anmeldelink verschickt.",
+    "noAccount": "Noch kein Konto?",
+    "hasAccount": "Sie haben bereits ein Konto?",
+    "forgotPassword": "Passwort vergessen",
+    "marketingConsent": "Ich möchte Neuzugänge per E-Mail erhalten. Abmeldung jederzeit möglich.",
+    "signInTitle": "Anmeldung",
+    "signUpTitle": "Konto erstellen",
+    "errors": {
+      "invalidCredentials": "E-Mail-Adresse oder Passwort ist falsch.",
+      "emailTaken": "Für diese Adresse besteht bereits ein Konto.",
+      "invalidEmail": "Ungültige E-Mail-Adresse.",
+      "passwordTooShort": "Das Passwort muss mindestens 12 Zeichen lang sein.",
+      "required": "Dieses Feld ist erforderlich.",
+      "banned": "Dieses Konto ist gesperrt.",
+      "rateLimited": "Zu viele Versuche. Versuchen Sie es in einigen Minuten erneut.",
+      "generic": "Der Vorgang wurde nicht abgeschlossen. Versuchen Sie es erneut."
+    }
+  },
+  "account": {
+    "title": "Mein Konto",
+    "greeting": "Hallo {name}",
+    "orders": "Bestellungen",
+    "offers": "Meine Angebote",
+    "favorites": "Favoriten",
+    "messages": "Nachrichten",
+    "returns": "Rücksendungen",
+    "alerts": "Größenhinweise",
+    "addresses": "Adressen",
+    "settings": "Einstellungen"
+  },
+  "footer": {
+    "legalNotice": "Impressum",
+    "terms": "Allgemeine Geschäftsbedingungen",
+    "privacy": "Datenschutzerklärung",
+    "cookies": "Cookies",
+    "shipping": "Versand",
+    "returns": "Rücksendungen und Widerruf",
+    "contact": "Kontakt",
+    "about": "Über uns",
+    "mediator": "Verbraucherschlichtungsstelle",
+    "vatNotice": "Umsatzsteuer nicht anwendbar, Art. 293 B des französischen Steuergesetzbuchs",
+    "withdrawalNotice": "14 Tage Widerrufsrecht ab Erhalt der Ware."
+  },
+  "common": {
+    "loading": "Wird geladen",
+    "error": "Es ist ein Fehler aufgetreten.",
+    "retry": "Erneut versuchen",
+    "close": "Schließen",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "save": "Speichern",
+    "back": "Zurück",
+    "free": "Kostenlos",
+    "sold": "Verkauft",
+    "reserved": "Wird gerade gekauft",
+    "unavailable": "Nicht verfügbar"
+  }
+}
