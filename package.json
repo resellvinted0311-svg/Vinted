@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
+    "vercel-build": "prisma generate && prisma migrate deploy && npm run db:seed:if-requested && next build",
+    "db:seed:if-requested": "node -e \"if(process.env.SEED_ON_BUILD==='1'){require('child_process').execSync('tsx prisma/seed.ts',{stdio:'inherit'})}else{console.log('Seed ignoré (SEED_ON_BUILD absent).')}\"",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
