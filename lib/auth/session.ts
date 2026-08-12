@@ -2,7 +2,9 @@ import 'server-only'
 
 import { randomBytes } from 'node:crypto'
 import { cookies } from 'next/headers'
+import type { Session } from 'next-auth'
 import { prisma } from '@/lib/db/client'
+import { isAuthConfigured } from '@/lib/config/site'
 import { auth } from './index'
 import {
   SESSION_COOKIE_NAME,
@@ -72,7 +74,21 @@ export async function destroyCurrentSession(): Promise<void> {
  * immédiatement, sans attendre l'expiration du cookie.
  */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const session = await auth()
+  if (!isAuthConfigured()) return null
+
+  // `auth` est surchargé — il sert aussi de middleware — donc son type de
+  // retour inféré n'est pas celui d'une session. On l'annote explicitement.
+  let session: Session | null = null
+  try {
+    session = await auth()
+  } catch (error) {
+    // Une session illisible — secret changé, cookie corrompu — signifie
+    // « pas connecté », pas « page en erreur ». Le catalogue doit rester
+    // consultable quoi qu'il arrive.
+    console.error('[auth] Session illisible.', error)
+    return null
+  }
+
   if (!session?.user?.id) return null
 
   const user = await prisma.user.findUnique({

@@ -1,3 +1,28 @@
+function resolveSiteUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL
+  if (explicit) return explicit.replace(/\/$/, '')
+
+  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  if (production) return `https://${production}`
+
+  const deployment = process.env.VERCEL_URL
+  if (deployment) return `https://${deployment}`
+
+  return 'http://localhost:3000'
+}
+
+/**
+ * L'authentification est-elle configurée ?
+ *
+ * Sans secret de signature, Auth.js refuse de traiter la moindre requête. On
+ * préfère le constater et neutraliser proprement la connexion plutôt que de
+ * laisser une page renvoyer une erreur 500 — et surtout plutôt que d'inventer
+ * un secret de repli, qui rendrait les sessions falsifiables.
+ */
+export function isAuthConfigured(): boolean {
+  return Boolean(process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET)
+}
+
 /**
  * Identité de la boutique.
  *
@@ -9,8 +34,18 @@ export const SITE = {
   name: 'Nina & Diego',
   /** Baseline affichée sous le nom, en plus petit. */
   tagline: 'La seconde main à portée de main',
-  /** Domaine de production — à remplacer une fois le nom de domaine acquis. */
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+  /**
+   * Domaine du site.
+   *
+   * Déduit de l'environnement Vercel à défaut d'être fourni, pour qu'un
+   * déploiement fonctionne sans configuration : les URL canoniques, les
+   * balises hreflang et les images Open Graph pointent alors sur le domaine
+   * réel plutôt que sur localhost.
+   *
+   * `VERCEL_PROJECT_PRODUCTION_URL` est le domaine stable du projet ;
+   * `VERCEL_URL` change à chaque déploiement et ne sert que de repli.
+   */
+  url: resolveSiteUrl(),
   /** Devise unique en V1. L'abstraction existe, elle n'est pas activée. */
   currency: 'EUR',
 } as const

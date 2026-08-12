@@ -21,19 +21,27 @@ pages statiques. Dans le tableau de bord Vercel, projet → **Storage** →
 
 Projet → **Settings** → **Environment Variables** :
 
-| Variable | Obligatoire | Valeur | Rôle |
-|---|---|---|---|
-| `DATABASE_URL` | oui | injectée par Vercel | connexion applicative |
-| `AUTH_SECRET` | oui | `openssl rand -base64 32` | signature des sessions |
-| `SEED_ON_BUILD` | premier déploiement | `1` | insère les 50 articles de démonstration |
-| `NEXT_PUBLIC_SITE_URL` | recommandé | l'URL du déploiement | métadonnées, liens canoniques |
-| `DIRECT_URL` | non | URL de connexion directe | migrations, si le pooler les refuse |
+**Une seule variable est nécessaire, et Vercel la pose lui-même** en créant la
+base à l'étape 2 : `DATABASE_URL`. Tout le reste est déduit.
 
-`DIRECT_URL` est **déduite automatiquement** par le script de build, dans cet
-ordre : valeur explicite, puis `POSTGRES_URL_NON_POOLING` (convention Neon et
-Vercel Postgres), puis `DATABASE_URL_UNPOOLED`, puis `DATABASE_URL`. Ne la
-renseignez que si les migrations échouent sur un verrou — signe que la
-connexion passe par un pooler en mode transaction.
+| Variable | Requise | Comportement par défaut |
+|---|---|---|
+| `DATABASE_URL` | oui | injectée par Vercel via Storage |
+| `DIRECT_URL` | non | déduite : `POSTGRES_URL_NON_POOLING`, puis `DATABASE_URL_UNPOOLED`, puis `DATABASE_URL` |
+| `SEED_ON_BUILD` | non | le jeu de démonstration est inséré si le catalogue est vide |
+| `NEXT_PUBLIC_SITE_URL` | non | déduite de `VERCEL_PROJECT_PRODUCTION_URL` |
+| `AUTH_SECRET` | non\* | sans elle, la connexion est désactivée proprement ; le reste fonctionne |
+
+\* Sans `AUTH_SECRET`, la boutique est entièrement consultable mais personne ne
+peut se connecter, et la page de connexion l'indique. Aucun secret de repli
+n'est fabriqué : ce serait rendre les sessions falsifiables. Générez-la avec
+`openssl rand -base64 32` dès que vous voulez tester les comptes.
+
+Renseignez `DIRECT_URL` uniquement si les migrations échouent sur un verrou —
+signe d'une connexion via un pooler en mode transaction. Le script vous en
+avertit dans le log.
+
+`SEED_ON_BUILD` reste disponible pour forcer (`1`) ou interdire (`0`) le seed.
 
 Une fois le premier déploiement passé, **retire `SEED_ON_BUILD`**. Le seed est
 idempotent, donc le relancer ne casse rien — mais il réécrirait les articles de

@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { redirect } from '@/lib/i18n/navigation'
 import { Link } from '@/lib/i18n/navigation'
 import { getCurrentUser } from '@/lib/auth/session'
+import { isAuthConfigured } from '@/lib/config/site'
 import { SignInForm } from '@/components/shop/sign-in-form'
 
 /** Lit la session pour rediriger une personne déjà connectée. */
@@ -39,6 +40,17 @@ export default async function SignInPage({
   return (
     <div className="mx-auto w-full max-w-md px-4 py-12 sm:px-6">
       <h1 className="text-xl">{t('signInTitle')}</h1>
+
+      {/* Sans secret de signature, Auth.js ne peut ouvrir aucune session. On
+          le dit franchement plutôt que de laisser le formulaire échouer sans
+          explication. Le reste de la boutique reste consultable. */}
+      {!isAuthConfigured() ? (
+        <p className="mt-6 border border-warning bg-paper-raised p-4 text-base text-muted rounded-card">
+          L’authentification n’est pas configurée sur ce déploiement : la
+          variable d’environnement <code>AUTH_SECRET</code> est absente.
+          La navigation et le catalogue fonctionnent normalement.
+        </p>
+      ) : null}
 
       <div className="mt-8">
         <Suspense fallback={null}>

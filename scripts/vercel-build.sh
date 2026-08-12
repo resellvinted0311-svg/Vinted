@@ -53,11 +53,20 @@ prisma generate
 echo "→ Application des migrations"
 prisma migrate deploy
 
-if [ "$SEED_ON_BUILD" = "1" ]; then
-  echo "→ Insertion du jeu de démonstration (SEED_ON_BUILD=1)"
+# Le seed ne demande aucune variable : on regarde si le catalogue est vide.
+# Un premier déploiement trouve une base fraîche et la peuple ; les suivants
+# n'y touchent pas. SEED_ON_BUILD reste disponible pour forcer (1) ou
+# interdire (0) explicitement.
+if [ "$SEED_ON_BUILD" = "0" ]; then
+  echo "→ Seed désactivé (SEED_ON_BUILD=0)"
+elif [ "$SEED_ON_BUILD" = "1" ]; then
+  echo "→ Seed forcé (SEED_ON_BUILD=1)"
+  tsx prisma/seed.ts
+elif node scripts/catalogue-is-empty.mjs; then
+  echo "→ Catalogue vide : insertion du jeu de démonstration"
   tsx prisma/seed.ts
 else
-  echo "→ Seed ignoré (SEED_ON_BUILD absent)"
+  echo "→ Catalogue déjà peuplé : seed ignoré"
 fi
 
 echo "→ Build Next.js"
