@@ -21,16 +21,19 @@ pages statiques. Dans le tableau de bord Vercel, projet → **Storage** →
 
 Projet → **Settings** → **Environment Variables** :
 
-| Variable | Valeur | Rôle |
-|---|---|---|
-| `DATABASE_URL` | injectée par Vercel | connexion applicative |
-| `DIRECT_URL` | même valeur que `DATABASE_URL` | migrations Prisma, sans pooler |
-| `AUTH_SECRET` | `openssl rand -base64 32` | signature des sessions |
-| `NEXT_PUBLIC_SITE_URL` | l'URL du déploiement | métadonnées, liens canoniques |
-| `SEED_ON_BUILD` | `1` **au premier déploiement seulement** | insère les 50 articles de démonstration |
+| Variable | Obligatoire | Valeur | Rôle |
+|---|---|---|---|
+| `DATABASE_URL` | oui | injectée par Vercel | connexion applicative |
+| `AUTH_SECRET` | oui | `openssl rand -base64 32` | signature des sessions |
+| `SEED_ON_BUILD` | premier déploiement | `1` | insère les 50 articles de démonstration |
+| `NEXT_PUBLIC_SITE_URL` | recommandé | l'URL du déploiement | métadonnées, liens canoniques |
+| `DIRECT_URL` | non | URL de connexion directe | migrations, si le pooler les refuse |
 
-`DIRECT_URL` est indispensable : avec Neon comme avec Supabase, `DATABASE_URL`
-passe par un pooler qui n'accepte pas les migrations.
+`DIRECT_URL` est **déduite automatiquement** par le script de build, dans cet
+ordre : valeur explicite, puis `POSTGRES_URL_NON_POOLING` (convention Neon et
+Vercel Postgres), puis `DATABASE_URL_UNPOOLED`, puis `DATABASE_URL`. Ne la
+renseignez que si les migrations échouent sur un verrou — signe que la
+connexion passe par un pooler en mode transaction.
 
 Une fois le premier déploiement passé, **retire `SEED_ON_BUILD`**. Le seed est
 idempotent, donc le relancer ne casse rien — mais il réécrirait les articles de
@@ -38,13 +41,15 @@ démonstration par-dessus un éventuel catalogue réel.
 
 ## 4. Ce que fait le build
 
-Le script `vercel-build` enchaîne :
+`scripts/vercel-build.sh` enchaîne :
 
-1. `prisma generate` — client typé
-2. `prisma migrate deploy` — applique la migration initiale (tables,
+1. contrôle de `DATABASE_URL`, avec un message explicite si elle manque
+2. déduction de `DIRECT_URL`
+3. `prisma generate` — client typé
+4. `prisma migrate deploy` — applique la migration initiale (tables,
    extensions `pg_trgm` et `unaccent`, trigger de recherche plein texte)
-3. le seed, si `SEED_ON_BUILD=1`
-4. `next build`
+5. le seed, si `SEED_ON_BUILD=1`
+6. `next build`
 
 ## 5. Comptes de démonstration
 
