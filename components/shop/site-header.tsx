@@ -3,6 +3,7 @@ import { Link } from '@/lib/i18n/navigation'
 import { Wordmark } from './wordmark'
 import { LocaleSwitcher } from './locale-switcher'
 import { AccountNav } from './account-nav'
+import { SearchBox } from './search-box'
 
 /**
  * En-tête.
@@ -38,6 +39,8 @@ export async function SiteHeader() {
             </Link>
           ))}
         </nav>
+
+        <SearchBox className="order-4 w-full sm:order-none sm:w-64" />
 
         <div className="flex items-center gap-3">
           <LocaleSwitcher />

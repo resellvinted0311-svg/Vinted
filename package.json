@@ -20,7 +20,8 @@
     "db:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:bench": "vitest run tests/bench --disable-console-intercept"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -60,6 +61,7 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.5",
+    "dotenv": "^17.4.2",
     "eslint": "9.39.5",
     "eslint-config-next": "15.5.23",
     "prisma": "6.19.3",

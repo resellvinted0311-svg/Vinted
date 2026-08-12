@@ -7,6 +7,7 @@ import { Fraunces, Inter_Tight } from 'next/font/google'
 import { routing, locales, localeTags, type Locale } from '@/lib/i18n/routing'
 import { SITE } from '@/lib/config/site'
 import { ToastProvider } from '@/components/ui/toast'
+import { FavoritesProvider } from '@/components/shop/favorites-provider'
 import { SiteHeader } from '@/components/shop/site-header'
 import { SiteFooter } from '@/components/shop/site-footer'
 
@@ -91,17 +92,22 @@ export default async function LocaleLayout({
       <body className="flex min-h-dvh flex-col">
         <NextIntlClientProvider>
           <ToastProvider>
-            <a href="#contenu" className="skip-link bg-surface px-3 py-2 text-base">
-              {t('skipToContent')}
-            </a>
+            <FavoritesProvider>
+              <a
+                href="#contenu"
+                className="skip-link bg-surface px-3 py-2 text-base"
+              >
+                {t('skipToContent')}
+              </a>
 
-            <SiteHeader />
+              <SiteHeader />
 
-            <main id="contenu" className="flex-1">
-              {children}
-            </main>
+              <main id="contenu" className="flex-1">
+                {children}
+              </main>
 
-            <SiteFooter />
+              <SiteFooter />
+            </FavoritesProvider>
           </ToastProvider>
         </NextIntlClientProvider>
       </body>

@@ -20,6 +20,9 @@
   "home": {
     "intro": "Abbigliamento di seconda mano selezionato pezzo per pezzo. Ogni capo è unico: una volta venduto, non torna.",
     "newArrivals": "Ultimi arrivi",
+    "seeAll": "Vedi tutto il catalogo",
+    "shopByCategory": "Per categoria",
+    "shopByBrand": "Per marchio",
     "emptyCatalogue": "Nessun capo online al momento.",
     "emptyCatalogueHint": "I primi pezzi arrivano presto.",
     "howItWorks": {
@@ -31,6 +34,141 @@
       "shippingTitle": "Spedizione",
       "shippingBody": "Spedizione entro 48 ore lavorative dalla Francia, in punto di ritiro o a domicilio."
     }
+  },
+  "catalogue": {
+    "title": "Catalogo",
+    "filtersHeading": "Filtra",
+    "results": "{count, plural, =0 {Nessun capo} one {# capo} other {# capi}}",
+    "noResults": "Nessun capo corrisponde a questi filtri.",
+    "noResultsHint": "Rimuovi un filtro per ampliare la ricerca.",
+    "loadMore": "Mostra altri",
+    "sort": "Ordina",
+    "sortOptions": {
+      "nouveautes": "Novità",
+      "prix_asc": "Prezzo crescente",
+      "prix_desc": "Prezzo decrescente",
+      "baisse": "Prezzo ribassato di recente"
+    },
+    "facets": {
+      "category": "Categoria",
+      "brand": "Marchio",
+      "size": "Taglia",
+      "condition": "Condizioni",
+      "color": "Colore",
+      "material": "Materiale",
+      "price": "Prezzo",
+      "priceMin": "Minimo",
+      "priceMax": "Massimo"
+    },
+    "apply": "Applica i filtri",
+    "activeFilters": "Filtri attivi",
+    "removeFilter": "Rimuovi questo filtro",
+    "clearFilters": "Cancella tutto",
+    "beingPurchased": "In corso di acquisto",
+    "addToFavorites": "Aggiungi ai preferiti",
+    "removeFromFavorites": "Rimuovi dai preferiti",
+    "colors": {
+      "ecru": "Ecru",
+      "marine": "Blu navy",
+      "kaki": "Cachi",
+      "noir": "Nero",
+      "bordeaux": "Bordeaux",
+      "gris": "Grigio melange",
+      "camel": "Cammello"
+    },
+    "materials": {
+      "coton": "Cotone",
+      "laine": "Lana",
+      "lin": "Lino",
+      "denim": "Denim",
+      "cuir": "Pelle",
+      "velours": "Velluto a coste"
+    },
+    "fits": {
+      "droite": "Taglio dritto",
+      "ajustee": "Taglio aderente",
+      "ample": "Taglio ampio",
+      "oversize": "Taglio oversize"
+    }
+  },
+  "condition": {
+    "NEW_WITH_TAGS": {
+      "label": "Nuovo con cartellino",
+      "help": "Mai indossato, cartellino originale ancora attaccato."
+    },
+    "NEW_WITHOUT_TAGS": {
+      "label": "Nuovo senza cartellino",
+      "help": "Mai indossato, ma il cartellino originale è stato rimosso."
+    },
+    "VERY_GOOD": {
+      "label": "Ottime condizioni",
+      "help": "Indossato poche volte, nessun segno di usura visibile."
+    },
+    "GOOD": {
+      "label": "Buone condizioni",
+      "help": "Indossato regolarmente, lievi segni d'uso senza difetti rilevanti."
+    },
+    "FAIR": {
+      "label": "Condizioni discrete",
+      "help": "Usura visibile, descritta nella descrizione del capo."
+    }
+  },
+  "measurement": {
+    "title": "Misure",
+    "help": "Misure prese a capo disteso e chiuso. Confrontale con un capo che indossi già.",
+    "keys": {
+      "shoulders": "Spalle",
+      "chest": "Petto",
+      "waist": "Vita",
+      "hips": "Fianchi",
+      "length": "Lunghezza",
+      "sleeve": "Manica",
+      "inseam": "Cavallo interno",
+      "footLength": "Lunghezza del piede"
+    }
+  },
+  "article": {
+    "details": "Caratteristiche",
+    "description": "Descrizione",
+    "brand": "Marchio",
+    "size": "Taglia",
+    "material": "Materiale",
+    "color": "Colore",
+    "fit": "Taglio",
+    "condition": "Condizioni",
+    "reference": "Riferimento",
+    "addToCart": "Aggiungi al carrello",
+    "makeOffer": "Fai un'offerta",
+    "offersOpenOn": "Le offerte aprono il {date}.",
+    "askQuestion": "Fai una domanda",
+    "similar": "Capi simili",
+    "similarAvailable": "Questi capi sono disponibili",
+    "sold": "Venduto",
+    "soldHint": "Questo capo è stato venduto. Era un pezzo unico e non tornerà.",
+    "reserved": "In corso di acquisto",
+    "reservedHint": "Qualcuno sta completando il proprio acquisto. Se l'ordine non va a buon fine, il capo tornerà disponibile.",
+    "shippingEstimate": "Spedizione",
+    "shippingFrom": "A partire da {price}",
+    "machineTranslated": "Questa descrizione è stata tradotta automaticamente.",
+    "backToCatalogue": "Torna al catalogo"
+  },
+  "favorites": {
+    "title": "Preferiti",
+    "empty": "Nessun preferito per ora.",
+    "emptyHint": "I capi aggiunti ai preferiti vengono conservati, anche senza account.",
+    "count": "{count, plural, =0 {Nessun preferito} one {# preferito} other {# preferiti}}"
+  },
+  "search": {
+    "label": "Cerca un capo",
+    "placeholder": "Marchio, categoria, materiale",
+    "submit": "Cerca",
+    "resultsFor": "Risultati per «{query}»",
+    "noSuggestions": "Nessun suggerimento."
+  },
+  "brands": {
+    "title": "Marchi",
+    "intro": "Tutti i marchi presenti nel catalogo.",
+    "itemCount": "{count, plural, =0 {Nessun capo} one {# capo} other {# capi}}"
   },
   "auth": {
     "signIn": "Accedi",

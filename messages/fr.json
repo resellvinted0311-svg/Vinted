@@ -20,6 +20,9 @@
   "home": {
     "intro": "Des vêtements de seconde main sélectionnés pièce par pièce. Chaque article est unique : une fois vendu, il ne revient pas.",
     "newArrivals": "Derniers arrivages",
+    "seeAll": "Voir tout le catalogue",
+    "shopByCategory": "Par catégorie",
+    "shopByBrand": "Par marque",
     "emptyCatalogue": "Aucun article en ligne pour le moment.",
     "emptyCatalogueHint": "Les premières pièces arrivent bientôt.",
     "howItWorks": {
@@ -31,6 +34,141 @@
       "shippingTitle": "Envoi",
       "shippingBody": "Expédition sous 48 heures ouvrées depuis la France, en point relais ou à domicile."
     }
+  },
+  "catalogue": {
+    "title": "Catalogue",
+    "filtersHeading": "Filtrer",
+    "results": "{count, plural, =0 {Aucun article} one {# article} other {# articles}}",
+    "noResults": "Aucun article ne correspond à ces filtres.",
+    "noResultsHint": "Retirez un filtre pour élargir la recherche.",
+    "loadMore": "Voir la suite",
+    "sort": "Trier",
+    "sortOptions": {
+      "nouveautes": "Nouveautés",
+      "prix_asc": "Prix croissant",
+      "prix_desc": "Prix décroissant",
+      "baisse": "Prix baissés récemment"
+    },
+    "facets": {
+      "category": "Catégorie",
+      "brand": "Marque",
+      "size": "Taille",
+      "condition": "État",
+      "color": "Couleur",
+      "material": "Matière",
+      "price": "Prix",
+      "priceMin": "Minimum",
+      "priceMax": "Maximum"
+    },
+    "apply": "Appliquer les filtres",
+    "activeFilters": "Filtres actifs",
+    "removeFilter": "Retirer ce filtre",
+    "clearFilters": "Tout effacer",
+    "beingPurchased": "En cours d'achat",
+    "addToFavorites": "Ajouter aux favoris",
+    "removeFromFavorites": "Retirer des favoris",
+    "colors": {
+      "ecru": "Écru",
+      "marine": "Bleu marine",
+      "kaki": "Kaki",
+      "noir": "Noir",
+      "bordeaux": "Bordeaux",
+      "gris": "Gris chiné",
+      "camel": "Camel"
+    },
+    "materials": {
+      "coton": "Coton",
+      "laine": "Laine",
+      "lin": "Lin",
+      "denim": "Denim",
+      "cuir": "Cuir",
+      "velours": "Velours côtelé"
+    },
+    "fits": {
+      "droite": "Coupe droite",
+      "ajustee": "Coupe ajustée",
+      "ample": "Coupe ample",
+      "oversize": "Coupe oversize"
+    }
+  },
+  "condition": {
+    "NEW_WITH_TAGS": {
+      "label": "Neuf avec étiquette",
+      "help": "Jamais porté, étiquette d'origine encore attachée."
+    },
+    "NEW_WITHOUT_TAGS": {
+      "label": "Neuf sans étiquette",
+      "help": "Jamais porté, mais l'étiquette d'origine a été retirée."
+    },
+    "VERY_GOOD": {
+      "label": "Très bon état",
+      "help": "Porté quelques fois, aucune trace d'usure visible."
+    },
+    "GOOD": {
+      "label": "Bon état",
+      "help": "Porté régulièrement, légères traces d'usage sans défaut notable."
+    },
+    "FAIR": {
+      "label": "État correct",
+      "help": "Usure visible, décrite dans la description de l'article."
+    }
+  },
+  "measurement": {
+    "title": "Mesures",
+    "help": "Mesures prises à plat, vêtement fermé. Comparez-les à une pièce que vous portez déjà.",
+    "keys": {
+      "shoulders": "Épaules",
+      "chest": "Poitrine",
+      "waist": "Taille",
+      "hips": "Hanches",
+      "length": "Longueur",
+      "sleeve": "Manches",
+      "inseam": "Entrejambe",
+      "footLength": "Longueur du pied"
+    }
+  },
+  "article": {
+    "details": "Caractéristiques",
+    "description": "Description",
+    "brand": "Marque",
+    "size": "Taille",
+    "material": "Matière",
+    "color": "Couleur",
+    "fit": "Coupe",
+    "condition": "État",
+    "reference": "Référence",
+    "addToCart": "Ajouter au panier",
+    "makeOffer": "Faire une offre",
+    "offersOpenOn": "Les offres ouvrent le {date}.",
+    "askQuestion": "Poser une question",
+    "similar": "Articles similaires",
+    "similarAvailable": "Ces pièces sont disponibles",
+    "sold": "Vendu",
+    "soldHint": "Cette pièce est partie. Elle était unique, elle ne reviendra pas.",
+    "reserved": "En cours d'achat",
+    "reservedHint": "Quelqu'un est en train de finaliser son achat. Si la commande n'aboutit pas, l'article redeviendra disponible.",
+    "shippingEstimate": "Livraison",
+    "shippingFrom": "À partir de {price}",
+    "machineTranslated": "Cette description a été traduite automatiquement.",
+    "backToCatalogue": "Retour au catalogue"
+  },
+  "favorites": {
+    "title": "Favoris",
+    "empty": "Aucun favori pour le moment.",
+    "emptyHint": "Les articles mis en favori sont conservés, même sans compte.",
+    "count": "{count, plural, =0 {Aucun favori} one {# favori} other {# favoris}}"
+  },
+  "search": {
+    "label": "Rechercher un article",
+    "placeholder": "Marque, catégorie, matière",
+    "submit": "Rechercher",
+    "resultsFor": "Résultats pour « {query} »",
+    "noSuggestions": "Aucune suggestion."
+  },
+  "brands": {
+    "title": "Marques",
+    "intro": "Toutes les marques présentes dans le catalogue.",
+    "itemCount": "{count, plural, =0 {Aucun article} one {# article} other {# articles}}"
   },
   "auth": {
     "signIn": "Se connecter",

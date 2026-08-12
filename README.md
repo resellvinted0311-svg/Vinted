@@ -45,6 +45,7 @@ Ces comptes ne sont créés que par le seed de développement.
 | `pnpm test:e2e` | Tests de bout en bout (Playwright) |
 | `pnpm db:migrate` | Nouvelle migration |
 | `pnpm db:seed` | Seed — déterministe et idempotent |
+| `pnpm test:bench` | Banc d'essai du catalogue (base peuplée requise) |
 
 ## Architecture
 
@@ -75,3 +76,20 @@ Les pages publiques restent prérendues : c'est ce qui porte le référencement
 et la cible LCP. L'état de session est résolu côté client par `AccountNav`,
 parce que lire les cookies dans le layout basculerait toutes les routes en
 rendu dynamique. Les pages de compte sont explicitement dynamiques.
+
+## Banc d'essai du catalogue
+
+`pnpm test:bench` mesure listing, facettes et recherche. Il demande une base
+peuplée ; pour reproduire les relevés (10 000 articles) :
+
+```bash
+createdb nina_bench
+DATABASE_URL=…nina_bench pnpm db:deploy && DATABASE_URL=…nina_bench pnpm db:seed
+# puis insérer des articles synthétiques (voir tests/bench/perf.bench.test.ts)
+DATABASE_URL=…nina_bench pnpm test:bench
+```
+
+Relevé du 12/08/2026, 10 050 articles : page catalogue complète (listing +
+6 dimensions de facettes) en 33 ms p50 / 41 ms p95. C'est ce qui a écarté la
+vue matérialisée : sur un stock unitaire, des compteurs périmés coûtent plus
+cher que 30 ms.

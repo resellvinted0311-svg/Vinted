@@ -85,7 +85,11 @@ test.describe('Connexion', () => {
     await page.getByRole('button', { name: 'Se connecter' }).click()
 
     await expect(page).toHaveURL(/\/fr\/compte/)
-    await expect(page.getByText('Bonjour Diego')).toBeVisible()
+    // Par rôle : `getByText` attraperait aussi l'annonceur de route de Next,
+    // qui recopie le titre de la page dans une région live.
+    await expect(
+      page.getByRole('heading', { name: 'Bonjour Diego' }),
+    ).toBeVisible()
 
     // L'en-tête doit refléter la session, alors même que l'accueil est servi
     // depuis le cache statique.
@@ -119,6 +123,11 @@ test.describe('Connexion', () => {
     await expect(page).toHaveURL(/\/fr\/compte/)
 
     await page.getByRole('button', { name: 'Se déconnecter' }).click()
+
+    // On attend que l'en-tête ait basculé avant de naviguer : sans cela, le
+    // test partirait pendant que l'action serveur est encore en vol et
+    // enverrait l'ancien cookie.
+    await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible()
 
     await page.goto('/fr/compte')
     await expect(page).toHaveURL(/\/fr\/connexion/)

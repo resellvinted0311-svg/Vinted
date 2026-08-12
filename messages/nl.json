@@ -20,6 +20,9 @@
   "home": {
     "intro": "Tweedehands kleding, stuk voor stuk uitgezocht. Elk item is uniek: eenmaal verkocht, komt het niet terug.",
     "newArrivals": "Nieuwste stuks",
+    "seeAll": "Bekijk de hele collectie",
+    "shopByCategory": "Per categorie",
+    "shopByBrand": "Per merk",
     "emptyCatalogue": "Op dit moment staan er geen items online.",
     "emptyCatalogueHint": "De eerste stuks komen binnenkort.",
     "howItWorks": {
@@ -31,6 +34,141 @@
       "shippingTitle": "Verzending",
       "shippingBody": "Verzonden binnen 48 werkuren vanuit Frankrijk, naar een afhaalpunt of naar uw adres."
     }
+  },
+  "catalogue": {
+    "title": "Collectie",
+    "filtersHeading": "Filteren",
+    "results": "{count, plural, =0 {Geen items} one {# item} other {# items}}",
+    "noResults": "Geen items komen overeen met deze filters.",
+    "noResultsHint": "Verwijder een filter om ruimer te zoeken.",
+    "loadMore": "Meer tonen",
+    "sort": "Sorteren",
+    "sortOptions": {
+      "nouveautes": "Nieuwste",
+      "prix_asc": "Prijs oplopend",
+      "prix_desc": "Prijs aflopend",
+      "baisse": "Recent verlaagd"
+    },
+    "facets": {
+      "category": "Categorie",
+      "brand": "Merk",
+      "size": "Maat",
+      "condition": "Staat",
+      "color": "Kleur",
+      "material": "Materiaal",
+      "price": "Prijs",
+      "priceMin": "Minimum",
+      "priceMax": "Maximum"
+    },
+    "apply": "Filters toepassen",
+    "activeFilters": "Actieve filters",
+    "removeFilter": "Dit filter verwijderen",
+    "clearFilters": "Alles wissen",
+    "beingPurchased": "Wordt gekocht",
+    "addToFavorites": "Aan favorieten toevoegen",
+    "removeFromFavorites": "Uit favorieten verwijderen",
+    "colors": {
+      "ecru": "Ecru",
+      "marine": "Marineblauw",
+      "kaki": "Kaki",
+      "noir": "Zwart",
+      "bordeaux": "Bordeaux",
+      "gris": "Gemêleerd grijs",
+      "camel": "Camel"
+    },
+    "materials": {
+      "coton": "Katoen",
+      "laine": "Wol",
+      "lin": "Linnen",
+      "denim": "Denim",
+      "cuir": "Leer",
+      "velours": "Corduroy"
+    },
+    "fits": {
+      "droite": "Rechte pasvorm",
+      "ajustee": "Slanke pasvorm",
+      "ample": "Ruime pasvorm",
+      "oversize": "Oversized pasvorm"
+    }
+  },
+  "condition": {
+    "NEW_WITH_TAGS": {
+      "label": "Nieuw met label",
+      "help": "Nooit gedragen, origineel label zit er nog aan."
+    },
+    "NEW_WITHOUT_TAGS": {
+      "label": "Nieuw zonder label",
+      "help": "Nooit gedragen, maar het originele label is verwijderd."
+    },
+    "VERY_GOOD": {
+      "label": "Zeer goede staat",
+      "help": "Enkele keren gedragen, geen zichtbare slijtage."
+    },
+    "GOOD": {
+      "label": "Goede staat",
+      "help": "Regelmatig gedragen, lichte gebruikssporen zonder noemenswaardig gebrek."
+    },
+    "FAIR": {
+      "label": "Redelijke staat",
+      "help": "Zichtbare slijtage, beschreven in de productomschrijving."
+    }
+  },
+  "measurement": {
+    "title": "Maten",
+    "help": "Plat gemeten, kledingstuk gesloten. Vergelijk ze met een stuk dat u al draagt.",
+    "keys": {
+      "shoulders": "Schouders",
+      "chest": "Borst",
+      "waist": "Taille",
+      "hips": "Heupen",
+      "length": "Lengte",
+      "sleeve": "Mouw",
+      "inseam": "Binnenbeenlengte",
+      "footLength": "Voetlengte"
+    }
+  },
+  "article": {
+    "details": "Kenmerken",
+    "description": "Omschrijving",
+    "brand": "Merk",
+    "size": "Maat",
+    "material": "Materiaal",
+    "color": "Kleur",
+    "fit": "Pasvorm",
+    "condition": "Staat",
+    "reference": "Referentie",
+    "addToCart": "In winkelmand",
+    "makeOffer": "Een bod doen",
+    "offersOpenOn": "Biedingen openen op {date}.",
+    "askQuestion": "Een vraag stellen",
+    "similar": "Vergelijkbare items",
+    "similarAvailable": "Deze stuks zijn beschikbaar",
+    "sold": "Verkocht",
+    "soldHint": "Dit stuk is weg. Het was uniek en komt niet terug.",
+    "reserved": "Wordt gekocht",
+    "reservedHint": "Iemand rondt zijn aankoop af. Als de bestelling niet doorgaat, komt het item weer beschikbaar.",
+    "shippingEstimate": "Levering",
+    "shippingFrom": "Vanaf {price}",
+    "machineTranslated": "Deze omschrijving is automatisch vertaald.",
+    "backToCatalogue": "Terug naar de collectie"
+  },
+  "favorites": {
+    "title": "Favorieten",
+    "empty": "Nog geen favorieten.",
+    "emptyHint": "Items die u als favoriet markeert, blijven bewaard, ook zonder account.",
+    "count": "{count, plural, =0 {Geen favorieten} one {# favoriet} other {# favorieten}}"
+  },
+  "search": {
+    "label": "Zoek een item",
+    "placeholder": "Merk, categorie, materiaal",
+    "submit": "Zoeken",
+    "resultsFor": "Resultaten voor “{query}”",
+    "noSuggestions": "Geen suggesties."
+  },
+  "brands": {
+    "title": "Merken",
+    "intro": "Alle merken in de collectie.",
+    "itemCount": "{count, plural, =0 {Geen items} one {# item} other {# items}}"
   },
   "auth": {
     "signIn": "Inloggen",

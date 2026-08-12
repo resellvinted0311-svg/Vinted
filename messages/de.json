@@ -20,6 +20,9 @@
   "home": {
     "intro": "Second-Hand-Kleidung, Stück für Stück ausgewählt. Jedes Teil ist ein Einzelstück: einmal verkauft, kommt es nicht zurück.",
     "newArrivals": "Neu eingetroffen",
+    "seeAll": "Gesamten Katalog ansehen",
+    "shopByCategory": "Nach Kategorie",
+    "shopByBrand": "Nach Marke",
     "emptyCatalogue": "Derzeit sind keine Artikel online.",
     "emptyCatalogueHint": "Die ersten Stücke folgen in Kürze.",
     "howItWorks": {
@@ -31,6 +34,141 @@
       "shippingTitle": "Versand",
       "shippingBody": "Versand innerhalb von 48 Werkstunden aus Frankreich, an eine Paketstation oder an Ihre Adresse."
     }
+  },
+  "catalogue": {
+    "title": "Katalog",
+    "filtersHeading": "Filtern",
+    "results": "{count, plural, =0 {Keine Artikel} one {# Artikel} other {# Artikel}}",
+    "noResults": "Keine Artikel entsprechen diesen Filtern.",
+    "noResultsHint": "Entfernen Sie einen Filter, um die Suche zu erweitern.",
+    "loadMore": "Mehr anzeigen",
+    "sort": "Sortieren",
+    "sortOptions": {
+      "nouveautes": "Neuheiten",
+      "prix_asc": "Preis aufsteigend",
+      "prix_desc": "Preis absteigend",
+      "baisse": "Kürzlich reduziert"
+    },
+    "facets": {
+      "category": "Kategorie",
+      "brand": "Marke",
+      "size": "Größe",
+      "condition": "Zustand",
+      "color": "Farbe",
+      "material": "Material",
+      "price": "Preis",
+      "priceMin": "Minimum",
+      "priceMax": "Maximum"
+    },
+    "apply": "Filter anwenden",
+    "activeFilters": "Aktive Filter",
+    "removeFilter": "Diesen Filter entfernen",
+    "clearFilters": "Alles zurücksetzen",
+    "beingPurchased": "Wird gerade gekauft",
+    "addToFavorites": "Zu Favoriten hinzufügen",
+    "removeFromFavorites": "Aus Favoriten entfernen",
+    "colors": {
+      "ecru": "Ecru",
+      "marine": "Marineblau",
+      "kaki": "Khaki",
+      "noir": "Schwarz",
+      "bordeaux": "Bordeaux",
+      "gris": "Graumeliert",
+      "camel": "Camel"
+    },
+    "materials": {
+      "coton": "Baumwolle",
+      "laine": "Wolle",
+      "lin": "Leinen",
+      "denim": "Denim",
+      "cuir": "Leder",
+      "velours": "Cord"
+    },
+    "fits": {
+      "droite": "Gerader Schnitt",
+      "ajustee": "Schmaler Schnitt",
+      "ample": "Weiter Schnitt",
+      "oversize": "Oversize-Schnitt"
+    }
+  },
+  "condition": {
+    "NEW_WITH_TAGS": {
+      "label": "Neu mit Etikett",
+      "help": "Nie getragen, Originaletikett noch angebracht."
+    },
+    "NEW_WITHOUT_TAGS": {
+      "label": "Neu ohne Etikett",
+      "help": "Nie getragen, das Originaletikett wurde jedoch entfernt."
+    },
+    "VERY_GOOD": {
+      "label": "Sehr guter Zustand",
+      "help": "Wenige Male getragen, keine sichtbaren Gebrauchsspuren."
+    },
+    "GOOD": {
+      "label": "Guter Zustand",
+      "help": "Regelmäßig getragen, leichte Gebrauchsspuren ohne nennenswerten Mangel."
+    },
+    "FAIR": {
+      "label": "Ordentlicher Zustand",
+      "help": "Sichtbare Abnutzung, in der Artikelbeschreibung beschrieben."
+    }
+  },
+  "measurement": {
+    "title": "Maße",
+    "help": "Flach liegend gemessen, Kleidungsstück geschlossen. Vergleichen Sie sie mit einem Teil, das Sie bereits tragen.",
+    "keys": {
+      "shoulders": "Schultern",
+      "chest": "Brust",
+      "waist": "Taille",
+      "hips": "Hüfte",
+      "length": "Länge",
+      "sleeve": "Ärmel",
+      "inseam": "Schrittlänge",
+      "footLength": "Fußlänge"
+    }
+  },
+  "article": {
+    "details": "Merkmale",
+    "description": "Beschreibung",
+    "brand": "Marke",
+    "size": "Größe",
+    "material": "Material",
+    "color": "Farbe",
+    "fit": "Schnitt",
+    "condition": "Zustand",
+    "reference": "Referenz",
+    "addToCart": "In den Warenkorb",
+    "makeOffer": "Angebot machen",
+    "offersOpenOn": "Angebote sind ab dem {date} möglich.",
+    "askQuestion": "Frage stellen",
+    "similar": "Ähnliche Artikel",
+    "similarAvailable": "Diese Stücke sind verfügbar",
+    "sold": "Verkauft",
+    "soldHint": "Dieses Stück ist weg. Es war ein Einzelstück und kommt nicht zurück.",
+    "reserved": "Wird gerade gekauft",
+    "reservedHint": "Jemand schließt gerade seinen Kauf ab. Kommt die Bestellung nicht zustande, wird der Artikel wieder verfügbar.",
+    "shippingEstimate": "Lieferung",
+    "shippingFrom": "Ab {price}",
+    "machineTranslated": "Diese Beschreibung wurde maschinell übersetzt.",
+    "backToCatalogue": "Zurück zum Katalog"
+  },
+  "favorites": {
+    "title": "Favoriten",
+    "empty": "Noch keine Favoriten.",
+    "emptyHint": "Als Favorit markierte Artikel bleiben erhalten, auch ohne Konto.",
+    "count": "{count, plural, =0 {Keine Favoriten} one {# Favorit} other {# Favoriten}}"
+  },
+  "search": {
+    "label": "Artikel suchen",
+    "placeholder": "Marke, Kategorie, Material",
+    "submit": "Suchen",
+    "resultsFor": "Ergebnisse für „{query}“",
+    "noSuggestions": "Keine Vorschläge."
+  },
+  "brands": {
+    "title": "Marken",
+    "intro": "Alle Marken im Katalog.",
+    "itemCount": "{count, plural, =0 {Keine Artikel} one {# Artikel} other {# Artikel}}"
   },
   "auth": {
     "signIn": "Anmelden",

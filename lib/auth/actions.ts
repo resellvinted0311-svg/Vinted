@@ -7,6 +7,7 @@ import { createDatabaseSession, destroyCurrentSession } from './session'
 import { signIn as authSignIn } from './index'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
+import { mergeGuestFavorites } from '@/lib/shop/favorites'
 
 export type AuthActionState =
   | { status: 'idle' }
@@ -74,6 +75,11 @@ export async function signUpAction(
   })
 
   await createDatabaseSession(user.id)
+
+  // Les favoris mis de côté avant l'inscription suivent dans le compte :
+  // c'est ce qui rend l'ajout aux favoris utile sans compte.
+  await mergeGuestFavorites(user.id)
+
   return { status: 'success' }
 }
 
@@ -124,6 +130,9 @@ export async function signInAction(
     where: { id: user.id },
     data: { lastSeenAt: new Date() },
   })
+
+  // Reprise des favoris déposés depuis ce navigateur avant la connexion.
+  await mergeGuestFavorites(user.id)
 
   return { status: 'success' }
 }

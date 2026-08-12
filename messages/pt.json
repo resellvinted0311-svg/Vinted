@@ -20,6 +20,9 @@
   "home": {
     "intro": "Roupa em segunda mão selecionada peça a peça. Cada artigo é único: depois de vendido, não volta.",
     "newArrivals": "Últimas chegadas",
+    "seeAll": "Ver todo o catálogo",
+    "shopByCategory": "Por categoria",
+    "shopByBrand": "Por marca",
     "emptyCatalogue": "Nenhum artigo publicado de momento.",
     "emptyCatalogueHint": "As primeiras peças chegam em breve.",
     "howItWorks": {
@@ -31,6 +34,141 @@
       "shippingTitle": "Envio",
       "shippingBody": "Expedição em 48 horas úteis a partir de França, para ponto de recolha ou ao domicílio."
     }
+  },
+  "catalogue": {
+    "title": "Catálogo",
+    "filtersHeading": "Filtrar",
+    "results": "{count, plural, =0 {Nenhum artigo} one {# artigo} other {# artigos}}",
+    "noResults": "Nenhum artigo corresponde a estes filtros.",
+    "noResultsHint": "Retire um filtro para alargar a pesquisa.",
+    "loadMore": "Ver mais",
+    "sort": "Ordenar",
+    "sortOptions": {
+      "nouveautes": "Novidades",
+      "prix_asc": "Preço crescente",
+      "prix_desc": "Preço decrescente",
+      "baisse": "Preço reduzido recentemente"
+    },
+    "facets": {
+      "category": "Categoria",
+      "brand": "Marca",
+      "size": "Tamanho",
+      "condition": "Estado",
+      "color": "Cor",
+      "material": "Material",
+      "price": "Preço",
+      "priceMin": "Mínimo",
+      "priceMax": "Máximo"
+    },
+    "apply": "Aplicar os filtros",
+    "activeFilters": "Filtros ativos",
+    "removeFilter": "Retirar este filtro",
+    "clearFilters": "Limpar tudo",
+    "beingPurchased": "Em processo de compra",
+    "addToFavorites": "Adicionar aos favoritos",
+    "removeFromFavorites": "Retirar dos favoritos",
+    "colors": {
+      "ecru": "Cru",
+      "marine": "Azul-marinho",
+      "kaki": "Caqui",
+      "noir": "Preto",
+      "bordeaux": "Bordô",
+      "gris": "Cinzento mesclado",
+      "camel": "Camelo"
+    },
+    "materials": {
+      "coton": "Algodão",
+      "laine": "Lã",
+      "lin": "Linho",
+      "denim": "Ganga",
+      "cuir": "Couro",
+      "velours": "Bombazina"
+    },
+    "fits": {
+      "droite": "Corte direito",
+      "ajustee": "Corte justo",
+      "ample": "Corte largo",
+      "oversize": "Corte oversize"
+    }
+  },
+  "condition": {
+    "NEW_WITH_TAGS": {
+      "label": "Novo com etiqueta",
+      "help": "Nunca usado, etiqueta original ainda colocada."
+    },
+    "NEW_WITHOUT_TAGS": {
+      "label": "Novo sem etiqueta",
+      "help": "Nunca usado, mas a etiqueta original foi retirada."
+    },
+    "VERY_GOOD": {
+      "label": "Muito bom estado",
+      "help": "Usado poucas vezes, sem sinais visíveis de desgaste."
+    },
+    "GOOD": {
+      "label": "Bom estado",
+      "help": "Usado com regularidade, ligeiros sinais de uso sem defeito assinalável."
+    },
+    "FAIR": {
+      "label": "Estado razoável",
+      "help": "Desgaste visível, descrito na descrição do artigo."
+    }
+  },
+  "measurement": {
+    "title": "Medidas",
+    "help": "Medidas tiradas em plano, com a peça fechada. Compare-as com uma peça que já use.",
+    "keys": {
+      "shoulders": "Ombros",
+      "chest": "Peito",
+      "waist": "Cintura",
+      "hips": "Ancas",
+      "length": "Comprimento",
+      "sleeve": "Manga",
+      "inseam": "Entrepernas",
+      "footLength": "Comprimento do pé"
+    }
+  },
+  "article": {
+    "details": "Características",
+    "description": "Descrição",
+    "brand": "Marca",
+    "size": "Tamanho",
+    "material": "Material",
+    "color": "Cor",
+    "fit": "Corte",
+    "condition": "Estado",
+    "reference": "Referência",
+    "addToCart": "Adicionar ao cesto",
+    "makeOffer": "Fazer uma proposta",
+    "offersOpenOn": "As propostas abrem a {date}.",
+    "askQuestion": "Fazer uma pergunta",
+    "similar": "Artigos semelhantes",
+    "similarAvailable": "Estas peças estão disponíveis",
+    "sold": "Vendido",
+    "soldHint": "Esta peça foi vendida. Era única e não voltará.",
+    "reserved": "Em processo de compra",
+    "reservedHint": "Alguém está a concluir a sua compra. Se a encomenda não avançar, o artigo volta a ficar disponível.",
+    "shippingEstimate": "Entrega",
+    "shippingFrom": "A partir de {price}",
+    "machineTranslated": "Esta descrição foi traduzida automaticamente.",
+    "backToCatalogue": "Voltar ao catálogo"
+  },
+  "favorites": {
+    "title": "Favoritos",
+    "empty": "Ainda não há favoritos.",
+    "emptyHint": "Os artigos marcados como favoritos são conservados, mesmo sem conta.",
+    "count": "{count, plural, =0 {Nenhum favorito} one {# favorito} other {# favoritos}}"
+  },
+  "search": {
+    "label": "Pesquisar um artigo",
+    "placeholder": "Marca, categoria, material",
+    "submit": "Pesquisar",
+    "resultsFor": "Resultados para «{query}»",
+    "noSuggestions": "Nenhuma sugestão."
+  },
+  "brands": {
+    "title": "Marcas",
+    "intro": "Todas as marcas presentes no catálogo.",
+    "itemCount": "{count, plural, =0 {Nenhum artigo} one {# artigo} other {# artigos}}"
   },
   "auth": {
     "signIn": "Iniciar sessão",

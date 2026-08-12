@@ -20,6 +20,9 @@
   "home": {
     "intro": "Second-hand clothing selected piece by piece. Every item is unique: once sold, it does not come back.",
     "newArrivals": "Latest arrivals",
+    "seeAll": "See all items",
+    "shopByCategory": "By category",
+    "shopByBrand": "By brand",
     "emptyCatalogue": "No items online at the moment.",
     "emptyCatalogueHint": "The first pieces are coming soon.",
     "howItWorks": {
@@ -31,6 +34,141 @@
       "shippingTitle": "Shipping",
       "shippingBody": "Dispatched within 48 working hours from France, to a pickup point or to your address."
     }
+  },
+  "catalogue": {
+    "title": "Catalogue",
+    "filtersHeading": "Filter",
+    "results": "{count, plural, =0 {No items} one {# item} other {# items}}",
+    "noResults": "No items match these filters.",
+    "noResultsHint": "Remove a filter to widen the search.",
+    "loadMore": "Show more",
+    "sort": "Sort",
+    "sortOptions": {
+      "nouveautes": "Newest",
+      "prix_asc": "Price, low to high",
+      "prix_desc": "Price, high to low",
+      "baisse": "Recently reduced"
+    },
+    "facets": {
+      "category": "Category",
+      "brand": "Brand",
+      "size": "Size",
+      "condition": "Condition",
+      "color": "Colour",
+      "material": "Material",
+      "price": "Price",
+      "priceMin": "Minimum",
+      "priceMax": "Maximum"
+    },
+    "apply": "Apply filters",
+    "activeFilters": "Active filters",
+    "removeFilter": "Remove this filter",
+    "clearFilters": "Clear all",
+    "beingPurchased": "Being purchased",
+    "addToFavorites": "Add to favourites",
+    "removeFromFavorites": "Remove from favourites",
+    "colors": {
+      "ecru": "Ecru",
+      "marine": "Navy",
+      "kaki": "Khaki",
+      "noir": "Black",
+      "bordeaux": "Burgundy",
+      "gris": "Heather grey",
+      "camel": "Camel"
+    },
+    "materials": {
+      "coton": "Cotton",
+      "laine": "Wool",
+      "lin": "Linen",
+      "denim": "Denim",
+      "cuir": "Leather",
+      "velours": "Corduroy"
+    },
+    "fits": {
+      "droite": "Straight fit",
+      "ajustee": "Slim fit",
+      "ample": "Relaxed fit",
+      "oversize": "Oversized fit"
+    }
+  },
+  "condition": {
+    "NEW_WITH_TAGS": {
+      "label": "New with tags",
+      "help": "Never worn, original tag still attached."
+    },
+    "NEW_WITHOUT_TAGS": {
+      "label": "New without tags",
+      "help": "Never worn, but the original tag has been removed."
+    },
+    "VERY_GOOD": {
+      "label": "Very good condition",
+      "help": "Worn a few times, no visible signs of wear."
+    },
+    "GOOD": {
+      "label": "Good condition",
+      "help": "Worn regularly, light signs of use with no notable flaw."
+    },
+    "FAIR": {
+      "label": "Fair condition",
+      "help": "Visible wear, described in the item description."
+    }
+  },
+  "measurement": {
+    "title": "Measurements",
+    "help": "Measured flat, garment fastened. Compare them with a piece you already wear.",
+    "keys": {
+      "shoulders": "Shoulders",
+      "chest": "Chest",
+      "waist": "Waist",
+      "hips": "Hips",
+      "length": "Length",
+      "sleeve": "Sleeve",
+      "inseam": "Inside leg",
+      "footLength": "Foot length"
+    }
+  },
+  "article": {
+    "details": "Details",
+    "description": "Description",
+    "brand": "Brand",
+    "size": "Size",
+    "material": "Material",
+    "color": "Colour",
+    "fit": "Fit",
+    "condition": "Condition",
+    "reference": "Reference",
+    "addToCart": "Add to basket",
+    "makeOffer": "Make an offer",
+    "offersOpenOn": "Offers open on {date}.",
+    "askQuestion": "Ask a question",
+    "similar": "Similar items",
+    "similarAvailable": "These pieces are available",
+    "sold": "Sold",
+    "soldHint": "This piece has gone. It was unique, and it will not come back.",
+    "reserved": "Being purchased",
+    "reservedHint": "Someone is completing their purchase. If the order does not go through, the item will become available again.",
+    "shippingEstimate": "Delivery",
+    "shippingFrom": "From {price}",
+    "machineTranslated": "This description was translated automatically.",
+    "backToCatalogue": "Back to the catalogue"
+  },
+  "favorites": {
+    "title": "Favourites",
+    "empty": "No favourites yet.",
+    "emptyHint": "Items you favourite are kept, even without an account.",
+    "count": "{count, plural, =0 {No favourites} one {# favourite} other {# favourites}}"
+  },
+  "search": {
+    "label": "Search for an item",
+    "placeholder": "Brand, category, material",
+    "submit": "Search",
+    "resultsFor": "Results for “{query}”",
+    "noSuggestions": "No suggestions."
+  },
+  "brands": {
+    "title": "Brands",
+    "intro": "Every brand currently in the catalogue.",
+    "itemCount": "{count, plural, =0 {No items} one {# item} other {# items}}"
   },
   "auth": {
     "signIn": "Sign in",

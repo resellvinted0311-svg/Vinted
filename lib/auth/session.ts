@@ -53,7 +53,16 @@ export async function destroyCurrentSession(): Promise<void> {
     await prisma.session.deleteMany({ where: { sessionToken: token } })
   }
 
-  store.delete(SESSION_COOKIE_NAME)
+  // `store.delete(nom)` n'émet pas l'attribut Secure. Or un cookie dont le nom
+  // commence par `__Secure-` est REJETÉ par le navigateur s'il ne le porte
+  // pas : la suppression échouerait silencieusement en production et la
+  // déconnexion ne fermerait rien côté navigateur. On réécrit donc le cookie
+  // vide avec exactement les mêmes attributs qu'à la pose.
+  store.set(SESSION_COOKIE_NAME, '', {
+    ...sessionCookieOptions,
+    maxAge: 0,
+    expires: new Date(0),
+  })
 }
 
 /**

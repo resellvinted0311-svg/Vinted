@@ -66,11 +66,6 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  experimental: {
-    // `costCents` & co. ne doivent jamais traverser la frontière serveur/client.
-    typedRoutes: false,
-  },
-
   async headers() {
     return [
       {

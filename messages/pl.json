@@ -20,6 +20,9 @@
   "home": {
     "intro": "Odzież z drugiej ręki wybierana sztuka po sztuce. Każdy przedmiot jest jedyny w swoim rodzaju: po sprzedaży nie wraca.",
     "newArrivals": "Ostatnio dodane",
+    "seeAll": "Zobacz cały katalog",
+    "shopByCategory": "Według kategorii",
+    "shopByBrand": "Według marki",
     "emptyCatalogue": "Obecnie nie ma żadnych przedmiotów.",
     "emptyCatalogueHint": "Pierwsze sztuki pojawią się wkrótce.",
     "howItWorks": {
@@ -31,6 +34,141 @@
       "shippingTitle": "Wysyłka",
       "shippingBody": "Wysyłka w ciągu 48 godzin roboczych z Francji, do punktu odbioru lub pod wskazany adres."
     }
+  },
+  "catalogue": {
+    "title": "Katalog",
+    "filtersHeading": "Filtruj",
+    "results": "{count, plural, =0 {Brak przedmiotów} one {# przedmiot} few {# przedmioty} many {# przedmiotów} other {# przedmiotu}}",
+    "noResults": "Żaden przedmiot nie odpowiada tym filtrom.",
+    "noResultsHint": "Usuń filtr, aby poszerzyć wyszukiwanie.",
+    "loadMore": "Pokaż więcej",
+    "sort": "Sortuj",
+    "sortOptions": {
+      "nouveautes": "Nowości",
+      "prix_asc": "Cena rosnąco",
+      "prix_desc": "Cena malejąco",
+      "baisse": "Niedawno obniżone"
+    },
+    "facets": {
+      "category": "Kategoria",
+      "brand": "Marka",
+      "size": "Rozmiar",
+      "condition": "Stan",
+      "color": "Kolor",
+      "material": "Materiał",
+      "price": "Cena",
+      "priceMin": "Minimum",
+      "priceMax": "Maksimum"
+    },
+    "apply": "Zastosuj filtry",
+    "activeFilters": "Aktywne filtry",
+    "removeFilter": "Usuń ten filtr",
+    "clearFilters": "Wyczyść wszystko",
+    "beingPurchased": "W trakcie zakupu",
+    "addToFavorites": "Dodaj do ulubionych",
+    "removeFromFavorites": "Usuń z ulubionych",
+    "colors": {
+      "ecru": "Ecru",
+      "marine": "Granatowy",
+      "kaki": "Khaki",
+      "noir": "Czarny",
+      "bordeaux": "Bordowy",
+      "gris": "Szary melanż",
+      "camel": "Wielbłądzi"
+    },
+    "materials": {
+      "coton": "Bawełna",
+      "laine": "Wełna",
+      "lin": "Len",
+      "denim": "Denim",
+      "cuir": "Skóra",
+      "velours": "Sztruks"
+    },
+    "fits": {
+      "droite": "Prosty krój",
+      "ajustee": "Dopasowany krój",
+      "ample": "Luźny krój",
+      "oversize": "Krój oversize"
+    }
+  },
+  "condition": {
+    "NEW_WITH_TAGS": {
+      "label": "Nowy z metką",
+      "help": "Nigdy nienoszony, oryginalna metka nadal przyczepiona."
+    },
+    "NEW_WITHOUT_TAGS": {
+      "label": "Nowy bez metki",
+      "help": "Nigdy nienoszony, ale oryginalna metka została usunięta."
+    },
+    "VERY_GOOD": {
+      "label": "Bardzo dobry stan",
+      "help": "Noszony kilka razy, bez widocznych śladów użytkowania."
+    },
+    "GOOD": {
+      "label": "Dobry stan",
+      "help": "Noszony regularnie, lekkie ślady użytkowania bez istotnych wad."
+    },
+    "FAIR": {
+      "label": "Stan dostateczny",
+      "help": "Widoczne zużycie, opisane w opisie przedmiotu."
+    }
+  },
+  "measurement": {
+    "title": "Wymiary",
+    "help": "Mierzone na płasko, przy zapiętym ubraniu. Porównaj je z rzeczą, którą już nosisz.",
+    "keys": {
+      "shoulders": "Ramiona",
+      "chest": "Klatka piersiowa",
+      "waist": "Talia",
+      "hips": "Biodra",
+      "length": "Długość",
+      "sleeve": "Rękaw",
+      "inseam": "Wewnętrzna długość nogawki",
+      "footLength": "Długość stopy"
+    }
+  },
+  "article": {
+    "details": "Cechy",
+    "description": "Opis",
+    "brand": "Marka",
+    "size": "Rozmiar",
+    "material": "Materiał",
+    "color": "Kolor",
+    "fit": "Krój",
+    "condition": "Stan",
+    "reference": "Numer referencyjny",
+    "addToCart": "Dodaj do koszyka",
+    "makeOffer": "Złóż ofertę",
+    "offersOpenOn": "Oferty otwierają się {date}.",
+    "askQuestion": "Zadaj pytanie",
+    "similar": "Podobne przedmioty",
+    "similarAvailable": "Te sztuki są dostępne",
+    "sold": "Sprzedane",
+    "soldHint": "Ta sztuka została sprzedana. Była jedyna w swoim rodzaju i nie wróci.",
+    "reserved": "W trakcie zakupu",
+    "reservedHint": "Ktoś finalizuje zakup. Jeśli zamówienie nie dojdzie do skutku, przedmiot znów będzie dostępny.",
+    "shippingEstimate": "Dostawa",
+    "shippingFrom": "Od {price}",
+    "machineTranslated": "Ten opis został przetłumaczony automatycznie.",
+    "backToCatalogue": "Powrót do katalogu"
+  },
+  "favorites": {
+    "title": "Ulubione",
+    "empty": "Na razie brak ulubionych.",
+    "emptyHint": "Przedmioty dodane do ulubionych są zachowywane, nawet bez konta.",
+    "count": "{count, plural, =0 {Brak ulubionych} one {# ulubiony} few {# ulubione} many {# ulubionych} other {# ulubionego}}"
+  },
+  "search": {
+    "label": "Szukaj przedmiotu",
+    "placeholder": "Marka, kategoria, materiał",
+    "submit": "Szukaj",
+    "resultsFor": "Wyniki dla „{query}”",
+    "noSuggestions": "Brak podpowiedzi."
+  },
+  "brands": {
+    "title": "Marki",
+    "intro": "Wszystkie marki obecne w katalogu.",
+    "itemCount": "{count, plural, =0 {Brak przedmiotów} one {# przedmiot} few {# przedmioty} many {# przedmiotów} other {# przedmiotu}}"
   },
   "auth": {
     "signIn": "Zaloguj się",
