@@ -327,6 +327,51 @@ export function withPoolerParams(url: string): string {
   return `${url}${url.includes('?') ? '&' : '?'}${params.join('&')}`
 }
 
+/** Remplace un paramètre s'il existe, l'ajoute sinon. */
+function setParam(url: string, name: string, value: string): string {
+  const existing = new RegExp(`([?&])${name}=[^&]*`)
+  if (existing.test(url)) return url.replace(existing, `$1${name}=${value}`)
+  return `${url}${url.includes('?') ? '&' : '?'}${name}=${value}`
+}
+
+/**
+ * Nombre de connexions ouvertes pendant le build, et délai d'attente du pool.
+ *
+ * Volontairement à l'opposé du réglage applicatif. Next prérend les pages sur
+ * un worker par cœur, et chaque worker rend plusieurs pages de front : une
+ * seule page d'accueil déclenche déjà quatre requêtes en parallèle, une page
+ * de catalogue une dizaine.
+ */
+const BUILD_CONNECTION_LIMIT = 8
+const BUILD_POOL_TIMEOUT_SECONDS = 30
+
+/**
+ * Profil de connexion du build.
+ *
+ * `connection_limit=1` est la recommandation de Prisma derrière un pooler, et
+ * elle est juste — POUR L'APPLICATION. Chaque instance serverless est
+ * éphémère et ne traite qu'une requête à la fois ; la mutualisation est
+ * assurée en amont.
+ *
+ * Le build n'a rien de tout cela : c'est un processus long qui prérend la
+ * totalité des pages, en parallèle. Avec une seule connexion, les requêtes
+ * font la queue, et comme chaque aller-retour vers la base coûte une centaine
+ * de millisecondes depuis la région de build, l'attente dépasse le délai du
+ * pool. Prisma répond alors P2024 et le build s'arrête, alors que la base se
+ * porte très bien.
+ *
+ * L'hôte et le port restent ceux de la connexion applicative : seul le profil
+ * de pool change. Cette URL ne sort jamais du build — `lib/db/client.ts`
+ * résout la sienne à l'exécution, depuis l'environnement de la fonction.
+ */
+export function withBuildParams(url: string): string {
+  return setParam(
+    setParam(url, 'connection_limit', String(BUILD_CONNECTION_LIMIT)),
+    'pool_timeout',
+    String(BUILD_POOL_TIMEOUT_SECONDS),
+  )
+}
+
 /**
  * Noms — jamais les valeurs — des variables liées à la base présentes dans
  * l'environnement. Sert au diagnostic de build : une URL de connexion contient

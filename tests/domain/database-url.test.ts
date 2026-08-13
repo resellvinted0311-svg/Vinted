@@ -9,6 +9,7 @@ import {
   describeConnectionProblem,
   presentDatabaseEnvNames,
   wasUserinfoEncoded,
+  withBuildParams,
 } from '@/lib/db/database-url'
 
 /**
@@ -71,6 +72,40 @@ describe('paramètres de pooler', () => {
     const url = withPoolerParams(`${SUPABASE.POSTGRES_PRISMA_URL}?sslmode=require`)
     expect(url).toContain('?sslmode=require&')
     expect(url).not.toContain('??')
+  })
+})
+
+describe('profil de connexion du build', () => {
+  it('relève la limite posée pour le serverless', () => {
+    // Le prérendu est un processus long qui rend plusieurs pages de front :
+    // à une seule connexion, les requêtes font la queue et le pool expire.
+    const runtime = resolveDatabaseUrl(SUPABASE)
+    expect(runtime?.value).toContain('connection_limit=1')
+
+    const build = withBuildParams(runtime?.value ?? '')
+    expect(build).not.toContain('connection_limit=1&')
+    expect(build).toContain('connection_limit=8')
+    expect(build).toContain('pool_timeout=30')
+  })
+
+  it('vise le même hôte que la connexion applicative', () => {
+    // Seul le profil de pool change : un build qui viserait un autre hôte ne
+    // vérifierait pas la base que l'application utilisera.
+    const runtime = resolveDatabaseUrl(SUPABASE)?.value ?? ''
+    expect(new URL(withBuildParams(runtime)).host).toBe(new URL(runtime).host)
+  })
+
+  it('conserve les autres paramètres', () => {
+    const build = withBuildParams(resolveDatabaseUrl(SUPABASE)?.value ?? '')
+    expect(build).toContain('pgbouncer=true')
+  })
+
+  it('pose les paramètres sur une URL qui n’en a aucun', () => {
+    const build = withBuildParams(LOCAL.DATABASE_URL)
+    expect(build).toContain('connection_limit=8')
+    expect(build).toContain('pool_timeout=30')
+    expect(build).toContain('schema=public')
+    expect(build).not.toContain('??')
   })
 })
 

@@ -12,6 +12,7 @@ import {
   blocksMigrations,
   describeConnectionProblem,
   presentDatabaseEnvNames,
+  withBuildParams,
 } from '../lib/db/database-url.ts'
 
 const runtime = resolveDatabaseUrl()
@@ -97,8 +98,15 @@ if (blocksMigrations(migration.value)) {
 }
 
 // Sortie standard : uniquement du shell évaluable.
+//
+// BUILD_DATABASE_URL vise le même hôte que DATABASE_URL, avec un pool taillé
+// pour un processus long plutôt que pour une fonction serverless. Elle est
+// appliquée aux seules étapes qui interrogent la base pendant le build ; la
+// connexion applicative reste exportée telle quelle, pour que le log dise la
+// vérité sur ce que l'application utilisera.
 const quote = (value) => `'${value.replaceAll("'", `'\\''`)}'`
 process.stdout.write(
   `export DATABASE_URL=${quote(runtime.value)}\n` +
-    `export DIRECT_URL=${quote(migration.value)}\n`,
+    `export DIRECT_URL=${quote(migration.value)}\n` +
+    `export BUILD_DATABASE_URL=${quote(withBuildParams(runtime.value))}\n`,
 )

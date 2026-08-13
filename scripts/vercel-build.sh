@@ -38,17 +38,22 @@ prisma migrate deploy
 # Un premier déploiement trouve une base fraîche et la peuple ; les suivants
 # n'y touchent pas. SEED_ON_BUILD reste disponible pour forcer (1) ou
 # interdire (0) explicitement.
+# Les étapes qui interrogent réellement la base passent par
+# BUILD_DATABASE_URL : même hôte, mais un pool dimensionné pour un processus
+# long. Avec le connection_limit=1 de la connexion applicative, le prérendu
+# des 115 pages met les requêtes en file sur une seule connexion et dépasse le
+# délai du pool (Prisma P2024) — réglage juste en serverless, ruineux ici.
 if [ "$SEED_ON_BUILD" = "0" ]; then
   echo "→ Seed désactivé (SEED_ON_BUILD=0)"
 elif [ "$SEED_ON_BUILD" = "1" ]; then
   echo "→ Seed forcé (SEED_ON_BUILD=1)"
-  tsx prisma/seed.ts
-elif node scripts/catalogue-is-empty.mjs; then
+  DATABASE_URL="$BUILD_DATABASE_URL" tsx prisma/seed.ts
+elif DATABASE_URL="$BUILD_DATABASE_URL" node scripts/catalogue-is-empty.mjs; then
   echo "→ Catalogue vide : insertion du jeu de démonstration"
-  tsx prisma/seed.ts
+  DATABASE_URL="$BUILD_DATABASE_URL" tsx prisma/seed.ts
 else
   echo "→ Catalogue déjà peuplé : seed ignoré"
 fi
 
 echo "→ Build Next.js"
-next build
+DATABASE_URL="$BUILD_DATABASE_URL" next build
