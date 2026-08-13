@@ -35,7 +35,18 @@
       "shippingBody": "Expedição em 48 horas úteis a partir de França, para ponto de recolha ou ao domicílio."
     },
     "registerCount": "{count, plural, =0 {Nenhuma peça no registo} one {# peça no registo} other {# peças no registo}}",
-    "registerNote": "Uma peça, um exemplar. Referência, material, peso e medidas constam de cada ficha."
+    "registerNote": "Uma peça, um exemplar. Referência, material, peso e medidas constam de cada ficha.",
+    "featured": "A peça do momento",
+    "featuredCta": "Ver a peça",
+    "arrivals": "Acabado de entrar",
+    "browseTitle": "Entrar no catálogo",
+    "browseBody": "Todas as peças online, com filtros: tamanho, material, estado, cor, preço.",
+    "browseCta": "Abrir o catálogo",
+    "indexCategories": "Índice de categorias",
+    "indexBrands": "Índice de marcas",
+    "claimUnique": "Um exemplar de cada peça",
+    "claimMeasured": "Medidas reais em cada ficha",
+    "claimShipped": "Expedição em 48 horas úteis"
   },
   "catalogue": {
     "title": "Catálogo",

@@ -38,7 +38,7 @@ export default async function SignInPage({
   const t = await getTranslations('auth')
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 py-12 sm:px-6">
+    <div className="mx-auto w-full max-w-md px-4 pb-24 pt-12 sm:px-6">
       <h1 className="text-xl">{t('signInTitle')}</h1>
 
       {/* Sans secret de signature, Auth.js ne peut ouvrir aucune session. On

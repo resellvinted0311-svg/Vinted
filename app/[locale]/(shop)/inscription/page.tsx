@@ -34,7 +34,7 @@ export default async function SignUpPage({
   const t = await getTranslations('auth')
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 py-12 sm:px-6">
+    <div className="mx-auto w-full max-w-md px-4 pb-24 pt-12 sm:px-6">
       <h1 className="text-xl">{t('signUpTitle')}</h1>
 
       <div className="mt-8">

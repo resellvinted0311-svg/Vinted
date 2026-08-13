@@ -39,7 +39,7 @@ export default async function BrandsPage({
   const brands = await listBrandsWithCounts()
 
   return (
-    <div className="mx-auto max-w-[80rem] px-4 py-12 sm:px-6">
+    <div className="mx-auto max-w-[80rem] px-4 pb-24 pt-12 sm:px-6">
       <h1 className="text-2xl">{t('title')}</h1>
       <p className="mt-2 max-w-2xl text-base text-muted">{t('intro')}</p>
 

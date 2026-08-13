@@ -373,7 +373,133 @@
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Mouvement
+
+   Trois gestes, et leurs garde-fous. Tous partent du principe que la page doit
+   être complète et lisible avant qu'une seule ligne de script ne s'exécute :
+   l'animation retire, elle n'ajoute jamais.
+   --------------------------------------------------------------------------- */
+
+@layer components {
+  /*
+    Révélation au défilement.
+
+    L'état escamoté n'existe QUE lorsque le script a posé `data-reveal` — sans
+    lui, la règle ne s'applique pas et le contenu reste visible. C'est ce qui
+    rend la page utilisable sans JavaScript et indexable telle quelle.
+  */
+  .reveal {
+    transition:
+      opacity 620ms var(--ease-out),
+      transform 620ms var(--ease-out);
+  }
+
+  .reveal[data-reveal='out'] {
+    opacity: 0;
+  }
+
+  .reveal[data-reveal='out'][data-reveal-from='up'] {
+    transform: translate3d(0, 26px, 0);
+  }
+
+  .reveal[data-reveal='out'][data-reveal-from='left'] {
+    transform: translate3d(-26px, 0, 0);
+  }
+
+  .reveal[data-reveal='out'][data-reveal-from='right'] {
+    transform: translate3d(26px, 0, 0);
+  }
+
+  .reveal[data-reveal='in'] {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  /* Dérive au pointeur : la position vient du script, le rendu du GPU. */
+  .drift {
+    transform: translate3d(var(--drift-x, 0), var(--drift-y, 0), 0);
+    transition: transform 420ms var(--ease-out);
+  }
+
+  /*
+    Bandeau défilant.
+
+    La séquence est rendue deux fois et la piste translate de moitié : le
+    raccord tombe exactement sur le début du second exemplaire, la boucle est
+    donc sans saut. Une durée longue — le bandeau accompagne, il ne réclame
+    pas l'attention.
+  */
+  .marquee__track {
+    animation: nd-marquee 46s linear infinite;
+  }
+
+  .marquee:hover .marquee__track {
+    animation-play-state: paused;
+  }
+
+  @keyframes nd-marquee {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  /*
+    Rail d'arrivage : défilement horizontal natif, avec accrochage.
+
+    Un vrai débordement plutôt qu'un carrousel scripté — le geste tactile, la
+    molette, la navigation clavier et la barre de défilement sont ceux du
+    navigateur, gratuitement et sans bogue.
+  */
+  .rail {
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rail > * {
+    scroll-snap-align: start;
+  }
+}
+
 @layer utilities {
+  /*
+    Titre à l'échelle du bloc : la typographie devient une surface, pas une
+    ligne. `clamp` la tient entre deux bornes lisibles sur toutes largeurs.
+  */
+  /*
+    Le titre du héros est du contenu, pas du décor : c'est le nom d'un article,
+    et sa longueur varie de « Pull Uniqlo » à bien pire. Le plafond est donc
+    calé pour que le mot le plus long tienne dans sa colonne — au-delà, il
+    débordait du cadre et se faisait rogner par l'écran.
+  */
+  .type-hero {
+    font-size: clamp(2.5rem, 8vw, 7.5rem);
+    line-height: 0.86;
+    letter-spacing: -0.05em;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  .type-section {
+    font-size: clamp(1.75rem, 5.5vw, 3.75rem);
+    line-height: 0.9;
+    letter-spacing: -0.045em;
+  }
+
+  /* Chiffre en contour : un graphisme fait de type, pas une image. */
+  .type-outline {
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--sand-strong);
+  }
+
   /*
     Trame de registre.
 
@@ -394,6 +520,33 @@
         transparent 1px
       );
     background-size: 24px 24px;
+  }
+
+  /*
+    Aligné à gauche sur la colonne de texte, libre de déborder à droite.
+
+    Un bandeau qui défile doit commencer là où commence le titre qui l'annonce
+    — sinon la page a deux marges gauches — mais courir jusqu'au bord de
+    l'écran, car c'est ce débordement qui dit qu'on peut faire défiler. Comme
+    il vit hors du conteneur centré, il recalcule lui-même la gouttière.
+  */
+  .bleed-right {
+    padding-left: max(1rem, calc((100vw - 80rem) / 2 + 1rem));
+    /*
+      Indispensable, et facile à oublier : l'accrochage aligne l'élément sur le
+      bord du CADRE de défilement, pas sur le bord du contenu. Sans
+      `scroll-padding`, le navigateur fait défiler par-dessus la gouttière dès
+      le chargement et la première fiche vient se coller au bord de l'écran —
+      la marge est bien appliquée, elle est simplement dépassée.
+    */
+    scroll-padding-left: max(1rem, calc((100vw - 80rem) / 2 + 1rem));
+  }
+
+  @media (min-width: 640px) {
+    .bleed-right {
+      padding-left: max(1.5rem, calc((100vw - 80rem) / 2 + 1.5rem));
+      scroll-padding-left: max(1.5rem, calc((100vw - 80rem) / 2 + 1.5rem));
+    }
   }
 
   /* Zone de clic minimale de 44px sans grossir visuellement la cible. */

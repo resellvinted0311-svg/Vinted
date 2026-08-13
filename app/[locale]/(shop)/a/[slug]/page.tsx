@@ -145,7 +145,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
   }
 
   return (
-    <div className="mx-auto max-w-[80rem] px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-[80rem] px-4 pb-24 pt-6 sm:px-6">
       <Breadcrumbs
         locale={locale}
         items={[

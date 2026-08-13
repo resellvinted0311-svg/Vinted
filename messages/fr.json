@@ -35,7 +35,18 @@
       "shippingBody": "Expédition sous 48 heures ouvrées depuis la France, en point relais ou à domicile."
     },
     "registerCount": "{count, plural, =0 {Aucune pièce au registre} one {# pièce au registre} other {# pièces au registre}}",
-    "registerNote": "Une pièce, un exemplaire. Référence, matière, poids et mesures figurent sur chaque fiche."
+    "registerNote": "Une pièce, un exemplaire. Référence, matière, poids et mesures figurent sur chaque fiche.",
+    "featured": "La pièce du moment",
+    "featuredCta": "Voir la pièce",
+    "arrivals": "Ce qui vient d'entrer",
+    "browseTitle": "Entrer dans le catalogue",
+    "browseBody": "Toutes les pièces en ligne, avec les filtres : taille, matière, état, couleur, prix.",
+    "browseCta": "Ouvrir le catalogue",
+    "indexCategories": "Index des catégories",
+    "indexBrands": "Index des marques",
+    "claimUnique": "Un exemplaire de chaque pièce",
+    "claimMeasured": "Mesures réelles sur chaque fiche",
+    "claimShipped": "Expédition sous 48 heures ouvrées"
   },
   "catalogue": {
     "title": "Catalogue",

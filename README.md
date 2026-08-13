@@ -70,6 +70,19 @@ jamais d'une réponse publique. Les lectures publiques passent par les
 sélecteurs explicites de `lib/db/selectors.ts`, et un test balaie les charges
 utiles à la recherche de ces champs.
 
+### Structure de l'accueil — vitrine, pas rayon
+
+L'accueil **n'ouvre pas** sur une grille filtrable. C'est la structure de tous
+les sites de vêtements, et c'est précisément ce dont la boutique doit se
+distinguer. Il ouvre sur une pièce, en grand, avec son relevé complet — ce
+qu'une boutique où chaque article est unique peut montrer et qu'un catalogue de
+tailles multiples ne peut pas.
+
+La descente est une séquence : la pièce du moment, le bandeau de faits,
+l'arrivage en rail horizontal, la méthode, l'index typographique, puis l'entrée
+du catalogue. Celle-ci vit **en bas de page** : le rayon est une destination
+qu'on choisit, pas la porte d'entrée.
+
 ### Direction artistique — « Registre »
 
 Une pièce, un exemplaire : le site se tient comme un registre d'atelier plutôt
@@ -90,6 +103,16 @@ Trois gestes de mouvement, définis une seule fois dans `app/globals.css` :
 
 `.lift` et `.card-pick` ne s'appliquent que sous `@media (hover: hover)` : sur
 écran tactile, `:hover` reste collé après le tap.
+
+Trois gestes de mouvement s'y ajoutent, dans `components/motion/` :
+
+| Composant | Effet | Garde-fou |
+|---|---|---|
+| `Reveal` | apparition au défilement, une seule fois | rendu **visible** côté serveur ; le script escamote puis révèle. Sans JavaScript ou sans `IntersectionObserver`, rien n'est masqué |
+| `PointerDrift` | dérive du visuel sous la souris | pointeurs fins uniquement, écriture cadencée par `requestAnimationFrame` |
+| `Marquee` | bandeau défilant | CSS pur, aucun script ; le second exemplaire est `aria-hidden` |
+
+`prefers-reduced-motion` neutralise les trois.
 
 **Amendement au brief §11** (13/08/2026). Le brief interdisait toute imagerie
 végétale. L'interdit est levé sur un point : la gravure au trait, à grande

@@ -89,7 +89,7 @@ export async function CatalogueView({
     : null
 
   return (
-    <div className="mx-auto max-w-[80rem] px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-[80rem] px-4 pb-24 pt-8 sm:px-6">
       {/* En-tête de registre : le titre, puis le décompte détaché sous un
           filet plein. Le nombre est une donnée d'inventaire, il est donc
           composé comme telle et non comme un argument. */}

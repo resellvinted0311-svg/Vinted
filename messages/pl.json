@@ -35,7 +35,18 @@
       "shippingBody": "Wysyłka w ciągu 48 godzin roboczych z Francji, do punktu odbioru lub pod wskazany adres."
     },
     "registerCount": "{count, plural, =0 {Brak sztuk w rejestrze} one {# sztuka w rejestrze} few {# sztuki w rejestrze} many {# sztuk w rejestrze} other {# sztuki w rejestrze}}",
-    "registerNote": "Jedna sztuka, jeden egzemplarz. Numer, materiał, waga i wymiary są podane przy każdym produkcie."
+    "registerNote": "Jedna sztuka, jeden egzemplarz. Numer, materiał, waga i wymiary są podane przy każdym produkcie.",
+    "featured": "Rzecz chwili",
+    "featuredCta": "Zobacz tę sztukę",
+    "arrivals": "Właśnie weszło",
+    "browseTitle": "Wejdź do katalogu",
+    "browseBody": "Wszystkie sztuki online, z filtrami: rozmiar, materiał, stan, kolor, cena.",
+    "browseCta": "Otwórz katalog",
+    "indexCategories": "Indeks kategorii",
+    "indexBrands": "Indeks marek",
+    "claimUnique": "Jeden egzemplarz każdej sztuki",
+    "claimMeasured": "Rzeczywiste wymiary przy każdym produkcie",
+    "claimShipped": "Wysyłka w ciągu 48 godzin roboczych"
   },
   "catalogue": {
     "title": "Katalog",

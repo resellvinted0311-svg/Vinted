@@ -81,7 +81,7 @@ export default async function StaticPage({ params }: { params: Params }) {
   const th = await getTranslations('home')
 
   return (
-    <article className="mx-auto max-w-[46rem] px-4 py-12 sm:px-6">
+    <article className="mx-auto max-w-[46rem] px-4 pb-24 pt-12 sm:px-6">
       <h1 className="text-2xl">{t(TITLE_KEY[slug])}</h1>
 
       <div className="mt-6 flex flex-col gap-4 text-base text-ink">

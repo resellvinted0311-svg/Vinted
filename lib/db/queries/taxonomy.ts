@@ -216,6 +216,60 @@ export async function listBrandsWithCounts(): Promise<BrandSummary[]> {
     .filter((brand) => brand.articleCount > 0)
 }
 
+export interface CategoryEntry {
+  id: string
+  /** Chemin complet, prêt à composer une URL `/c/…`. */
+  path: string
+  name: string
+  articleCount: number
+}
+
+/**
+ * Catégories terminales et leur nombre de pièces en ligne.
+ *
+ * L'accueil les présente en index typographique plutôt qu'en pastilles : le
+ * compteur y devient une donnée lisible, qui dit où le catalogue est fourni.
+ * Seules les feuilles sont retenues — une pièce est toujours rangée dans une
+ * feuille, un parent n'apporterait qu'un doublon.
+ */
+export async function listCategoriesWithCounts(
+  locale: string,
+): Promise<CategoryEntry[]> {
+  const rows = await prisma.category.findMany({
+    select: {
+      id: true,
+      slug: true,
+      parentId: true,
+      position: true,
+      translations: { select: { locale: true, name: true } },
+      parent: { select: { slug: true } },
+      _count: {
+        select: {
+          articles: {
+            where: {
+              status: { in: ['AVAILABLE', 'RESERVED'] },
+              publishedAt: { not: null, lte: new Date() },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { position: 'asc' },
+  })
+
+  return rows
+    .filter((row) => row._count.articles > 0)
+    .map((row) => ({
+      id: row.id,
+      path: row.parent ? `${row.parent.slug}/${row.slug}` : row.slug,
+      name: nameFor(row.translations, locale, row.slug),
+      articleCount: row._count.articles,
+    }))
+    // Les plus fournies d'abord : l'index sert à entrer dans le catalogue,
+    // pas à réciter l'arborescence.
+    .sort((a, b) => b.articleCount - a.articleCount)
+}
+
 export async function getBrandBySlug(slug: string) {
   return prisma.brand.findUnique({
     where: { slug },

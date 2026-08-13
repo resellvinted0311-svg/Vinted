@@ -35,7 +35,18 @@
       "shippingBody": "Spedizione entro 48 ore lavorative dalla Francia, in punto di ritiro o a domicilio."
     },
     "registerCount": "{count, plural, =0 {Nessun capo nel registro} one {# capo nel registro} other {# capi nel registro}}",
-    "registerNote": "Un capo, un esemplare. Riferimento, materiale, peso e misure sono indicati su ogni scheda."
+    "registerNote": "Un capo, un esemplare. Riferimento, materiale, peso e misure sono indicati su ogni scheda.",
+    "featured": "Il capo del momento",
+    "featuredCta": "Vedi il capo",
+    "arrivals": "Appena arrivati",
+    "browseTitle": "Entra nel catalogo",
+    "browseBody": "Tutti i capi online, con i filtri: taglia, materiale, condizione, colore, prezzo.",
+    "browseCta": "Apri il catalogo",
+    "indexCategories": "Indice delle categorie",
+    "indexBrands": "Indice dei marchi",
+    "claimUnique": "Un esemplare di ogni capo",
+    "claimMeasured": "Misure reali su ogni scheda",
+    "claimShipped": "Spedizione entro 48 ore lavorative"
   },
   "catalogue": {
     "title": "Catalogo",

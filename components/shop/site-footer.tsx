@@ -23,7 +23,7 @@ export async function SiteFooter() {
     // Colophon : la mention de fin d'un ouvrage imprimé, qui dit qui l'a
     // composé et sous quelles règles. C'est exactement ce que contient ce pied
     // de page — d'où le traitement en bloc réglé plutôt qu'en bandeau coloré.
-    <footer className="mt-20 ruled-t bg-paper-raised">
+    <footer className="ruled-t bg-paper-raised">
       <div className="mx-auto max-w-[80rem] px-4 py-10 sm:px-6">
         <div className="grid gap-8 sm:grid-cols-3">
           <div>

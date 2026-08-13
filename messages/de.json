@@ -35,7 +35,18 @@
       "shippingBody": "Versand innerhalb von 48 Werkstunden aus Frankreich, an eine Paketstation oder an Ihre Adresse."
     },
     "registerCount": "{count, plural, =0 {Keine Stücke im Register} one {# Stück im Register} other {# Stücke im Register}}",
-    "registerNote": "Ein Stück, ein Exemplar. Referenz, Material, Gewicht und Maße stehen auf jeder Produktseite."
+    "registerNote": "Ein Stück, ein Exemplar. Referenz, Material, Gewicht und Maße stehen auf jeder Produktseite.",
+    "featured": "Das Stück des Augenblicks",
+    "featuredCta": "Stück ansehen",
+    "arrivals": "Gerade eingetroffen",
+    "browseTitle": "In den Katalog",
+    "browseBody": "Alle Stücke online, mit Filtern: Größe, Material, Zustand, Farbe, Preis.",
+    "browseCta": "Katalog öffnen",
+    "indexCategories": "Kategorienverzeichnis",
+    "indexBrands": "Markenverzeichnis",
+    "claimUnique": "Ein Exemplar von jedem Stück",
+    "claimMeasured": "Echte Maße auf jeder Produktseite",
+    "claimShipped": "Versand innerhalb von 48 Werkstunden"
   },
   "catalogue": {
     "title": "Katalog",

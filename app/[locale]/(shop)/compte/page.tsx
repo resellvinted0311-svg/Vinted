@@ -56,7 +56,7 @@ export default async function AccountPage({
   ] as const
 
   return (
-    <div className="mx-auto w-full max-w-[60rem] px-4 py-12 sm:px-6">
+    <div className="mx-auto w-full max-w-[60rem] px-4 pb-24 pt-12 sm:px-6">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-xl">
           {t('greeting', { name: user.firstName ?? user.email })}

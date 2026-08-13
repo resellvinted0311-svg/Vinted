@@ -35,7 +35,18 @@
       "shippingBody": "Dispatched within 48 working hours from France, to a pickup point or to your address."
     },
     "registerCount": "{count, plural, =0 {No pieces in the register} one {# piece in the register} other {# pieces in the register}}",
-    "registerNote": "One piece, one copy. Reference, material, weight and measurements appear on every listing."
+    "registerNote": "One piece, one copy. Reference, material, weight and measurements appear on every listing.",
+    "featured": "Piece of the moment",
+    "featuredCta": "View this piece",
+    "arrivals": "Just arrived",
+    "browseTitle": "Enter the catalogue",
+    "browseBody": "Every piece online, with filters: size, material, condition, colour, price.",
+    "browseCta": "Open the catalogue",
+    "indexCategories": "Category index",
+    "indexBrands": "Brand index",
+    "claimUnique": "One copy of every piece",
+    "claimMeasured": "Real measurements on every listing",
+    "claimShipped": "Shipped within 48 working hours"
   },
   "catalogue": {
     "title": "Catalogue",
