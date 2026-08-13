@@ -93,12 +93,43 @@ export function describeConnectionProblem(value: string): string | null {
     )
   }
 
+  let parsed: URL
   try {
-    new URL(value)
+    parsed = new URL(value)
   } catch {
     return (
       'la chaîne n’est pas une URL valide. Un caractère spécial du mot de ' +
       'passe doit être encodé (@ → %40, # → %23, / → %2F)'
+    )
+  }
+
+  // Les poolers Supabase routent la connexion d'après l'identifiant : il doit
+  // porter la référence du projet, sous la forme `postgres.<ref>`. Avec le
+  // simple `postgres` — celui de la connexion directe — l'authentification
+  // échoue quel que soit le mot de passe, et Prisma se contente d'un
+  // « P1000 : credentials are not valid » qui laisse chercher du côté du mot
+  // de passe.
+  if (
+    parsed.hostname.endsWith('.pooler.supabase.com') &&
+    parsed.username === 'postgres'
+  ) {
+    return (
+      'le pooler Supabase attend l’identifiant « postgres.<référence-du-projet> », ' +
+      'pas « postgres » seul. L’identifiant sans suffixe n’appartient qu’à la ' +
+      'connexion directe (hôte db.<référence>.supabase.co). Reprenez la chaîne ' +
+      'depuis Supabase : Connect → ORMs → Prisma'
+    )
+  }
+
+  // Cas symétrique : identifiant du pooler sur l'hôte de connexion directe.
+  if (
+    parsed.hostname.endsWith('.supabase.co') &&
+    parsed.username.startsWith('postgres.')
+  ) {
+    return (
+      'la connexion directe attend l’identifiant « postgres » seul, sans la ' +
+      'référence du projet. Celle-ci n’est requise que sur les hôtes ' +
+      '*.pooler.supabase.com'
     )
   }
 

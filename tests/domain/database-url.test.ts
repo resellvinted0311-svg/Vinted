@@ -201,3 +201,47 @@ describe('diagnostic de forme', () => {
     expect(problem).toContain('%40')
   })
 })
+
+describe('identifiant Supabase', () => {
+  const REF = 'jtjkdcldtabc'
+
+  it('refuse « postgres » seul sur un hôte pooler', () => {
+    // Cas réel : hôte du pooler mais identifiant de la connexion directe.
+    // Prisma répond alors P1000 sans jamais désigner l'identifiant.
+    const problem = describeConnectionProblem(
+      `postgresql://postgres:pw@aws-1-eu-west-3.pooler.supabase.com:5432/postgres`,
+    )
+    expect(problem).not.toBeNull()
+    expect(problem).toContain('postgres.<référence-du-projet>')
+  })
+
+  it('accepte « postgres.<ref> » sur un hôte pooler', () => {
+    expect(
+      describeConnectionProblem(
+        `postgresql://postgres.${REF}:pw@aws-1-eu-west-3.pooler.supabase.com:5432/postgres`,
+      ),
+    ).toBeNull()
+  })
+
+  it('accepte « postgres » seul en connexion directe', () => {
+    expect(
+      describeConnectionProblem(
+        `postgresql://postgres:pw@db.${REF}.supabase.co:5432/postgres`,
+      ),
+    ).toBeNull()
+  })
+
+  it('refuse « postgres.<ref> » sur l’hôte de connexion directe', () => {
+    expect(
+      describeConnectionProblem(
+        `postgresql://postgres.${REF}:pw@db.${REF}.supabase.co:5432/postgres`,
+      ),
+    ).not.toBeNull()
+  })
+
+  it('ne juge pas l’identifiant hors de Supabase', () => {
+    expect(
+      describeConnectionProblem('postgresql://postgres:pw@localhost:5432/nina'),
+    ).toBeNull()
+  })
+})
