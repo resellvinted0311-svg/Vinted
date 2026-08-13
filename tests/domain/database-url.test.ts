@@ -245,3 +245,48 @@ describe('identifiant Supabase', () => {
     ).toBeNull()
   })
 })
+
+describe('marqueur de mot de passe non remplacé', () => {
+  const HOST = 'aws-1-eu-west-3.pooler.supabase.com:5432/postgres'
+
+  it('signale [YOUR-PASSWORD] laissé tel quel', () => {
+    const problem = describeConnectionProblem(
+      `postgresql://postgres.abc:[YOUR-PASSWORD]@${HOST}`,
+    )
+    expect(problem).toContain('texte à remplacer')
+  })
+
+  it('signale la variante encodée par un copier-coller', () => {
+    // Les crochets sont souvent encodés au passage dans une interface web.
+    const problem = describeConnectionProblem(
+      `postgresql://postgres.abc:%5BYOUR-PASSWORD%5D@${HOST}`,
+    )
+    expect(problem).toContain('texte à remplacer')
+  })
+
+  it('signale la variante en chevrons', () => {
+    expect(
+      describeConnectionProblem(`postgresql://postgres.abc:<password>@${HOST}`),
+    ).toContain('texte à remplacer')
+  })
+
+  it('signale un mot de passe absent', () => {
+    expect(
+      describeConnectionProblem(`postgresql://postgres.abc:@${HOST}`),
+    ).toContain('aucun mot de passe')
+  })
+
+  it('accepte un vrai mot de passe', () => {
+    expect(
+      describeConnectionProblem(`postgresql://postgres.abc:Xk92mQvz@${HOST}`),
+    ).toBeNull()
+  })
+
+  it('n’alerte pas sur un mot de passe contenant un crochet encodé', () => {
+    // %5B est un crochet légitime dans un mot de passe généré ; seul un
+    // COUPLE de crochets encadrant du texte trahit un marqueur.
+    expect(
+      describeConnectionProblem(`postgresql://postgres.abc:Xk%5B92mQvz@${HOST}`),
+    ).toBeNull()
+  })
+})

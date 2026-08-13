@@ -103,6 +103,25 @@ export function describeConnectionProblem(value: string): string | null {
     )
   }
 
+  // Marqueur laissé tel quel. Les hébergeurs insèrent un texte à remplacer
+  // là où ils ne peuvent pas connaître la valeur — un mot de passe n'est
+  // jamais stocké en clair de leur côté. Oublier la substitution produit une
+  // erreur d'authentification qui laisse chercher ailleurs.
+  const password = decodeURIComponent(parsed.password)
+  const placeholder = /\[[^\]]*\]|YOUR[-_]?PASSWORD|<[^>]*>/i.exec(password)
+  if (placeholder) {
+    return (
+      `le mot de passe vaut encore « ${placeholder[0]} », qui est un texte à ` +
+      'remplacer. Utilisez le mot de passe de votre base — Supabase : ' +
+      'Project Settings → Database → Reset database password si vous ne ' +
+      'l’avez plus'
+    )
+  }
+
+  if (password === '') {
+    return 'aucun mot de passe n’est renseigné dans la chaîne de connexion'
+  }
+
   // Les poolers Supabase routent la connexion d'après l'identifiant : il doit
   // porter la référence du projet, sous la forme `postgres.<ref>`. Avec le
   // simple `postgres` — celui de la connexion directe — l'authentification
