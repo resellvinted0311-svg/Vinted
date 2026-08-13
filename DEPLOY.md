@@ -14,8 +14,16 @@ git push -u origin claude/secondhand-clothing-shop-kefiil
 
 Le catalogue est en base : sans elle, le build échoue à la génération des
 pages statiques. Dans le tableau de bord Vercel, projet → **Storage** →
-**Create Database** → **Neon** (ou Supabase). Vercel injecte alors
-`DATABASE_URL` automatiquement.
+**Create Database** → **Supabase**. Vercel pose alors les variables de
+connexion lui-même, sans rien à recopier.
+
+Supabase plutôt qu'un autre : le temps réel du panier et des offres
+(Phases 2 et 3) s'appuie sur Supabase Realtime. Un autre hébergeur
+imposerait de bâtir une couche SSE équivalente.
+
+Supabase sert deux connexions sur le même hôte : le port **6543** en mode
+transaction, pour l'application, et le port **5432** en mode session, pour les
+migrations. Le build choisit la bonne tout seul.
 
 ## 3. Variables d'environnement
 

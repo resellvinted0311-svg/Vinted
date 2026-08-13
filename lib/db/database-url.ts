@@ -14,6 +14,9 @@
  * toujours la valeur explicite quand elle existe.
  */
 
+/** Environnement lu : seules des clés arbitraires nous intéressent. */
+type EnvLike = Record<string, string | undefined>
+
 /** Connexion applicative. Un pool convient, et est même préférable en serverless. */
 const RUNTIME_KEYS = [
   'DATABASE_URL',
@@ -38,7 +41,7 @@ const MIGRATION_KEYS = [
 
 function firstNonEmpty(
   keys: readonly string[],
-  env: NodeJS.ProcessEnv,
+  env: EnvLike,
 ): { key: string; value: string } | null {
   for (const key of keys) {
     const value = env[key]
@@ -50,20 +53,72 @@ function firstNonEmpty(
 }
 
 export function resolveDatabaseUrl(
-  env: NodeJS.ProcessEnv = process.env,
+  env: EnvLike = process.env,
 ): { key: string; value: string } | null {
-  return firstNonEmpty(RUNTIME_KEYS, env)
+  const found = firstNonEmpty(RUNTIME_KEYS, env)
+  if (!found) return null
+
+  // La connexion applicative peut légitimement passer par un pooler ; on la
+  // complète pour que Prisma s'y comporte correctement.
+  return { key: found.key, value: withPoolerParams(found.value) }
 }
 
 export function resolveMigrationUrl(
-  env: NodeJS.ProcessEnv = process.env,
+  env: EnvLike = process.env,
 ): { key: string; value: string } | null {
   return firstNonEmpty(MIGRATION_KEYS, env)
 }
 
-/** Une connexion passe-t-elle par un pooler en mode transaction ? */
+/**
+ * Une connexion passe-t-elle par un pooler en mode transaction ?
+ *
+ * Supabase sert son pooler sur le port 6543 et sur un hôte `*.pooler.*` ;
+ * Neon et Vercel Postgres utilisent un hôte suffixé `-pooler`.
+ */
 export function looksPooled(url: string): boolean {
-  return url.includes('-pooler') || url.includes('pgbouncer=true')
+  return (
+    url.includes('-pooler') ||
+    url.includes('.pooler.') ||
+    url.includes(':6543') ||
+    url.includes('pgbouncer=true')
+  )
+}
+
+/**
+ * Le pooler est-il en mode TRANSACTION, incompatible avec les migrations ?
+ *
+ * Distinction importante chez Supabase : le même hôte `*.pooler.*` sert le
+ * mode transaction sur le port 6543 et le mode SESSION sur le port 5432. Le
+ * mode session conserve l'état de connexion, donc gère les verrous
+ * consultatifs : les migrations y passent sans problème. Avertir sur le seul
+ * nom d'hôte produirait une alerte à tort dans la configuration Supabase la
+ * plus courante.
+ */
+export function blocksMigrations(url: string): boolean {
+  return url.includes(':6543') || url.includes('pgbouncer=true')
+}
+
+/**
+ * Complète une URL poolée des paramètres qu'attend Prisma.
+ *
+ * PgBouncer en mode transaction ne conserve pas l'état de session : sans
+ * `pgbouncer=true`, Prisma émet des requêtes préparées qui échouent au bout
+ * de quelques appels avec « prepared statement "s0" already exists ». Le
+ * défaut passe donc inaperçu au déploiement et ne se manifeste qu'en charge.
+ *
+ * `connection_limit=1` est la recommandation de Prisma derrière un pooler :
+ * chaque instance serverless n'ouvre qu'une connexion, la mutualisation étant
+ * déjà assurée en amont.
+ */
+export function withPoolerParams(url: string): string {
+  if (!looksPooled(url)) return url
+
+  const params: string[] = []
+  if (!/[?&]pgbouncer=/.test(url)) params.push('pgbouncer=true')
+  if (!/[?&]connection_limit=/.test(url)) params.push('connection_limit=1')
+  if (params.length === 0) return url
+
+  return `${url}${url.includes('?') ? '&' : '?'}${params.join('&')}`
 }
 
 /**
@@ -72,7 +127,7 @@ export function looksPooled(url: string): boolean {
  * un mot de passe et n'a rien à faire dans un journal.
  */
 export function presentDatabaseEnvNames(
-  env: NodeJS.ProcessEnv = process.env,
+  env: EnvLike = process.env,
 ): string[] {
   return Object.keys(env)
     .filter((key) => /^(DATABASE|POSTGRES|PG|NEON|SUPABASE)/.test(key))

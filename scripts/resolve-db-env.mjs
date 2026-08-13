@@ -9,7 +9,7 @@
 import {
   resolveDatabaseUrl,
   resolveMigrationUrl,
-  looksPooled,
+  blocksMigrations,
   presentDatabaseEnvNames,
 } from '../lib/db/database-url.ts'
 
@@ -51,10 +51,14 @@ if (!runtime || !migration) {
 console.error(`Connexion applicative : ${runtime.key}`)
 console.error(`Connexion des migrations : ${migration.key}`)
 
-if (looksPooled(migration.value)) {
+// N'avertir que sur un pooler en mode TRANSACTION : le mode session de
+// Supabase (port 5432) gère les verrous consultatifs et convient aux
+// migrations. Alerter sur le seul nom d'hôte crierait au loup.
+if (blocksMigrations(migration.value)) {
   console.error(
-    'Attention : les migrations passent par un pooler. En cas d’échec sur ' +
-      'un verrou, renseignez DIRECT_URL avec l’URL de connexion directe.',
+    'Attention : les migrations passent par un pooler en mode transaction, ' +
+      'qui ne gère pas les verrous consultatifs. Renseignez DIRECT_URL avec ' +
+      'l’URL de connexion directe (port 5432 chez Supabase).',
   )
 }
 
