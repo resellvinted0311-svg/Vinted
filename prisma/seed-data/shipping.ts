@@ -38,9 +38,20 @@ export const ZONES: ZoneSeed[] = [
   },
   {
     code: 'FR_DOM',
-    name: 'DOM-TOM',
+    name: 'Outre-mer',
     countries: ['FR'],
-    postalPrefixes: ['971', '972', '973', '974', '975', '976', '977', '978'],
+    // 971 à 978 : Guadeloupe, Martinique, Guyane, La Réunion, Saint-Pierre-et-
+    // Miquelon, Mayotte, Saint-Barthélemy, Saint-Martin.
+    //
+    // 984, 986, 987, 988 ajoutés après relecture : les Terres australes,
+    // Wallis-et-Futuna, la Polynésie française et la Nouvelle-Calédonie portent
+    // elles aussi le code pays FR. Absentes de cette liste, elles retombaient
+    // sur la zone générique — donc Nouméa facturée au tarif de Paris, à un
+    // tiers du coût réel, sans qu'aucune erreur ne le signale.
+    postalPrefixes: [
+      '971', '972', '973', '974', '975', '976', '977', '978',
+      '984', '986', '987', '988',
+    ],
     freeShippingThresholdCents: null,
     position: 3,
     requiresCustoms: true,
