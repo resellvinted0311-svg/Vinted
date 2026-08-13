@@ -214,7 +214,8 @@
       "required": "Dit veld is verplicht.",
       "banned": "Dit account is geschorst.",
       "rateLimited": "Te veel pogingen. Probeer het over enkele minuten opnieuw.",
-      "generic": "De handeling is niet voltooid. Probeer het opnieuw."
+      "generic": "De handeling is niet voltooid. Probeer het opnieuw.",
+      "notConfigured": "Inloggen is nog niet ingeschakeld op deze deployment. De catalogus en favorieten werken gewoon."
     }
   },
   "account": {

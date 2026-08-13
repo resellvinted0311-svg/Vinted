@@ -214,7 +214,8 @@
       "required": "Dieses Feld ist erforderlich.",
       "banned": "Dieses Konto ist gesperrt.",
       "rateLimited": "Zu viele Versuche. Versuchen Sie es in einigen Minuten erneut.",
-      "generic": "Der Vorgang wurde nicht abgeschlossen. Versuchen Sie es erneut."
+      "generic": "Der Vorgang wurde nicht abgeschlossen. Versuchen Sie es erneut.",
+      "notConfigured": "Die Anmeldung ist auf diesem Deployment noch nicht aktiviert. Katalog und Favoriten funktionieren normal."
     }
   },
   "account": {

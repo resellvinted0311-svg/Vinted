@@ -214,7 +214,8 @@
       "required": "Este campo é obrigatório.",
       "banned": "Esta conta está suspensa.",
       "rateLimited": "Demasiadas tentativas. Tente novamente dentro de alguns minutos.",
-      "generic": "A operação não foi concluída. Tente novamente."
+      "generic": "A operação não foi concluída. Tente novamente.",
+      "notConfigured": "O início de sessão ainda não está ativado nesta implementação. O catálogo e os favoritos funcionam normalmente."
     }
   },
   "account": {

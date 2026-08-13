@@ -47,10 +47,20 @@ qui ouvre le nom de la base ; dans ce cas, changez le mot de passe.
 | `NEXT_PUBLIC_SITE_URL` | non | déduite de `VERCEL_PROJECT_PRODUCTION_URL` |
 | `AUTH_SECRET` | non\* | sans elle, la connexion est désactivée proprement ; le reste fonctionne |
 
-\* Sans `AUTH_SECRET`, la boutique est entièrement consultable mais personne ne
-peut se connecter, et la page de connexion l'indique. Aucun secret de repli
-n'est fabriqué : ce serait rendre les sessions falsifiables. Générez-la avec
-`openssl rand -base64 32` dès que vous voulez tester les comptes.
+\* Sans `AUTH_SECRET`, la boutique est entièrement consultable — catalogue,
+recherche, favoris — mais **connexion et inscription sont refusées**, et les
+deux pages le disent. Aucun compte n'est écrit en base dans ce cas : un compte
+à moitié créé condamnerait l'adresse e-mail pour toujours. Aucun secret de
+repli n'est fabriqué non plus, ce serait rendre les sessions falsifiables.
+
+Pour activer les comptes, une seule variable suffit :
+
+```bash
+openssl rand -base64 32
+```
+
+Collez le résultat dans `AUTH_SECRET` (Production **et** Preview), puis
+redéployez.
 
 Renseignez `DIRECT_URL` uniquement si les migrations échouent sur un verrou —
 signe d'une connexion via un pooler en mode transaction. Le script vous en

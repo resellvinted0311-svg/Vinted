@@ -8,6 +8,7 @@ import { signIn as authSignIn } from './index'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { mergeGuestFavorites } from '@/lib/shop/favorites'
+import { isAuthConfigured } from '@/lib/config/site'
 
 export type AuthActionState =
   | { status: 'idle' }
@@ -25,6 +26,17 @@ export async function signUpAction(
   _prev: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  // Refus AVANT toute écriture.
+  //
+  // Sans secret de signature, la session serait bien créée en base et le
+  // cookie bien posé — mais `getCurrentUser()` renvoie `null`, donc la
+  // personne repart aussitôt vers la connexion, avec un compte qu'elle ne
+  // peut plus utiliser et une adresse désormais « déjà prise ». Mieux vaut
+  // n'écrire rien du tout et le dire.
+  if (!isAuthConfigured()) {
+    return { status: 'error', messageKey: 'notConfigured' }
+  }
+
   const parsed = signUpSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
@@ -93,6 +105,11 @@ export async function signInAction(
   _prev: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  // Même raison qu'à l'inscription : la session serait ouverte puis illisible.
+  if (!isAuthConfigured()) {
+    return { status: 'error', messageKey: 'notConfigured' }
+  }
+
   const parsed = signInSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
@@ -142,6 +159,12 @@ export async function magicLinkAction(
   _prev: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  // Le lien magique passe par Auth.js de bout en bout : sans secret, il
+  // échouerait après l'envoi de l'e-mail, donc au pire moment possible.
+  if (!isAuthConfigured()) {
+    return { status: 'error', messageKey: 'notConfigured' }
+  }
+
   const parsed = magicLinkSchema.safeParse({
     email: formData.get('email'),
     locale: formData.get('locale'),

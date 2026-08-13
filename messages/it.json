@@ -214,7 +214,8 @@
       "required": "Questo campo è obbligatorio.",
       "banned": "Questo account è sospeso.",
       "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
-      "generic": "L'operazione non è andata a buon fine. Riprova."
+      "generic": "L'operazione non è andata a buon fine. Riprova.",
+      "notConfigured": "L’accesso non è ancora attivo su questo deploy. Il catalogo e i preferiti funzionano normalmente."
     }
   },
   "account": {

@@ -214,7 +214,8 @@
       "required": "To pole jest wymagane.",
       "banned": "To konto jest zawieszone.",
       "rateLimited": "Zbyt wiele prób. Spróbuj ponownie za kilka minut.",
-      "generic": "Operacja nie została ukończona. Spróbuj ponownie."
+      "generic": "Operacja nie została ukończona. Spróbuj ponownie.",
+      "notConfigured": "Logowanie nie jest jeszcze włączone w tym wdrożeniu. Katalog i ulubione działają normalnie."
     }
   },
   "account": {

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { redirect, Link } from '@/lib/i18n/navigation'
 import { getCurrentUser } from '@/lib/auth/session'
+import { isAuthConfigured } from '@/lib/config/site'
 import { SignUpForm } from '@/components/shop/sign-up-form'
 
 /** Lit la session pour rediriger une personne déjà connectée. */
@@ -36,6 +37,15 @@ export default async function SignUpPage({
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-24 pt-12 sm:px-6">
       <h1 className="text-xl">{t('signUpTitle')}</h1>
+
+      {/* L'avertissement existait sur /connexion mais pas ici, alors que
+          l'inscription est le chemin où le silence coûtait le plus cher : le
+          compte partait en base et devenait inutilisable. */}
+      {!isAuthConfigured() ? (
+        <p className="mt-6 rounded-card border-[1.5px] border-warning bg-paper-raised p-4 text-base text-muted">
+          {t('errors.notConfigured')}
+        </p>
+      ) : null}
 
       <div className="mt-8">
         <SignUpForm />

@@ -214,7 +214,8 @@
       "required": "Ce champ est obligatoire.",
       "banned": "Ce compte est suspendu.",
       "rateLimited": "Trop de tentatives. Réessayez dans quelques minutes.",
-      "generic": "L'opération n'a pas abouti. Réessayez."
+      "generic": "L'opération n'a pas abouti. Réessayez.",
+      "notConfigured": "La connexion n’est pas encore activée sur ce déploiement. Le catalogue et les favoris fonctionnent normalement."
     }
   },
   "account": {

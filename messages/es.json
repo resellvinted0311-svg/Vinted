@@ -214,7 +214,8 @@
       "required": "Este campo es obligatorio.",
       "banned": "Esta cuenta está suspendida.",
       "rateLimited": "Demasiados intentos. Inténtalo de nuevo en unos minutos.",
-      "generic": "La operación no se ha completado. Inténtalo de nuevo."
+      "generic": "La operación no se ha completado. Inténtalo de nuevo.",
+      "notConfigured": "El inicio de sesión aún no está activado en este despliegue. El catálogo y los favoritos funcionan con normalidad."
     }
   },
   "account": {
