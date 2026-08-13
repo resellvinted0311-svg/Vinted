@@ -8,6 +8,7 @@ import {
   normalizeConnectionString,
   describeConnectionProblem,
   presentDatabaseEnvNames,
+  wasUserinfoEncoded,
 } from '@/lib/db/database-url'
 
 /**
@@ -196,9 +197,84 @@ describe('diagnostic de forme', () => {
     expect(describeConnectionProblem('psql "postgresql://u:p@h/db"')).not.toBeNull()
   })
 
-  it('signale un mot de passe non encodé', () => {
+  it('signale un mot de passe non encodé qui aurait échappé à la réparation', () => {
+    // La normalisation encode ce cas d'elle-même ; le diagnostic reste le
+    // filet de sécurité pour une chaîne qui l'aurait contournée.
     const problem = describeConnectionProblem('postgresql://u:p@ss@host:5432/db')
     expect(problem).toContain('%40')
+  })
+})
+
+describe('caractères réservés dans le mot de passe', () => {
+  const HOST = 'aws-1-eu-west-3.pooler.supabase.com:5432/postgres'
+
+  it('encode un « @ » laissé tel quel', () => {
+    // Un nom d'hôte ne peut pas contenir « @ » : le DERNIER « @ » est donc
+    // forcément le séparateur, et la réparation est sans ambiguïté.
+    expect(
+      normalizeConnectionString(`postgresql://postgres.abc:Xk@92mQ@${HOST}`),
+    ).toBe(`postgresql://postgres.abc:Xk%4092mQ@${HOST}`)
+  })
+
+  it('encode plusieurs « @ » du même mot de passe', () => {
+    expect(
+      normalizeConnectionString(`postgresql://postgres.abc:a@b@c@${HOST}`),
+    ).toBe(`postgresql://postgres.abc:a%40b%40c@${HOST}`)
+  })
+
+  it('encode « # » et « ? », qui tronqueraient l’autorité', () => {
+    expect(
+      normalizeConnectionString(`postgresql://postgres.abc:a#b?c@${HOST}`),
+    ).toBe(`postgresql://postgres.abc:a%23b%3Fc@${HOST}`)
+  })
+
+  it('encode un « : » surnuméraire sans casser la séparation', () => {
+    expect(
+      normalizeConnectionString(`postgresql://postgres.abc:a:b@${HOST}`),
+    ).toBe(`postgresql://postgres.abc:a%3Ab@${HOST}`)
+  })
+
+  it('la réparation rend la chaîne exploitable', () => {
+    const repaired = normalizeConnectionString(
+      `postgresql://postgres.abc:Xk@92mQ@${HOST}`,
+    )
+    // Sans encodage, `new URL` retenait le dernier « @ » et le pilote se
+    // connectait au mauvais hôte.
+    expect(new URL(repaired).hostname).toBe('aws-1-eu-west-3.pooler.supabase.com')
+    // Sans perte : le mot de passe transmis reste celui qui était écrit.
+    expect(decodeURIComponent(new URL(repaired).password)).toBe('Xk@92mQ')
+    expect(describeConnectionProblem(repaired)).toBeNull()
+  })
+
+  it('ne touche pas une chaîne déjà correcte', () => {
+    const clean = `postgresql://postgres.abc:Xk92mQvz@${HOST}`
+    expect(normalizeConnectionString(clean)).toBe(clean)
+    expect(wasUserinfoEncoded(clean)).toBe(false)
+  })
+
+  it('ne double pas un encodage déjà présent', () => {
+    const already = `postgresql://postgres.abc:Xk%4092mQ@${HOST}`
+    expect(normalizeConnectionString(already)).toBe(already)
+  })
+
+  it('laisse intacte une URL sans mot de passe', () => {
+    const noPassword = 'postgresql://postgres@localhost:5432/nina'
+    expect(normalizeConnectionString(noPassword)).toBe(noPassword)
+  })
+
+  it('la résolution répare et le signale', () => {
+    const resolved = resolveMigrationUrl({
+      DIRECT_URL: `postgresql://postgres.abc:Xk@92mQ@${HOST}`,
+    })
+    expect(resolved?.value).toContain('%40')
+    expect(resolved?.repaired).toBe(true)
+  })
+
+  it('des guillemets retirés ne comptent pas comme une réparation', () => {
+    const resolved = resolveMigrationUrl({
+      DIRECT_URL: `"postgresql://postgres.abc:Xk92mQvz@${HOST}"`,
+    })
+    expect(resolved?.repaired).toBe(false)
   })
 })
 

@@ -52,6 +52,18 @@ if (!runtime || !migration) {
 console.error(`Connexion applicative : ${runtime.key}`)
 console.error(`Connexion des migrations : ${migration.key}`)
 
+// Une réparation silencieuse ferait chercher ailleurs si la connexion échoue
+// malgré tout. On la dit, sans jamais montrer le caractère en cause : il
+// appartient au mot de passe.
+for (const entry of [runtime, migration]) {
+  if (entry.repaired) {
+    console.error(
+      `${entry.key} : un caractère réservé du mot de passe a été encodé ` +
+        'automatiquement. Le mot de passe transmis reste identique.',
+    )
+  }
+}
+
 // Contrôle de forme avant de laisser Prisma répondre « P1013 : the scheme is
 // not recognized », message qui ne désigne jamais la cause réelle.
 let invalid = false

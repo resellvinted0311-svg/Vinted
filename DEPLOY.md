@@ -33,6 +33,12 @@ Projet → **Settings** → **Environment Variables** :
 lui-même la connexion en créant la base à l'étape 2, et le build accepte les
 différentes conventions de nommage.
 
+Un mot de passe contenant `@`, `#`, `?` ou `:` est encodé automatiquement au
+passage : ces caractères rendent l'URL ambiguë, mais un nom d'hôte ne pouvant
+pas en contenir, la réparation est sans ambiguïté et sans perte. Le log le
+signale. Seul le `/` reste irrécupérable — il est indiscernable du séparateur
+qui ouvre le nom de la base ; dans ce cas, changez le mot de passe.
+
 | Variable | Requise | Comportement par défaut |
 |---|---|---|
 | connexion PostgreSQL | oui | reconnue sous `DATABASE_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL` ou `NEON_DATABASE_URL` |

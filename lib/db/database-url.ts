@@ -52,6 +52,11 @@ const MIGRATION_KEYS = [
  * parfait.
  */
 export function normalizeConnectionString(raw: string): string {
+  return encodeUserinfo(stripWrapping(raw))
+}
+
+/** Retire l'emballage — espaces, préfixe `NOM=`, guillemets — sans rien encoder. */
+function stripWrapping(raw: string): string {
   let value = raw.trim()
 
   // Préfixe « NOM= » recopié depuis un .env. On ne le retire que si ce qui
@@ -69,6 +74,78 @@ export function normalizeConnectionString(raw: string): string {
   }
 
   return value
+}
+
+/**
+ * La chaîne a-t-elle dû être réparée pour être exploitable ?
+ *
+ * Sert uniquement à la trace de build : savoir qu'un encodage a eu lieu évite
+ * de chercher ailleurs si la connexion échoue malgré tout.
+ */
+export function wasUserinfoEncoded(raw: string): boolean {
+  const stripped = stripWrapping(raw)
+  return encodeUserinfo(stripped) !== stripped
+}
+
+/**
+ * Encode les caractères réservés laissés tels quels dans les identifiants.
+ *
+ * Un mot de passe contenant « @ » produit une URL à deux séparateurs
+ * possibles entre identifiants et hôte. `new URL` ne s'en plaint pas — elle
+ * retient silencieusement le dernier — mais le pilote PostgreSQL, lui, se
+ * connecte au mauvais hôte, et Prisma répond P1001 sans jamais désigner la
+ * cause.
+ *
+ * Le cas est pourtant réparable sans la moindre ambiguïté : un nom d'hôte ne
+ * peut pas contenir « @ », donc le DERNIER « @ » de l'autorité est forcément
+ * le séparateur, et tout ce qui le précède appartient aux identifiants. On
+ * encode donc plutôt que d'exiger un mot de passe recopié à la main dans une
+ * interface web — opération qu'il faudrait refaire à chaque rotation.
+ *
+ * La réparation est sans perte : le pilote décode « %40 » en « @ », le mot de
+ * passe transmis est exactement celui qui était écrit.
+ *
+ * Limite assumée : un « / » dans le mot de passe reste irrécupérable. Il est
+ * indiscernable du séparateur qui ouvre le nom de la base, et aucune règle ne
+ * permet de trancher. `describeConnectionProblem` s'en charge.
+ */
+function encodeUserinfo(value: string): string {
+  const scheme = value.indexOf('://')
+  if (scheme === -1) return value
+
+  const start = scheme + 3
+
+  // Fin de l'autorité : le premier « / » après le schéma, ou la fin de la
+  // chaîne. « # » et « ? » n'entrent pas dans ce calcul — s'ils se trouvent
+  // dans le mot de passe, ils sont avant ce « / » et seront encodés avec le
+  // reste.
+  const slash = value.indexOf('/', start)
+  const end = slash === -1 ? value.length : slash
+  const authority = value.slice(start, end)
+
+  const separator = authority.lastIndexOf('@')
+  if (separator === -1) return value
+
+  const userinfo = authority.slice(0, separator)
+  const hostPort = authority.slice(separator + 1)
+
+  // Sans « : », il n'y a pas de mot de passe : rien à réparer.
+  const colon = userinfo.indexOf(':')
+  if (colon === -1) return value
+
+  const encode = (part: string): string =>
+    part.replace(
+      /[@#?:]/g,
+      (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+    )
+
+  const repaired = `${encode(userinfo.slice(0, colon))}:${encode(
+    userinfo.slice(colon + 1),
+  )}`
+
+  if (repaired === userinfo) return value
+
+  return `${value.slice(0, start)}${repaired}@${hostPort}${value.slice(end)}`
 }
 
 /** Décrit ce qui cloche dans une chaîne de connexion, ou `null` si elle est valide. */
@@ -155,14 +232,27 @@ export function describeConnectionProblem(value: string): string | null {
   return null
 }
 
+/** Connexion retenue. `repaired` signale qu'un caractère a dû être encodé. */
+export interface ResolvedConnection {
+  key: string
+  value: string
+  repaired: boolean
+}
+
 function firstNonEmpty(
   keys: readonly string[],
   env: EnvLike,
-): { key: string; value: string } | null {
+): ResolvedConnection | null {
   for (const key of keys) {
-    const value = env[key]
-    if (typeof value === 'string' && value.trim() !== '') {
-      return { key, value: normalizeConnectionString(value) }
+    const raw = env[key]
+    if (typeof raw !== 'string' || raw.trim() === '') continue
+
+    return {
+      key,
+      value: normalizeConnectionString(raw),
+      // Des guillemets retirés ne sont pas une réparation d'identifiants et
+      // n'ont pas à être signalés comme telle.
+      repaired: wasUserinfoEncoded(raw),
     }
   }
   return null
@@ -170,18 +260,18 @@ function firstNonEmpty(
 
 export function resolveDatabaseUrl(
   env: EnvLike = process.env,
-): { key: string; value: string } | null {
+): ResolvedConnection | null {
   const found = firstNonEmpty(RUNTIME_KEYS, env)
   if (!found) return null
 
   // La connexion applicative peut légitimement passer par un pooler ; on la
   // complète pour que Prisma s'y comporte correctement.
-  return { key: found.key, value: withPoolerParams(found.value) }
+  return { ...found, value: withPoolerParams(found.value) }
 }
 
 export function resolveMigrationUrl(
   env: EnvLike = process.env,
-): { key: string; value: string } | null {
+): ResolvedConnection | null {
   return firstNonEmpty(MIGRATION_KEYS, env)
 }
 
