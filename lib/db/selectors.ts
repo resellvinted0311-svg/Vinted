@@ -58,7 +58,15 @@ export const publicCategorySelect = {
   translations: { select: { locale: true, name: true } },
 } satisfies Prisma.CategorySelect
 
-/** Vignette de catalogue : le strict nécessaire pour afficher une grille. */
+/**
+ * Vignette de catalogue : le strict nécessaire pour afficher une grille.
+ *
+ * `material` et `weightGrams` s'y ajoutent depuis la refonte « Registre » : la
+ * vignette porte une ligne de données factuelles sous le titre. Les deux sont
+ * déjà publics sur la fiche article — les exposer ici n'ouvre rien de nouveau,
+ * et reste très en deçà des champs privés que ce fichier a pour rôle de tenir
+ * hors des réponses publiques (voir PRIVATE_ARTICLE_FIELDS).
+ */
 export const publicArticleCardSelect = {
   id: true,
   sku: true,
@@ -67,6 +75,8 @@ export const publicArticleCardSelect = {
   sizeLabel: true,
   sizeNormalized: true,
   color: true,
+  material: true,
+  weightGrams: true,
   priceCents: true,
   comparePriceCents: true,
   status: true,

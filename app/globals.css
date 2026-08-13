@@ -1,97 +1,143 @@
 @import 'tailwindcss';
 
 /* ===========================================================================
-   Nina & Diego — jetons de design
+   Nina & Diego — jetons de design « Registre »
 
-   La direction artistique passe par la matière et la retenue : fond crème,
-   bordures fines plutôt qu'ombres portées, rayons faibles, aucune icône ni
-   dégradé évoquant l'écologie. La photo produit est le seul élément qui a le
-   droit d'occuper tout le cadre.
+   Chaque pièce est unique : le site l'assume et se tient comme un registre
+   d'atelier plutôt que comme une vitrine. Fond de toile écrue, filets pleins,
+   numéro d'inventaire visible, données composées en chasse fixe — et des
+   fiches aux angles adoucis, qui empêchent le registre de virer au formulaire
+   administratif.
+
+   L'écologie ne passe pas par le symbole mais par la traçabilité : référence,
+   matière, poids, date d'entrée sont affichés parce qu'ils sont réels.
+
+   Amendement au brief §11, arbitré le 13/08/2026 : le végétal dessiné est
+   autorisé, en gravure au trait et en grand format, sur les pages éditoriales
+   uniquement (accueil, à propos). Il ne descend jamais dans un contrôle : pas
+   de feuille dans un bouton, pas de pictogramme de recyclage, pas de dégradé
+   vert. Voir components/shop/engraving.tsx.
    =========================================================================== */
 
 :root {
-  /* Couleurs — thème clair (référence) */
-  --paper: #faf8f4;
+  /* --- Fonds et encres ---------------------------------------------------
+     Le crème est chaud (jaune plutôt que gris) : c'est ce qui empêche la
+     direction « archive » de virer au froid administratif. */
+  --paper: #f3f0e7;
+  --paper-raised: #faf7f0;
   --surface: #ffffff;
-  --ink: #1c1b18;
-  --muted: #6b6960;
-  --sand: #e5dfd4;
-  --moss: #2f4a3c;
-  --clay: #b5654a;
+  --ink: #171510;
+  --muted: #6b6558;
+
+  /* --- Filets ------------------------------------------------------------
+     Deux régimes distincts, et c'est la grammaire du design : le filet PLEIN
+     (encre, 1,5px) délimite un objet — une fiche, un cadre photo, une
+     section ; le filet SABLE sépare à l'intérieur d'un objet. Les confondre
+     fait perdre la lecture. */
+  --sand: #ded7c6;
+  --sand-strong: #c6bda6;
+  --rule: #171510;
+
+  /* --- Accents -----------------------------------------------------------
+     Encre de régie pour l'action principale, tampon rouge-brique pour ce qui
+     marque une pièce (remise, exemplaire unique). Aucun vert dans l'interface :
+     il est réservé à la gravure éditoriale. */
+  --stamp: #26357a;
+  --stamp-hover: #1a2659;
+  --mark: #9b3226;
+  --mark-hover: #7c2820;
+  --sage: #7d9273;
+
   --success: #3b6e4f;
-  --warning: #a9762a;
-  --danger: #9b3b32;
+  --warning: #92631f;
+  --danger: #9b3226;
 
-  /* Dérivés — calculés à la main pour garder le contraste AA */
-  --paper-raised: #f4f1ea;
-  --sand-strong: #cfc6b6;
-  --ink-inverse: #faf8f4;
-  --moss-hover: #263b30;
-  --clay-hover: #9c5540;
-  --focus-ring: #2f4a3c;
+  --ink-inverse: #faf7f0;
+  --focus-ring: #26357a;
 
-  /* Typographie — échelle modulaire ratio 1.25, six tailles, pas une de plus.
-     Préfixe `fs-` pour ne pas entrer en collision avec l'espace de noms
-     `--text-*` que Tailwind v4 réserve à ses utilitaires. */
-  --fs-xs: 0.8rem;
+  /* --- Typographie -------------------------------------------------------
+     Échelle modulaire ratio 1,25. Le préfixe `fs-` évite la collision avec
+     l'espace de noms `--text-*` que Tailwind v4 réserve à ses utilitaires. */
+  --fs-xs: 0.78rem;
   --fs-base: 1rem;
   --fs-lg: 1.25rem;
   --fs-xl: 1.5625rem;
   --fs-2xl: 1.953rem;
   --fs-3xl: 2.441rem;
+  --fs-4xl: 3.052rem;
 
-  /* Rayons — volontairement faibles */
-  --r-input: 2px;
-  --r-card: 4px;
+  /* --- Rayons ------------------------------------------------------------
+     Deux valeurs, franchement écartées : 12px sur les cartes, 6px sur les
+     contrôles. L'écart est volontaire — un bouton au même rayon que la carte
+     qui le contient fait bouillie. Le rayon adoucit la fiche sans lui retirer
+     son contour : c'est le contour plein, pas l'angle vif, qui porte la
+     charte. */
+  --r-input: 6px;
+  --r-card: 12px;
 
-  /* Mouvement */
+  /* --- Mouvement --------------------------------------------------------- */
   --duration-fast: 150ms;
   --duration-base: 200ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Épaisseur du filet plein. Centralisée : c'est un réglage de justesse
+     visuelle qu'on veut pouvoir changer en un seul endroit. */
+  --rule-width: 1.5px;
 }
 
-/* Thème sombre : inversion crème/encre. Les tokens sont prévus pour, même si
-   le mode sombre n'est pas la priorité de la V1. */
+/* Thème sombre : la toile devient encre. La règle d'or est conservée — le
+   filet plein reste le plus contrasté des deux régimes, donc il passe du noir
+   au crème. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --paper: #14140f;
-    --surface: #1c1b18;
-    --ink: #f2eee6;
-    --muted: #a3a096;
-    --sand: #33312b;
-    --moss: #7fa78f;
-    --clay: #d08a6f;
-    --success: #6fa383;
-    --warning: #d0a05a;
-    --danger: #d47a70;
+    --paper: #14130f;
+    --paper-raised: #1b1a15;
+    --surface: #211f1a;
+    --ink: #f2eee3;
+    --muted: #a09a8b;
 
-    --paper-raised: #1a1915;
-    --sand-strong: #4a473f;
-    --ink-inverse: #14140f;
-    --moss-hover: #98bda6;
-    --clay-hover: #e0a189;
-    --focus-ring: #7fa78f;
+    --sand: #34322b;
+    --sand-strong: #4d4a40;
+    --rule: #f2eee3;
+
+    --stamp: #9db0f0;
+    --stamp-hover: #bccaf7;
+    --mark: #dd8a7c;
+    --mark-hover: #eaa79b;
+    --sage: #90a686;
+
+    --success: #74a888;
+    --warning: #cfa25c;
+    --danger: #dd8a7c;
+
+    --ink-inverse: #14130f;
+    --focus-ring: #9db0f0;
   }
 }
 
 :root[data-theme='dark'] {
-  --paper: #14140f;
-  --surface: #1c1b18;
-  --ink: #f2eee6;
-  --muted: #a3a096;
-  --sand: #33312b;
-  --moss: #7fa78f;
-  --clay: #d08a6f;
-  --success: #6fa383;
-  --warning: #d0a05a;
-  --danger: #d47a70;
+  --paper: #14130f;
+  --paper-raised: #1b1a15;
+  --surface: #211f1a;
+  --ink: #f2eee3;
+  --muted: #a09a8b;
 
-  --paper-raised: #1a1915;
-  --sand-strong: #4a473f;
-  --ink-inverse: #14140f;
-  --moss-hover: #98bda6;
-  --clay-hover: #e0a189;
-  --focus-ring: #7fa78f;
+  --sand: #34322b;
+  --sand-strong: #4d4a40;
+  --rule: #f2eee3;
+
+  --stamp: #9db0f0;
+  --stamp-hover: #bccaf7;
+  --mark: #dd8a7c;
+  --mark-hover: #eaa79b;
+  --sage: #90a686;
+
+  --success: #74a888;
+  --warning: #cfa25c;
+  --danger: #dd8a7c;
+
+  --ink-inverse: #14130f;
+  --focus-ring: #9db0f0;
 }
 
 /* `inline` fait émettre var(--x) plutôt que la valeur littérale : c'est ce qui
@@ -105,16 +151,21 @@
   --color-muted: var(--muted);
   --color-sand: var(--sand);
   --color-sand-strong: var(--sand-strong);
-  --color-moss: var(--moss);
-  --color-moss-hover: var(--moss-hover);
-  --color-clay: var(--clay);
-  --color-clay-hover: var(--clay-hover);
+  --color-rule: var(--rule);
+  --color-stamp: var(--stamp);
+  --color-stamp-hover: var(--stamp-hover);
+  --color-mark: var(--mark);
+  --color-mark-hover: var(--mark-hover);
+  --color-sage: var(--sage);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
 
-  --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  --font-display: var(--font-archivo), 'Helvetica Neue', Helvetica, Arial,
+    sans-serif;
   --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
 
   --text-xs: var(--fs-xs);
   --text-base: var(--fs-base);
@@ -122,6 +173,7 @@
   --text-xl: var(--fs-xl);
   --text-2xl: var(--fs-2xl);
   --text-3xl: var(--fs-3xl);
+  --text-4xl: var(--fs-4xl);
 
   --radius-input: var(--r-input);
   --radius-card: var(--r-card);
@@ -153,17 +205,25 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Titres : grotesque serrée en capitales. Le crénage négatif est ce qui
+     donne la densité de couverture d'un registre imprimé ; sans lui, la
+     capitale s'étale et perd son autorité. */
   h1,
   h2,
   h3 {
-    font-family: var(--font-fraunces), Georgia, serif;
-    font-weight: 500;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
+    font-family: var(--font-archivo), 'Helvetica Neue', Helvetica, Arial,
+      sans-serif;
+    font-weight: 700;
+    line-height: 1.04;
+    letter-spacing: -0.035em;
+    text-transform: uppercase;
     text-wrap: balance;
   }
 
-  /* Les données chiffrées s'alignent en colonne : prix, tailles, totaux. */
+  /* Les données chiffrées s'alignent en colonne : prix, tailles, totaux.
+     `data-numeric` est réservé aux MONTANTS — les tests de tri s'appuient
+     dessus pour extraire les prix d'une grille. Pour un poids ou une
+     référence, utiliser `.data`. */
   .tabular,
   [data-numeric] {
     font-variant-numeric: tabular-nums;
@@ -174,7 +234,6 @@
   :focus-visible {
     outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
-    border-radius: 1px;
   }
 
   /* On ne retire jamais le focus : on ne le duplique pas non plus au clic. */
@@ -183,11 +242,12 @@
   }
 
   ::selection {
-    background-color: var(--moss);
+    background-color: var(--stamp);
     color: var(--ink-inverse);
   }
 
-  /* Aucune animation décorative, et rien du tout si la personne l'a demandé. */
+  /* Le mouvement de cette charte est entièrement au survol et au clic. Une
+     personne qui l'a désactivé garde donc toutes les informations. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -200,7 +260,142 @@
   }
 }
 
+/* ===========================================================================
+   Composants transverses
+
+   Trois gestes, et pas un de plus : le filet plein, l'ombre dure, la fiche qui
+   pivote. Ils sont définis ici plutôt que recopiés en classes utilitaires dans
+   trente composants — c'est la grammaire, elle doit avoir un seul endroit.
+   =========================================================================== */
+
+@layer components {
+  /* Contour d'objet. Volontairement pas `border` de Tailwind : l'épaisseur
+     tient à un demi-pixel près, et elle est partagée. */
+  .ruled {
+    border: var(--rule-width) solid var(--rule);
+  }
+
+  .ruled-b {
+    border-bottom: var(--rule-width) solid var(--rule);
+  }
+
+  .ruled-t {
+    border-top: var(--rule-width) solid var(--rule);
+  }
+
+  /*
+    Ombre dure décalée.
+
+    Une ombre portée floue simulerait une profondeur physique ; celle-ci est
+    un décalage franc, comme deux cartons superposés. C'est l'effet signature,
+    et il ne coûte qu'un `transform` composité.
+
+    Réservé aux pointeurs qui survolent réellement : sur écran tactile, `:hover`
+    reste collé après le tap et l'élément resterait décalé.
+  */
+  .lift {
+    transition:
+      transform var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out),
+      background-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .lift:hover:not(:disabled):not([aria-disabled='true']) {
+      transform: translate(-2px, -2px);
+      box-shadow: 3px 3px 0 var(--rule);
+    }
+  }
+
+  .lift:active:not(:disabled):not([aria-disabled='true']) {
+    transform: translate(0, 0);
+    box-shadow: none;
+  }
+
+  /*
+    Fiche qu'on soulève.
+
+    Un demi-degré, pas davantage : au-delà, le texte de la vignette crénèle sur
+    les écrans non-Retina et la grille se met à tanguer.
+  */
+  .card-pick {
+    transition:
+      transform var(--duration-base) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out);
+  }
+
+  @media (hover: hover) {
+    .card-pick:hover {
+      transform: rotate(-0.5deg) translateY(-3px);
+      box-shadow: 4px 4px 0 var(--rule);
+    }
+  }
+
+  /*
+    Tampon.
+
+    Marque une pièce, jamais une promesse commerciale : « exemplaire unique »
+    est un fait de stock, pas une incitation à se dépêcher.
+  */
+  .stamp-mark {
+    display: inline-block;
+    border: var(--rule-width) solid var(--mark);
+    border-radius: 4px;
+    color: var(--mark);
+    font-family: var(--font-plex-mono), ui-monospace, Menlo, monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    transform: rotate(-2.5deg);
+  }
+
+  /*
+    Étiquette de régie : intitulé de section, en-tête de colonne, libellé de
+    champ. Chasse fixe et interlettrage large — c'est ce qui signale « donnée »
+    par opposition à « discours ».
+  */
+  .label-reg {
+    font-family: var(--font-plex-mono), ui-monospace, Menlo, monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  /* Donnée composée : référence, poids, dimension, date. */
+  .data {
+    font-family: var(--font-plex-mono), ui-monospace, Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+}
+
 @layer utilities {
+  /*
+    Trame de registre.
+
+    Réservée aux surfaces éditoriales — jamais posée par-dessus une photo de
+    vêtement : la photo est ce que la cliente vient regarder, on ne la
+    quadrille pas.
+  */
+  .grid-reg {
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in oklab, var(--ink) 5%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--ink) 5%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 24px 24px;
+  }
+
   /* Zone de clic minimale de 44px sans grossir visuellement la cible. */
   .tap-target {
     position: relative;

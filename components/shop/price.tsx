@@ -32,7 +32,7 @@ export function Price({
           size === 'sm' && 'text-base',
           size === 'md' && 'text-lg',
           size === 'lg' && 'text-xl',
-          discount !== null && 'text-clay',
+          discount !== null && 'text-mark',
         )}
       >
         {formatPrice(cents, locale)}
@@ -40,10 +40,10 @@ export function Price({
 
       {discount !== null && compareCents ? (
         <>
-          <span data-numeric className="text-xs text-muted line-through">
+          <span className="data text-xs text-muted line-through">
             {formatPrice(compareCents, locale)}
           </span>
-          <span data-numeric className="text-xs text-clay">
+          <span className="data text-xs text-mark">
             −{discount} %
           </span>
         </>
@@ -68,11 +68,17 @@ export function PriceStatic({
 
   return (
     <span className={cn('inline-flex items-baseline gap-2', className)}>
-      <span data-numeric className={cn('text-lg', discount !== null && 'text-clay')}>
+      <span
+        data-numeric
+        className={cn(
+          'font-display text-lg font-bold tracking-tight',
+          discount !== null && 'text-mark',
+        )}
+      >
         {formatPrice(cents, locale)}
       </span>
       {discount !== null && compareCents ? (
-        <span data-numeric className="text-xs text-muted line-through">
+        <span className="data text-xs text-muted line-through">
           {formatPrice(compareCents, locale)}
         </span>
       ) : null}

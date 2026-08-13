@@ -41,18 +41,23 @@ export async function MeasurementsTable({
 
   return (
     <section>
-      <h2 className="text-lg">{t('title')}</h2>
-      <p className="mt-1 text-xs text-muted">{t('help')}</p>
+      <h2 className="border-b border-sand pb-2 text-lg">{t('title')}</h2>
+      <p className="mt-2 text-xs text-muted">{t('help')}</p>
 
+      {/* Relevé, pas prose : intitulés en étiquette de régie, valeurs en chasse
+          fixe alignées à droite. Les chiffres se comparent en colonne. */}
       <table className="mt-3 w-full border-collapse text-base">
         <caption className="sr-only">{t('title')}</caption>
         <tbody>
           {sorted.map((measurement) => (
             <tr key={measurement.key} className="border-b border-sand">
-              <th scope="row" className="py-2 text-left font-normal text-muted">
+              <th
+                scope="row"
+                className="label-reg py-2.5 text-left font-normal text-muted"
+              >
                 {t(`keys.${measurement.key}`)}
               </th>
-              <td data-numeric className="py-2 text-right text-ink">
+              <td className="data py-2.5 text-right text-ink">
                 {formatCm(measurement.valueCm, locale)}
               </td>
             </tr>

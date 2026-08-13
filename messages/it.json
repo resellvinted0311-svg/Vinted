@@ -33,7 +33,9 @@
       "selectionBody": "Ogni capo viene lavato, controllato e misurato. Le misure reali in centimetri sono indicate nella scheda, insieme agli eventuali difetti.",
       "shippingTitle": "Spedizione",
       "shippingBody": "Spedizione entro 48 ore lavorative dalla Francia, in punto di ritiro o a domicilio."
-    }
+    },
+    "registerCount": "{count, plural, =0 {Nessun capo nel registro} one {# capo nel registro} other {# capi nel registro}}",
+    "registerNote": "Un capo, un esemplare. Riferimento, materiale, peso e misure sono indicati su ogni scheda."
   },
   "catalogue": {
     "title": "Catalogo",
@@ -150,7 +152,11 @@
     "shippingEstimate": "Spedizione",
     "shippingFrom": "A partire da {price}",
     "machineTranslated": "Questa descrizione è stata tradotta automaticamente.",
-    "backToCatalogue": "Torna al catalogo"
+    "backToCatalogue": "Torna al catalogo",
+    "uniquePiece": "Esemplare unico",
+    "weight": "Peso spedito",
+    "addedOn": "Registrato il {date}",
+    "identification": "Identificazione"
   },
   "favorites": {
     "title": "Preferiti",

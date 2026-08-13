@@ -97,7 +97,7 @@ export async function ActiveFilterChips({
         <Link
           key={`${chip.label}-${chip.href}`}
           href={chip.href}
-          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-input border border-sand-strong px-2.5 text-xs text-ink transition-colors duration-150 ease-out hover:bg-paper-raised"
+          className="label-reg lift inline-flex min-h-[36px] items-center gap-1.5 rounded-input border-[1.5px] border-rule bg-surface px-2.5 text-ink"
         >
           {chip.label}
           <span aria-hidden className="text-muted">
@@ -109,7 +109,7 @@ export async function ActiveFilterChips({
 
       <Link
         href={basePath}
-        className="min-h-[36px] px-1 text-xs text-muted underline underline-offset-4 hover:text-ink"
+        className="label-reg min-h-[36px] px-1 text-muted underline underline-offset-4 hover:text-ink"
       >
         {t('clearFilters')}
       </Link>

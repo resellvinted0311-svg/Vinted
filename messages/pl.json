@@ -33,7 +33,9 @@
       "selectionBody": "Każde ubranie jest prane, sprawdzane i mierzone. Rzeczywiste wymiary w centymetrach są podane na karcie produktu, wraz z ewentualnymi wadami.",
       "shippingTitle": "Wysyłka",
       "shippingBody": "Wysyłka w ciągu 48 godzin roboczych z Francji, do punktu odbioru lub pod wskazany adres."
-    }
+    },
+    "registerCount": "{count, plural, =0 {Brak sztuk w rejestrze} one {# sztuka w rejestrze} few {# sztuki w rejestrze} many {# sztuk w rejestrze} other {# sztuki w rejestrze}}",
+    "registerNote": "Jedna sztuka, jeden egzemplarz. Numer, materiał, waga i wymiary są podane przy każdym produkcie."
   },
   "catalogue": {
     "title": "Katalog",
@@ -150,7 +152,11 @@
     "shippingEstimate": "Dostawa",
     "shippingFrom": "Od {price}",
     "machineTranslated": "Ten opis został przetłumaczony automatycznie.",
-    "backToCatalogue": "Powrót do katalogu"
+    "backToCatalogue": "Powrót do katalogu",
+    "uniquePiece": "Jedyny egzemplarz",
+    "weight": "Waga wysyłki",
+    "addedOn": "Wpisano do rejestru {date}",
+    "identification": "Identyfikacja"
   },
   "favorites": {
     "title": "Ulubione",

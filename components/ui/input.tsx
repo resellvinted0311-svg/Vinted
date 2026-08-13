@@ -4,11 +4,16 @@ import * as React from 'react'
 import { cn } from '@/lib/utils/cn'
 import { useFieldControlProps } from './field'
 
+/**
+ * Champ de saisie « Registre » : angle vif, contour plein encre. Le survol ne
+ * change pas l'épaisseur du trait — un champ qui grossit fait sauter la ligne
+ * de base de toute la colonne.
+ */
 const base = cn(
   'w-full min-h-[44px] rounded-input bg-surface px-3 py-2',
-  'border border-sand-strong text-ink placeholder:text-muted',
+  'border-[1.5px] border-rule text-ink placeholder:text-muted',
   'transition-colors duration-150 ease-out',
-  'hover:border-ink/30',
+  'hover:bg-paper-raised',
   'disabled:cursor-not-allowed disabled:bg-paper-raised disabled:opacity-60',
   'aria-[invalid=true]:border-danger',
 )

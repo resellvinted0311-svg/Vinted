@@ -48,11 +48,13 @@ export async function CatalogueFiltersPanel({
       ) : null}
 
       <fieldset>
-        <legend className="text-xs font-medium text-ink">{t('sort')}</legend>
+        <legend className="label-reg w-full border-b border-sand pb-1.5 text-ink">
+          {t('sort')}
+        </legend>
         <select
           name="tri"
           defaultValue={sort}
-          className="mt-2 min-h-[44px] w-full rounded-input border border-sand-strong bg-surface px-3 text-base"
+          className="mt-3 min-h-[44px] w-full rounded-input border-[1.5px] border-rule bg-surface px-3 text-base"
         >
           {SORT_KEYS.map((key) => (
             <option key={key} value={key}>
@@ -116,10 +118,10 @@ export async function CatalogueFiltersPanel({
 
       {facets.priceRange ? (
         <fieldset>
-          <legend className="text-xs font-medium text-ink">
+          <legend className="label-reg w-full border-b border-sand pb-1.5 text-ink">
             {t('facets.price')}
           </legend>
-          <p className="mt-1 text-xs text-muted">
+          <p className="data mt-2 text-xs text-muted">
             {formatPrice(facets.priceRange.minCents, locale)} —{' '}
             {formatPrice(facets.priceRange.maxCents, locale)}
           </p>
@@ -139,7 +141,7 @@ export async function CatalogueFiltersPanel({
                     ? String(filters.minPriceCents / 100)
                     : ''
                 }
-                className="min-h-[44px] w-full rounded-input border border-sand-strong bg-surface px-3 text-base"
+                className="data min-h-[44px] w-full rounded-input border-[1.5px] border-rule bg-surface px-3 text-base"
               />
             </label>
             <span aria-hidden className="text-muted">
@@ -159,7 +161,7 @@ export async function CatalogueFiltersPanel({
                     ? String(filters.maxPriceCents / 100)
                     : ''
                 }
-                className="min-h-[44px] w-full rounded-input border border-sand-strong bg-surface px-3 text-base"
+                className="data min-h-[44px] w-full rounded-input border-[1.5px] border-rule bg-surface px-3 text-base"
               />
             </label>
           </div>
@@ -171,7 +173,7 @@ export async function CatalogueFiltersPanel({
           relais, mais reste atteignable au clavier. */}
       <button
         type="submit"
-        className="min-h-[44px] rounded-input border border-moss bg-moss px-4 text-base text-ink-inverse"
+        className="lift min-h-[44px] rounded-input border-[1.5px] border-stamp bg-stamp px-4 text-base font-medium text-ink-inverse"
       >
         {t('apply')}
       </button>
@@ -196,11 +198,13 @@ function FacetGroup({
 
   return (
     <fieldset>
-      <legend className="text-xs font-medium text-ink">{legend}</legend>
+      <legend className="label-reg w-full border-b border-sand pb-1.5 text-ink">
+        {legend}
+      </legend>
 
       <div
         className={cn(
-          'mt-2 gap-1',
+          'mt-3 gap-1',
           columns ? 'grid grid-cols-3' : 'flex flex-col',
         )}
       >
@@ -211,7 +215,7 @@ function FacetGroup({
               key={entry.value}
               className={cn(
                 'flex min-h-[36px] cursor-pointer items-center gap-2 text-base',
-                'text-ink transition-colors duration-150 ease-out hover:text-moss',
+                'text-ink transition-colors duration-150 ease-out hover:text-stamp',
               )}
             >
               <input
@@ -219,10 +223,10 @@ function FacetGroup({
                 name={name}
                 value={entry.value}
                 defaultChecked={checked}
-                className="h-4 w-4 shrink-0 accent-[var(--moss)]"
+                className="h-4 w-4 shrink-0 accent-[var(--stamp)]"
               />
               <span className="flex-1 truncate">{entry.label}</span>
-              <span data-numeric className="text-xs text-muted">
+              <span className="data text-xs text-muted">
                 {entry.count}
               </span>
             </label>

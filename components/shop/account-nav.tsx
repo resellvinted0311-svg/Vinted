@@ -70,7 +70,7 @@ export function AccountNav() {
     return (
       <Link
         href="/connexion"
-        className="text-base text-ink underline underline-offset-4"
+        className="label-reg whitespace-nowrap text-ink underline underline-offset-4"
       >
         {tAuth('signIn')}
       </Link>
@@ -81,7 +81,7 @@ export function AccountNav() {
     <span className="flex items-center gap-3">
       <Link
         href="/compte"
-        className="text-base text-ink underline underline-offset-4"
+        className="label-reg whitespace-nowrap text-ink underline underline-offset-4"
       >
         {session.firstName ?? t('account')}
       </Link>
@@ -89,7 +89,7 @@ export function AccountNav() {
       {session.role === 'ADMIN' ? (
         <Link
           href="/admin"
-          className="text-base text-moss underline underline-offset-4"
+          className="label-reg text-stamp underline underline-offset-4"
         >
           Admin
         </Link>
@@ -105,7 +105,7 @@ export function AccountNav() {
             router.refresh()
           })
         }}
-        className="min-h-[44px] text-base text-muted transition-colors duration-150 ease-out hover:text-ink disabled:opacity-50"
+        className="label-reg min-h-[44px] whitespace-nowrap text-muted transition-colors duration-150 ease-out hover:text-ink disabled:opacity-50"
       >
         {tAuth('signOut')}
       </button>

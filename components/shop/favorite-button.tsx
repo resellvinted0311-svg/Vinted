@@ -10,6 +10,9 @@ import { useFavorites } from './favorites-provider'
  * Un cœur plein ou vide, sans compteur ni animation d'attention. La zone de
  * clic fait 44 px même si l'icône est petite, et l'état est annoncé par
  * `aria-pressed` plutôt que par la seule couleur.
+ *
+ * Posé sur la photo, il porte le contour plein de la charte : sans lui, il
+ * flotterait sur les visuels clairs et disparaîtrait sur les visuels sombres.
  */
 export function FavoriteButton({
   articleId,
@@ -45,9 +48,10 @@ export function FavoriteButton({
         })
       }}
       className={cn(
-        'relative z-10 inline-flex h-11 w-11 items-center justify-center',
-        'rounded-input bg-paper/90 text-ink',
-        'transition-colors duration-150 ease-out hover:bg-paper',
+        'lift relative z-10 inline-flex h-11 w-11 items-center justify-center',
+        'rounded-input border-[1.5px] border-rule bg-paper',
+        isFavorite ? 'text-mark' : 'text-ink',
+        'hover:bg-paper-raised',
         'disabled:opacity-60',
         className,
       )}

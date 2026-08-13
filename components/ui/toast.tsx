@@ -73,7 +73,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               if (!open) dismiss(item.id)
             }}
             className={cn(
-              'flex items-start gap-3 rounded-card border bg-surface p-3',
+              'flex items-start gap-3 rounded-card border-[1.5px] bg-surface p-3',
+              'shadow-[4px_4px_0_var(--rule)]',
               'data-[state=closed]:opacity-0',
               'transition-opacity duration-200 ease-out',
               tones[item.tone],
@@ -94,7 +95,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <RadixToast.Action
                 altText={item.action.label}
                 onClick={item.action.onClick}
-                className="shrink-0 rounded-input border border-sand-strong px-2 py-1 text-xs text-ink hover:bg-paper-raised"
+                className="label-reg shrink-0 rounded-input border-[1.5px] border-rule px-2 py-1 text-ink hover:bg-paper-raised"
               >
                 {item.action.label}
               </RadixToast.Action>

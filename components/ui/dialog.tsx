@@ -40,7 +40,7 @@ export function DialogContent({
           'fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-lg',
           '-translate-x-1/2 -translate-y-1/2',
           'max-h-[calc(100vh-2rem)] overflow-y-auto',
-          'rounded-card border border-sand-strong bg-surface p-5',
+          'rounded-card ruled bg-surface p-5 shadow-[6px_6px_0_var(--rule)]',
           className,
         )}
       >

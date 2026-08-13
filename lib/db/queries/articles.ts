@@ -427,6 +427,19 @@ export async function getSimilarArticles(
     .filter((entry): entry is PublicArticleCard => entry !== undefined)
 }
 
+/**
+ * Nombre de pièces actuellement au registre.
+ *
+ * Sert le bandeau d'accueil. C'est une taille d'inventaire, pas un compteur
+ * d'urgence : elle décrit ce qui existe, elle ne prétend pas qu'il faut se
+ * dépêcher. Le brief interdit les seconds, pas les premières.
+ */
+export async function countListedArticles(): Promise<number> {
+  return prisma.article.count({
+    where: { status: { in: [...LISTED_STATUSES] } },
+  })
+}
+
 /** Derniers arrivages, pour l'accueil. */
 export async function getLatestArticles(
   locale: string,

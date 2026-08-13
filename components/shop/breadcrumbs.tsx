@@ -36,9 +36,9 @@ export function Breadcrumbs({
   return (
     <>
       <nav aria-label="Fil d'Ariane">
-        <ol className="flex flex-wrap items-center gap-1 text-xs text-muted">
+        <ol className="label-reg flex flex-wrap items-center gap-1.5 text-muted">
           {items.map((item, index) => (
-            <li key={`${item.label}-${index}`} className="flex items-center gap-1">
+            <li key={`${item.label}-${index}`} className="flex items-center gap-1.5">
               {index > 0 ? (
                 <span aria-hidden className="text-sand-strong">
                   /

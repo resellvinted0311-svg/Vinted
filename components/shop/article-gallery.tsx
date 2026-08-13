@@ -60,7 +60,7 @@ export function ArticleGallery({
   }, [images.length])
 
   if (images.length === 0) {
-    return <div className="aspect-[3/4] w-full bg-sand" />
+    return <div className="grid-reg aspect-[3/4] w-full rounded-card ruled bg-sand" />
   }
 
   return (
@@ -69,7 +69,8 @@ export function ArticleGallery({
         <div
           ref={scroller}
           className={cn(
-            'flex snap-x snap-mandatory overflow-x-auto',
+            'flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden',
+            'rounded-card ruled',
             // Barre de défilement masquée : les vignettes tiennent ce rôle.
             '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           )}
@@ -101,7 +102,7 @@ export function ArticleGallery({
         </div>
 
         {soldLabel ? (
-          <span className="absolute left-3 top-3 bg-ink px-2 py-1 text-xs text-ink-inverse">
+          <span className="label-reg absolute left-3 top-3 rounded-input border-[1.5px] border-mark bg-mark px-2 py-1 text-ink-inverse">
             {soldLabel}
           </span>
         ) : null}
@@ -120,8 +121,10 @@ export function ArticleGallery({
               aria-label={`${index + 1}`}
               aria-current={index === active}
               className={cn(
-                'h-20 w-16 shrink-0 overflow-hidden border bg-sand',
-                index === active ? 'border-ink' : 'border-transparent',
+                'h-20 w-16 shrink-0 overflow-hidden rounded-input border-[1.5px] bg-sand',
+                // La vignette active est cernée d'encre ; les autres gardent un
+                // filet sable, pour que la rangée reste une rangée.
+                index === active ? 'border-rule' : 'border-sand-strong',
               )}
             >
               <ArticleImage image={image} sizes="64px" />

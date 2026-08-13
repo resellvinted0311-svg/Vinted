@@ -33,7 +33,9 @@
       "selectionBody": "Jedes Kleidungsstück wird gewaschen, geprüft und vermessen. Die tatsächlichen Maße in Zentimetern stehen auf der Artikelseite, ebenso etwaige Mängel.",
       "shippingTitle": "Versand",
       "shippingBody": "Versand innerhalb von 48 Werkstunden aus Frankreich, an eine Paketstation oder an Ihre Adresse."
-    }
+    },
+    "registerCount": "{count, plural, =0 {Keine Stücke im Register} one {# Stück im Register} other {# Stücke im Register}}",
+    "registerNote": "Ein Stück, ein Exemplar. Referenz, Material, Gewicht und Maße stehen auf jeder Produktseite."
   },
   "catalogue": {
     "title": "Katalog",
@@ -150,7 +152,11 @@
     "shippingEstimate": "Lieferung",
     "shippingFrom": "Ab {price}",
     "machineTranslated": "Diese Beschreibung wurde maschinell übersetzt.",
-    "backToCatalogue": "Zurück zum Katalog"
+    "backToCatalogue": "Zurück zum Katalog",
+    "uniquePiece": "Einzelstück",
+    "weight": "Versandgewicht",
+    "addedOn": "Am {date} ins Register aufgenommen",
+    "identification": "Identifikation"
   },
   "favorites": {
     "title": "Favoriten",

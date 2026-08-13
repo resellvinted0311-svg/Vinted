@@ -45,7 +45,7 @@ export default async function SignInPage({
           le dit franchement plutôt que de laisser le formulaire échouer sans
           explication. Le reste de la boutique reste consultable. */}
       {!isAuthConfigured() ? (
-        <p className="mt-6 border border-warning bg-paper-raised p-4 text-base text-muted rounded-card">
+        <p className="mt-6 rounded-card border-[1.5px] border-warning bg-paper-raised p-4 text-base text-muted">
           L’authentification n’est pas configurée sur ce déploiement : la
           variable d’environnement <code>AUTH_SECRET</code> est absente.
           La navigation et le catalogue fonctionnent normalement.

@@ -33,7 +33,9 @@
       "selectionBody": "Elk kledingstuk wordt gewassen, gecontroleerd en opgemeten. De werkelijke maten in centimeters staan op de productpagina, samen met eventuele gebreken.",
       "shippingTitle": "Verzending",
       "shippingBody": "Verzonden binnen 48 werkuren vanuit Frankrijk, naar een afhaalpunt of naar uw adres."
-    }
+    },
+    "registerCount": "{count, plural, =0 {Geen stuks in het register} one {# stuk in het register} other {# stuks in het register}}",
+    "registerNote": "Eén stuk, één exemplaar. Referentie, materiaal, gewicht en maten staan op elke productpagina."
   },
   "catalogue": {
     "title": "Collectie",
@@ -150,7 +152,11 @@
     "shippingEstimate": "Levering",
     "shippingFrom": "Vanaf {price}",
     "machineTranslated": "Deze omschrijving is automatisch vertaald.",
-    "backToCatalogue": "Terug naar de collectie"
+    "backToCatalogue": "Terug naar de collectie",
+    "uniquePiece": "Uniek exemplaar",
+    "weight": "Verzendgewicht",
+    "addedOn": "Opgenomen in het register op {date}",
+    "identification": "Identificatie"
   },
   "favorites": {
     "title": "Favorieten",

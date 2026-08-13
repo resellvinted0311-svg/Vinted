@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
-import { Fraunces, Inter_Tight } from 'next/font/google'
+import { Archivo, Inter_Tight, IBM_Plex_Mono } from 'next/font/google'
 
 import { routing, locales, localeTags, type Locale } from '@/lib/i18n/routing'
 import { SITE } from '@/lib/config/site'
@@ -13,17 +13,39 @@ import { SiteFooter } from '@/components/shop/site-footer'
 
 import '../globals.css'
 
-const fraunces = Fraunces({
+/**
+ * Trois rôles, trois familles — c'est le minimum pour que la charte
+ * « Registre » tienne, et le maximum pour que le budget de fontes reste sain.
+ *
+ * Archivo : grotesque serrée conçue pour l'impression à forte densité. Elle
+ * porte les titres en capitales et les prix. Fraunces, retenue jusqu'ici, était
+ * un serif éditorial : elle appartient à la direction que la refonte remplace.
+ *
+ * IBM Plex Mono : tout ce qui est donnée — référence d'inventaire, poids,
+ * mesures, dates. La chasse fixe est ce qui fait lire un chiffre comme un
+ * relevé plutôt que comme un argument.
+ *
+ * Les trois sont auto-hébergées et sous-ensemblées par next/font : aucune
+ * requête vers un tiers, donc aucun consentement à demander pour les charger.
+ */
+const archivo = Archivo({
   subsets: ['latin', 'latin-ext'],
-  variable: '--font-fraunces',
+  variable: '--font-archivo',
   display: 'swap',
-  weight: ['400', '500', '600'],
+  weight: ['500', '600', '700'],
 })
 
 const interTight = Inter_Tight({
   subsets: ['latin', 'latin-ext'],
   variable: '--font-inter-tight',
   display: 'swap',
+})
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-plex-mono',
+  display: 'swap',
+  weight: ['400', '500'],
 })
 
 export function generateStaticParams() {
@@ -86,7 +108,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir="ltr"
-      className={`${fraunces.variable} ${interTight.variable}`}
+      className={`${archivo.variable} ${interTight.variable} ${plexMono.variable}`}
       suppressHydrationWarning
     >
       <body className="flex min-h-dvh flex-col">
@@ -95,7 +117,7 @@ export default async function LocaleLayout({
             <FavoritesProvider>
               <a
                 href="#contenu"
-                className="skip-link bg-surface px-3 py-2 text-base"
+                className="skip-link rounded-input ruled bg-surface px-3 py-2 text-base"
               >
                 {t('skipToContent')}
               </a>

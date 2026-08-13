@@ -36,6 +36,28 @@ export function formatDate(date: Date, locale: string): string {
   }).format(date)
 }
 
+/**
+ * Poids expédié.
+ *
+ * Affiché sur la vignette et la fiche : c'est une donnée d'inventaire réelle,
+ * qui sert aussi au calcul du port. En grammes en dessous du kilo, en
+ * kilogrammes au-delà — personne ne lit « 1 250 g » sans convertir.
+ */
+export function formatGrams(grams: number, locale: string): string {
+  const tag = localeTags[locale as Locale] ?? localeTags.fr
+
+  if (grams < 1000) {
+    return `${new Intl.NumberFormat(tag).format(grams)} g`
+  }
+
+  const formatted = new Intl.NumberFormat(tag, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 2,
+  }).format(grams / 1000)
+
+  return `${formatted} kg`
+}
+
 /** Mesure en centimètres, sans décimale superflue. */
 export function formatCm(value: number, locale: string): string {
   const tag = localeTags[locale as Locale] ?? localeTags.fr

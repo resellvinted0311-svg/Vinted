@@ -70,6 +70,34 @@ jamais d'une réponse publique. Les lectures publiques passent par les
 sélecteurs explicites de `lib/db/selectors.ts`, et un test balaie les charges
 utiles à la recherche de ces champs.
 
+### Direction artistique — « Registre »
+
+Une pièce, un exemplaire : le site se tient comme un registre d'atelier plutôt
+que comme une vitrine. Toile écrue chaude, contours pleins de 1,5 px, fiches à
+angles adoucis (12 px), grotesque serrée en capitales pour les titres, chasse
+fixe pour toute donnée — référence, matière, poids, mesures, dates.
+
+L'écologie se démontre par la **traçabilité**, pas par le symbole : ce qui est
+affiché d'une pièce, c'est ce qu'elle est. Aucun vert n'existe dans l'interface.
+
+Trois gestes de mouvement, définis une seule fois dans `app/globals.css` :
+
+| Classe | Effet | Où |
+|---|---|---|
+| `.ruled` / `.ruled-b` / `.ruled-t` | contour plein 1,5 px | fiches, cadres, sections |
+| `.lift` | décalage 2 px + ombre pleine | boutons, pastilles, liens-boutons |
+| `.card-pick` | rotation 0,5° + ombre pleine | vignette de catalogue |
+
+`.lift` et `.card-pick` ne s'appliquent que sous `@media (hover: hover)` : sur
+écran tactile, `:hover` reste collé après le tap.
+
+**Amendement au brief §11** (13/08/2026). Le brief interdisait toute imagerie
+végétale. L'interdit est levé sur un point : la gravure au trait, à grande
+échelle, sur les pages éditoriales uniquement — voir
+`components/shop/engraving.tsx`, qui porte les conditions exactes. Elle ne
+descend jamais dans un contrôle. Restent interdits les pictogrammes de
+recyclage, les dégradés verts et les textures kraft.
+
 ### Rendu et cache
 
 Les pages publiques restent prérendues : c'est ce qui porte le référencement

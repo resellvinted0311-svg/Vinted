@@ -121,7 +121,7 @@ export default async function StaticPage({ params }: { params: Params }) {
               ) : null}
             </dl>
           ) : (
-            <p className="border border-warning bg-paper-raised p-4 text-muted rounded-card">
+            <p className="rounded-card border-[1.5px] border-warning bg-paper-raised p-4 text-muted">
               Les mentions légales seront publiées dès que l’identité de
               l’entreprise sera renseignée (LEGAL_COMPANY_NAME, LEGAL_SIRET,
               LEGAL_ADDRESS, LEGAL_EMAIL). Aucune valeur n’est inventée ici.
@@ -141,7 +141,7 @@ export default async function StaticPage({ params }: { params: Params }) {
         ) : null}
 
         {['cgv', 'confidentialite', 'cookies', 'livraison'].includes(slug) ? (
-          <p className="border border-sand bg-paper-raised p-4 text-muted rounded-card">
+          <p className="rounded-card ruled bg-paper-raised p-4 text-muted">
             Contenu rédigé en Phase 7. La structure, les URL et les liens sont
             en place dès maintenant pour que le référencement et la navigation
             ne changent plus ensuite.

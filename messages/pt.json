@@ -33,7 +33,9 @@
       "selectionBody": "Cada peça é lavada, verificada e medida. As medidas reais em centímetros constam da ficha, tal como eventuais defeitos.",
       "shippingTitle": "Envio",
       "shippingBody": "Expedição em 48 horas úteis a partir de França, para ponto de recolha ou ao domicílio."
-    }
+    },
+    "registerCount": "{count, plural, =0 {Nenhuma peça no registo} one {# peça no registo} other {# peças no registo}}",
+    "registerNote": "Uma peça, um exemplar. Referência, material, peso e medidas constam de cada ficha."
   },
   "catalogue": {
     "title": "Catálogo",
@@ -150,7 +152,11 @@
     "shippingEstimate": "Entrega",
     "shippingFrom": "A partir de {price}",
     "machineTranslated": "Esta descrição foi traduzida automaticamente.",
-    "backToCatalogue": "Voltar ao catálogo"
+    "backToCatalogue": "Voltar ao catálogo",
+    "uniquePiece": "Exemplar único",
+    "weight": "Peso de envio",
+    "addedOn": "Registado a {date}",
+    "identification": "Identificação"
   },
   "favorites": {
     "title": "Favoritos",

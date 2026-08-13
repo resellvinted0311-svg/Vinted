@@ -62,7 +62,7 @@ export function SignUpForm() {
         <input
           type="checkbox"
           name="marketingConsent"
-          className="mt-0.5 h-4 w-4 accent-[var(--moss)]"
+          className="mt-0.5 h-4 w-4 accent-[var(--stamp)]"
         />
         <span>{t('marketingConsent')}</span>
       </label>

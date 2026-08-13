@@ -20,12 +20,21 @@ export async function SiteFooter() {
   ] as const
 
   return (
-    <footer className="mt-16 border-t border-sand bg-paper-raised">
+    // Colophon : la mention de fin d'un ouvrage imprimé, qui dit qui l'a
+    // composé et sous quelles règles. C'est exactement ce que contient ce pied
+    // de page — d'où le traitement en bloc réglé plutôt qu'en bandeau coloré.
+    <footer className="mt-20 ruled-t bg-paper-raised">
       <div className="mx-auto max-w-[80rem] px-4 py-10 sm:px-6">
         <div className="grid gap-8 sm:grid-cols-3">
           <div>
-            <p className="font-display text-lg text-ink">{SITE.name}</p>
-            <p className="mt-1 text-xs text-muted">
+            <p className="font-display text-lg font-bold uppercase tracking-tight text-ink">
+              {SITE.name}
+            </p>
+            <span
+              aria-hidden
+              className="mt-2 block h-[1.5px] w-10 bg-rule"
+            />
+            <p className="data mt-2 text-xs text-muted">
               {LEGAL.companyName || null}
             </p>
           </div>
@@ -36,7 +45,7 @@ export async function SiteFooter() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-base text-muted transition-colors duration-150 ease-out hover:text-ink"
+                    className="label-reg text-muted transition-colors duration-150 ease-out hover:text-ink"
                   >
                     {link.label}
                   </Link>
@@ -51,7 +60,7 @@ export async function SiteFooter() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-base text-muted transition-colors duration-150 ease-out hover:text-ink"
+                    className="label-reg text-muted transition-colors duration-150 ease-out hover:text-ink"
                   >
                     {link.label}
                   </Link>
@@ -61,7 +70,7 @@ export async function SiteFooter() {
           </nav>
         </div>
 
-        <div className="mt-8 flex flex-col gap-1 border-t border-sand pt-6 text-xs text-muted">
+        <div className="data mt-8 flex flex-col gap-1 border-t border-sand pt-6 text-xs text-muted">
           <p>{t('withdrawalNotice')}</p>
 
           {/* Mention obligatoire en franchise en base de TVA. */}

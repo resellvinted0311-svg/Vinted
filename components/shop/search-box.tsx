@@ -132,7 +132,7 @@ export function SearchBox({ className }: { className?: string }) {
                 }
               }
             }}
-            className="min-h-[44px] w-full rounded-input border border-sand-strong bg-surface px-3 text-base text-ink placeholder:text-muted"
+            className="min-h-[44px] w-full rounded-input border-[1.5px] border-rule bg-surface px-3 text-base text-ink placeholder:text-muted"
           />
 
           <button type="submit" className="sr-only">
@@ -146,7 +146,7 @@ export function SearchBox({ className }: { className?: string }) {
           id={listId}
           role="listbox"
           aria-label={t('label')}
-          className="absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-card border border-sand-strong bg-surface"
+          className="absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-card ruled bg-surface shadow-[4px_4px_0_var(--rule)]"
         >
           {suggestions.map((suggestion, index) => (
             <li
@@ -165,7 +165,7 @@ export function SearchBox({ className }: { className?: string }) {
                 )}
               >
                 <span className="truncate text-ink">{suggestion.label}</span>
-                <span className="shrink-0 text-xs text-muted">
+                <span className="label-reg shrink-0 text-muted">
                   {suggestion.detail ?? ''}
                 </span>
               </button>

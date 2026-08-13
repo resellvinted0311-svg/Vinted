@@ -33,7 +33,9 @@
       "selectionBody": "Chaque vêtement est lavé, contrôlé et mesuré. Les mesures réelles en centimètres sont indiquées sur la fiche, ainsi que les défauts éventuels.",
       "shippingTitle": "Envoi",
       "shippingBody": "Expédition sous 48 heures ouvrées depuis la France, en point relais ou à domicile."
-    }
+    },
+    "registerCount": "{count, plural, =0 {Aucune pièce au registre} one {# pièce au registre} other {# pièces au registre}}",
+    "registerNote": "Une pièce, un exemplaire. Référence, matière, poids et mesures figurent sur chaque fiche."
   },
   "catalogue": {
     "title": "Catalogue",
@@ -150,7 +152,11 @@
     "shippingEstimate": "Livraison",
     "shippingFrom": "À partir de {price}",
     "machineTranslated": "Cette description a été traduite automatiquement.",
-    "backToCatalogue": "Retour au catalogue"
+    "backToCatalogue": "Retour au catalogue",
+    "uniquePiece": "Exemplaire unique",
+    "weight": "Poids expédié",
+    "addedOn": "Entrée au registre le {date}",
+    "identification": "Identification"
   },
   "favorites": {
     "title": "Favoris",

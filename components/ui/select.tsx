@@ -54,9 +54,9 @@ export function Select({
         aria-label={ariaLabel}
         className={cn(
           'inline-flex w-full min-h-[44px] items-center justify-between gap-2',
-          'rounded-input border border-sand-strong bg-surface px-3 py-2',
+          'rounded-input border-[1.5px] border-rule bg-surface px-3 py-2',
           'text-left text-ink transition-colors duration-150 ease-out',
-          'hover:border-ink/30',
+          'hover:bg-paper-raised',
           'data-[placeholder]:text-muted',
           'disabled:cursor-not-allowed disabled:bg-paper-raised disabled:opacity-60',
           className,
@@ -75,7 +75,10 @@ export function Select({
           className={cn(
             'z-50 max-h-[min(24rem,var(--radix-select-content-available-height))]',
             'w-[var(--radix-select-trigger-width)] overflow-hidden',
-            'rounded-card border border-sand-strong bg-surface',
+            // Le panneau flotte : le contour plein le détache du fond sans
+            // recourir à une ombre floue, absente de cette charte.
+            'rounded-card border-[1.5px] border-rule bg-surface',
+            'shadow-[4px_4px_0_var(--rule)]',
           )}
         >
           <RadixSelect.Viewport className="p-1">

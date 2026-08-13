@@ -61,10 +61,10 @@ export default async function AccountPage({
         <h1 className="text-xl">
           {t('greeting', { name: user.firstName ?? user.email })}
         </h1>
-        {user.role === 'ADMIN' ? <Badge tone="moss">Administration</Badge> : null}
+        {user.role === 'ADMIN' ? <Badge tone="stamp">Administration</Badge> : null}
       </div>
 
-      <ul className="mt-8 grid gap-px overflow-hidden rounded-card border border-sand bg-sand sm:grid-cols-2">
+      <ul className="mt-8 grid gap-px overflow-hidden rounded-card ruled bg-sand sm:grid-cols-2">
         {sections.map((section) => (
           <li key={section.href}>
             <Link

@@ -43,7 +43,7 @@ export default async function BrandsPage({
       <h1 className="text-2xl">{t('title')}</h1>
       <p className="mt-2 max-w-2xl text-base text-muted">{t('intro')}</p>
 
-      <ul className="mt-8 grid gap-px overflow-hidden rounded-card border border-sand bg-sand sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-8 grid gap-px overflow-hidden rounded-card ruled bg-sand sm:grid-cols-2 lg:grid-cols-3">
         {brands.map((brand) => (
           <li key={brand.id}>
             <Link

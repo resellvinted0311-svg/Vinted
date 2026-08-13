@@ -41,12 +41,21 @@ test.describe('Accueil', () => {
   test('applique les jetons de couleur du thème', async ({ page }) => {
     await page.goto('/fr')
 
+    // Valeur épinglée volontairement : c'est le garde-fou qui signale qu'une
+    // refonte a touché la palette. Charte « Registre » — toile écrue chaude.
     const paper = await page.evaluate(() =>
       getComputedStyle(document.documentElement)
         .getPropertyValue('--paper')
         .trim(),
     )
-    expect(paper.toLowerCase()).toBe('#faf8f4')
+    expect(paper.toLowerCase()).toBe('#f3f0e7')
+
+    // Le jeton doit aussi être réellement peint : déclaré sans être appliqué,
+    // il passerait le contrôle ci-dessus tout en laissant la page blanche.
+    const background = await page.evaluate(
+      () => getComputedStyle(document.body).backgroundColor,
+    )
+    expect(background).toBe('rgb(243, 240, 231)')
   })
 })
 
@@ -129,8 +138,19 @@ test.describe('Connexion', () => {
     // enverrait l'ancien cookie.
     await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible()
 
-    await page.goto('/fr/compte')
-    await expect(page).toHaveURL(/\/fr\/connexion/)
+    // Ce basculement ne suffit pas : l'en-tête se met à jour dès que l'état
+    // local change, donc AVANT que le router.refresh() déclenché dans la
+    // foulée soit terminé. Naviguer à cet instant fait annuler la nouvelle
+    // navigation par Chromium (net::ERR_ABORTED) une fois sur trois environ.
+    //
+    // `networkidle` ne convient pas ici : le flux RSC de Next garde une
+    // connexion ouverte, l'attente n'aboutit jamais. On reprend donc la
+    // navigation ET son assertion — si la redirection ne se produit pas, le
+    // test échoue toujours, ce qui est bien ce qu'il doit vérifier.
+    await expect(async () => {
+      await page.goto('/fr/compte')
+      await expect(page).toHaveURL(/\/fr\/connexion/)
+    }).toPass({ timeout: 15_000 })
   })
 })
 

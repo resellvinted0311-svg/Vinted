@@ -90,10 +90,13 @@ export async function CatalogueView({
 
   return (
     <div className="mx-auto max-w-[80rem] px-4 py-8 sm:px-6">
-      <header className="flex flex-col gap-2">
+      {/* En-tête de registre : le titre, puis le décompte détaché sous un
+          filet plein. Le nombre est une donnée d'inventaire, il est donc
+          composé comme telle et non comme un argument. */}
+      <header className="flex flex-col gap-3 ruled-b pb-4">
         <h1 className="text-2xl">{heading}</h1>
         {intro ? <p className="max-w-2xl text-base text-muted">{intro}</p> : null}
-        <p data-numeric className="text-xs text-muted">
+        <p className="data label-reg text-muted">
           {t('results', { count: page.totalCount })}
         </p>
       </header>
@@ -128,7 +131,7 @@ export async function CatalogueView({
           />
           <label
             htmlFor="nd-filtres"
-            className="flex min-h-[44px] cursor-pointer items-center border-b border-sand text-base text-ink lg:hidden"
+            className="label-reg flex min-h-[44px] cursor-pointer items-center justify-between ruled-b text-ink lg:hidden"
           >
             {t('filtersHeading')}
           </label>
@@ -155,7 +158,7 @@ export async function CatalogueView({
           />
 
           {page.items.length === 0 ? (
-            <div className="mt-8 border border-sand bg-surface p-8 rounded-card">
+            <div className="grid-reg mt-8 rounded-card ruled bg-surface p-8">
               <p className="text-base text-ink">{t('noResults')}</p>
               <p className="mt-1 text-xs text-muted">{t('noResultsHint')}</p>
             </div>
@@ -179,7 +182,7 @@ export async function CatalogueView({
                   <Link
                     href={nextHref}
                     rel="next"
-                    className="inline-flex min-h-[44px] items-center rounded-input border border-sand-strong px-5 text-base text-ink transition-colors duration-150 ease-out hover:bg-paper-raised"
+                    className="lift label-reg inline-flex min-h-[44px] items-center rounded-input border-[1.5px] border-rule bg-surface px-6 text-ink"
                   >
                     {t('loadMore')}
                   </Link>

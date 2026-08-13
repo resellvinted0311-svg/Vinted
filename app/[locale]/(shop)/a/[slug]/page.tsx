@@ -13,7 +13,14 @@ import { MeasurementsTable } from '@/components/shop/measurements-table'
 import { FavoriteButton } from '@/components/shop/favorite-button'
 import { Breadcrumbs } from '@/components/shop/breadcrumbs'
 import { Badge } from '@/components/ui/badge'
-import { formatPrice, discountPercent, formatDate } from '@/lib/utils/format'
+import { Button } from '@/components/ui/button'
+import { Stamp } from '@/components/ui/stamp'
+import {
+  formatPrice,
+  discountPercent,
+  formatDate,
+  formatGrams,
+} from '@/lib/utils/format'
 import { locales, localeTags } from '@/lib/i18n/routing'
 import { SITE } from '@/lib/config/site'
 
@@ -157,32 +164,35 @@ export default async function ArticlePage({ params }: { params: Params }) {
 
         <div className="flex flex-col gap-6">
           <div>
-            <h1 className="text-2xl">{translation?.title ?? article.sku}</h1>
+            <p className="label-reg text-muted">{categoryName}</p>
+            <h1 className="mt-2 text-2xl">{translation?.title ?? article.sku}</h1>
 
             {article.brand ? (
               <Link
                 href={`/marque/${article.brand.slug}`}
-                className="mt-1 inline-block text-base text-muted underline underline-offset-4 hover:text-ink"
+                className="mt-2 inline-block text-base text-muted underline underline-offset-4 hover:text-ink"
               >
                 {article.brand.name}
               </Link>
             ) : null}
           </div>
 
-          <div className="flex flex-wrap items-baseline gap-3">
+          <div className="flex flex-wrap items-baseline gap-3 border-y border-sand py-4">
             <span
               data-numeric
-              className={`text-2xl ${discount !== null ? 'text-clay' : 'text-ink'}`}
+              className={`font-display text-2xl font-bold tracking-tight ${
+                discount !== null ? 'text-mark' : 'text-ink'
+              }`}
             >
               {formatPrice(article.priceCents, locale)}
             </span>
 
             {discount !== null && article.comparePriceCents ? (
               <>
-                <span data-numeric className="text-base text-muted line-through">
+                <span className="data text-base text-muted line-through">
                   {formatPrice(article.comparePriceCents, locale)}
                 </span>
-                <Badge tone="clay">
+                <Badge tone="mark">
                   −{discount} %
                   {article.lastPriceDropAt
                     ? ` · ${formatDate(article.lastPriceDropAt, locale)}`
@@ -190,16 +200,22 @@ export default async function ArticlePage({ params }: { params: Params }) {
                 </Badge>
               </>
             ) : null}
+
+            {/* Fait de stock, pas argument : le stock est unitaire par
+                construction, l'afficher ne fabrique aucune urgence. */}
+            {!isSold ? (
+              <Stamp className="ml-auto">{t('uniquePiece')}</Stamp>
+            ) : null}
           </div>
 
           {/* État de stock — factuel, jamais alarmiste. */}
           {isSold ? (
-            <div className="border border-sand bg-paper-raised p-4 rounded-card">
+            <div className="rounded-card ruled bg-paper-raised p-4">
               <p className="text-base text-ink">{t('sold')}</p>
               <p className="mt-1 text-xs text-muted">{t('soldHint')}</p>
             </div>
           ) : isReserved ? (
-            <div className="border border-sand bg-paper-raised p-4 rounded-card">
+            <div className="rounded-card ruled bg-paper-raised p-4">
               <p className="text-base text-ink">{t('reserved')}</p>
               <p className="mt-1 text-xs text-muted">{t('reservedHint')}</p>
             </div>
@@ -207,22 +223,14 @@ export default async function ArticlePage({ params }: { params: Params }) {
             <div className="flex flex-col gap-2">
               {/* Panier et offres arrivent en Phases 2 et 3 : les commandes
                   sont annoncées mais désactivées, plutôt qu'absentes. */}
-              <button
-                type="button"
-                disabled
-                className="min-h-[52px] w-full rounded-input border border-moss bg-moss px-6 text-base text-ink-inverse disabled:opacity-50"
-              >
+              <Button size="lg" disabled fullWidth>
                 {t('addToCart')}
-              </button>
+              </Button>
 
               {offersOpen ? (
-                <button
-                  type="button"
-                  disabled
-                  className="min-h-[44px] w-full rounded-input border border-sand-strong px-6 text-base text-ink disabled:opacity-50"
-                >
+                <Button variant="outline" disabled fullWidth>
                   {t('makeOffer')}
-                </button>
+                </Button>
               ) : article.allowOffers && article.offersOpenAt ? (
                 <p className="text-xs text-muted">
                   {t('offersOpenOn', {
@@ -239,14 +247,17 @@ export default async function ArticlePage({ params }: { params: Params }) {
               label={tCat('addToFavorites')}
               labelRemove={tCat('removeFromFavorites')}
               size="lg"
-              className="border border-sand-strong"
             />
-            <span className="text-xs text-muted">{tCat('addToFavorites')}</span>
+            <span className="label-reg text-muted">
+              {tCat('addToFavorites')}
+            </span>
           </div>
 
           <section>
-            <h2 className="text-lg">{t('description')}</h2>
-            <p className="mt-2 whitespace-pre-line text-base text-ink">
+            <h2 className="border-b border-sand pb-2 text-lg">
+              {t('description')}
+            </h2>
+            <p className="mt-3 whitespace-pre-line text-base text-ink">
               {translation?.description}
             </p>
             {translation?.isMachineTranslated ? (
@@ -254,47 +265,52 @@ export default async function ArticlePage({ params }: { params: Params }) {
             ) : null}
           </section>
 
-          <section>
-            <h2 className="text-lg">{t('details')}</h2>
-            <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-base">
-              <dt className="text-muted">{t('condition')}</dt>
-              <dd className="text-ink">
-                {tc(`${article.condition}.label`)}
-                <span className="block text-xs text-muted">
-                  {tc(`${article.condition}.help`)}
-                </span>
-              </dd>
+          {/*
+            Bloc d'identification.
 
-              <dt className="text-muted">{t('size')}</dt>
-              <dd className="text-ink">{article.sizeLabel}</dd>
+            C'est ici que se joue la thèse de la charte : l'écologie se
+            démontre en disant ce que la pièce EST — référence, matière, poids
+            réel, date d'entrée — plutôt qu'en affichant un symbole. Toutes ces
+            valeurs viennent de la base ; aucune n'est estimée ni arrondie pour
+            faire joli, et celles qui manquent ne sont pas affichées.
+          */}
+          <section>
+            <h2 className="border-b border-sand pb-2 text-lg">{t('details')}</h2>
+
+            <dl className="mt-1">
+              <Row label={t('condition')} note={tc(`${article.condition}.help`)}>
+                {tc(`${article.condition}.label`)}
+              </Row>
+
+              <Row label={t('size')}>{article.sizeLabel}</Row>
 
               {article.material ? (
-                <>
-                  <dt className="text-muted">{t('material')}</dt>
-                  <dd className="text-ink">
-                    {tCat(`materials.${article.material}`)}
-                  </dd>
-                </>
+                <Row label={t('material')}>
+                  {tCat(`materials.${article.material}`)}
+                </Row>
               ) : null}
 
               {article.color ? (
-                <>
-                  <dt className="text-muted">{t('color')}</dt>
-                  <dd className="text-ink">{tCat(`colors.${article.color}`)}</dd>
-                </>
+                <Row label={t('color')}>{tCat(`colors.${article.color}`)}</Row>
               ) : null}
 
               {article.fit ? (
-                <>
-                  <dt className="text-muted">{t('fit')}</dt>
-                  <dd className="text-ink">{tCat(`fits.${article.fit}`)}</dd>
-                </>
+                <Row label={t('fit')}>{tCat(`fits.${article.fit}`)}</Row>
               ) : null}
 
-              <dt className="text-muted">{t('reference')}</dt>
-              <dd data-numeric className="text-ink">
-                {article.sku}
-              </dd>
+              <Row label={t('weight')}>
+                {formatGrams(article.weightGrams, locale)}
+              </Row>
+
+              <Row label={t('reference')}>{article.sku}</Row>
+
+              {article.publishedAt ? (
+                <Row label={t('identification')}>
+                  {t('addedOn', {
+                    date: formatDate(article.publishedAt, locale),
+                  })}
+                </Row>
+              ) : null}
             </dl>
           </section>
 
@@ -306,7 +322,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
       </div>
 
       {similar.length > 0 ? (
-        <section className="mt-16 border-t border-sand pt-10">
+        <section className="mt-16 ruled-t pt-10">
           <h2 className="text-xl">
             {isSold ? t('similarAvailable') : t('similar')}
           </h2>
@@ -329,6 +345,40 @@ export default async function ArticlePage({ params }: { params: Params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+    </div>
+  )
+}
+
+/**
+ * Ligne du bloc d'identification.
+ *
+ * Intitulé en étiquette de régie à gauche, valeur en chasse fixe à droite,
+ * filet sable entre chaque : la même grammaire que le tableau de mesures, pour
+ * que les deux se lisent comme un seul relevé.
+ */
+function Row({
+  label,
+  children,
+  note,
+}: {
+  label: string
+  children: React.ReactNode
+  /**
+   * Précision en prose, sous la ligne. Elle reste en composition courante et
+   * alignée à gauche : une phrase en chasse fixe alignée à droite se lit comme
+   * une donnée tabulaire, ce qu'elle n'est pas.
+   */
+  note?: string
+}) {
+  return (
+    <div className="border-b border-sand py-2.5">
+      <div className="flex items-baseline justify-between gap-6">
+        <dt className="label-reg shrink-0 text-muted">{label}</dt>
+        <dd className="data text-right text-base text-ink">{children}</dd>
+      </div>
+      {note ? (
+        <p className="mt-1 font-sans text-xs text-muted">{note}</p>
+      ) : null}
     </div>
   )
 }

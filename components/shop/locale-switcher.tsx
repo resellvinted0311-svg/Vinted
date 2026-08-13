@@ -39,7 +39,9 @@ export function LocaleSwitcher() {
           router.replace(pathname, { locale: next as Locale })
         })
       }}
-      className="min-w-[9rem]"
+      // Compact : le sélecteur partage la ligne de titre avec la recherche et
+      // le compte. À 9rem il poussait « Se connecter » à la ligne suivante.
+      className="w-[7.5rem] shrink-0 px-2.5"
     />
   )
 }

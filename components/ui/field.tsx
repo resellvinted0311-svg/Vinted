@@ -88,11 +88,13 @@ export function FieldLabel({
   return (
     <Label.Root
       htmlFor={id}
-      className={cn('text-xs font-medium text-ink', className)}
+      className={cn('label-reg text-ink', className)}
     >
       {children}
       {optional ? (
-        <span className="ml-1 font-normal text-muted">(facultatif)</span>
+        <span className="ml-1 normal-case tracking-normal text-muted">
+          (facultatif)
+        </span>
       ) : null}
     </Label.Root>
   )

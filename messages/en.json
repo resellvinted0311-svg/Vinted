@@ -33,7 +33,9 @@
       "selectionBody": "Every garment is washed, checked and measured. Actual measurements in centimetres are listed on the item page, along with any flaws.",
       "shippingTitle": "Shipping",
       "shippingBody": "Dispatched within 48 working hours from France, to a pickup point or to your address."
-    }
+    },
+    "registerCount": "{count, plural, =0 {No pieces in the register} one {# piece in the register} other {# pieces in the register}}",
+    "registerNote": "One piece, one copy. Reference, material, weight and measurements appear on every listing."
   },
   "catalogue": {
     "title": "Catalogue",
@@ -150,7 +152,11 @@
     "shippingEstimate": "Delivery",
     "shippingFrom": "From {price}",
     "machineTranslated": "This description was translated automatically.",
-    "backToCatalogue": "Back to the catalogue"
+    "backToCatalogue": "Back to the catalogue",
+    "uniquePiece": "One of one",
+    "weight": "Shipped weight",
+    "addedOn": "Added to the register on {date}",
+    "identification": "Identification"
   },
   "favorites": {
     "title": "Favourites",
