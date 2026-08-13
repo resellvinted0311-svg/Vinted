@@ -5,6 +5,8 @@ import {
   looksPooled,
   withPoolerParams,
   blocksMigrations,
+  normalizeConnectionString,
+  describeConnectionProblem,
   presentDatabaseEnvNames,
 } from '@/lib/db/database-url'
 
@@ -140,5 +142,62 @@ describe('mode du pooler', () => {
 
   it('une connexion directe ne les empêche pas', () => {
     expect(blocksMigrations(LOCAL.DATABASE_URL)).toBe(false)
+  })
+})
+
+describe('chaînes recopiées à la main', () => {
+  const CLEAN =
+    'postgresql://postgres.abc:pw@aws-0-eu-west-3.pooler.supabase.com:5432/postgres'
+
+  it('retire les guillemets doubles encadrants', () => {
+    expect(normalizeConnectionString(`"${CLEAN}"`)).toBe(CLEAN)
+  })
+
+  it('retire les guillemets simples encadrants', () => {
+    expect(normalizeConnectionString(`'${CLEAN}'`)).toBe(CLEAN)
+  })
+
+  it('retire un préfixe NOM= recopié depuis un .env', () => {
+    expect(normalizeConnectionString(`DATABASE_URL="${CLEAN}"`)).toBe(CLEAN)
+    expect(normalizeConnectionString(`DIRECT_URL=${CLEAN}`)).toBe(CLEAN)
+  })
+
+  it('n’ampute pas un mot de passe contenant un =', () => {
+    const withEquals = 'postgresql://user:ab=cd@host:5432/postgres'
+    expect(normalizeConnectionString(withEquals)).toBe(withEquals)
+  })
+
+  it('absorbe les espaces et retours à la ligne', () => {
+    expect(normalizeConnectionString(`  ${CLEAN}\n`)).toBe(CLEAN)
+  })
+
+  it('la résolution applique le nettoyage', () => {
+    const resolved = resolveMigrationUrl({ DIRECT_URL: `"${CLEAN}"` })
+    expect(resolved?.value).toBe(CLEAN)
+  })
+})
+
+describe('diagnostic de forme', () => {
+  it('accepte une chaîne valide', () => {
+    expect(
+      describeConnectionProblem(
+        'postgresql://u:p@host:5432/postgres?pgbouncer=true',
+      ),
+    ).toBeNull()
+  })
+
+  it('signale un schéma absent sans divulguer le mot de passe', () => {
+    const problem = describeConnectionProblem('"postgresql://u:secret@host/db')
+    expect(problem).not.toBeNull()
+    expect(problem).not.toContain('secret')
+  })
+
+  it('signale une commande psql collée par erreur', () => {
+    expect(describeConnectionProblem('psql "postgresql://u:p@h/db"')).not.toBeNull()
+  })
+
+  it('signale un mot de passe non encodé', () => {
+    const problem = describeConnectionProblem('postgresql://u:p@ss@host:5432/db')
+    expect(problem).toContain('%40')
   })
 })

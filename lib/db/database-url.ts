@@ -39,6 +39,72 @@ const MIGRATION_KEYS = [
   ...RUNTIME_KEYS,
 ] as const
 
+/**
+ * Nettoie une chaîne de connexion recopiée à la main.
+ *
+ * Une valeur collée depuis un fichier `.env` traîne souvent avec elle le nom
+ * de la variable et les guillemets qui l'encadrent. Une interface web les
+ * conserve tels quels, et PostgreSQL reçoit alors une chaîne commençant par
+ * un guillemet : Prisma répond « P1013 : the scheme is not recognized »,
+ * message qui ne désigne pas la cause.
+ *
+ * On préfère absorber ces deux cas plutôt que d'exiger un copier-coller
+ * parfait.
+ */
+export function normalizeConnectionString(raw: string): string {
+  let value = raw.trim()
+
+  // Préfixe « NOM= » recopié depuis un .env. On ne le retire que si ce qui
+  // suit ressemble vraiment à une chaîne de connexion, pour ne jamais
+  // amputer un mot de passe contenant un « = ».
+  const prefixed = /^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/s.exec(value)
+  if (prefixed?.[2] && /^["']?(postgres|postgresql):\/\//i.test(prefixed[2])) {
+    value = prefixed[2].trim()
+  }
+
+  // Guillemets encadrants, simples ou doubles.
+  const first = value.charAt(0)
+  if ((first === '"' || first === "'") && value.endsWith(first)) {
+    value = value.slice(1, -1).trim()
+  }
+
+  return value
+}
+
+/** Décrit ce qui cloche dans une chaîne de connexion, ou `null` si elle est valide. */
+export function describeConnectionProblem(value: string): string | null {
+  if (!/^(postgres|postgresql):\/\//i.test(value)) {
+    // On ne montre que l'amorce : le mot de passe vient après « :// ».
+    const head = value.slice(0, 16).replace(/\s/g, '·')
+    return `la chaîne devrait commencer par « postgresql:// », elle commence par « ${head}… »`
+  }
+
+  // Un « @ » non encodé dans le mot de passe rend l'URL ambiguë : il y a
+  // alors deux séparateurs possibles entre identifiants et hôte. `new URL`
+  // ne s'en plaint pas — elle retient silencieusement le dernier — mais le
+  // pilote PostgreSQL, lui, se connecte au mauvais hôte.
+  const authority = value.slice(value.indexOf('://') + 3).split('/')[0] ?? ''
+  const atCount = (authority.match(/@/g) ?? []).length
+  if (atCount > 1) {
+    return (
+      'le mot de passe contient un « @ » non encodé, ce qui rend l’URL ' +
+      'ambiguë. Remplacez-le par %40 (de même : # → %23, / → %2F, ? → %3F, ' +
+      ': → %3A)'
+    )
+  }
+
+  try {
+    new URL(value)
+  } catch {
+    return (
+      'la chaîne n’est pas une URL valide. Un caractère spécial du mot de ' +
+      'passe doit être encodé (@ → %40, # → %23, / → %2F)'
+    )
+  }
+
+  return null
+}
+
 function firstNonEmpty(
   keys: readonly string[],
   env: EnvLike,
@@ -46,7 +112,7 @@ function firstNonEmpty(
   for (const key of keys) {
     const value = env[key]
     if (typeof value === 'string' && value.trim() !== '') {
-      return { key, value: value.trim() }
+      return { key, value: normalizeConnectionString(value) }
     }
   }
   return null

@@ -10,6 +10,7 @@ import {
   resolveDatabaseUrl,
   resolveMigrationUrl,
   blocksMigrations,
+  describeConnectionProblem,
   presentDatabaseEnvNames,
 } from '../lib/db/database-url.ts'
 
@@ -50,6 +51,27 @@ if (!runtime || !migration) {
 // Trace utile sans rien divulguer : on nomme la variable retenue, pas sa valeur.
 console.error(`Connexion applicative : ${runtime.key}`)
 console.error(`Connexion des migrations : ${migration.key}`)
+
+// Contrôle de forme avant de laisser Prisma répondre « P1013 : the scheme is
+// not recognized », message qui ne désigne jamais la cause réelle.
+let invalid = false
+for (const entry of [runtime, migration]) {
+  const problem = describeConnectionProblem(entry.value)
+  if (problem) {
+    console.error('')
+    console.error(`${entry.key} est mal formée : ${problem}`)
+    invalid = true
+  }
+}
+
+if (invalid) {
+  console.error('')
+  console.error('Dans Vercel, le champ Value ne doit contenir QUE l’URL :')
+  console.error('  ni le préfixe « DATABASE_URL= », ni les guillemets.')
+  console.error('Elle commence par postgresql:// et finit par /postgres.')
+  console.error('')
+  process.exit(1)
+}
 
 // N'avertir que sur un pooler en mode TRANSACTION : le mode session de
 // Supabase (port 5432) gère les verrous consultatifs et convient aux
