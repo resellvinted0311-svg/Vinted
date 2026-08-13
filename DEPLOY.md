@@ -21,12 +21,13 @@ pages statiques. Dans le tableau de bord Vercel, projet → **Storage** →
 
 Projet → **Settings** → **Environment Variables** :
 
-**Une seule variable est nécessaire, et Vercel la pose lui-même** en créant la
-base à l'étape 2 : `DATABASE_URL`. Tout le reste est déduit.
+**Aucune variable n'est à saisir** : il suffit que la base existe. Vercel pose
+lui-même la connexion en créant la base à l'étape 2, et le build accepte les
+différentes conventions de nommage.
 
 | Variable | Requise | Comportement par défaut |
 |---|---|---|
-| `DATABASE_URL` | oui | injectée par Vercel via Storage |
+| connexion PostgreSQL | oui | reconnue sous `DATABASE_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL` ou `NEON_DATABASE_URL` |
 | `DIRECT_URL` | non | déduite : `POSTGRES_URL_NON_POOLING`, puis `DATABASE_URL_UNPOOLED`, puis `DATABASE_URL` |
 | `SEED_ON_BUILD` | non | le jeu de démonstration est inséré si le catalogue est vide |
 | `NEXT_PUBLIC_SITE_URL` | non | déduite de `VERCEL_PROJECT_PRODUCTION_URL` |
@@ -40,6 +41,12 @@ n'est fabriqué : ce serait rendre les sessions falsifiables. Générez-la avec
 Renseignez `DIRECT_URL` uniquement si les migrations échouent sur un verrou —
 signe d'une connexion via un pooler en mode transaction. Le script vous en
 avertit dans le log.
+
+**Attention aux environnements Vercel** : les variables sont portées par cible
+(Production, Preview, Development). Une variable posée pour Production seule
+n'est pas visible depuis un déploiement de branche, qui est un Preview. Si le
+build annonce n'avoir trouvé aucune connexion, c'est la première chose à
+vérifier — le log liste alors les noms des variables réellement présentes.
 
 `SEED_ON_BUILD` reste disponible pour forcer (`1`) ou interdire (`0`) le seed.
 

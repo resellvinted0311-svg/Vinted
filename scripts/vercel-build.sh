@@ -12,36 +12,17 @@ set -e
 # Connexion à la base
 # ---------------------------------------------------------------------------
 
-if [ -z "$DATABASE_URL" ]; then
-  echo ""
-  echo "DATABASE_URL n'est pas définie."
-  echo ""
-  echo "Le catalogue vit en base : sans elle, la génération des pages"
-  echo "statiques échoue. Dans Vercel : projet > Storage > Create Database,"
-  echo "ou renseignez la variable à la main dans Settings > Environment"
-  echo "Variables."
-  echo ""
-  exit 1
-fi
-
-# `prisma migrate deploy` a besoin d'une connexion DIRECTE. Les hébergeurs
-# exposent en général DATABASE_URL derrière un pooler en mode transaction,
-# qui ne gère pas les verrous consultatifs utilisés par les migrations.
+# Les hébergeurs ne nomment pas la connexion de la même façon : DATABASE_URL,
+# POSTGRES_PRISMA_URL, POSTGRES_URL selon l'intégration. Le résolveur accepte
+# les alias connus et exporte DATABASE_URL et DIRECT_URL sous les noms
+# qu'attend Prisma. Il diagnostique et échoue proprement s'il ne trouve rien.
 #
-# On retient donc, dans l'ordre : la valeur explicite, puis les conventions
-# de Neon et de Vercel Postgres, et en dernier recours DATABASE_URL elle-même.
-# Cela évite d'imposer une variable manuelle de plus — l'oublier faisait
-# échouer le build sur une erreur peu parlante.
-DIRECT_URL="${DIRECT_URL:-${POSTGRES_URL_NON_POOLING:-${DATABASE_URL_UNPOOLED:-$DATABASE_URL}}}"
-export DIRECT_URL
-
-case "$DIRECT_URL" in
-  *-pooler*|*pgbouncer=true*)
-    echo "Attention : la connexion utilisée pour les migrations passe par un"
-    echo "pooler. Si 'migrate deploy' échoue sur un verrou, renseignez"
-    echo "DIRECT_URL avec l'URL de connexion directe."
-    ;;
-esac
+# L'affectation est séparée de l'eval : `eval "$(cmd)"` renvoie le code de
+# `eval`, pas celui de `cmd`, donc un échec du résolveur passerait inaperçu
+# malgré `set -e`.
+echo "→ Résolution de la connexion à la base"
+DB_EXPORTS="$(tsx scripts/resolve-db-env.mjs)" || exit 1
+eval "$DB_EXPORTS"
 
 # ---------------------------------------------------------------------------
 # Étapes
