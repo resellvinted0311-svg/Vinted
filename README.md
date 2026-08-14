@@ -26,12 +26,15 @@ la migration initiale.
 
 ### Comptes de test
 
-| Rôle | Adresse | Mot de passe |
-|---|---|---|
-| Admin | `admin@nina-diego.test` | `AdminNinaDiego2026` |
-| Client | `client@nina-diego.test` | `ClientNinaDiego2026` |
+Aucun compte n'est créé en production. En développement, le seed n'en crée que
+si `SEED_ADMIN_PASSWORD` est renseignée, sans valeur de repli :
 
-Ces comptes ne sont créés que par le seed de développement.
+```bash
+SEED_ADMIN_PASSWORD="…" pnpm db:seed
+```
+
+Adresses créées : `admin@nina-diego.test` (rôle ADMIN) et
+`client@nina-diego.test`.
 
 ## Commandes
 

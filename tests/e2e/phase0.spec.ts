@@ -1,6 +1,14 @@
 import { test, expect } from '@playwright/test'
 
 /**
+ * Mot de passe des comptes de démonstration, lu dans l'environnement.
+ *
+ * Il n'est plus écrit dans le dépôt : celui qui y figurait a été inséré tel
+ * quel dans la base de production par le script de build.
+ */
+const SEED_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? ''
+
+/**
  * Livrable de Phase 0 : voir l'accueil stylé et se connecter.
  *
  * Ces tests passent par l'interface réelle — formulaire, Server Action,
@@ -90,7 +98,7 @@ test.describe('Connexion', () => {
       .getByLabel('Adresse e-mail')
       .first()
       .fill('client@nina-diego.test')
-    await page.getByLabel('Mot de passe').fill('ClientNinaDiego2026')
+    await page.getByLabel('Mot de passe').fill(SEED_PASSWORD)
     await page.getByRole('button', { name: 'Se connecter' }).click()
 
     await expect(page).toHaveURL(/\/fr\/compte/)
@@ -111,7 +119,7 @@ test.describe('Connexion', () => {
   }) => {
     await page.goto('/fr/connexion')
     await page.getByLabel('Adresse e-mail').first().fill('admin@nina-diego.test')
-    await page.getByLabel('Mot de passe').fill('AdminNinaDiego2026')
+    await page.getByLabel('Mot de passe').fill(SEED_PASSWORD)
     await page.getByRole('button', { name: 'Se connecter' }).click()
 
     await expect(page).toHaveURL(/\/fr\/compte/)
@@ -127,7 +135,7 @@ test.describe('Connexion', () => {
       .getByLabel('Adresse e-mail')
       .first()
       .fill('client@nina-diego.test')
-    await page.getByLabel('Mot de passe').fill('ClientNinaDiego2026')
+    await page.getByLabel('Mot de passe').fill(SEED_PASSWORD)
     await page.getByRole('button', { name: 'Se connecter' }).click()
     await expect(page).toHaveURL(/\/fr\/compte/)
 

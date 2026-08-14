@@ -23,6 +23,7 @@ import {
 } from '@/lib/utils/format'
 import { locales, localeTags } from '@/lib/i18n/routing'
 import { SITE } from '@/lib/config/site'
+import { serializeJsonLd } from '@/lib/utils/json-ld'
 
 type Params = Promise<{ locale: string; slug: string }>
 
@@ -343,7 +344,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
 
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
     </div>
   )

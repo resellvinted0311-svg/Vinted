@@ -43,9 +43,12 @@ qui ouvre le nom de la base ; dans ce cas, changez le mot de passe.
 |---|---|---|
 | connexion PostgreSQL | oui | reconnue sous `DATABASE_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL` ou `NEON_DATABASE_URL` |
 | `DIRECT_URL` | non | déduite : `POSTGRES_URL_NON_POOLING`, puis `DATABASE_URL_UNPOOLED`, puis `DATABASE_URL` |
-| `SEED_ON_BUILD` | non | le jeu de démonstration est inséré si le catalogue est vide |
+| `SEED_ON_BUILD` | non | **rien n'est inséré sans `SEED_ON_BUILD=1`**. Le seed se déclenchait auparavant sur un catalogue vide — l'état d'une base neuve — et a peuplé la production sans qu'on le demande |
 | `NEXT_PUBLIC_SITE_URL` | non | déduite de `VERCEL_PROJECT_PRODUCTION_URL` |
 | `AUTH_SECRET` | non\* | sans elle, la connexion est désactivée proprement ; le reste fonctionne |
+| `UPSTASH_REDIS_REST_URL` | **oui en production** | sans elle, la limitation de débit est en mémoire : chaque instance a son propre compteur, remis à zéro à chaque démarrage à froid |
+| `UPSTASH_REDIS_REST_TOKEN` | **oui en production** | idem |
+| `CRON_SECRET` | **oui** | sans elle, la route `/api/cron` refuse tout et les réservations expirées ne sont jamais libérées |
 
 \* Sans `AUTH_SECRET`, la boutique est entièrement consultable — catalogue,
 recherche, favoris — mais **connexion et inscription sont refusées**, et les
@@ -72,11 +75,9 @@ n'est pas visible depuis un déploiement de branche, qui est un Preview. Si le
 build annonce n'avoir trouvé aucune connexion, c'est la première chose à
 vérifier — le log liste alors les noms des variables réellement présentes.
 
-`SEED_ON_BUILD` reste disponible pour forcer (`1`) ou interdire (`0`) le seed.
-
-Une fois le premier déploiement passé, **retire `SEED_ON_BUILD`**. Le seed est
-idempotent, donc le relancer ne casse rien — mais il réécrirait les articles de
-démonstration par-dessus un éventuel catalogue réel.
+**Ne posez `SEED_ON_BUILD=1` que si vous voulez réellement peupler la base de
+démonstration**, et retirez-la juste après : le seed est idempotent, mais il
+réécrirait les articles de démonstration par-dessus un catalogue réel.
 
 ## 4. Ce que fait le build
 
@@ -87,19 +88,23 @@ démonstration par-dessus un éventuel catalogue réel.
 3. `prisma generate` — client typé
 4. `prisma migrate deploy` — applique la migration initiale (tables,
    extensions `pg_trgm` et `unaccent`, trigger de recherche plein texte)
-5. le seed, si `SEED_ON_BUILD=1`
+5. le seed, **uniquement** si `SEED_ON_BUILD=1`
 6. `next build`
 
 ## 5. Comptes de démonstration
 
-Créés uniquement par le seed :
+Le seed ne crée AUCUN compte en production, et n'en crée en développement que
+si `SEED_ADMIN_PASSWORD` est renseignée — sans valeur de repli.
 
-| Rôle | Adresse | Mot de passe |
-|---|---|---|
-| Admin | `admin@nina-diego.test` | `AdminNinaDiego2026` |
-| Client | `client@nina-diego.test` | `ClientNinaDiego2026` |
+```bash
+SEED_ADMIN_PASSWORD="choisissez-un-mot-de-passe-long" pnpm db:seed
+```
 
-À supprimer avant toute mise en ligne réelle.
+Les comptes créés sont alors `admin@nina-diego.test` et
+`client@nina-diego.test`, tous deux avec ce mot de passe.
+
+Aucun mot de passe n'est écrit dans ce dépôt : un secret committé finit
+toujours par être publié avec le code.
 
 ## 6. Ce qui n'est pas encore branché
 

@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
     key: `search:${await clientFingerprint()}`,
     limit: 60,
     windowSeconds: 60,
+    // Confort : bloquer la recherche pendant une panne punirait des clientes
+    // pour rien.
+    sensitive: false,
   })
   if (!allowed) {
     return NextResponse.json(

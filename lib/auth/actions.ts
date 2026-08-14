@@ -61,6 +61,7 @@ export async function signUpAction(
     key: `signup:${await clientFingerprint()}`,
     limit: 5,
     windowSeconds: 3600,
+    sensitive: true,
   })
   if (!allowed) return { status: 'error', messageKey: 'rateLimited' }
 
@@ -121,12 +122,30 @@ export async function signInAction(
 
   const { email, password } = parsed.data
 
-  const allowed = await checkRateLimit({
-    key: `signin:${await clientFingerprint()}:${email}`,
+  // DEUX compteurs, et le second est le plus important.
+  //
+  // Compter par couple (empreinte, adresse) ne freine que l'acharnement sur UN
+  // compte. La pulvérisation — un mot de passe très courant essayé contre des
+  // milliers d'adresses différentes — ne touchait jamais le plafond, puisque
+  // chaque adresse ouvrait son propre compteur. Le second compteur, par
+  // empreinte seule, ferme cette porte.
+  const fingerprint = await clientFingerprint()
+
+  const perAccount = await checkRateLimit({
+    key: `signin:${fingerprint}:${email}`,
     limit: 10,
     windowSeconds: 900,
+    sensitive: true,
   })
-  if (!allowed) return { status: 'error', messageKey: 'rateLimited' }
+  if (!perAccount) return { status: 'error', messageKey: 'rateLimited' }
+
+  const perOrigin = await checkRateLimit({
+    key: `signin-origin:${fingerprint}`,
+    limit: 30,
+    windowSeconds: 900,
+    sensitive: true,
+  })
+  if (!perOrigin) return { status: 'error', messageKey: 'rateLimited' }
 
   const user = await prisma.user.findUnique({
     where: { email },
@@ -178,6 +197,7 @@ export async function magicLinkAction(
     key: `magic:${await clientFingerprint()}`,
     limit: 5,
     windowSeconds: 900,
+    sensitive: true,
   })
   if (!allowed) return { status: 'error', messageKey: 'rateLimited' }
 

@@ -515,31 +515,68 @@ async function seedArticles(
 // Comptes de test
 // ---------------------------------------------------------------------------
 
+/**
+ * Comptes de démonstration.
+ *
+ * ---------------------------------------------------------------------------
+ * Deux verrous, parce qu'un seul a déjà cédé
+ * ---------------------------------------------------------------------------
+ * Ce bloc a réellement créé un compte ADMIN sur la base de PRODUCTION, avec un
+ * mot de passe écrit en clair dans un dépôt public. Le script de build lançait
+ * le seed dès qu'il trouvait un catalogue vide — ce qui est exactement l'état
+ * d'une base neuve — et rien ici ne demandait dans quel environnement il
+ * s'exécutait.
+ *
+ * Désormais :
+ *
+ *  1. refus net en production, quel que soit l'appelant ;
+ *  2. mot de passe lu dans l'environnement, SANS valeur de repli. Variable
+ *     absente, aucun compte créé. Un mot de passe écrit dans le code finit
+ *     toujours par être publié avec lui.
+ *
+ * Le rôle ADMIN n'ouvre encore sur rien — /admin n'existe pas — mais ce compte
+ * deviendrait un accès complet à la seconde où la première page
+ * d'administration serait déposée.
+ */
 async function seedUsers(): Promise<void> {
-  const argon2Options = { memoryCost: 19456, timeCost: 2, parallelism: 1 }
+  if (
+    process.env.VERCEL_ENV === 'production' ||
+    process.env.NODE_ENV === 'production'
+  ) {
+    console.info('  Comptes de démonstration : ignorés (environnement de production)')
+    return
+  }
 
-  const adminPassword = await hash('AdminNinaDiego2026', argon2Options)
-  const customerPassword = await hash('ClientNinaDiego2026', argon2Options)
+  const password = process.env.SEED_ADMIN_PASSWORD
+  if (!password || password.length < 12) {
+    console.info(
+      '  Comptes de démonstration : ignorés (SEED_ADMIN_PASSWORD absente ou trop courte)',
+    )
+    return
+  }
+
+  const argon2Options = { memoryCost: 19456, timeCost: 2, parallelism: 1 }
+  const passwordHash = await hash(password, argon2Options)
 
   await prisma.user.upsert({
     where: { email: 'admin@nina-diego.test' },
     create: {
       email: 'admin@nina-diego.test',
-      passwordHash: adminPassword,
+      passwordHash,
       firstName: 'Nina',
       lastName: 'Administration',
       role: 'ADMIN',
       locale: 'fr',
       emailVerified: new Date(),
     },
-    update: { passwordHash: adminPassword, role: 'ADMIN' },
+    update: { passwordHash, role: 'ADMIN' },
   })
 
   await prisma.user.upsert({
     where: { email: 'client@nina-diego.test' },
     create: {
       email: 'client@nina-diego.test',
-      passwordHash: customerPassword,
+      passwordHash,
       firstName: 'Diego',
       lastName: 'Client',
       role: 'CUSTOMER',
@@ -547,10 +584,10 @@ async function seedUsers(): Promise<void> {
       emailVerified: new Date(),
       marketingConsent: false,
     },
-    update: { passwordHash: customerPassword },
+    update: { passwordHash },
   })
 
-  console.info('  Comptes : admin@nina-diego.test · client@nina-diego.test')
+  console.info('  Comptes de démonstration : admin@nina-diego.test · client@nina-diego.test')
 }
 
 // ---------------------------------------------------------------------------

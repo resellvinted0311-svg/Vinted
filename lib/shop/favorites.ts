@@ -61,6 +61,8 @@ export async function toggleFavorite(
     key: `favorite:${await clientFingerprint()}`,
     limit: 120,
     windowSeconds: 60,
+    // Confort : une panne du compteur ne doit pas empêcher de mettre en favori.
+    sensitive: false,
   })
   if (!allowed) return { ok: false, isFavorite: false, reason: 'rate-limited' }
 

@@ -1,5 +1,6 @@
 import { Link } from '@/lib/i18n/navigation'
 import { SITE } from '@/lib/config/site'
+import { serializeJsonLd } from '@/lib/utils/json-ld'
 
 export interface Crumb {
   /** `null` pour l'élément courant, qui n'est pas un lien. */
@@ -64,9 +65,11 @@ export function Breadcrumbs({
 
       <script
         type="application/ld+json"
-        // Contenu entièrement produit par le serveur à partir de données
-        // internes : aucune entrée utilisateur n'y transite.
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // Sérialisé par serializeJsonLd : les libellés viennent de la base
+        // (titres traduits, noms de catégorie) et ne sont donc PAS des données
+        // internes de confiance. `JSON.stringify` seul laissait passer une
+        // fermeture de balise script.
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
     </>
   )

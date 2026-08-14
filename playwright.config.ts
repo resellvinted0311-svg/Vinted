@@ -1,6 +1,17 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { config as loadEnv } from 'dotenv'
 import { defineConfig, devices } from '@playwright/test'
+
+/**
+ * Charger .env avant tout.
+ *
+ * Vitest le fait par son fichier de mise en place ; Playwright, non. Les tests
+ * de connexion lisent le mot de passe des comptes de démonstration dans
+ * l'environnement — il n'est plus écrit dans le dépôt — et échouaient donc
+ * silencieusement sur une chaîne vide.
+ */
+loadEnv()
 
 const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:3000'
 

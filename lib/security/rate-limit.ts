@@ -11,12 +11,41 @@ import 'server-only'
  * entre instances : il est délibérément inadapté à la production, et le
  * signale au démarrage plutôt que de donner une fausse impression de
  * protection.
+ *
+ * ---------------------------------------------------------------------------
+ * Que faire quand le compteur ne répond plus
+ * ---------------------------------------------------------------------------
+ * La version précédente laissait passer dans TOUS les cas d'échec — magasin
+ * indisponible, quota épuisé, panne réseau. Conséquence : il suffisait de
+ * marteler l'autocomplétion jusqu'à épuiser le quota du plan pour désactiver,
+ * du même coup, la protection de la page de connexion.
+ *
+ * Le bon comportement dépend de ce qu'on protège, et ne peut donc pas être
+ * unique :
+ *
+ *  - un chemin de CONFORT (recherche, autocomplétion) s'ouvre en cas de
+ *    panne. Bloquer la recherche parce que Redis tousse punirait des clientes
+ *    pour rien ;
+ *  - un chemin SENSIBLE (connexion, inscription, lien magique) se ferme.
+ *    Refuser une connexion pendant une panne est ennuyeux ; laisser une force
+ *    brute s'exécuter sans frein pendant cette même panne est une brèche.
+ *
+ * L'appelant doit donc le déclarer. `sensitive` n'a pas de valeur par défaut
+ * permissive : c'est un booléen obligatoire, pour qu'on ne puisse pas oublier
+ * d'y penser.
  */
 
 export interface RateLimitInput {
   key: string
   limit: number
   windowSeconds: number
+  /**
+   * `true` : en cas de panne du compteur, on REFUSE (connexion, inscription,
+   * lien magique, paiement). `false` : on laisse passer (recherche, favoris).
+   *
+   * Sans valeur par défaut, volontairement.
+   */
+  sensitive: boolean
 }
 
 const memoryCounters = new Map<string, { count: number; resetAt: number }>()
@@ -59,23 +88,37 @@ async function checkUpstash(
   })
 
   if (!response.ok) {
-    // Redis indisponible : on laisse passer plutôt que de bloquer la
-    // connexion de tout le monde, et on le signale.
+    // Le quota du plan épuisé renvoie 429 : c'est précisément l'état qu'un
+    // attaquant peut provoquer en martelant un chemin bon marché. Ouvrir ici
+    // reviendrait à lui offrir la désactivation de toute la protection.
     console.error(`[rate-limit] Upstash indisponible (${response.status}).`)
-    return true
+    throw new Error(`upstash-unavailable-${response.status}`)
   }
 
   const body = (await response.json()) as { result?: number }
   const count = body.result ?? 0
 
   if (count === 1) {
-    await fetch(
+    // L'échéance n'est PAS posée « au cas où ». Sans elle, le compteur ne
+    // redescend jamais : après quelques inscriptions, tout un réseau
+    // d'entreprise ou tout un opérateur mobile — qui partagent une IP — se
+    // verrait refuser l'accès définitivement, sans message compréhensible.
+    // On efface donc la clé plutôt que de laisser un compteur immortel.
+    const expire = await fetch(
       `${url}/expire/${encodeURIComponent(namespaced)}/${windowSeconds}`,
       {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
       },
-    ).catch(() => undefined)
+    ).catch(() => null)
+
+    if (!expire?.ok) {
+      console.error('[rate-limit] Échéance non posée : la clé est effacée.')
+      await fetch(`${url}/del/${encodeURIComponent(namespaced)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      }).catch(() => undefined)
+    }
   }
 
   return count <= limit
@@ -91,7 +134,8 @@ export async function checkRateLimit(input: RateLimitInput): Promise<boolean> {
       return await checkUpstash(input, url, token)
     } catch (error) {
       console.error('[rate-limit] Appel Upstash en échec.', error)
-      return true
+      // Chemin sensible : on refuse. Chemin de confort : on laisse passer.
+      return !input.sensitive
     }
   }
 
