@@ -83,8 +83,15 @@ export async function acquireStockLocks(
 
   await lockOwnerSerially(tx, input.ownerId)
 
-  const until = new Date(Date.now() + input.ttlMinutes * 60_000)
-
+  // L'échéance est calculée PAR LA BASE, jamais par le serveur applicatif.
+  //
+  // L'expiration se teste ailleurs avec `now()`, c'est-à-dire l'horloge de
+  // PostgreSQL. Poser l'échéance avec `Date.now()` ferait cohabiter deux
+  // horloges : sur une fonction serverless dont l'horloge dérive de quelques
+  // secondes — cela arrive — un verrou expirerait avant l'heure et libérerait
+  // un article pendant que son acheteur est sur la page de paiement, ou
+  // survivrait au-delà et l'immobiliserait pour rien.
+  //
   // Une seule instruction. Les trois branches du WHERE :
   //   - AVAILABLE                       : libre ;
   //   - RESERVED expiré                 : le balayage n'est pas passé, la
@@ -93,11 +100,11 @@ export async function acquireStockLocks(
   //
   // `status = 'RESERVED'` et non 'SOLD' : une pièce vendue ne se reprend
   // jamais, même par celui qui l'avait réservée.
-  const locked = await tx.$queryRaw<{ id: string }[]>`
+  const locked = await tx.$queryRaw<{ id: string; reservedUntil: Date }[]>`
     UPDATE "Article"
     SET "status" = 'RESERVED',
         "reservedById" = ${input.ownerId},
-        "reservedUntil" = ${until},
+        "reservedUntil" = now() + make_interval(mins => ${input.ttlMinutes}::int),
         "updatedAt" = now()
     WHERE "id" = ANY(${ids}::text[])
       AND "publishedAt" IS NOT NULL
@@ -108,7 +115,7 @@ export async function acquireStockLocks(
           AND ("reservedUntil" < now() OR "reservedById" = ${input.ownerId})
         )
       )
-    RETURNING "id"
+    RETURNING "id", "reservedUntil"
   `
 
   if (locked.length !== ids.length) {
@@ -117,6 +124,12 @@ export async function acquireStockLocks(
       ok: false,
       unavailableArticleIds: ids.filter((id) => !lockedIds.has(id)),
     }
+  }
+
+  // L'échéance renvoyée est celle réellement inscrite, relue de la base.
+  const until = locked[0]?.reservedUntil
+  if (!until) {
+    return { ok: false, unavailableArticleIds: ids }
   }
 
   return { ok: true, until }
