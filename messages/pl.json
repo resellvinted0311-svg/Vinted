@@ -124,6 +124,10 @@
     "FAIR": {
       "label": "Stan dostateczny",
       "help": "Widoczne zużycie, opisane w opisie przedmiotu."
+    },
+    "POOR": {
+      "label": "Zły stan",
+      "help": "Znaczne wady, opisane i sfotografowane. Sprzedawane w takim stanie."
     }
   },
   "measurement": {

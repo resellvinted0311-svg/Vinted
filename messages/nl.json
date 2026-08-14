@@ -124,6 +124,10 @@
     "FAIR": {
       "label": "Redelijke staat",
       "help": "Zichtbare slijtage, beschreven in de productomschrijving."
+    },
+    "POOR": {
+      "label": "Slechte staat",
+      "help": "Aanzienlijke gebreken, beschreven en gefotografeerd. Verkocht zoals gezien."
     }
   },
   "measurement": {

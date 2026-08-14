@@ -124,6 +124,10 @@
     "FAIR": {
       "label": "Ordentlicher Zustand",
       "help": "Sichtbare Abnutzung, in der Artikelbeschreibung beschrieben."
+    },
+    "POOR": {
+      "label": "Schlechter Zustand",
+      "help": "Erhebliche Mängel, beschrieben und fotografiert. Verkauf wie gesehen."
     }
   },
   "measurement": {

@@ -124,6 +124,10 @@
     "FAIR": {
       "label": "Estado razoável",
       "help": "Desgaste visível, descrito na descrição do artigo."
+    },
+    "POOR": {
+      "label": "Mau estado",
+      "help": "Defeitos importantes, descritos e fotografados. Vendido no estado."
     }
   },
   "measurement": {

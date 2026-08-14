@@ -124,6 +124,10 @@
     "FAIR": {
       "label": "Fair condition",
       "help": "Visible wear, described in the item description."
+    },
+    "POOR": {
+      "label": "Poor condition",
+      "help": "Significant flaws, described and photographed. Sold as seen."
     }
   },
   "measurement": {

@@ -124,6 +124,10 @@
     "FAIR": {
       "label": "Condizioni discrete",
       "help": "Usura visibile, descritta nella descrizione del capo."
+    },
+    "POOR": {
+      "label": "Cattivo stato",
+      "help": "Difetti importanti, descritti e fotografati. Venduto come visto."
     }
   },
   "measurement": {

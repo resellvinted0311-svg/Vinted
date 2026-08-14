@@ -193,6 +193,91 @@ export const CATEGORIES: CategorySeed[] = [
       nl: 'Tas', de: 'Tasche', pt: 'Mala', pl: 'Torba',
     },
   },
+  // -------------------------------------------------------------------------
+  // Familles ajoutées pour l'application de gestion.
+  //
+  // Sept familles de son stock ne trouvaient aucune feuille : jupes, shorts,
+  // bermudas, maillots de bain, pyjamas, sous-vêtements et combinaisons. Les
+  // ranger de force ailleurs — une jupe dans « robes », un short dans
+  // « jeans et pantalons » — aurait faussé le filtrage et trompé la cliente.
+  // -------------------------------------------------------------------------
+  {
+    slug: 'jupes',
+    parentSlug: 'bas',
+    position: 2,
+    defaultWeightGrams: 300,
+    measurementKeys: ['waist', 'hips', 'length'],
+    names: {
+      fr: 'Jupes', en: 'Skirts', es: 'Faldas', it: 'Gonne',
+      nl: 'Rokken', de: 'Röcke', pt: 'Saias', pl: 'Spódnice',
+    },
+    singular: {
+      fr: 'Jupe', en: 'Skirt', es: 'Falda', it: 'Gonna',
+      nl: 'Rok', de: 'Rock', pt: 'Saia', pl: 'Spódnica',
+    },
+  },
+  {
+    slug: 'shorts',
+    parentSlug: 'bas',
+    position: 3,
+    defaultWeightGrams: 250,
+    measurementKeys: ['waist', 'hips', 'inseam', 'length'],
+    names: {
+      fr: 'Shorts et bermudas', en: 'Shorts', es: 'Pantalones cortos',
+      it: 'Shorts e bermuda', nl: "Shorts en bermuda's",
+      de: 'Shorts und Bermudas', pt: 'Calções', pl: 'Szorty i bermudy',
+    },
+    singular: {
+      fr: 'Short', en: 'Shorts', es: 'Pantalón corto', it: 'Short',
+      nl: 'Short', de: 'Shorts', pt: 'Calções', pl: 'Szorty',
+    },
+  },
+  {
+    slug: 'maillots-de-bain',
+    position: 9,
+    defaultWeightGrams: 150,
+    measurementKeys: ['chest', 'waist'],
+    names: {
+      fr: 'Maillots de bain', en: 'Swimwear', es: 'Bañadores',
+      it: 'Costumi da bagno', nl: 'Badkleding', de: 'Bademode',
+      pt: 'Fatos de banho', pl: 'Stroje kąpielowe',
+    },
+    singular: {
+      fr: 'Maillot de bain', en: 'Swimsuit', es: 'Bañador',
+      it: 'Costume da bagno', nl: 'Badpak', de: 'Badeanzug',
+      pt: 'Fato de banho', pl: 'Strój kąpielowy',
+    },
+  },
+  {
+    slug: 'lingerie-nuit',
+    position: 10,
+    defaultWeightGrams: 120,
+    measurementKeys: ['chest', 'waist'],
+    names: {
+      fr: 'Lingerie et nuit', en: 'Lingerie and nightwear',
+      es: 'Lencería y pijamas', it: 'Intimo e pigiami',
+      nl: 'Lingerie en nachtkleding', de: 'Wäsche und Nachtwäsche',
+      pt: 'Lingerie e pijamas', pl: 'Bielizna i piżamy',
+    },
+    singular: {
+      fr: 'Lingerie', en: 'Lingerie', es: 'Lencería', it: 'Intimo',
+      nl: 'Lingerie', de: 'Wäsche', pt: 'Lingerie', pl: 'Bielizna',
+    },
+  },
+  {
+    slug: 'combinaisons',
+    position: 11,
+    defaultWeightGrams: 500,
+    measurementKeys: ['shoulders', 'chest', 'waist', 'hips', 'length'],
+    names: {
+      fr: 'Combinaisons', en: 'Jumpsuits', es: 'Monos', it: 'Tute',
+      nl: 'Jumpsuits', de: 'Overalls', pt: 'Macacões', pl: 'Kombinezony',
+    },
+    singular: {
+      fr: 'Combinaison', en: 'Jumpsuit', es: 'Mono', it: 'Tuta',
+      nl: 'Jumpsuit', de: 'Overall', pt: 'Macacão', pl: 'Kombinezon',
+    },
+  },
 ]
 
 export interface BrandSeed {

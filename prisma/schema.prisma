@@ -42,6 +42,11 @@ enum ArticleCondition {
   VERY_GOOD
   GOOD
   FAIR
+  /// Défauts importants, assumés et décrits. Ajouté pour l'application de
+  /// gestion, qui distingue « état correct » de « mauvais état » : les
+  /// confondre reviendrait à mentir sur l'état d'une pièce, ce qui finit en
+  /// litige et en retour.
+  POOR
 }
 
 enum OfferStatus {

@@ -124,6 +124,10 @@
     "FAIR": {
       "label": "État correct",
       "help": "Usure visible, décrite dans la description de l'article."
+    },
+    "POOR": {
+      "label": "Mauvais état",
+      "help": "Défauts importants, décrits et photographiés. Vendu en connaissance de cause."
     }
   },
   "measurement": {

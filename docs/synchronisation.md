@@ -59,9 +59,8 @@ d'au plus 100. C'est ce qui rend l'import initial praticable.
 |---|---|---|
 | `externalId` | chaîne | 1 à 64 caractères. **L'identifiant de la pièce dans l'application.** C'est lui qui fait qu'un second envoi met à jour au lieu de dupliquer |
 | `title` | chaîne | 1 à 200. En français |
-| `description` | chaîne | 1 à 5000. En français |
 | `categorySlug` | chaîne | l'une des valeurs du §2.4 |
-| `condition` | chaîne | `NEW_WITH_TAGS`, `NEW_WITHOUT_TAGS`, `VERY_GOOD`, `GOOD`, `FAIR` |
+| `condition` | chaîne | `NEW_WITH_TAGS`, `NEW_WITHOUT_TAGS`, `VERY_GOOD`, `GOOD`, `FAIR`, `POOR` |
 | `sizeLabel` | chaîne | libre — `M`, `W32 L34`, `42` |
 | `priceCents` | entier | > 0. **En centimes**, jamais en euros décimaux |
 | `costCents` | entier | ≥ 0. Prix d'achat, en centimes. Nécessaire au calcul du prix plancher |
@@ -80,6 +79,7 @@ ressort **jamais** dans une réponse publique de la boutique.
 
 | Champ | Type | Contrainte |
 |---|---|---|
+| `description` | chaîne | 1 à 5000, en français. **Facultative** : à défaut, la boutique compose un texte factuel à partir de la marque, de la taille, de l'état, de la matière et des mesures |
 | `brandName` | chaîne | marque inconnue = créée |
 | `comparePriceCents` | entier | prix barré. Doit être **strictement supérieur** à `priceCents`, sinon rejeté — un prix de référence fictif est une pratique commerciale trompeuse |
 | `color` | chaîne | `ecru`, `marine`, `kaki`, `noir`, `bordeaux`, `gris`, `camel` |
@@ -99,12 +99,24 @@ parente.
 
 ```
 t-shirts            chemises           pulls-sweats
-jeans-pantalons     robes
+jeans-pantalons     jupes              shorts
+robes               combinaisons
 vestes-legeres      manteaux
 chaussures          accessoires        sacs
+maillots-de-bain    lingerie-nuit
 ```
 
 Refusées car parentes : `hauts`, `bas`, `vestes-manteaux`.
+
+`jupes`, `shorts`, `maillots-de-bain`, `lingerie-nuit` et `combinaisons` ont été
+ajoutées après la première lecture du contrat : sept familles du stock n'avaient
+aucune feuille, et les ranger de force ailleurs aurait faussé le filtrage.
+`shorts` couvre aussi les bermudas, `lingerie-nuit` couvre pyjamas,
+sous-vêtements et nuisettes.
+
+La catégorie `Autre` de l'application n'a **pas** d'équivalent, volontairement :
+une pièce qu'aucun mot-clé ne sait classer n'a rien à faire dans un catalogue
+filtrable. Ces articles sont retenus côté application.
 
 ### 2.5 Ce que l'application n'envoie JAMAIS
 
@@ -140,7 +152,9 @@ calculé. **La pièce est quand même publiée** — c'est une décision commerc
 qui appartient au vendeur — mais `estimatedMarginCents` dit la marge réelle, et
 elle peut être négative. À afficher côté application.
 
-En cas de rejet, le statut HTTP est 422 et chaque entrée porte son motif :
+Statut HTTP, selon l'issue du lot (voir §7.5) : `200` tout accepté,
+**`207 Multi-Status`** lot mixte, `422` tout rejeté. Chaque entrée porte son
+motif :
 
 ```json
 {
@@ -155,20 +169,26 @@ En cas de rejet, le statut HTTP est 422 et chaque entrée porte son motif :
 
 Motifs : `unknown-category`, `unknown-color`, `unknown-material`,
 `unknown-fit`, `weight-not-covered`, `invalid-price`,
-`compare-price-not-higher`, `image-unreachable`, `payload-too-large`.
+`compare-price-not-higher`, `payload-too-large`, `locked-by-checkout`.
 
 Un lot est traité **article par article** : une pièce rejetée n'annule pas les
 autres.
 
 ### 2.7 Images
 
-La boutique **récupère** les URL fournies et les héberge elle-même. Elle
-vérifie le type réel par les octets d'en-tête — pas par l'extension —, borne la
-taille et les dimensions, et supprime les métadonnées EXIF, qui contiennent
-souvent les coordonnées GPS du lieu de la photo.
+La boutique **télécharge et réhéberge** les URL fournies. Elle vérifie le type
+réel sur les octets d'en-tête — pas sur l'extension —, borne taille et
+dimensions, et supprime les métadonnées EXIF, qui contiennent souvent les
+coordonnées GPS du lieu de la photo.
 
-Les URL doivent rester accessibles le temps de l'appel. Une image injoignable
-rejette la pièce entière plutôt que de publier une fiche sans visuel.
+Limites : 10 Mo, 6000 × 6000 pixels au maximum, **800 pixels minimum sur le
+grand côté**. Formats : JPEG, PNG, WebP, AVIF.
+
+**Le téléchargement est asynchrone** — voir §6, décision 2.5. Trois cents
+images dans un seul appel dépasseraient le temps imparti à une fonction
+serverless. L'article est donc créé immédiatement en brouillon, la réponse porte
+`imagesPending: true`, et la fiche se publie seule dès que les images sont
+stockées. Une fiche n'est jamais publiée sans visuel.
 
 ### 2.8 Langues
 
@@ -287,3 +307,167 @@ production.
 6. Le rattrapage `GET /api/sync/changes` ferme la boucle.
 
 Les étapes 1 à 3 ne dépendent pas du paiement et peuvent avancer tout de suite.
+
+---
+
+## 6. Arbitrages — réponses aux sept questions
+
+Numérotation de la réponse de l'application de gestion.
+
+### 2.1 Catégories — cinq feuilles ajoutées
+
+Fait, et en base. `jupes` et `shorts` sous `bas` ; `maillots-de-bain`,
+`lingerie-nuit` et `combinaisons` à la racine, comme `robes`. Traduites dans les
+huit langues, avec poids par défaut et clés de mesures.
+
+Correspondance attendue :
+
+| famille de l'application | feuille |
+|---|---|
+| Jupe | `jupes` |
+| Short, Bermuda | `shorts` |
+| Maillot de bain | `maillots-de-bain` |
+| Pyjama, Sous-vêtement, Corset / Nuisette | `lingerie-nuit` |
+| Combi / Combinaison | `combinaisons` |
+| Autre | **ne pas envoyer** |
+
+### 2.2 `POOR` ajouté
+
+Fait, en base et traduit. Le refus de replier « mauvais état » sur `FAIR` était
+juste : c'est le genre de raccourci qui finit en litige et en retour, pas en
+vente.
+
+### 2.3 Quantité — option (a), et c'est la seule possible
+
+**Une commande ne peut pas porter deux exemplaires du même article, par
+construction.** `CartItem` n'a pas de colonne quantité et porte une contrainte
+d'unicité `(panier, article)` ; le verrou de stock fait passer un article entier
+de « disponible » à « réservé » ; les données structurées annoncent un stock de
+1. L'option (b) ne demanderait pas un champ mais la réécriture du panier, du
+verrou, de la commande et du paiement.
+
+Donc **(a)** : `<id>-1`, `<id>-2`, `<id>-3`, stables dans le temps.
+
+Quand la quantité passe de 3 à 2, archivez **le plus haut numéro qui n'est ni
+vendu ni réservé**. Si tous le sont, n'archivez rien : voir §2.7.
+
+### 2.4 `description` devient facultative
+
+Accepté. Seize heures de génération pour débloquer un import est un mauvais
+échange.
+
+À défaut, la boutique compose un texte factuel — marque, taille, état, matière,
+mesures — et marque la fiche comme ayant une description générée. Un envoi
+ultérieur avec une vraie description l'écrase.
+
+### 2.5 Images
+
+1. **Confirmé.** La boutique télécharge et réhéberge. Vos URL peuvent
+   disparaître ensuite sans casser la fiche.
+
+2. **Limites** : 10 Mo par image, 6000 × 6000 pixels au maximum, et **800 pixels
+   minimum sur le grand côté** — en dessous, une photo de vêtement est
+   inexploitable en fiche produit. Formats acceptés : JPEG, PNG, WebP, AVIF,
+   vérifiés sur les octets d'en-tête et non sur l'extension.
+
+3. **Le délai est un vrai problème, et je change le contrat pour lui.** Trois
+   cents téléchargements dans un seul appel dépasseront le temps imparti à une
+   fonction Vercel, en production, sur les gros lots.
+
+   Les images ne sont donc **plus récupérées pendant l'appel**. L'article est
+   créé immédiatement, en brouillon, et ses images sont téléchargées par la file
+   de tâches déjà en place. La fiche est publiée automatiquement dès qu'elles
+   sont stockées.
+
+   La réponse porte `imagesPending: true` et `published: false`. Un article dont
+   toutes les images échouent reste en brouillon et apparaît dans
+   `GET /api/sync/changes` avec le motif — jamais publié sans visuel.
+
+### 2.6 Poids — l'approche est la bonne
+
+Poids par défaut par catégorie, volontairement majorés, poids réel prioritaire :
+c'est exactement le bon arbitrage. Un poids sous-estimé coûte la différence de
+port à chaque vente ; surestimé, il ne coûte que quelques centimes d'affichage.
+
+Pour corriger au fil du temps, l'événement de vente portera de quoi réconcilier :
+
+```json
+"shipping": {
+  "parcelWeightGrams": 780,
+  "tierMaxGrams": 1000,
+  "carrierCostCents": 480,
+  "chargedCents": 0
+}
+```
+
+`parcelWeightGrams` inclut l'emballage. Comparé à `tierMaxGrams`, il dit si la
+pièce frôle une borne de palier — c'est là qu'une sous-estimation coûte cher.
+
+### 2.7 Vendu sur Vinted pendant qu'il est dans un panier
+
+La règle est déjà écrite et implémentée : **la boutique ne retire jamais une
+ligne de panier en silence.** Trois cas :
+
+- **article simplement dans des paniers** — l'archivage réussit. Les lignes
+  passent à l'état « indisponible », restent visibles avec un message explicite,
+  et seule la cliente peut les retirer ;
+- **article `RESERVED`** — quelqu'un est à l'étape de paiement, carte en main.
+  L'archivage est **refusé**, statut `409`, avec l'échéance du verrou dans la
+  réponse. Réessayez après. Le verrou dure quinze minutes au maximum ;
+- **article `SOLD`** — refusé. Il est déjà parti, et la boutique vous l'annonce
+  par l'événement de vente.
+
+Réponse d'un refus :
+
+```json
+{ "externalId": "abc-123", "action": "rejected",
+  "reason": "locked-by-checkout",
+  "lockedUntil": "2026-08-14T10:47:00.000Z" }
+```
+
+---
+
+## 7. Réponses aux cinq demandes
+
+### 7.1 Domaine
+
+À confirmer : c'est l'URL de production Vercel de la boutique. Elle sera
+communiquée avec les secrets.
+
+### 7.2 Secrets
+
+D'accord sur la méthode, et c'est la bonne : ils sont générés par le
+propriétaire avec `openssl rand -base64 32` et posés directement dans les
+variables d'environnement des deux projets Vercel. Ni dépôt, ni conversation.
+
+### 7.3 Mode d'essai — accepté
+
+`?dryRun=1` ou `"dryRun": true` dans le corps. Valide tout, calcule le prix
+plancher, renvoie **exactement** la même réponse, n'écrit rien. `action` vaut
+alors `would-create` ou `would-update`.
+
+Demande justifiée : sans lui, vérifier une correspondance de champs oblige à
+polluer un catalogue réel puis à nettoyer à la main.
+
+### 7.4 Cadence
+
+**30 appels par minute**, largement au-dessus des 20 lots de l'import initial.
+Vous pouvez les enchaîner sans espacer.
+
+La limite est comptée par clé et se **ferme** en cas de panne du compteur — la
+route écrit dans le catalogue, elle est traitée comme un chemin sensible. Un
+dépassement renvoie `429` avec `Retry-After`.
+
+### 7.5 Statut HTTP d'un lot mixte — objection retenue
+
+Vous avez raison, `422` global sur un lot partiellement accepté est trompeur.
+
+| situation | statut |
+|---|---|
+| tout accepté | `200` |
+| lot mixte | **`207 Multi-Status`** |
+| tout rejeté | `422` |
+| corps illisible, clé absente ou invalide | `400` / `401` |
+
+Le corps porte toujours le détail par article. Un `207` signifie « regardez le
+détail », jamais « tout a échoué ».
