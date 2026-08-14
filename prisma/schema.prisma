@@ -342,6 +342,15 @@ model Article {
 
   weightGrams Int
 
+  /// Identifiant de la pièce dans l'application de gestion, qui est la SOURCE
+  /// DE VÉRITÉ de l'inventaire. C'est lui qui fait qu'une resynchronisation met
+  /// à jour au lieu de créer un doublon.
+  ///
+  /// Nul pour les pièces nées ici — jeu de démonstration, back-office.
+  externalId      String?   @unique
+  /// Dernière synchronisation réussie depuis l'application de gestion.
+  externalSyncedAt DateTime?
+
   status      ArticleStatus @default(DRAFT)
   scheduledAt DateTime?
   publishedAt DateTime?
