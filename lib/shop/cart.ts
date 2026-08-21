@@ -2,6 +2,7 @@ import 'server-only'
 
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
+import { isArticleListed } from '@/lib/db/visibility'
 import { getCurrentUser } from '@/lib/auth/session'
 import {
   ensureShopSessionToken,
@@ -282,15 +283,17 @@ export type CartMutationResult =
  */
 export async function addToCart(articleId: string): Promise<CartMutationResult> {
   const article = await prisma.article.findFirst({
-    where: { id: articleId, publishedAt: { not: null } },
-    select: { id: true, priceCents: true, status: true },
+    where: { id: articleId },
+    select: { id: true, priceCents: true, status: true, publishedAt: true },
   })
 
   if (!article) return { ok: false, reason: 'unknown-article' }
 
-  // On refuse d'ajouter ce qui est déjà parti. Une pièce réservée reste
-  // ajoutable : la réservation peut expirer avant le paiement.
-  if (article.status === 'SOLD' || article.status === 'ARCHIVED') {
+  // On refuse d'ajouter ce qui est déjà parti, retiré du registre, ou pas
+  // encore en ligne. Une pièce RÉSERVÉE reste ajoutable : la réservation peut
+  // expirer avant le paiement. C'est exactement la règle des grilles du
+  // catalogue, donc le même prédicat.
+  if (!isArticleListed(article)) {
     return { ok: false, reason: 'not-purchasable' }
   }
 

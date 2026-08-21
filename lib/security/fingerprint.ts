@@ -1,13 +1,19 @@
 import 'server-only'
 
 import { headers } from 'next/headers'
-import { createHash } from 'node:crypto'
+import { pseudonymize } from './pseudonymize'
 
 /**
  * Empreinte d'appelant pour la limitation de débit.
  *
- * Hachée : elle sert de clé de compteur, pas de trace. Aucune adresse IP en
- * clair ne doit se retrouver dans les logs ou dans Redis.
+ * Le haché sans clé qui figurait ici n'anonymisait rien : les 4 milliards
+ * d'adresses IPv4 se pré-calculent, donc `sha256(ip)` se retourne en adresse
+ * en clair. Or cette empreinte part chez un tiers (Upstash) dans le chemin
+ * d'URL des requêtes, où elle est susceptible d'être journalisée.
+ *
+ * On passe donc par un HMAC à rotation quotidienne : le jeton reste stable le
+ * temps d'une fenêtre de comptage, mais il n'est ni réversible ni corrélable
+ * d'un jour à l'autre. Voir `pseudonymize.ts` pour le détail du raisonnement.
  */
 export async function clientFingerprint(): Promise<string> {
   const h = await headers()
@@ -17,5 +23,5 @@ export async function clientFingerprint(): Promise<string> {
   const forwarded = h.get('x-forwarded-for')?.split(',')[0]?.trim()
   const ip = forwarded || h.get('x-real-ip') || 'inconnu'
 
-  return createHash('sha256').update(ip).digest('hex').slice(0, 32)
+  return pseudonymize({ purpose: 'rate-limit:ip', value: ip, rotateDaily: true })
 }

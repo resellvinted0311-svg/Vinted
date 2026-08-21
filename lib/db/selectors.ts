@@ -13,9 +13,35 @@ export const PRIVATE_ARTICLE_FIELDS = [
   'internalNotes',
   'sourcedFrom',
   'sourcedAt',
+  /**
+   * Qui détient la réservation ne regarde personne d'autre.
+   *
+   * L'identifiant lui-même est opaque, mais il permet de savoir que DEUX
+   * pièces sont réservées par la même personne — donc de suivre un panier en
+   * cours de constitution depuis l'extérieur. Ce qu'une visiteuse doit voir
+   * d'une réservation, c'est qu'elle existe et jusqu'à quand, rien de plus :
+   * `reservedUntil` reste public pour cette raison.
+   */
+  'reservedById',
 ] as const
 
 export const PRIVATE_ORDER_ITEM_FIELDS = ['costCentsSnapshot'] as const
+
+/**
+ * Secrets d'authentification et de session.
+ *
+ * Ces valeurs ne sont pas seulement confidentielles : elles SONT l'identité.
+ * Un jeton de session boutique recopié dans une réponse JSON donnerait accès
+ * au panier et aux favoris de la personne concernée.
+ */
+export const PRIVATE_SECRET_FIELDS = [
+  'passwordHash',
+  'sessionToken',
+  'tokenHash',
+  'access_token',
+  'refresh_token',
+  'id_token',
+] as const
 
 /**
  * Sélecteurs publics.
@@ -144,7 +170,7 @@ export function findPrivateFieldLeaks(payload: unknown): string[] {
   const forbidden = new Set<string>([
     ...PRIVATE_ARTICLE_FIELDS,
     ...PRIVATE_ORDER_ITEM_FIELDS,
-    'passwordHash',
+    ...PRIVATE_SECRET_FIELDS,
   ])
   const found = new Set<string>()
   const seen = new WeakSet<object>()

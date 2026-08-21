@@ -151,9 +151,15 @@ function encodeUserinfo(value: string): string {
 /** Décrit ce qui cloche dans une chaîne de connexion, ou `null` si elle est valide. */
 export function describeConnectionProblem(value: string): string | null {
   if (!/^(postgres|postgresql):\/\//i.test(value)) {
-    // On ne montre que l'amorce : le mot de passe vient après « :// ».
-    const head = value.slice(0, 16).replace(/\s/g, '·')
-    return `la chaîne devrait commencer par « postgresql:// », elle commence par « ${head}… »`
+    // Aucun extrait, même court. « On ne montre que l'amorce » supposait que
+    // le mot de passe vient après « :// » — vrai pour une chaîne bien formée,
+    // faux précisément dans le cas qu'on est en train de diagnostiquer. Une
+    // valeur mal collée peut commencer par n'importe quoi, mot de passe
+    // compris.
+    return (
+      'la chaîne ne commence pas par « postgresql:// ». Vérifiez qu’aucun ' +
+      'préfixe ni guillemet n’a été collé avec elle'
+    )
   }
 
   // Un « @ » non encodé dans le mot de passe rend l'URL ambiguë : il y a
@@ -185,11 +191,26 @@ export function describeConnectionProblem(value: string): string | null {
   // jamais stocké en clair de leur côté. Oublier la substitution produit une
   // erreur d'authentification qui laisse chercher ailleurs.
   const password = decodeURIComponent(parsed.password)
-  const placeholder = /\[[^\]]*\]|YOUR[-_]?PASSWORD|<[^>]*>/i.exec(password)
+
+  // Détection RESSERRÉE sur les marqueurs réellement émis par les hébergeurs.
+  //
+  // La version précédente traitait « tout texte entre crochets » comme un
+  // marqueur, et INTERPOLAIT le fragment déclencheur dans son message. Un mot
+  // de passe parfaitement valide contenant une paire de crochets — cas courant
+  // avec un générateur — voyait donc un morceau de sa valeur réelle écrit dans
+  // le journal de build Vercel, conservé sans limite et lisible par qui détient
+  // un lien de déploiement.
+  //
+  // Le message ne cite plus jamais le contenu : il nomme la CLASSE de marqueur.
+  const placeholder =
+    /YOUR[-_]?PASSWORD|\[YOUR[-_][^\]]*\]|<YOUR[-_][^>]*>|<password>|\[password\]/i.test(
+      password,
+    )
+
   if (placeholder) {
     return (
-      `le mot de passe vaut encore « ${placeholder[0]} », qui est un texte à ` +
-      'remplacer. Utilisez le mot de passe de votre base — Supabase : ' +
+      'le mot de passe est encore le texte à remplacer fourni par ' +
+      'l’hébergeur. Utilisez le mot de passe de votre base — Supabase : ' +
       'Project Settings → Database → Reset database password si vous ne ' +
       'l’avez plus'
     )

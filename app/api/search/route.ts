@@ -1,4 +1,5 @@
-import { NextResponse, type NextRequest } from 'next/server'
+import { type NextRequest } from 'next/server'
+import { publicJson } from '@/lib/security/public-json'
 import { suggest } from '@/lib/db/queries/search'
 import { autocompleteSchema } from '@/lib/validation/catalogue'
 import { checkRateLimit } from '@/lib/security/rate-limit'
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
     sensitive: false,
   })
   if (!allowed) {
-    return NextResponse.json(
+    return publicJson(
       { suggestions: [] },
       { status: 429, headers: { 'Cache-Control': 'no-store' } },
     )
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
   })
 
   if (!parsed.success) {
-    return NextResponse.json(
+    return publicJson(
       { suggestions: [] },
       { headers: { 'Cache-Control': 'no-store' } },
     )
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
 
   const suggestions = await suggest(parsed.data.q, parsed.data.locale)
 
-  return NextResponse.json(
+  return publicJson(
     { suggestions },
     {
       headers: {

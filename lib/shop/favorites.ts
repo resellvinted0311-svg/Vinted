@@ -1,13 +1,11 @@
 'use server'
 
 import { prisma } from '@/lib/db/client'
+import { visibleArticleWhere } from '@/lib/db/visibility'
 import { getCurrentUser } from '@/lib/auth/session'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
-import {
-  ensureShopSessionToken,
-  readShopSessionToken,
-} from '@/lib/shop/session-token'
+import { ensureShopSessionToken, readShopSessionToken } from '@/lib/shop/session-token'
 
 /**
  * Favoris.
@@ -19,7 +17,24 @@ import {
  *
  * Les favoris d'un visiteur sont repris dans son compte à l'inscription comme
  * à la connexion : c'est ce qui rend l'ajout aux favoris utile avant même
- * d'avoir un compte.
+ * d'avoir un compte. La reprise elle-même vit dans `favorites-merge.ts`, hors
+ * de ce fichier — voir l'avertissement ci-dessous.
+ *
+ * ---------------------------------------------------------------------------
+ * AVERTISSEMENT — chaque export de ce fichier est une adresse HTTP publique
+ * ---------------------------------------------------------------------------
+ * `'use server'` ne rend pas un fichier privé : il rend PUBLIC tout ce qu'il
+ * exporte. Chaque fonction exportée ici reçoit un identifiant stable et devient
+ * appelable depuis n'importe quel navigateur, qu'une page s'en serve ou non.
+ *
+ * Règle : un export = un point d'entrée réseau. Il doit donc valider ses
+ * entrées avec Zod, et dériver l'identité de l'appelant de la session — jamais
+ * la recevoir en paramètre.
+ *
+ * `mergeGuestFavorites` violait les deux : elle recevait un identifiant de
+ * compte du réseau et écrivait dans les favoris de ce compte, sans vérifier qui
+ * appelait. Elle a été déplacée dans un module `server-only`, qui n'expose
+ * rien.
  */
 
 /** Identifiants des articles en favori, pour la session courante. */
@@ -66,10 +81,11 @@ export async function toggleFavorite(
   })
   if (!allowed) return { ok: false, isFavorite: false, reason: 'rate-limited' }
 
-  // On ne met en favori que ce qui existe et a été publié : sinon n'importe
-  // quel identifiant deviendrait insérable.
+  // On ne met en favori que ce qui est réellement consultable : sinon
+  // n'importe quel identifiant deviendrait insérable, et on stockerait des
+  // renvois vers des fiches introuvables.
   const article = await prisma.article.findFirst({
-    where: { id: articleId, publishedAt: { not: null } },
+    where: { id: articleId, ...visibleArticleWhere() },
     select: { id: true },
   })
   if (!article) return { ok: false, isFavorite: false, reason: 'unknown-article' }
@@ -110,31 +126,4 @@ export async function toggleFavorite(
     data: { sessionToken: token, articleId },
   })
   return { ok: true, isFavorite: true }
-}
-
-/**
- * Reprend les favoris d'un visiteur dans son compte.
- *
- * Appelée à l'inscription et à la connexion. `skipDuplicates` évite d'échouer
- * si l'article est déjà en favori sur le compte — cas courant quand quelqu'un
- * se reconnecte depuis un navigateur déjà utilisé.
- */
-export async function mergeGuestFavorites(userId: string): Promise<number> {
-  const token = await readShopSessionToken()
-  if (!token) return 0
-
-  const guestRows = await prisma.guestFavorite.findMany({
-    where: { sessionToken: token },
-    select: { articleId: true },
-  })
-  if (guestRows.length === 0) return 0
-
-  const result = await prisma.favorite.createMany({
-    data: guestRows.map((row) => ({ userId, articleId: row.articleId })),
-    skipDuplicates: true,
-  })
-
-  await prisma.guestFavorite.deleteMany({ where: { sessionToken: token } })
-
-  return result.count
 }

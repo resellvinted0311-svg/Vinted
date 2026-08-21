@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { publicJson } from '@/lib/security/public-json'
 import { getCurrentUser } from '@/lib/auth/session'
 
 export const runtime = 'nodejs'
@@ -25,7 +25,7 @@ export async function GET() {
     ? { signedIn: true as const, firstName: user.firstName, role: user.role }
     : { signedIn: false as const, firstName: null, role: null }
 
-  return NextResponse.json(body, {
+  return publicJson(body, {
     headers: {
       // Une réponse de session ne doit jamais être mise en cache, ni par le
       // navigateur, ni par un intermédiaire.

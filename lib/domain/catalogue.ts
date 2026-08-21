@@ -86,7 +86,22 @@ export function decodeCursor(raw: string | null | undefined): Cursor | null {
     const value = Number(decoded.slice(0, separator))
     const id = decoded.slice(separator + 1)
 
-    if (!Number.isFinite(value) || id.length === 0) return null
+    // `Number.isFinite` laisse passer 1e30. La valeur part ensuite en
+    // paramètre lié vers un cast `::bigint` qui déborde, et PostgreSQL répond
+    // « bigint out of range » : une URL forgée renvoyait donc une 500 sur les
+    // trois pages publiques indexées — catalogue, catégorie, marque. Un lien
+    // partagé n'importe où cassait la page pour tous ses visiteurs.
+    //
+    // `isSafeInteger` refuse les flottants et les entiers hors portée. La
+    // borne explicite couvre en plus les valeurs représentables en JavaScript
+    // mais absurdes comme date en millisecondes ou comme montant.
+    if (!Number.isSafeInteger(value)) return null
+    if (Math.abs(value) > 8.64e15) return null
+
+    // Un identifiant est un cuid : borner sa longueur évite d'envoyer une
+    // chaîne arbitraire dans une requête.
+    if (id.length === 0 || id.length > 64) return null
+
     return { value, id }
   } catch {
     return null

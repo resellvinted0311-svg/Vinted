@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { prisma } from '@/lib/db/client'
 import { publicArticleCardSelect } from '@/lib/db/selectors'
+import { visibleArticleWhere } from '@/lib/db/visibility'
 import { getFavoriteArticleIds } from '@/lib/shop/favorites'
 import {
   ArticleCard,
@@ -33,14 +34,16 @@ export default async function FavoritesPage({
   const t = await getTranslations('favorites')
   const ids = await getFavoriteArticleIds()
 
-  // Les favoris sont conservés même quand l'article part : on les affiche
-  // toujours, marqués « Vendu », plutôt que de les faire disparaître sans
-  // explication.
+  // Un favori vendu reste affiché, marqué « Vendu » : le faire disparaître
+  // sans explication serait pire. Une pièce RETIRÉE du registre, en revanche,
+  // n'a plus de fiche à ouvrir — l'afficher avec son prix promettait un achat
+  // impossible et menait à une page introuvable. D'où le prédicat partagé,
+  // le même que celui de la fiche article.
   const articles =
     ids.length === 0
       ? []
       : await prisma.article.findMany({
-          where: { id: { in: ids }, publishedAt: { not: null } },
+          where: { id: { in: ids }, ...visibleArticleWhere() },
           select: publicArticleCardSelect,
           orderBy: { publishedAt: 'desc' },
         })

@@ -9,6 +9,11 @@ import {
   type PublicArticleDetail,
 } from '@/lib/db/selectors'
 import {
+  LISTED_STATUSES,
+  listedArticleWhere,
+  visibleArticleWhere,
+} from '@/lib/db/visibility'
+import {
   decodeCursor,
   encodeCursor,
   cursorValueFor,
@@ -31,15 +36,8 @@ import {
  * colonne au SELECT brut.
  */
 
-/**
- * Statuts visibles au catalogue.
- *
- * RESERVED est inclus : la réservation ne dure que 15 minutes et expire le
- * plus souvent. Masquer l'article ferait disparaître puis réapparaître des
- * pièces sans explication. Il est affiché avec une mention honnête.
- * SOLD est exclu du listing, mais sa fiche reste accessible en 200.
- */
-const LISTED_STATUSES = ['AVAILABLE', 'RESERVED'] as const
+// Les statuts visibles vivent dans `lib/db/visibility.ts` : la même règle sert
+// au catalogue, à la fiche, aux favoris et au compteur d'accueil.
 
 interface ListInput {
   filters: CatalogueFilters
@@ -359,11 +357,7 @@ export async function getArticleBySlug(
   locale: string,
 ): Promise<PublicArticleDetail | null> {
   const article = await prisma.article.findFirst({
-    where: {
-      slug,
-      status: { in: ['AVAILABLE', 'RESERVED', 'SOLD'] },
-      publishedAt: { not: null, lte: new Date() },
-    },
+    where: { slug, ...visibleArticleWhere() },
     select: publicArticleDetailSelect,
   })
 
@@ -435,9 +429,9 @@ export async function getSimilarArticles(
  * dépêcher. Le brief interdit les seconds, pas les premières.
  */
 export async function countListedArticles(): Promise<number> {
-  return prisma.article.count({
-    where: { status: { in: [...LISTED_STATUSES] } },
-  })
+  // La publication compte autant que le statut : sans elle, le bandeau
+  // annoncerait des pièces qu'aucune visiteuse ne peut ouvrir.
+  return prisma.article.count({ where: listedArticleWhere() })
 }
 
 /** Derniers arrivages, pour l'accueil. */

@@ -7,7 +7,8 @@ import { createDatabaseSession, destroyCurrentSession } from './session'
 import { signIn as authSignIn } from './index'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
-import { mergeGuestFavorites } from '@/lib/shop/favorites'
+import { pseudonymize } from '@/lib/security/pseudonymize'
+import { mergeGuestFavorites } from '@/lib/shop/favorites-merge'
 import { isAuthConfigured } from '@/lib/config/site'
 
 export type AuthActionState =
@@ -131,8 +132,18 @@ export async function signInAction(
   // empreinte seule, ferme cette porte.
   const fingerprint = await clientFingerprint()
 
+  // L'adresse e-mail ne sort JAMAIS en clair dans une clé de compteur : elle
+  // partirait telle quelle dans le chemin d'URL des requêtes au prestataire de
+  // limitation, où elle serait journalisée chez lui. Le jeton distingue les
+  // comptes aussi bien que l'adresse — c'est tout ce que le compteur demande.
+  const account = pseudonymize({
+    purpose: 'rate-limit:signin-email',
+    value: email,
+    rotateDaily: true,
+  })
+
   const perAccount = await checkRateLimit({
-    key: `signin:${fingerprint}:${email}`,
+    key: `signin:${fingerprint}:${account}`,
     limit: 10,
     windowSeconds: 900,
     sensitive: true,
