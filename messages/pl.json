@@ -234,6 +234,69 @@
     "addresses": "Adresy",
     "settings": "Ustawienia"
   },
+  "privacy": {
+    "title": "Prywatność",
+    "intro": "Co ta witryna przechowuje na Twój temat, dlaczego, jak długo i co możesz z tym zrobić.",
+    "collectionNotice": "Twój adres e-mail służy do prowadzenia konta i obsługi zamówień. Do niczego więcej.",
+    "collectionLink": "Co przechowujemy",
+    "controller": "Administrator danych",
+    "controllerMissing": "Tożsamość administratora zostanie opublikowana, gdy tylko będzie znana. Nic tu nie jest zmyślone.",
+    "purposes": "Co przetwarzamy i dlaczego",
+    "table": {
+      "purpose": "Przetwarzanie",
+      "basis": "Podstawa prawna",
+      "retention": "Okres przechowywania"
+    },
+    "basis": {
+      "contract": "Wykonanie umowy",
+      "consent": "Zgoda",
+      "legal-obligation": "Obowiązek prawny",
+      "legitimate-interest": "Uzasadniony interes"
+    },
+    "processing": {
+      "account": "Twoje konto",
+      "orders": "Twoje zamówienia i faktury",
+      "favorites": "Twoje ulubione",
+      "cart": "Twój koszyk",
+      "marketing": "Nowości e-mailem",
+      "security": "Ochrona przed atakami"
+    },
+    "retentionWhileAccount": "Dopóki konto istnieje",
+    "retentionDays": "{days} dni",
+    "retentionYears": "{years} lat",
+    "processors": "Kto jeszcze ma dostęp",
+    "processorsIntro": "Ci dostawcy przetwarzają dane w naszym imieniu i wyłącznie zgodnie z naszymi instrukcjami. Lista obejmuje usługi rzeczywiście dziś podłączone.",
+    "region": {
+      "eu": "Unia Europejska",
+      "us-scc": "Stany Zjednoczone, standardowe klauzule umowne",
+      "eu-us-scc": "Unia Europejska i Stany Zjednoczone, standardowe klauzule umowne"
+    },
+    "rights": "Twoje prawa",
+    "rightsIntro": "Dostęp, sprostowanie, usunięcie, przenoszenie, sprzeciw i wycofanie zgody. Z poziomu konta, bez żadnych dokumentów.",
+    "rightsLink": "Otwórz moje konto",
+    "complaint": "Jeśli uważasz, że Twoje prawa nie są respektowane, możesz złożyć skargę do krajowego organu ochrony danych.",
+    "myData": {
+      "title": "Moje dane",
+      "exportTitle": "Otrzymać kopię",
+      "exportBody": "Plik zawierający wszystko, co ta witryna przechowuje na Twój temat.",
+      "exportButton": "Pobierz moje dane",
+      "eraseTitle": "Usuń moje konto",
+      "eraseBody": "Nieodwracalne. Faktury są przechowywane przez dziesięć lat, tak jak wymaga prawo, ale Twoja tożsamość zostaje z nich usunięta.",
+      "eraseConfirmLabel": "Wpisz EFFACER, aby potwierdzić",
+      "eraseButton": "Usuń moje konto",
+      "erasedDeleted": "Twoje konto zostało usunięte.",
+      "erasedAnonymized": "Twoja tożsamość została usunięta. Faktury pozostają ze względu na obowiązek księgowy.",
+      "consentTitle": "Nowości e-mailem",
+      "consentOn": "Otrzymujesz nowości.",
+      "consentOff": "Nic nie otrzymujesz.",
+      "errors": {
+        "confirmationRequired": "Wpisz EFFACER, aby potwierdzić.",
+        "rateLimited": "Zbyt wiele żądań. Spróbuj za godzinę.",
+        "unknownAccount": "Nie znaleziono konta.",
+        "invalidInput": "Nieprawidłowe żądanie."
+      }
+    }
+  },
   "footer": {
     "legalNotice": "Informacje prawne",
     "terms": "Ogólne warunki sprzedaży",

@@ -234,6 +234,69 @@
     "addresses": "Indirizzi",
     "settings": "Impostazioni"
   },
+  "privacy": {
+    "title": "Riservatezza",
+    "intro": "Che cosa questo sito conserva su di lei, perché, per quanto tempo e che cosa può farne.",
+    "collectionNotice": "Il suo indirizzo e-mail serve a gestire il suo account e i suoi ordini. Nient’altro.",
+    "collectionLink": "Che cosa conserviamo",
+    "controller": "Titolare del trattamento",
+    "controllerMissing": "L’identità del titolare sarà pubblicata non appena disponibile. Qui non si inventa nulla.",
+    "purposes": "Che cosa trattiamo e perché",
+    "table": {
+      "purpose": "Trattamento",
+      "basis": "Base giuridica",
+      "retention": "Conservazione"
+    },
+    "basis": {
+      "contract": "Esecuzione del contratto",
+      "consent": "Consenso",
+      "legal-obligation": "Obbligo di legge",
+      "legitimate-interest": "Legittimo interesse"
+    },
+    "processing": {
+      "account": "Il suo account",
+      "orders": "I suoi ordini e le sue fatture",
+      "favorites": "I suoi preferiti",
+      "cart": "Il suo carrello",
+      "marketing": "Le novità via e-mail",
+      "security": "La protezione dagli attacchi"
+    },
+    "retentionWhileAccount": "Finché l’account esiste",
+    "retentionDays": "{days} giorni",
+    "retentionYears": "{years} anni",
+    "processors": "Chi altro vi ha accesso",
+    "processorsIntro": "Questi fornitori trattano dati per nostro conto e soltanto secondo le nostre istruzioni. L’elenco riflette i servizi realmente collegati oggi.",
+    "region": {
+      "eu": "Unione europea",
+      "us-scc": "Stati Uniti, clausole contrattuali tipo",
+      "eu-us-scc": "Unione europea e Stati Uniti, clausole contrattuali tipo"
+    },
+    "rights": "I suoi diritti",
+    "rightsIntro": "Accesso, rettifica, cancellazione, portabilità, opposizione, revoca del consenso. Dal suo account, senza documenti da fornire.",
+    "rightsLink": "Apri il mio account",
+    "complaint": "Se ritiene che i suoi diritti non siano rispettati, può rivolgersi all’autorità nazionale per la protezione dei dati.",
+    "myData": {
+      "title": "I miei dati",
+      "exportTitle": "Ricevere una copia",
+      "exportBody": "Un file con tutto ciò che questo sito conserva su di lei.",
+      "exportButton": "Scarica i miei dati",
+      "eraseTitle": "Cancellare il mio account",
+      "eraseBody": "Irreversibile. Le sue fatture sono conservate dieci anni, come impone la legge, ma la sua identità viene rimossa.",
+      "eraseConfirmLabel": "Digiti EFFACER per confermare",
+      "eraseButton": "Cancella il mio account",
+      "erasedDeleted": "Il suo account è stato eliminato.",
+      "erasedAnonymized": "La sua identità è stata cancellata. Le fatture sono conservate per obbligo contabile.",
+      "consentTitle": "Novità via e-mail",
+      "consentOn": "Riceve le novità.",
+      "consentOff": "Non riceve nulla.",
+      "errors": {
+        "confirmationRequired": "Digiti EFFACER per confermare.",
+        "rateLimited": "Troppe richieste. Riprovi tra un’ora.",
+        "unknownAccount": "Account non trovato.",
+        "invalidInput": "Richiesta non valida."
+      }
+    }
+  },
   "footer": {
     "legalNotice": "Note legali",
     "terms": "Condizioni generali di vendita",

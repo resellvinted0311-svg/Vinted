@@ -234,6 +234,69 @@
     "addresses": "Adresses",
     "settings": "Paramètres"
   },
+  "privacy": {
+    "title": "Confidentialité",
+    "intro": "Ce que ce site conserve à votre sujet, pourquoi, pendant combien de temps, et ce que vous pouvez en faire.",
+    "collectionNotice": "Votre adresse e-mail sert à gérer votre compte et vos commandes. Rien d’autre.",
+    "collectionLink": "Ce que nous conservons",
+    "controller": "Responsable du traitement",
+    "controllerMissing": "L’identité du responsable sera publiée dès qu’elle sera renseignée. Aucune valeur n’est inventée ici.",
+    "purposes": "Ce que nous traitons, et pourquoi",
+    "table": {
+      "purpose": "Traitement",
+      "basis": "Base légale",
+      "retention": "Conservation"
+    },
+    "basis": {
+      "contract": "Exécution du contrat",
+      "consent": "Consentement",
+      "legal-obligation": "Obligation légale",
+      "legitimate-interest": "Intérêt légitime"
+    },
+    "processing": {
+      "account": "Votre compte",
+      "orders": "Vos commandes et vos factures",
+      "favorites": "Vos favoris",
+      "cart": "Votre panier",
+      "marketing": "Les nouveautés par e-mail",
+      "security": "La protection contre les attaques"
+    },
+    "retentionWhileAccount": "Tant que le compte existe",
+    "retentionDays": "{days} jours",
+    "retentionYears": "{years} ans",
+    "processors": "Qui d’autre y a accès",
+    "processorsIntro": "Ces prestataires traitent des données pour notre compte et selon nos seules instructions. Cette liste est celle des services réellement branchés aujourd’hui.",
+    "region": {
+      "eu": "Union européenne",
+      "us-scc": "États-Unis, clauses contractuelles types",
+      "eu-us-scc": "Union européenne et États-Unis, clauses contractuelles types"
+    },
+    "rights": "Vos droits",
+    "rightsIntro": "Accès, rectification, effacement, portabilité, opposition, retrait du consentement. Depuis votre espace personnel, sans justificatif à fournir.",
+    "rightsLink": "Ouvrir mon espace personnel",
+    "complaint": "Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir la CNIL (cnil.fr).",
+    "myData": {
+      "title": "Mes données",
+      "exportTitle": "Recevoir une copie",
+      "exportBody": "Un fichier contenant tout ce que ce site conserve à votre sujet.",
+      "exportButton": "Télécharger mes données",
+      "eraseTitle": "Effacer mon compte",
+      "eraseBody": "Irréversible. Vos factures sont conservées dix ans, comme la loi l’impose, mais votre identité en est retirée.",
+      "eraseConfirmLabel": "Tapez EFFACER pour confirmer",
+      "eraseButton": "Effacer mon compte",
+      "erasedDeleted": "Votre compte a été supprimé.",
+      "erasedAnonymized": "Votre identité a été effacée. Vos factures sont conservées au titre de l’obligation comptable.",
+      "consentTitle": "Nouveautés par e-mail",
+      "consentOn": "Vous recevez les nouveautés.",
+      "consentOff": "Vous ne recevez rien.",
+      "errors": {
+        "confirmationRequired": "Tapez EFFACER pour confirmer.",
+        "rateLimited": "Trop de demandes. Réessayez dans une heure.",
+        "unknownAccount": "Compte introuvable.",
+        "invalidInput": "Demande invalide."
+      }
+    }
+  },
   "footer": {
     "legalNotice": "Mentions légales",
     "terms": "Conditions générales de vente",

@@ -1,0 +1,192 @@
+/**
+ * Registre des traitements — la source unique.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi ce fichier plutôt qu'une page de texte
+ * ---------------------------------------------------------------------------
+ * Une politique de confidentialité rédigée à la main dérive du code en
+ * quelques semaines : on ajoute un prestataire, on allonge une conservation,
+ * on oublie de rouvrir le document. Le texte devient alors une déclaration
+ * fausse — ce qui est pire que pas de texte du tout, parce qu'il engage.
+ *
+ * Ici, la déclaration EST la configuration :
+ *  - la page publique de confidentialité affiche ces entrées ;
+ *  - la purge périodique applique ces durées ;
+ *  - la liste des sous-traitants se déduit de l'environnement réellement
+ *    configuré — un prestataire non branché n'apparaît pas.
+ *
+ * Conséquence voulue : brancher un nouveau prestataire sans l'inscrire ici se
+ * remarque, et rallonger une conservation dans le texte sans la rallonger dans
+ * la purge est impossible.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce que ce fichier n'est pas
+ * ---------------------------------------------------------------------------
+ * Il ne remplace pas le registre écrit de l'article 30, ni l'avis d'un
+ * juriste. Il donne les faits techniques exacts sur lesquels ce registre
+ * s'appuie. Aucune valeur n'y est inventée : ce qui n'est pas connu du code
+ * n'est pas affirmé.
+ */
+
+/** Bases légales de l'article 6.1 effectivement utilisées ici. */
+export type LegalBasis =
+  /** 6.1.b — exécution du contrat de vente. */
+  | 'contract'
+  /** 6.1.a — consentement, retirable à tout moment. */
+  | 'consent'
+  /** 6.1.c — obligation légale (comptabilité, facturation). */
+  | 'legal-obligation'
+  /** 6.1.f — intérêt légitime (sécurité du service). */
+  | 'legitimate-interest'
+
+export interface Processing {
+  /** Identifiant stable, sert de clé de traduction. */
+  key: string
+  /** Tables concernées, pour relier la déclaration au schéma réel. */
+  tables: readonly string[]
+  basis: LegalBasis
+  /** Durée de conservation en jours. `null` = tant que le compte existe. */
+  retentionDays: number | null
+  /**
+   * Ce qui justifie la durée. Écrit en clair parce que c'est la question
+   * qu'on se repose deux ans plus tard, jamais celle dont on se souvient.
+   */
+  retentionReason: string
+}
+
+/**
+ * Durée de vie du cookie de session boutique, en jours.
+ *
+ * Les données rattachées à ce cookie ne doivent pas lui survivre : passé ce
+ * délai, plus personne — pas même la personne concernée — ne peut les
+ * retrouver. Les garder ne servirait qu'à les garder.
+ *
+ * Doit rester cohérent avec `MAX_AGE_SECONDS` de `lib/shop/session-token.ts`.
+ * Un test vérifie l'égalité.
+ */
+export const GUEST_DATA_RETENTION_DAYS = 30
+
+/**
+ * Conservation des pièces comptables : 10 ans.
+ *
+ * Article L123-22 du code de commerce. C'est cette obligation qui prime sur
+ * l'effacement (article 17.3.b du RGPD) : une facture ne s'efface pas à la
+ * demande. Le reste du compte, si.
+ */
+export const ACCOUNTING_RETENTION_DAYS = 365 * 10
+
+/**
+ * Comptes inactifs : 3 ans sans connexion.
+ *
+ * Durée recommandée par la CNIL pour les données de prospects et de clients
+ * inactifs. Au-delà, le compte est anonymisé — pas supprimé, pour ne pas
+ * emporter les commandes qui relèvent de la conservation comptable.
+ */
+export const INACTIVE_ACCOUNT_RETENTION_DAYS = 365 * 3
+
+export const PROCESSING_REGISTER: readonly Processing[] = [
+  {
+    key: 'account',
+    tables: ['User', 'Session', 'Account'],
+    basis: 'contract',
+    retentionDays: INACTIVE_ACCOUNT_RETENTION_DAYS,
+    retentionReason:
+      'Tant que le compte vit, puis trois ans sans connexion (recommandation CNIL).',
+  },
+  {
+    key: 'orders',
+    tables: ['Order', 'OrderItem', 'Address'],
+    basis: 'legal-obligation',
+    retentionDays: ACCOUNTING_RETENTION_DAYS,
+    retentionReason:
+      'Pièce comptable : dix ans, article L123-22 du code de commerce.',
+  },
+  {
+    key: 'favorites',
+    tables: ['Favorite', 'GuestFavorite'],
+    basis: 'legitimate-interest',
+    retentionDays: GUEST_DATA_RETENTION_DAYS,
+    retentionReason:
+      'Sans compte, rattachés au cookie de session : ils ne lui survivent pas.',
+  },
+  {
+    key: 'cart',
+    tables: ['Cart', 'CartItem'],
+    basis: 'contract',
+    retentionDays: GUEST_DATA_RETENTION_DAYS,
+    retentionReason:
+      'Même durée que le cookie qui permet de le retrouver.',
+  },
+  {
+    key: 'marketing',
+    tables: ['User.marketingConsent'],
+    basis: 'consent',
+    retentionDays: null,
+    retentionReason:
+      'Jusqu’au retrait du consentement, dont la date est horodatée comme preuve.',
+  },
+  {
+    key: 'security',
+    tables: ['(compteurs externes)'],
+    basis: 'legitimate-interest',
+    retentionDays: 1,
+    retentionReason:
+      'Compteurs anti-force-brute : jetons non réversibles, renouvelés chaque jour.',
+  },
+] as const
+
+/**
+ * Localisation des traitements.
+ *
+ * Trois cas suffisent, et ils sont volontairement grossiers : la page publique
+ * doit dire si les données sortent de l'Union et sous quelle garantie, pas
+ * nommer un centre de données. `scc` = clauses contractuelles types.
+ */
+export type ProcessorRegion = 'eu' | 'us-scc' | 'eu-us-scc'
+
+export interface Processor {
+  key: string
+  /** Nom commercial. Non traduit : c'est un nom propre. */
+  name: string
+  region: ProcessorRegion
+}
+
+/**
+ * Sous-traitants effectivement actifs.
+ *
+ * Déduits de l'environnement : un prestataire dont la clé n'est pas
+ * renseignée ne traite rien, et n'a donc pas à figurer dans une déclaration.
+ * C'est ce qui empêche la liste de mentir dans les deux sens — annoncer un
+ * tiers qu'on n'utilise pas, ou en oublier un qu'on utilise.
+ *
+ * L'hébergeur et la base ne sont pas déduits d'une clé : ils sont toujours là
+ * dès qu'il y a un site. Ils sont donc inconditionnels.
+ */
+export function activeProcessors(): Processor[] {
+  const processors: Processor[] = [
+    { key: 'vercel', name: 'Vercel', region: 'eu' },
+    { key: 'supabase', name: 'Supabase', region: 'eu' },
+  ]
+
+  if (process.env.RESEND_API_KEY) {
+    processors.push({ key: 'resend', name: 'Resend', region: 'us-scc' })
+  }
+
+  if (process.env.STRIPE_SECRET_KEY) {
+    processors.push({ key: 'stripe', name: 'Stripe', region: 'eu-us-scc' })
+  }
+
+  if (process.env.UPSTASH_REDIS_REST_URL) {
+    processors.push({ key: 'upstash', name: 'Upstash', region: 'eu' })
+  }
+
+  if (process.env.CLOUDINARY_CLOUD_NAME) {
+    processors.push({ key: 'cloudinary', name: 'Cloudinary', region: 'eu' })
+  }
+
+  if (process.env.SENTRY_DSN) {
+    processors.push({ key: 'sentry', name: 'Sentry', region: 'eu' })
+  }
+
+  return processors
+}

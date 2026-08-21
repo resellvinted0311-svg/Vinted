@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { timingSafeEqual } from 'node:crypto'
 import { releaseExpiredStockLocks } from '@/lib/shop/stock-lock'
+import { purgeExpiredPersonalData } from '@/lib/privacy/retention'
 
 /**
  * Travaux périodiques.
@@ -51,12 +52,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const startedAt = Date.now()
 
   // Les travaux sont indépendants : l'échec de l'un ne doit pas empêcher les
-  // autres. On les exécutera en parallèle à mesure qu'ils s'ajoutent.
-  const releasedLocks = await releaseExpiredStockLocks()
+  // autres. `allSettled` le garantit — une purge qui tombe ne doit pas laisser
+  // du stock réservé indéfiniment, et réciproquement.
+  const [locks, purge] = await Promise.allSettled([
+    releaseExpiredStockLocks(),
+    purgeExpiredPersonalData(),
+  ])
+
+  if (locks.status === 'rejected') {
+    console.error('[cron] Libération des réservations en échec.', locks.reason)
+  }
+  if (purge.status === 'rejected') {
+    console.error('[cron] Purge des données personnelles en échec.', purge.reason)
+  }
 
   return NextResponse.json({
-    ok: true,
-    releasedLocks,
+    ok: locks.status === 'fulfilled' && purge.status === 'fulfilled',
+    releasedLocks: locks.status === 'fulfilled' ? locks.value : null,
+    purged: purge.status === 'fulfilled' ? purge.value : null,
     durationMs: Date.now() - startedAt,
   })
 }

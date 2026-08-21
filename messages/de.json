@@ -234,6 +234,69 @@
     "addresses": "Adressen",
     "settings": "Einstellungen"
   },
+  "privacy": {
+    "title": "Datenschutz",
+    "intro": "Was diese Website über Sie speichert, warum, wie lange und was Sie damit tun können.",
+    "collectionNotice": "Ihre E-Mail-Adresse dient dazu, Ihr Konto und Ihre Bestellungen zu verwalten. Sonst nichts.",
+    "collectionLink": "Was wir speichern",
+    "controller": "Verantwortlicher",
+    "controllerMissing": "Die Identität des Verantwortlichen wird veröffentlicht, sobald sie vorliegt. Hier wird nichts erfunden.",
+    "purposes": "Was wir verarbeiten, und warum",
+    "table": {
+      "purpose": "Verarbeitung",
+      "basis": "Rechtsgrundlage",
+      "retention": "Speicherdauer"
+    },
+    "basis": {
+      "contract": "Vertragserfüllung",
+      "consent": "Einwilligung",
+      "legal-obligation": "Rechtliche Verpflichtung",
+      "legitimate-interest": "Berechtigtes Interesse"
+    },
+    "processing": {
+      "account": "Ihr Konto",
+      "orders": "Ihre Bestellungen und Rechnungen",
+      "favorites": "Ihre Favoriten",
+      "cart": "Ihr Warenkorb",
+      "marketing": "Neuzugänge per E-Mail",
+      "security": "Schutz vor Angriffen"
+    },
+    "retentionWhileAccount": "Solange das Konto besteht",
+    "retentionDays": "{days} Tage",
+    "retentionYears": "{years} Jahre",
+    "processors": "Wer sonst Zugriff hat",
+    "processorsIntro": "Diese Dienstleister verarbeiten Daten in unserem Auftrag und ausschließlich nach unseren Weisungen. Die Liste zeigt die heute tatsächlich angebundenen Dienste.",
+    "region": {
+      "eu": "Europäische Union",
+      "us-scc": "Vereinigte Staaten, Standardvertragsklauseln",
+      "eu-us-scc": "Europäische Union und Vereinigte Staaten, Standardvertragsklauseln"
+    },
+    "rights": "Ihre Rechte",
+    "rightsIntro": "Auskunft, Berichtigung, Löschung, Übertragbarkeit, Widerspruch und Widerruf der Einwilligung. Aus Ihrem Konto heraus, ohne Nachweise.",
+    "rightsLink": "Mein Konto öffnen",
+    "complaint": "Wenn Sie der Ansicht sind, dass Ihre Rechte nicht gewahrt werden, können Sie sich an Ihre nationale Datenschutzbehörde wenden.",
+    "myData": {
+      "title": "Meine Daten",
+      "exportTitle": "Eine Kopie erhalten",
+      "exportBody": "Eine Datei mit allem, was diese Website über Sie speichert.",
+      "exportButton": "Meine Daten herunterladen",
+      "eraseTitle": "Mein Konto löschen",
+      "eraseBody": "Unwiderruflich. Ihre Rechnungen werden zehn Jahre aufbewahrt, wie es das Gesetz verlangt, Ihre Identität wird jedoch daraus entfernt.",
+      "eraseConfirmLabel": "Geben Sie EFFACER ein, um zu bestätigen",
+      "eraseButton": "Mein Konto löschen",
+      "erasedDeleted": "Ihr Konto wurde gelöscht.",
+      "erasedAnonymized": "Ihre Identität wurde gelöscht. Ihre Rechnungen bleiben aufgrund der Aufbewahrungspflicht bestehen.",
+      "consentTitle": "Neuzugänge per E-Mail",
+      "consentOn": "Sie erhalten die Neuzugänge.",
+      "consentOff": "Sie erhalten nichts.",
+      "errors": {
+        "confirmationRequired": "Geben Sie EFFACER ein, um zu bestätigen.",
+        "rateLimited": "Zu viele Anfragen. Versuchen Sie es in einer Stunde erneut.",
+        "unknownAccount": "Konto nicht gefunden.",
+        "invalidInput": "Ungültige Anfrage."
+      }
+    }
+  },
   "footer": {
     "legalNotice": "Impressum",
     "terms": "Allgemeine Geschäftsbedingungen",

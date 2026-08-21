@@ -234,6 +234,69 @@
     "addresses": "Direcciones",
     "settings": "Ajustes"
   },
+  "privacy": {
+    "title": "Privacidad",
+    "intro": "Lo que este sitio conserva sobre usted, por qué, durante cuánto tiempo y qué puede hacer al respecto.",
+    "collectionNotice": "Su dirección de correo sirve para gestionar su cuenta y sus pedidos. Nada más.",
+    "collectionLink": "Lo que conservamos",
+    "controller": "Responsable del tratamiento",
+    "controllerMissing": "La identidad del responsable se publicará en cuanto esté disponible. Aquí no se inventa ningún dato.",
+    "purposes": "Qué tratamos y por qué",
+    "table": {
+      "purpose": "Tratamiento",
+      "basis": "Base jurídica",
+      "retention": "Conservación"
+    },
+    "basis": {
+      "contract": "Ejecución del contrato",
+      "consent": "Consentimiento",
+      "legal-obligation": "Obligación legal",
+      "legitimate-interest": "Interés legítimo"
+    },
+    "processing": {
+      "account": "Su cuenta",
+      "orders": "Sus pedidos y facturas",
+      "favorites": "Sus favoritos",
+      "cart": "Su cesta",
+      "marketing": "Novedades por correo",
+      "security": "Protección frente a ataques"
+    },
+    "retentionWhileAccount": "Mientras exista la cuenta",
+    "retentionDays": "{days} días",
+    "retentionYears": "{years} años",
+    "processors": "Quién más tiene acceso",
+    "processorsIntro": "Estos proveedores tratan datos por nuestra cuenta y únicamente siguiendo nuestras instrucciones. Esta lista refleja los servicios realmente conectados hoy.",
+    "region": {
+      "eu": "Unión Europea",
+      "us-scc": "Estados Unidos, cláusulas contractuales tipo",
+      "eu-us-scc": "Unión Europea y Estados Unidos, cláusulas contractuales tipo"
+    },
+    "rights": "Sus derechos",
+    "rightsIntro": "Acceso, rectificación, supresión, portabilidad, oposición y retirada del consentimiento. Desde su cuenta, sin justificantes.",
+    "rightsLink": "Abrir mi cuenta",
+    "complaint": "Si considera que sus derechos no se respetan, puede reclamar ante su autoridad nacional de protección de datos.",
+    "myData": {
+      "title": "Mis datos",
+      "exportTitle": "Obtener una copia",
+      "exportBody": "Un archivo con todo lo que este sitio conserva sobre usted.",
+      "exportButton": "Descargar mis datos",
+      "eraseTitle": "Borrar mi cuenta",
+      "eraseBody": "Irreversible. Sus facturas se conservan diez años, como exige la ley, pero se retira su identidad de ellas.",
+      "eraseConfirmLabel": "Escriba EFFACER para confirmar",
+      "eraseButton": "Borrar mi cuenta",
+      "erasedDeleted": "Su cuenta ha sido eliminada.",
+      "erasedAnonymized": "Su identidad ha sido borrada. Sus facturas se conservan por obligación contable.",
+      "consentTitle": "Novedades por correo",
+      "consentOn": "Recibe las novedades.",
+      "consentOff": "No recibe nada.",
+      "errors": {
+        "confirmationRequired": "Escriba EFFACER para confirmar.",
+        "rateLimited": "Demasiadas solicitudes. Inténtelo dentro de una hora.",
+        "unknownAccount": "Cuenta no encontrada.",
+        "invalidInput": "Solicitud no válida."
+      }
+    }
+  },
   "footer": {
     "legalNotice": "Aviso legal",
     "terms": "Condiciones generales de venta",

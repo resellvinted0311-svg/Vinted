@@ -234,6 +234,69 @@
     "addresses": "Moradas",
     "settings": "Definições"
   },
+  "privacy": {
+    "title": "Privacidade",
+    "intro": "O que este site guarda sobre si, porquê, durante quanto tempo e o que pode fazer com isso.",
+    "collectionNotice": "O seu endereço de e-mail serve para gerir a sua conta e as suas encomendas. Mais nada.",
+    "collectionLink": "O que guardamos",
+    "controller": "Responsável pelo tratamento",
+    "controllerMissing": "A identidade do responsável será publicada assim que estiver disponível. Aqui nada é inventado.",
+    "purposes": "O que tratamos, e porquê",
+    "table": {
+      "purpose": "Tratamento",
+      "basis": "Fundamento jurídico",
+      "retention": "Conservação"
+    },
+    "basis": {
+      "contract": "Execução do contrato",
+      "consent": "Consentimento",
+      "legal-obligation": "Obrigação legal",
+      "legitimate-interest": "Interesse legítimo"
+    },
+    "processing": {
+      "account": "A sua conta",
+      "orders": "As suas encomendas e faturas",
+      "favorites": "Os seus favoritos",
+      "cart": "O seu cesto",
+      "marketing": "Novidades por e-mail",
+      "security": "Proteção contra ataques"
+    },
+    "retentionWhileAccount": "Enquanto a conta existir",
+    "retentionDays": "{days} dias",
+    "retentionYears": "{years} anos",
+    "processors": "Quem mais tem acesso",
+    "processorsIntro": "Estes prestadores tratam dados por nossa conta e apenas segundo as nossas instruções. Esta lista reflete os serviços realmente ligados hoje.",
+    "region": {
+      "eu": "União Europeia",
+      "us-scc": "Estados Unidos, cláusulas contratuais-tipo",
+      "eu-us-scc": "União Europeia e Estados Unidos, cláusulas contratuais-tipo"
+    },
+    "rights": "Os seus direitos",
+    "rightsIntro": "Acesso, retificação, apagamento, portabilidade, oposição e retirada do consentimento. A partir da sua conta, sem documentos a apresentar.",
+    "rightsLink": "Abrir a minha conta",
+    "complaint": "Se considerar que os seus direitos não são respeitados, pode apresentar queixa à autoridade nacional de proteção de dados.",
+    "myData": {
+      "title": "Os meus dados",
+      "exportTitle": "Receber uma cópia",
+      "exportBody": "Um ficheiro com tudo o que este site guarda sobre si.",
+      "exportButton": "Descarregar os meus dados",
+      "eraseTitle": "Apagar a minha conta",
+      "eraseBody": "Irreversível. As suas faturas são conservadas dez anos, como a lei exige, mas a sua identidade é retirada delas.",
+      "eraseConfirmLabel": "Escreva EFFACER para confirmar",
+      "eraseButton": "Apagar a minha conta",
+      "erasedDeleted": "A sua conta foi eliminada.",
+      "erasedAnonymized": "A sua identidade foi apagada. As faturas são conservadas por obrigação contabilística.",
+      "consentTitle": "Novidades por e-mail",
+      "consentOn": "Recebe as novidades.",
+      "consentOff": "Não recebe nada.",
+      "errors": {
+        "confirmationRequired": "Escreva EFFACER para confirmar.",
+        "rateLimited": "Demasiados pedidos. Tente novamente dentro de uma hora.",
+        "unknownAccount": "Conta não encontrada.",
+        "invalidInput": "Pedido inválido."
+      }
+    }
+  },
   "footer": {
     "legalNotice": "Informação legal",
     "terms": "Condições gerais de venda",

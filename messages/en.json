@@ -234,6 +234,69 @@
     "addresses": "Addresses",
     "settings": "Settings"
   },
+  "privacy": {
+    "title": "Privacy",
+    "intro": "What this site keeps about you, why, for how long, and what you can do about it.",
+    "collectionNotice": "Your email address is used to manage your account and your orders. Nothing else.",
+    "collectionLink": "What we keep",
+    "controller": "Data controller",
+    "controllerMissing": "The controller’s identity will be published as soon as it is provided. Nothing is invented here.",
+    "purposes": "What we process, and why",
+    "table": {
+      "purpose": "Processing",
+      "basis": "Legal basis",
+      "retention": "Retention"
+    },
+    "basis": {
+      "contract": "Performance of the contract",
+      "consent": "Consent",
+      "legal-obligation": "Legal obligation",
+      "legitimate-interest": "Legitimate interest"
+    },
+    "processing": {
+      "account": "Your account",
+      "orders": "Your orders and invoices",
+      "favorites": "Your favourites",
+      "cart": "Your basket",
+      "marketing": "New arrivals by email",
+      "security": "Protection against attacks"
+    },
+    "retentionWhileAccount": "As long as the account exists",
+    "retentionDays": "{days} days",
+    "retentionYears": "{years} years",
+    "processors": "Who else has access",
+    "processorsIntro": "These providers process data on our behalf and on our instructions only. This list reflects the services actually connected today.",
+    "region": {
+      "eu": "European Union",
+      "us-scc": "United States, standard contractual clauses",
+      "eu-us-scc": "European Union and United States, standard contractual clauses"
+    },
+    "rights": "Your rights",
+    "rightsIntro": "Access, rectification, erasure, portability, objection, withdrawal of consent. From your account, with no paperwork to provide.",
+    "rightsLink": "Open my account",
+    "complaint": "If you believe your rights are not being respected, you may lodge a complaint with your national data protection authority.",
+    "myData": {
+      "title": "My data",
+      "exportTitle": "Get a copy",
+      "exportBody": "A file containing everything this site keeps about you.",
+      "exportButton": "Download my data",
+      "eraseTitle": "Erase my account",
+      "eraseBody": "Irreversible. Your invoices are kept for ten years, as the law requires, but your identity is removed from them.",
+      "eraseConfirmLabel": "Type EFFACER to confirm",
+      "eraseButton": "Erase my account",
+      "erasedDeleted": "Your account has been deleted.",
+      "erasedAnonymized": "Your identity has been erased. Your invoices are kept to meet accounting obligations.",
+      "consentTitle": "New arrivals by email",
+      "consentOn": "You receive new arrivals.",
+      "consentOff": "You receive nothing.",
+      "errors": {
+        "confirmationRequired": "Type EFFACER to confirm.",
+        "rateLimited": "Too many requests. Try again in an hour.",
+        "unknownAccount": "Account not found.",
+        "invalidInput": "Invalid request."
+      }
+    }
+  },
   "footer": {
     "legalNotice": "Legal notice",
     "terms": "Terms and conditions of sale",

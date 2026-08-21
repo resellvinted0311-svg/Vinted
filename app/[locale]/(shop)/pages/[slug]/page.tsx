@@ -3,13 +3,15 @@ import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { LEGAL, SITE, hasLegalIdentity } from '@/lib/config/site'
 import { locales, localeTags } from '@/lib/i18n/routing'
+import { PrivacyRegister } from '@/components/shop/privacy-register'
 
 /**
  * Pages éditoriales et légales.
  *
- * En Phase 1, seule la structure existe : les contenus juridiques complets
- * (CGV, confidentialité, cookies) sont rédigés en Phase 7, où ils font l'objet
- * d'un travail dédié.
+ * La page de confidentialité fait exception : elle est rendue depuis le
+ * registre des traitements (`lib/config/privacy.ts`), donc elle est exacte dès
+ * maintenant — le site collecte des adresses e-mail aujourd'hui, il doit dire
+ * aujourd'hui ce qu'il en fait. Les CGV et la page cookies restent en Phase 7.
  *
  * Règle tenue dès maintenant : aucune mention légale n'est inventée. Tant que
  * l'identité de l'entreprise n'est pas renseignée en variables
@@ -140,7 +142,9 @@ export default async function StaticPage({ params }: { params: Params }) {
           </>
         ) : null}
 
-        {['cgv', 'confidentialite', 'cookies', 'livraison'].includes(slug) ? (
+        {slug === 'confidentialite' ? <PrivacyRegister locale={locale} /> : null}
+
+        {['cgv', 'cookies', 'livraison'].includes(slug) ? (
           <p className="rounded-card ruled bg-paper-raised p-4 text-muted">
             Contenu rédigé en Phase 7. La structure, les URL et les liens sont
             en place dès maintenant pour que le référencement et la navigation

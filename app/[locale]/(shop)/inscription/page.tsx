@@ -33,6 +33,7 @@ export default async function SignUpPage({
   if (user) redirect({ href: '/compte', locale })
 
   const t = await getTranslations('auth')
+  const tp = await getTranslations('privacy')
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-24 pt-12 sm:px-6">
@@ -50,6 +51,20 @@ export default async function SignUpPage({
       <div className="mt-8">
         <SignUpForm />
       </div>
+
+      {/* Information au moment de la collecte — article 13 du RGPD.
+          Elle est ici, sous le formulaire, et non reléguée dans un lien de
+          pied de page : l'obligation porte sur le moment où la donnée est
+          demandée, pas sur l'existence d'une page quelque part. */}
+      <p className="mt-6 text-xs text-muted">
+        {tp('collectionNotice')}{' '}
+        <Link
+          href="/pages/confidentialite"
+          className="text-ink underline underline-offset-4"
+        >
+          {tp('collectionLink')}
+        </Link>
+      </p>
 
       <p className="mt-8 text-xs text-muted">
         {t('hasAccount')}{' '}

@@ -15,8 +15,14 @@ import { cookies } from 'next/headers'
  */
 export const SHOP_SESSION_COOKIE = 'ND_SESSION'
 
-/** 30 jours — durée de conservation du panier annoncée dans le brief. */
-const MAX_AGE_SECONDS = 60 * 60 * 24 * 30
+/**
+ * 30 jours — durée de conservation du panier annoncée dans le brief.
+ *
+ * Exportée parce qu'elle doit rester égale à `GUEST_DATA_RETENTION_DAYS` :
+ * les données rattachées à ce cookie ne doivent pas lui survivre. Un test
+ * vérifie l'égalité, faute de quoi les deux dériveraient sans bruit.
+ */
+export const SHOP_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
 
 export async function readShopSessionToken(): Promise<string | null> {
   const store = await cookies()
@@ -42,7 +48,7 @@ export async function ensureShopSessionToken(): Promise<string> {
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: MAX_AGE_SECONDS,
+    maxAge: SHOP_SESSION_MAX_AGE_SECONDS,
   })
 
   return token

@@ -44,6 +44,7 @@ export default async function AccountPage({
   }
 
   const t = await getTranslations('account')
+  const tp = await getTranslations('privacy')
 
   const sections = [
     { href: '/compte/commandes', label: t('orders') },
@@ -53,6 +54,7 @@ export default async function AccountPage({
     { href: '/compte/retours', label: t('returns') },
     { href: '/compte/alertes', label: t('alerts') },
     { href: '/compte/parametres', label: t('settings') },
+    { href: '/compte/donnees', label: tp('myData.title') },
   ] as const
 
   return (

@@ -234,6 +234,69 @@
     "addresses": "Adressen",
     "settings": "Instellingen"
   },
+  "privacy": {
+    "title": "Privacy",
+    "intro": "Wat deze site over u bewaart, waarom, hoe lang, en wat u ermee kunt doen.",
+    "collectionNotice": "Uw e-mailadres dient om uw account en uw bestellingen te beheren. Meer niet.",
+    "collectionLink": "Wat wij bewaren",
+    "controller": "Verwerkingsverantwoordelijke",
+    "controllerMissing": "De identiteit van de verantwoordelijke wordt gepubliceerd zodra die bekend is. Hier wordt niets verzonnen.",
+    "purposes": "Wat wij verwerken, en waarom",
+    "table": {
+      "purpose": "Verwerking",
+      "basis": "Rechtsgrond",
+      "retention": "Bewaartermijn"
+    },
+    "basis": {
+      "contract": "Uitvoering van de overeenkomst",
+      "consent": "Toestemming",
+      "legal-obligation": "Wettelijke verplichting",
+      "legitimate-interest": "Gerechtvaardigd belang"
+    },
+    "processing": {
+      "account": "Uw account",
+      "orders": "Uw bestellingen en facturen",
+      "favorites": "Uw favorieten",
+      "cart": "Uw winkelmandje",
+      "marketing": "Nieuwe stukken per e-mail",
+      "security": "Bescherming tegen aanvallen"
+    },
+    "retentionWhileAccount": "Zolang het account bestaat",
+    "retentionDays": "{days} dagen",
+    "retentionYears": "{years} jaar",
+    "processors": "Wie er verder toegang heeft",
+    "processorsIntro": "Deze dienstverleners verwerken gegevens namens ons en uitsluitend volgens onze instructies. Deze lijst toont de diensten die vandaag daadwerkelijk zijn aangesloten.",
+    "region": {
+      "eu": "Europese Unie",
+      "us-scc": "Verenigde Staten, modelcontractbepalingen",
+      "eu-us-scc": "Europese Unie en Verenigde Staten, modelcontractbepalingen"
+    },
+    "rights": "Uw rechten",
+    "rightsIntro": "Inzage, rectificatie, wissing, overdraagbaarheid, bezwaar en intrekking van toestemming. Vanuit uw account, zonder bewijsstukken.",
+    "rightsLink": "Mijn account openen",
+    "complaint": "Vindt u dat uw rechten niet worden gerespecteerd, dan kunt u een klacht indienen bij uw nationale toezichthouder.",
+    "myData": {
+      "title": "Mijn gegevens",
+      "exportTitle": "Een kopie ontvangen",
+      "exportBody": "Een bestand met alles wat deze site over u bewaart.",
+      "exportButton": "Mijn gegevens downloaden",
+      "eraseTitle": "Mijn account wissen",
+      "eraseBody": "Onomkeerbaar. Uw facturen worden tien jaar bewaard, zoals de wet vereist, maar uw identiteit wordt eruit verwijderd.",
+      "eraseConfirmLabel": "Typ EFFACER om te bevestigen",
+      "eraseButton": "Mijn account wissen",
+      "erasedDeleted": "Uw account is verwijderd.",
+      "erasedAnonymized": "Uw identiteit is gewist. Uw facturen worden bewaard wegens de boekhoudplicht.",
+      "consentTitle": "Nieuwe stukken per e-mail",
+      "consentOn": "U ontvangt de nieuwe stukken.",
+      "consentOff": "U ontvangt niets.",
+      "errors": {
+        "confirmationRequired": "Typ EFFACER om te bevestigen.",
+        "rateLimited": "Te veel verzoeken. Probeer het over een uur opnieuw.",
+        "unknownAccount": "Account niet gevonden.",
+        "invalidInput": "Ongeldig verzoek."
+      }
+    }
+  },
   "footer": {
     "legalNotice": "Juridische informatie",
     "terms": "Algemene verkoopvoorwaarden",
