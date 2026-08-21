@@ -26,6 +26,27 @@ declare module 'next-auth' {
  * Volontairement décrit à la main plutôt qu'importé depuis
  * `next-auth/providers/resend` : l'envoi doit rester possible sans clé API en
  * développement (le lien est alors écrit dans la console).
+ *
+ * ---------------------------------------------------------------------------
+ * À RÉGLER AVEC LE TUNNEL DE COMMANDE — ne pas brancher le paiement sans
+ * ---------------------------------------------------------------------------
+ * Le rappel du lien est un GET sans contrôle CSRF. C'est le comportement de
+ * `@auth/core` pour `type: 'email'`, vérifié dans le code de la bibliothèque,
+ * pas une particularité d'ici.
+ *
+ * Conséquence : quelqu'un demande un lien pour SA PROPRE adresse et l'amène
+ * devant une victime — un lien dans un message, une image qui charge l'URL.
+ * Le navigateur de la victime se retrouve authentifié sur le compte de
+ * l'attaquant, sans qu'aucun écran ne le signale.
+ *
+ * Aujourd'hui, la victime ne peut y déposer qu'un favori, et le flux est de
+ * toute façon inerte tant que Resend n'est pas configuré. **Cela change de
+ * nature avec le tunnel de commande** : elle y saisirait son adresse postale
+ * et ses coordonnées, qui seraient enregistrées sur le compte d'un tiers.
+ *
+ * Correctif à poser en même temps que le paiement : une confirmation par
+ * bouton (donc un POST) sur la page de rappel, ou un nonce déposé en cookie
+ * chez le navigateur demandeur et vérifié au retour.
  */
 const magicLinkProvider: Provider = {
   id: 'magic-link',
