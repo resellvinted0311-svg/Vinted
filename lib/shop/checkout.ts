@@ -69,6 +69,26 @@ export type CheckoutResult =
     }
   | { ok: false; failure: CheckoutFailure }
 
+/**
+ * Durée minimale d'une session de paiement Stripe, en minutes.
+ *
+ * Imposée par Stripe, pas choisie par nous : `expires_at` ne peut pas être
+ * fixé à moins de trente minutes.
+ *
+ * C'est ce chiffre qui gouverne la durée du verrou de stock, et non l'inverse.
+ * Un verrou plus court que la session ouvrirait une fenêtre où la pièce est
+ * libre alors que quelqu'un est encore devant son formulaire de carte : il
+ * paierait un exemplaire déjà vendu à un autre. Le réglage
+ * `reservationTtlMinutes` est donc un PLANCHER que l'on relève au besoin,
+ * jamais un plafond que l'on force.
+ *
+ * Le prix de cette correction : un paiement abandonné immobilise la pièce une
+ * demi-heure au lieu d'un quart d'heure. C'est le bon échange — une pièce
+ * indisponible trente minutes se retrouve, une pièce vendue deux fois se
+ * rembourse et s'excuse.
+ */
+const STRIPE_MIN_SESSION_MINUTES = 30
+
 /** Lignes du panier, relues avec ce qu'il faut pour décider et facturer. */
 type CheckoutLine = {
   articleId: string
@@ -293,7 +313,12 @@ export async function prepareCheckoutFor(
     const locked = await acquireStockLocks(tx, {
       articleIds: lines.map((line) => line.articleId),
       ownerId: owner.lockOwnerId,
-      ttlMinutes: settings.reservationTtlMinutes,
+      // Jamais moins que la durée de vie de la session de paiement : voir
+      // STRIPE_MIN_SESSION_MINUTES.
+      ttlMinutes: Math.max(
+        settings.reservationTtlMinutes,
+        STRIPE_MIN_SESSION_MINUTES,
+      ),
     })
 
     if (!locked.ok) {
@@ -354,12 +379,19 @@ export async function prepareCheckoutFor(
       select: { id: true, orderNumber: true },
     })
 
-    return { ok: true as const, order, lines, amounts, option }
+    return {
+      ok: true as const,
+      order,
+      lines,
+      amounts,
+      option,
+      lockedUntil: locked.until,
+    }
   })
 
   if (!prepared.ok) return { ok: false, failure: prepared.failure }
 
-  const { order, lines, amounts, option } = prepared
+  const { order, lines, amounts, option, lockedUntil } = prepared
 
   // ---------------------------------------------------------------------
   // Session de paiement — hors transaction
@@ -396,6 +428,10 @@ export async function prepareCheckoutFor(
       payment_intent_data: {
         metadata: { orderId: order.id, orderNumber: order.orderNumber },
       },
+      // La session meurt EN MÊME TEMPS que le verrou, à la seconde près. Lui
+      // laisser survivre au verrou reviendrait à laisser payer une pièce
+      // redevenue disponible entre-temps.
+      expires_at: Math.floor(lockedUntil.getTime() / 1000),
       return_url: `${SITE.url}/${input.locale}/commande/confirmation?session_id={CHECKOUT_SESSION_ID}`,
     })
 

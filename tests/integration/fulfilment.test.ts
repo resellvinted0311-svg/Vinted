@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import { prisma } from '@/lib/db/client'
-import { markOrderPaid, expireOrder } from '@/lib/shop/fulfilment'
+import {
+  markOrderPaid,
+  expireOrder,
+  expireStaleOrders,
+} from '@/lib/shop/fulfilment'
 
 /**
  * Confirmation d'une vente, contre une vraie base.
@@ -148,9 +152,11 @@ describe('marquer une commande payée', () => {
   })
 
   it('n’écrase jamais la vente de quelqu’un d’autre', async () => {
-    // Le verrou de stock a une durée de vie ; une session Stripe ne peut pas
-    // expirer en moins de trente minutes. Il existe donc une fenêtre où
-    // quelqu'un paie une pièce déjà partie.
+    // La conception ferme ce cas — le verrou dure au moins aussi longtemps que
+    // la session de paiement. Mais une garantie de conception n'est pas une
+    // garantie d'exécution : un article libéré à la main depuis le back-office
+    // suffit à le rouvrir. Le jour où cela arrive, la vente de l'autre
+    // personne ne doit pas être écrasée.
     const mine = await makeArticle('a3')
     const taken = await makeArticle('a4', 'SOLD')
     const soldAtBefore = (
@@ -260,5 +266,103 @@ describe('expiration d’une commande', () => {
       select: { status: true },
     })
     expect(other.status).toBe('SOLD')
+  })
+})
+
+describe('balayage des commandes fantômes', () => {
+  it('annule une commande en attente depuis trop longtemps', async () => {
+    // Stripe envoie bien un événement d'expiration, mais un webhook peut se
+    // perdre. Sans ce balayage, la commande resterait en attente pour
+    // toujours alors que son stock a été rendu.
+    const article = await makeArticle('c1')
+    const order = await makeOrder('201', [article.id])
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { createdAt: new Date(Date.now() - 4 * 3_600_000) },
+    })
+
+    const cancelled = await expireStaleOrders(120)
+    expect(cancelled).toBeGreaterThanOrEqual(1)
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: { status: true },
+    })
+    expect(after.status).toBe('CANCELLED')
+
+    const released = await prisma.article.findUniqueOrThrow({
+      where: { id: article.id },
+      select: { status: true },
+    })
+    expect(released.status).toBe('AVAILABLE')
+  })
+
+  it('laisse tranquille une commande récente', async () => {
+    const article = await makeArticle('c2')
+    const order = await makeOrder('202', [article.id])
+
+    await expireStaleOrders(120)
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: { status: true },
+    })
+    expect(after.status).toBe('PENDING_PAYMENT')
+
+    // Et sa pièce reste réservée : quelqu'un est peut-être devant son
+    // formulaire de carte à cet instant.
+    const still = await prisma.article.findUniqueOrThrow({
+      where: { id: article.id },
+      select: { status: true },
+    })
+    expect(still.status).toBe('RESERVED')
+  })
+
+  it('ne touche pas à une commande déjà payée, même ancienne', async () => {
+    const article = await makeArticle('c3')
+    const order = await makeOrder('203', [article.id])
+    await markOrderPaid({ orderId: order.id, paymentIntentId: 'pi_9', paidAt: PAID_AT })
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { createdAt: new Date(Date.now() - 30 * 24 * 3_600_000) },
+    })
+
+    await expireStaleOrders(120)
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: { status: true },
+    })
+    expect(after.status).toBe('PAID')
+  })
+})
+
+describe('paiement arrivé après une annulation', () => {
+  it('rouvre la commande plutôt que d’encaisser dans le vide', async () => {
+    // Stripe ne garantit pas l'ordre des événements. Si un paiement arrive
+    // après que le balayage a annulé la commande, refuser reviendrait à
+    // encaisser sans qu'aucune commande n'existe — le pire des états, parce
+    // qu'il est invisible.
+    const article = await makeArticle('d1')
+    const order = await makeOrder('301', [article.id])
+
+    expect(await expireOrder(order.id)).toBe(true)
+
+    const result = await markOrderPaid({
+      orderId: order.id,
+      paymentIntentId: 'pi_10',
+      paidAt: PAID_AT,
+    })
+
+    expect(result.applied).toBe(true)
+    expect(result.soldArticleIds).toEqual([article.id])
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: { status: true, cancelledAt: true },
+    })
+    expect(after.status).toBe('PAID')
+    // L'historique ne doit pas dire à la fois « payée » et « annulée ».
+    expect(after.cancelledAt).toBeNull()
   })
 })

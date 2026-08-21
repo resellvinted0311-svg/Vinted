@@ -233,6 +233,39 @@ describe('ouverture d’un paiement', () => {
     }
   })
 
+  it('la session de paiement ne survit JAMAIS au verrou de stock', async () => {
+    // C'est l'invariant qui empêche de vendre une pièce qu'on ne peut plus
+    // livrer : si la session durait plus longtemps que la réservation, la
+    // pièce redeviendrait libre pendant que quelqu'un saisit sa carte.
+    //
+    // Stripe impose trente minutes minimum à une session ; c'est donc le
+    // verrou qu'on allonge, jamais la session qu'on raccourcit.
+    const option = await anOption()
+    const articleId = await makeArticle('h1', 2000)
+    const cartId = await makeCart([articleId])
+
+    const result = await prepareCheckoutFor(OWNER, cartId, {
+      ...INPUT,
+      shipping: { carrierCode: option.carrierCode, serviceCode: option.serviceCode },
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    const call = created.mock.calls[0]?.[0] as { expires_at: number }
+    const article = await prisma.article.findUniqueOrThrow({
+      where: { id: articleId },
+      select: { reservedUntil: true },
+    })
+
+    expect(article.reservedUntil).not.toBeNull()
+    const lockSeconds = Math.floor(article.reservedUntil!.getTime() / 1000)
+
+    expect(call.expires_at).toBeLessThanOrEqual(lockSeconds)
+    // Et le verrou couvre bien le minimum imposé par Stripe, même si le
+    // réglage `reservationTtlMinutes` est plus court (15 minutes au seed).
+    expect(call.expires_at).toBeGreaterThan(Date.now() / 1000 + 29 * 60)
+  })
+
   it('facture le prix EN BASE, pas celui mémorisé au panier', async () => {
     // L'instantané du panier vaut 0 dans ce jeu d'essai. S'il entrait dans un
     // total, la commande serait gratuite.

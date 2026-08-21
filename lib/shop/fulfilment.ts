@@ -17,18 +17,23 @@ import { prisma } from '@/lib/db/client'
  * PAID ressort telle quelle.
  *
  * ---------------------------------------------------------------------------
- * Le cas qu'on préférerait ne pas avoir
+ * Payer une pièce déjà partie
  * ---------------------------------------------------------------------------
- * Le verrou de stock a une durée de vie ; une session de paiement Stripe ne
- * peut pas expirer en moins de trente minutes. Il existe donc une fenêtre où
- * quelqu'un paie une pièce dont le verrou vient de tomber et qu'un autre a
- * achetée entre-temps.
+ * Ce cas est fermé PAR CONSTRUCTION en amont : le verrou de stock dure au
+ * moins aussi longtemps que la session de paiement (voir
+ * `STRIPE_MIN_SESSION_MINUTES` dans checkout.ts), donc la fenêtre où une pièce
+ * redevient libre pendant que quelqu'un saisit sa carte n'existe pas.
  *
- * Dans ce cas, l'argent EST pris. La seule chose honnête est de le dire :
+ * Le passage en vendu reste malgré tout CONDITIONNEL, parce qu'une garantie de
+ * conception n'est pas une garantie d'exécution : un article libéré à la main
+ * depuis le back-office, une horloge qui dérive, un verrou relâché par erreur.
+ * Le jour où l'un de ces cas se produit, il ne doit pas se traduire par
+ * l'écrasement de la vente de quelqu'un d'autre.
+ *
+ * S'il se produit, l'argent EST pris. La seule chose honnête est de le dire :
  * la commande est marquée payée — nier un débit réel serait pire — et les
- * lignes non honorables sont consignées pour remboursement. Aucune décision
- * automatique de remboursement n'est prise ici : elle appartient à la phase
- * suivante, et à une personne.
+ * lignes non honorables partent dans `AuditLog`. Consigné, pas résolu : le
+ * remboursement est une décision humaine.
  */
 
 export interface FulfilmentResult {
@@ -70,8 +75,14 @@ export async function markOrderPaid(input: {
       throw new Error(`Commande introuvable : ${input.orderId}`)
     }
 
-    // Déjà traitée. On ne retouche ni la date, ni le stock.
-    if (order.status !== 'PENDING_PAYMENT') {
+    // Déjà payée : on ne retouche ni la date, ni le stock.
+    //
+    // Une commande ANNULÉE, en revanche, se rouvre. Le balayage annule les
+    // commandes dont la session a expiré, et un paiement peut arriver juste
+    // après — Stripe ne garantit pas l'ordre des événements. Refuser ici
+    // reviendrait à encaisser sans qu'aucune commande n'existe : le pire des
+    // états possibles, parce qu'il est invisible.
+    if (order.status !== 'PENDING_PAYMENT' && order.status !== 'CANCELLED') {
       return {
         applied: false,
         soldArticleIds: [],
@@ -106,6 +117,9 @@ export async function markOrderPaid(input: {
       data: {
         status: 'PAID',
         paidAt: input.paidAt,
+        // Une commande rouverte n'est plus annulée : laisser la date
+        // d'annulation ferait mentir l'historique.
+        cancelledAt: null,
         ...(input.paymentIntentId
           ? { stripePaymentIntentId: input.paymentIntentId }
           : {}),
@@ -137,6 +151,41 @@ export async function markOrderPaid(input: {
       unfulfillableArticleIds: unfulfillable,
     }
   })
+}
+
+/**
+ * Annule les commandes dont la fenêtre de paiement est passée.
+ *
+ * Stripe envoie bien `checkout.session.expired`, mais un webhook peut se
+ * perdre — panne, déploiement, désactivation temporaire de l'endpoint. Sans
+ * ce balayage, ces commandes resteraient PENDING_PAYMENT pour toujours, alors
+ * que le verrou de stock, lui, aurait été relâché : la boutique afficherait
+ * une file de commandes fantômes que personne ne peut ni payer ni honorer.
+ *
+ * La marge est délibérément large. Annuler trop tôt une commande encore
+ * payable ne perdrait pas la vente — `markOrderPaid` rouvre une commande
+ * annulée — mais produirait un aller-retour d'états inutile dans l'historique.
+ */
+export async function expireStaleOrders(
+  graceMinutes: number,
+  now = new Date(),
+): Promise<number> {
+  const cutoff = new Date(now.getTime() - graceMinutes * 60_000)
+
+  const stale = await prisma.order.findMany({
+    where: { status: 'PENDING_PAYMENT', createdAt: { lt: cutoff } },
+    select: { id: true },
+    // Borne de sécurité : un balayage qui traiterait des milliers de lignes
+    // d'un coup dépasserait le temps alloué et échouerait en entier.
+    take: 100,
+  })
+
+  let cancelled = 0
+  for (const order of stale) {
+    if (await expireOrder(order.id)) cancelled += 1
+  }
+
+  return cancelled
 }
 
 /**
