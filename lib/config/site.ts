@@ -76,3 +76,34 @@ export const LEGAL = {
 export function hasLegalIdentity(): boolean {
   return Boolean(LEGAL.companyName && LEGAL.siret && LEGAL.address && LEGAL.email)
 }
+
+/**
+ * Le médiateur de la consommation est-il renseigné ?
+ *
+ * Son adhésion est OBLIGATOIRE pour tout commerce en ligne B2C français
+ * (article L612-1 du code de la consommation), et ses coordonnées doivent
+ * figurer sur le site et dans les CGV.
+ *
+ * Il est vérifié à part, et jamais fondu dans `hasLegalIdentity()`. Deux
+ * raisons, opposées :
+ *
+ *  - l'inclure masquerait tout le bloc d'identité tant qu'il manque, alors que
+ *    le nom, le SIRET et l'adresse sont exacts et utiles à afficher ;
+ *  - ne pas le vérifier du tout — ce qui était le cas — laissait le site
+ *    publier des mentions légales PRÉSENTÉES COMME COMPLÈTES en omettant en
+ *    silence un élément obligatoire. C'est le pire des deux.
+ *
+ * Séparés, l'absence se voit et se dit, sans rien cacher de ce qui est connu.
+ */
+export function hasMediator(): boolean {
+  return Boolean(LEGAL.mediatorName)
+}
+
+/**
+ * L'identité légale est-elle réellement COMPLÈTE ?
+ *
+ * À utiliser avant toute vente réelle, jamais pour décider d'un affichage.
+ */
+export function isLegallyComplete(): boolean {
+  return hasLegalIdentity() && hasMediator()
+}

@@ -308,7 +308,10 @@
     "about": "O nas",
     "mediator": "Mediator konsumencki",
     "vatNotice": "VAT nie ma zastosowania, art. 293 B francuskiego kodeksu podatkowego",
-    "withdrawalNotice": "Prawo odstąpienia od umowy w ciągu 14 dni od otrzymania."
+    "withdrawalNotice": "Prawo odstąpienia od umowy w ciągu 14 dni od otrzymania.",
+    "withdrawalFormTitle": "Wzór formularza odstąpienia od umowy",
+    "withdrawalFormIntro": "Nie musisz go używać, ale mamy obowiązek go udostępnić. Przepisz go i odeślij tylko wtedy, gdy chcesz odstąpić od umowy.",
+    "withdrawalFormLanguage": "Francuski wzór ustawowy, odtworzony w języku umowy."
   },
   "common": {
     "loading": "Wczytywanie",

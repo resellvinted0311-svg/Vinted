@@ -141,7 +141,27 @@ n'ont pas d'objet tant que rien n'est vendu ni déposé.
 
 ---
 
-## 6. Ce qui reste à faire
+## 6. Colonnes déclarées, jamais alimentées
+
+Le schéma décrit la boutique complète, phases 3 à 8 comprises. Quatre
+ensembles de colonnes existent donc en base sans qu'aucun chemin de code ne
+les écrive. C'est acceptable en avance de phase — **à condition que ce soit
+décidé et écrit**, parce qu'un audit du schéma les fera toutes apparaître
+comme « données collectées ».
+
+| Table / colonne | État | Décision |
+| --- | --- | --- |
+| `Account` (jetons OAuth) | Jamais écrite : le seul fournisseur est le lien magique | Les jetons y seraient stockés **en clair**. Décidé dès maintenant : ils seront chiffrés applicativement avant le premier fournisseur OAuth, pas après |
+| `User.image` | Aucun chemin ne l'alimente | Conservée : `@auth/prisma-adapter` l'attend sur le modèle `User`. La retirer casserait l'adaptateur pour gagner une colonne vide |
+| `UserToken` | Déclarée, non branchée | Sera utilisée par la réinitialisation de mot de passe. La purge l'efface déjà à échéance, et l'effacement de compte la vide explicitement |
+| `NewsletterSubscriber.consentIp` | Jamais écrite | Ne stockera **jamais** une IP brute : jeton HMAC tronqué, comme les compteurs de débit |
+
+Ces lignes n'ont pas vocation à rassurer : elles existent pour qu'on n'ait
+pas à redécouvrir la question au moment de brancher chacune.
+
+---
+
+## 7. Ce qui reste à faire
 
 Ces points ne se règlent pas dans le code.
 
@@ -150,24 +170,55 @@ Ces points ne se règlent pas dans le code.
    page de confidentialité et les mentions légales l'annoncent au lieu
    d'inventer. À renseigner en variables d'environnement Vercel.
 
-2. **Contrats de sous-traitance (article 28).** Chaque prestataire de la liste
+2. **Médiateur de la consommation.** Adhésion **obligatoire** pour tout
+   commerce en ligne B2C français (article L612-1 du code de la consommation),
+   et la démarche est externe, payante et longue : à engager maintenant. Tant
+   qu'elle n'aboutit pas, les mentions légales affichent l'absence au lieu de
+   l'omettre en silence, et le formulaire type de rétractation attend l'identité
+   de l'entreprise pour être publié.
+
+3. **Contrats de sous-traitance (article 28).** Chaque prestataire de la liste
    doit être couvert par un accord de traitement des données. Vercel, Supabase,
    Resend, Stripe, Upstash et Cloudinary en publient un, à accepter depuis leur
    console. Rien dans le code ne peut le faire à votre place.
 
-3. **Registre écrit de l'article 30.** Obligatoire même pour une petite
+4. **Registre écrit de l'article 30.** Obligatoire même pour une petite
    structure dès lors que le traitement n'est pas occasionnel — ce qui est le
    cas d'une boutique. Le tableau de la section 2, plus la liste des
    sous-traitants, en constituent la matière.
 
-4. **Bandeau cookies.** Aucun cookie de mesure d'audience ni de publicité n'est
-   posé aujourd'hui : les seuls cookies sont la session d'authentification et la
-   session boutique, tous deux strictement nécessaires, donc exemptés de
-   consentement. **Le jour où une mesure d'audience ou un pixel publicitaire est
-   ajouté, un bandeau devient obligatoire** — et le script ne doit pas être
-   chargé avant le consentement.
+5. **Bandeau cookies.** Aucun n'est nécessaire, et c'est un vrai avantage :
+   ni écran d'accueil à cliquer, ni dégradation des Core Web Vitals, ni
+   registre de consentements à tenir. Il ne reste que deux cookies, tous deux
+   strictement nécessaires : la session d'authentification et la session
+   boutique.
 
-5. **Analyse d'impact (AIPD).** Non requise ici : pas de profilage à grande
+   Le cookie de langue a été **retiré** pour préserver cette propriété : posé
+   sur simple lecture de l'en-tête du navigateur, il déposait un identifiant de
+   douze mois sans qu'aucun choix n'ait été fait — or un cookie de préférence
+   n'échappe au consentement que s'il résulte d'un choix explicite. La langue
+   est désormais déduite de l'en-tête à chaque requête, ce qui ne stocke rien,
+   et portée par le préfixe d'URL.
+
+   **Le jour où une mesure d'audience ou un pixel publicitaire est ajouté, un
+   bandeau devient obligatoire** — et le script ne doit pas être chargé avant le
+   consentement.
+
+6. **Newsletter : double opt-in, à trancher.** Le schéma prévoit déjà un
+   dispositif complet et jamais alimenté (`NewsletterSubscriber` : source du
+   consentement, preuve, jeton de désinscription, `confirmedAt` avec la règle
+   « tant qu'il est nul, aucun envoi »). Le code, lui, écrit un simple booléen.
+   Trois conséquences : pas de double confirmation, que la CNIL considère comme
+   la seule preuve solide en B2C ; aucun jeton pour le lien de désabonnement
+   obligatoire de chaque e-mail (article L34-5 du CPCE) ; et le texte réellement
+   consenti vit dans les fichiers de traduction, donc modifiable par un commit
+   sans laisser de trace.
+
+   Le branchement attend **une décision commerciale** : le double opt-in réduit
+   mécaniquement le taux d'inscription. Il faut aussi le texte définitif de la
+   case à cocher, qui sera alors versionné et horodaté comme `cgvVersion`.
+
+7. **Analyse d'impact (AIPD).** Non requise ici : pas de profilage à grande
    échelle, pas de données sensibles, pas de surveillance systématique. À
    réexaminer si une recommandation personnalisée ou un ciblage publicitaire
    apparaît.

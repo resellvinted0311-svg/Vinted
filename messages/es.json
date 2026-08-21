@@ -308,7 +308,10 @@
     "about": "Quiénes somos",
     "mediator": "Mediador de consumo",
     "vatNotice": "IVA no aplicable, art. 293 B del CGI francés",
-    "withdrawalNotice": "Derecho de desistimiento de 14 días desde la recepción."
+    "withdrawalNotice": "Derecho de desistimiento de 14 días desde la recepción.",
+    "withdrawalFormTitle": "Formulario tipo de desistimiento",
+    "withdrawalFormIntro": "No está obligado a utilizarlo, pero debemos ponerlo a su disposición. Cópielo y envíelo solo si desea desistir.",
+    "withdrawalFormLanguage": "Modelo legal francés, reproducido en la lengua del contrato."
   },
   "common": {
     "loading": "Cargando",

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
-import { LEGAL, SITE, hasLegalIdentity } from '@/lib/config/site'
+import { LEGAL, SITE, hasLegalIdentity, hasMediator } from '@/lib/config/site'
 import { locales, localeTags } from '@/lib/i18n/routing'
 import { PrivacyRegister } from '@/components/shop/privacy-register'
 
@@ -112,15 +112,25 @@ export default async function StaticPage({ params }: { params: Params }) {
               <dd>{LEGAL.email}</dd>
               <dt className="text-muted">TVA</dt>
               <dd>{LEGAL.vatExemptionNotice}</dd>
-              {LEGAL.mediatorName ? (
-                <>
-                  <dt className="text-muted">{t('mediator')}</dt>
-                  <dd>
+              {/* Le médiateur est TOUJOURS affiché, y compris absent.
+                  L'omettre en silence laissait publier des mentions légales
+                  présentées comme complètes alors qu'il leur manquait un
+                  élément obligatoire (article L612-1 du code de la
+                  consommation). */}
+              <dt className="text-muted">{t('mediator')}</dt>
+              <dd>
+                {hasMediator() ? (
+                  <>
                     {LEGAL.mediatorName}
                     {LEGAL.mediatorUrl ? ` — ${LEGAL.mediatorUrl}` : ''}
-                  </dd>
-                </>
-              ) : null}
+                  </>
+                ) : (
+                  <span className="text-warning">
+                    Adhésion à un médiateur de la consommation non encore
+                    renseignée. Elle est obligatoire avant toute vente.
+                  </span>
+                )}
+              </dd>
             </dl>
           ) : (
             <p className="rounded-card border-[1.5px] border-warning bg-paper-raised p-4 text-muted">
@@ -139,6 +149,54 @@ export default async function StaticPage({ params }: { params: Params }) {
               standard. Les frais de retour restent à la charge de l’acheteur,
               sauf article non conforme ou endommagé.
             </p>
+
+            {/* Le formulaire type doit être MIS À DISPOSITION, pas seulement
+                mentionné : c'est ce que dit l'annexe de l'article L221-5 du
+                code de la consommation. La page citait le droit sans jamais
+                fournir l'instrument qui permet de l'exercer.
+
+                Il n'est rendu que si l'identité de l'entreprise est connue :
+                un formulaire adressé à personne ne sert à rien, et inventer
+                un destinataire serait pire. */}
+            <h2 className="mt-6 text-lg">{t('withdrawalFormTitle')}</h2>
+            <p className="text-muted">{t('withdrawalFormIntro')}</p>
+
+            {hasLegalIdentity() ? (
+              <div className="rounded-card ruled bg-paper-raised p-5 text-sm">
+                <p className="text-xs text-muted">
+                  {t('withdrawalFormLanguage')}
+                </p>
+
+                <p className="mt-4">
+                  À l’attention de {LEGAL.companyName}, {LEGAL.address},{' '}
+                  {LEGAL.email} :
+                </p>
+
+                <p className="mt-4">
+                  Je vous notifie par la présente ma rétractation du contrat
+                  portant sur la vente du bien ci-dessous :
+                </p>
+
+                <ul className="mt-4 flex list-none flex-col gap-2 text-muted">
+                  <li>— Commandé le : ……………………</li>
+                  <li>— Reçu le : ……………………</li>
+                  <li>— Numéro de commande : ……………………</li>
+                  <li>— Nom du consommateur : ……………………</li>
+                  <li>— Adresse du consommateur : ……………………</li>
+                  <li>— Date : ……………………</li>
+                  <li>
+                    — Signature (uniquement en cas de notification sur papier) :
+                    ……………………
+                  </li>
+                </ul>
+              </div>
+            ) : (
+              <p className="rounded-card border-[1.5px] border-warning bg-paper-raised p-4 text-muted">
+                Le formulaire sera publié dès que l’identité de l’entreprise
+                sera renseignée : il doit porter le nom et l’adresse exacts du
+                destinataire, qui ne s’inventent pas.
+              </p>
+            )}
           </>
         ) : null}
 

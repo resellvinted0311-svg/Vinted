@@ -308,7 +308,10 @@
     "about": "Sobre",
     "mediator": "Mediador de consumo",
     "vatNotice": "IVA não aplicável, art. 293 B do CGI francês",
-    "withdrawalNotice": "Direito de livre resolução de 14 dias a contar da receção."
+    "withdrawalNotice": "Direito de livre resolução de 14 dias a contar da receção.",
+    "withdrawalFormTitle": "Formulário-tipo de retratação",
+    "withdrawalFormIntro": "Não é obrigado a utilizá-lo, mas temos de o disponibilizar. Copie-o e envie-o apenas se desejar retratar-se.",
+    "withdrawalFormLanguage": "Modelo legal francês, reproduzido na língua do contrato."
   },
   "common": {
     "loading": "A carregar",

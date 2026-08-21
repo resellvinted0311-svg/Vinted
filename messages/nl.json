@@ -308,7 +308,10 @@
     "about": "Over ons",
     "mediator": "Consumentenbemiddelaar",
     "vatNotice": "Btw niet van toepassing, art. 293 B van de Franse belastingwet",
-    "withdrawalNotice": "Herroepingsrecht van 14 dagen vanaf ontvangst."
+    "withdrawalNotice": "Herroepingsrecht van 14 dagen vanaf ontvangst.",
+    "withdrawalFormTitle": "Modelformulier voor herroeping",
+    "withdrawalFormIntro": "U bent niet verplicht het te gebruiken, maar wij moeten het beschikbaar stellen. Neem het over en stuur het alleen terug als u wilt herroepen.",
+    "withdrawalFormLanguage": "Frans wettelijk model, weergegeven in de taal van de overeenkomst."
   },
   "common": {
     "loading": "Laden",

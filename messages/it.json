@@ -308,7 +308,10 @@
     "about": "Chi siamo",
     "mediator": "Mediatore del consumo",
     "vatNotice": "IVA non applicabile, art. 293 B del CGI francese",
-    "withdrawalNotice": "Diritto di recesso di 14 giorni dalla ricezione."
+    "withdrawalNotice": "Diritto di recesso di 14 giorni dalla ricezione.",
+    "withdrawalFormTitle": "Modulo tipo di recesso",
+    "withdrawalFormIntro": "Non è obbligata a utilizzarlo, ma dobbiamo metterlo a sua disposizione. Lo ricopi e lo rinvii soltanto se desidera recedere.",
+    "withdrawalFormLanguage": "Modello legale francese, riprodotto nella lingua del contratto."
   },
   "common": {
     "loading": "Caricamento",

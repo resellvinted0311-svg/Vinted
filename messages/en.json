@@ -308,7 +308,10 @@
     "about": "About",
     "mediator": "Consumer mediator",
     "vatNotice": "VAT not applicable, art. 293 B of the French General Tax Code",
-    "withdrawalNotice": "14-day right of withdrawal from the date of receipt."
+    "withdrawalNotice": "14-day right of withdrawal from the date of receipt.",
+    "withdrawalFormTitle": "Model withdrawal form",
+    "withdrawalFormIntro": "You are not obliged to use it, but we must make it available to you. Copy it and send it back only if you wish to withdraw.",
+    "withdrawalFormLanguage": "French statutory model, reproduced in the language of the contract."
   },
   "common": {
     "loading": "Loading",

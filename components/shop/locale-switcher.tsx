@@ -9,9 +9,15 @@ import { Select } from '@/components/ui/select'
 /**
  * Sélecteur de langue.
  *
- * Le choix est persisté par next-intl dans le cookie ND_LOCALE : une personne
- * qui bascule en néerlandais reste en néerlandais à la visite suivante, même
- * si son navigateur annonce autre chose.
+ * Le choix vit dans l'URL, pas dans un cookie. Basculer en néerlandais mène à
+ * `/nl/…`, et c'est cette adresse qui se retrouve dans l'historique, dans les
+ * favoris et dans un lien partagé — donc le choix suit la personne partout où
+ * il compte.
+ *
+ * Le cookie de langue a été retiré : posé sur simple lecture de l'en-tête du
+ * navigateur, il déposait un identifiant de douze mois sans qu'aucun choix
+ * n'ait été fait, et faisait basculer le site du côté des sites qui doivent
+ * afficher un bandeau. Voir `lib/i18n/routing.ts` pour l'arbitrage complet.
  */
 export function LocaleSwitcher() {
   const locale = useLocale()

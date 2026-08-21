@@ -308,7 +308,10 @@
     "about": "À propos",
     "mediator": "Médiateur de la consommation",
     "vatNotice": "TVA non applicable, art. 293 B du CGI",
-    "withdrawalNotice": "Droit de rétractation de 14 jours à compter de la réception."
+    "withdrawalNotice": "Droit de rétractation de 14 jours à compter de la réception.",
+    "withdrawalFormTitle": "Formulaire type de rétractation",
+    "withdrawalFormIntro": "Vous n'êtes pas obligé de l'utiliser, mais nous devons le mettre à votre disposition. Recopiez-le et renvoyez-le seulement si vous souhaitez vous rétracter.",
+    "withdrawalFormLanguage": "Modèle légal français, reproduit dans la langue du contrat."
   },
   "common": {
     "loading": "Chargement",

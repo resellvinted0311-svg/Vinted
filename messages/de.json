@@ -308,7 +308,10 @@
     "about": "Über uns",
     "mediator": "Verbraucherschlichtungsstelle",
     "vatNotice": "Umsatzsteuer nicht anwendbar, Art. 293 B des französischen Steuergesetzbuchs",
-    "withdrawalNotice": "14 Tage Widerrufsrecht ab Erhalt der Ware."
+    "withdrawalNotice": "14 Tage Widerrufsrecht ab Erhalt der Ware.",
+    "withdrawalFormTitle": "Muster-Widerrufsformular",
+    "withdrawalFormIntro": "Sie müssen es nicht verwenden, wir müssen es Ihnen aber zur Verfügung stellen. Übernehmen und senden Sie es nur, wenn Sie widerrufen möchten.",
+    "withdrawalFormLanguage": "Französisches gesetzliches Muster, in der Vertragssprache wiedergegeben."
   },
   "common": {
     "loading": "Wird geladen",
