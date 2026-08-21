@@ -3,6 +3,11 @@ import 'server-only'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
 import { isArticleListed } from '@/lib/db/visibility'
+import {
+  articleIdSchema,
+  articleIdListSchema,
+  MAX_CART_LINES,
+} from '@/lib/validation/shop'
 import { getCurrentUser } from '@/lib/auth/session'
 import {
   ensureShopSessionToken,
@@ -202,7 +207,18 @@ export async function readCart(locale: string): Promise<CartView> {
 
   // Un seul instant pour toutes les lignes : deux lignes évaluées à deux
   // instants différents pourraient se contredire au bord d'une expiration.
-  const now = new Date()
+  //
+  // Et cet instant vient de la BASE, pas de la fonction serverless. Les
+  // échéances de verrou sont posées par PostgreSQL (`now() + make_interval`),
+  // et `stock-lock.ts` explique longuement pourquoi les deux doivent vivre sur
+  // la même horloge : une dérive de quelques secondes suffirait à afficher
+  // « réservé » sur une pièce que le verrou considère déjà libre, ou
+  // l'inverse.
+  //
+  // Sans conséquence aujourd'hui — cette lecture ne décide de rien, l'arbitre
+  // reste `acquireStockLocks` — mais c'est précisément le genre d'écart qui ne
+  // se voit qu'une fois qu'il a coûté une vente.
+  const [{ now }] = await prisma.$queryRaw<[{ now: Date }]>`SELECT now() AS "now"`
 
   const lines: CartLineView[] = items.map((item) => {
     const article = item.article
@@ -269,7 +285,11 @@ export type CartMutationResult =
   | { ok: true; totalCount: number }
   | {
       ok: false
-      reason: 'unknown-article' | 'not-purchasable' | 'already-in-cart'
+      reason:
+        | 'unknown-article'
+        | 'not-purchasable'
+        | 'already-in-cart'
+        | 'cart-full'
     }
 
 /**
@@ -282,8 +302,11 @@ export type CartMutationResult =
  * catalogue pour des paniers abandonnés. Le verrou est pris au paiement.
  */
 export async function addToCart(articleId: string): Promise<CartMutationResult> {
+  const parsed = articleIdSchema.safeParse(articleId)
+  if (!parsed.success) return { ok: false, reason: 'unknown-article' }
+
   const article = await prisma.article.findFirst({
-    where: { id: articleId },
+    where: { id: parsed.data },
     select: { id: true, priceCents: true, status: true, publishedAt: true },
   })
 
@@ -299,6 +322,15 @@ export async function addToCart(articleId: string): Promise<CartMutationResult> 
 
   const owner = await ensureCartOwner()
   const cartId = await ensureCart(owner)
+
+  // Plafond de lignes. Le stock étant unitaire, un panier réel de seconde main
+  // n'en compte jamais trente ; en revanche, rien n'empêchait d'en empiler des
+  // milliers, chacune relue et réévaluée à chaque affichage du panier, et
+  // chacune pesant sur le devis de port.
+  const lineCount = await prisma.cartItem.count({ where: { cartId } })
+  if (lineCount >= MAX_CART_LINES) {
+    return { ok: false, reason: 'cart-full' }
+  }
 
   try {
     await prisma.$transaction([
@@ -332,12 +364,17 @@ export async function addToCart(articleId: string): Promise<CartMutationResult> 
 export async function removeFromCart(
   articleId: string,
 ): Promise<CartMutationResult> {
+  const parsed = articleIdSchema.safeParse(articleId)
+  if (!parsed.success) return { ok: false, reason: 'unknown-article' }
+
   const owner = await ensureCartOwner()
   const cart = await findCart(owner)
   if (!cart) return { ok: true, totalCount: 0 }
 
   await prisma.$transaction([
-    prisma.cartItem.deleteMany({ where: { cartId: cart.id, articleId } }),
+    prisma.cartItem.deleteMany({
+      where: { cartId: cart.id, articleId: parsed.data },
+    }),
     prisma.cart.update({ where: { id: cart.id }, data: { updatedAt: new Date() } }),
   ])
 
@@ -357,7 +394,14 @@ export async function removeFromCart(
 export async function removeBlockedLines(
   articleIds: readonly string[],
 ): Promise<CartMutationResult> {
-  if (articleIds.length === 0) return { ok: true, totalCount: 0 }
+  // Ce paramètre vient du réseau : chaque entrée devient un paramètre d'une
+  // clause `IN`, et rien n'empêchait d'en envoyer cent mille. Les filtres
+  // d'URL du catalogue sont bornés à 20 depuis le premier jour, avec la
+  // raison écrite à côté ; il n'y avait aucun motif de traiter celui-ci
+  // autrement.
+  const parsed = articleIdListSchema.safeParse(articleIds)
+  if (!parsed.success) return { ok: false, reason: 'unknown-article' }
+  if (parsed.data.length === 0) return { ok: true, totalCount: 0 }
 
   const owner = await ensureCartOwner()
   const cart = await findCart(owner)
@@ -365,7 +409,7 @@ export async function removeBlockedLines(
 
   await prisma.$transaction([
     prisma.cartItem.deleteMany({
-      where: { cartId: cart.id, articleId: { in: [...articleIds] } },
+      where: { cartId: cart.id, articleId: { in: parsed.data } },
     }),
     prisma.cart.update({ where: { id: cart.id }, data: { updatedAt: new Date() } }),
   ])

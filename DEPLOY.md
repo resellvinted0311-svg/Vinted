@@ -46,6 +46,7 @@ qui ouvre le nom de la base ; dans ce cas, changez le mot de passe.
 | `SEED_ON_BUILD` | non | **rien n'est inséré sans `SEED_ON_BUILD=1`**. Le seed se déclenchait auparavant sur un catalogue vide — l'état d'une base neuve — et a peuplé la production sans qu'on le demande |
 | `NEXT_PUBLIC_SITE_URL` | non | déduite de `VERCEL_PROJECT_PRODUCTION_URL` |
 | `AUTH_SECRET` | non\* | sans elle, la connexion est désactivée proprement ; le reste fonctionne |
+| `AUTH_URL` | **oui** dès que `AUTH_SECRET` est posée | domaine public exact, sans barre finale. `trustHost` est actif : sans cette variable, Auth.js construit ses URL de rappel depuis l'en-tête Host de la requête. Le build de production échoue si elle manque |
 | `UPSTASH_REDIS_REST_URL` | **oui en production** | sans elle, la limitation de débit est en mémoire : chaque instance a son propre compteur, remis à zéro à chaque démarrage à froid |
 | `UPSTASH_REDIS_REST_TOKEN` | **oui en production** | idem |
 | `CRON_SECRET` | **oui** | sans elle, la route `/api/cron` refuse tout et les réservations expirées ne sont jamais libérées |

@@ -1,4 +1,7 @@
+import { NextResponse } from 'next/server'
 import { publicJson } from '@/lib/security/public-json'
+import { checkRateLimit } from '@/lib/security/rate-limit'
+import { clientFingerprint } from '@/lib/security/fingerprint'
 import { getCurrentUser } from '@/lib/auth/session'
 
 export const runtime = 'nodejs'
@@ -19,6 +22,26 @@ export const dynamic = 'force-dynamic'
  * privé, aucune adresse e-mail complète.
  */
 export async function GET() {
+  // Deux requêtes PostgreSQL par appel, et un appel par chargement de page :
+  // indiscernable du trafic normal, donc parfait pour saturer le pool.
+  // Celui-ci est réglé à UNE connexion par instance — c'est le bon réglage en
+  // serverless, mais il laisse peu de marge.
+  //
+  // Confort, pas sécurité : une panne du compteur ne doit pas déconnecter
+  // l'en-tête de tout le monde. D'où `sensitive: false`.
+  const allowed = await checkRateLimit({
+    key: `session:${await clientFingerprint()}`,
+    limit: 120,
+    windowSeconds: 60,
+    sensitive: false,
+  })
+  if (!allowed) {
+    return new NextResponse(null, {
+      status: 429,
+      headers: { 'Cache-Control': 'no-store' },
+    })
+  }
+
   const user = await getCurrentUser()
 
   const body = user

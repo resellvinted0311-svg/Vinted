@@ -1,6 +1,7 @@
 import createIntlMiddleware from 'next-intl/middleware'
 import { NextResponse, type NextRequest } from 'next/server'
 import { routing, locales } from '@/lib/i18n/routing'
+import { stripLocalePrefix } from '@/lib/security/safe-path'
 
 const intlMiddleware = createIntlMiddleware(routing)
 
@@ -42,7 +43,11 @@ export default function middleware(request: NextRequest): NextResponse {
     if (!hasSessionCookie) {
       const locale = pathname.split('/')[1] ?? routing.defaultLocale
       const target = new URL(`/${locale}/connexion`, request.url)
-      target.searchParams.set('suite', pathname)
+
+      // SANS le préfixe de langue : le routeur de next-intl le remet au
+      // moment de rediriger. Le stocker entier donnait `/fr/fr/compte`, donc
+      // une 404 — la reprise vers la page demandée ne fonctionnait jamais.
+      target.searchParams.set('suite', stripLocalePrefix(pathname, locales))
       return NextResponse.redirect(target)
     }
   }

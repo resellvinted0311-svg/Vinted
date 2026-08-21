@@ -167,24 +167,19 @@ export function computeNetMarginCents(
   )
 }
 
-/**
- * Prix de port facturé à l'acheteur.
- *
- * Le tarif transporteur n'est jamais répercuté à l'identique : ce que
- * l'acheteur paie en port entre dans le chiffre d'affaires et supporte
- * cotisations et commission.
- */
-export function computeChargedShippingCents(
-  carrierCostCents: number,
-  markupPercent: number,
-): number {
-  if (markupPercent < 0) {
-    throw new Error('La majoration sur le port ne peut pas être négative.')
-  }
-  return roundUpToTenCents(
-    Math.ceil(carrierCostCents * (1 + markupPercent / 100)),
-  )
-}
+// Le prix de port facturé vit dans `lib/domain/shipping.ts`, et nulle part
+// ailleurs.
+//
+// Une seconde version existait ici, et elle calculait en flottant : ce fichier
+// annonce pourtant en tête qu'« aucun Float n'entre dans un calcul de prix ».
+// Les deux divergeaient réellement — 1,00 € de coût transporteur majoré de
+// 10 % donnait 1,20 € ici contre 1,10 € là-bas, parce que 1 × 1.1 vaut
+// 1.1000000000000001 en virgule flottante.
+//
+// Aucune conséquence tant qu'elle n'avait pas d'appelant et que la majoration
+// réglée valait 20 %, l'une des valeurs où les deux coïncident. C'était un
+// piège dormant, qui se serait réveillé le jour d'un réglage à 10 % depuis le
+// back-office.
 
 /**
  * Baisse de prix automatique.

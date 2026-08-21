@@ -6,6 +6,7 @@ import {
   type CatalogueFilters,
   type SortKey,
 } from '@/lib/domain/catalogue'
+import { localeSchema } from '@/lib/validation/auth'
 
 /**
  * Validation des paramètres d'URL du catalogue.
@@ -176,5 +177,10 @@ export function parseCatalogueSearchParams(
 
 export const autocompleteSchema = z.object({
   q: z.string().trim().min(2).max(100),
-  locale: z.string().length(2),
+  // `z.string().length(2)` acceptait n'importe quelles deux lettres, alors que
+  // cette valeur alimente trois requêtes SQL brutes. Aucune injection n'était
+  // possible — la fonction de configuration textuelle concernée est purement
+  // déclarative et retombe sur 'simple' — mais c'était la même donnée validée
+  // plus lâchement ici qu'ailleurs, sans raison.
+  locale: localeSchema,
 })

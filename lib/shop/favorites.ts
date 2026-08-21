@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/db/client'
 import { visibleArticleWhere } from '@/lib/db/visibility'
+import { articleIdSchema } from '@/lib/validation/shop'
 import { getCurrentUser } from '@/lib/auth/session'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
@@ -39,6 +40,21 @@ import { ensureShopSessionToken, readShopSessionToken } from '@/lib/shop/session
 
 /** Identifiants des articles en favori, pour la session courante. */
 export async function getFavoriteArticleIds(): Promise<string[]> {
+  // Deux requêtes PostgreSQL, appelées à chaque chargement de page portant une
+  // grille — et c'est un export de fichier `'use server'`, donc une adresse
+  // HTTP appelable directement, en boucle, sans passer par une page.
+  //
+  // Confort, pas sécurité : une panne du compteur ne doit pas vider les
+  // favoris de tout le monde. Sur échec, on renvoie une liste vide plutôt que
+  // de laisser remonter une erreur dans le rendu d'une grille.
+  const allowed = await checkRateLimit({
+    key: `favorites-read:${await clientFingerprint()}`,
+    limit: 120,
+    windowSeconds: 60,
+    sensitive: false,
+  })
+  if (!allowed) return []
+
   const user = await getCurrentUser()
 
   if (user) {
@@ -68,9 +84,13 @@ export interface ToggleFavoriteResult {
 export async function toggleFavorite(
   articleId: string,
 ): Promise<ToggleFavoriteResult> {
-  if (typeof articleId !== 'string' || articleId.length === 0 || articleId.length > 40) {
+  // Zod, pas un `if` écrit à la main : c'est la règle du brief, et c'est le
+  // même schéma que celui du panier.
+  const parsed = articleIdSchema.safeParse(articleId)
+  if (!parsed.success) {
     return { ok: false, isFavorite: false, reason: 'unknown-article' }
   }
+  const id = parsed.data
 
   const allowed = await checkRateLimit({
     key: `favorite:${await clientFingerprint()}`,
@@ -85,7 +105,7 @@ export async function toggleFavorite(
   // n'importe quel identifiant deviendrait insérable, et on stockerait des
   // renvois vers des fiches introuvables.
   const article = await prisma.article.findFirst({
-    where: { id: articleId, ...visibleArticleWhere() },
+    where: { id, ...visibleArticleWhere() },
     select: { id: true },
   })
   if (!article) return { ok: false, isFavorite: false, reason: 'unknown-article' }
@@ -94,36 +114,36 @@ export async function toggleFavorite(
 
   if (user) {
     const existing = await prisma.favorite.findUnique({
-      where: { userId_articleId: { userId: user.id, articleId } },
+      where: { userId_articleId: { userId: user.id, articleId: id } },
       select: { userId: true },
     })
 
     if (existing) {
       await prisma.favorite.delete({
-        where: { userId_articleId: { userId: user.id, articleId } },
+        where: { userId_articleId: { userId: user.id, articleId: id } },
       })
       return { ok: true, isFavorite: false }
     }
 
-    await prisma.favorite.create({ data: { userId: user.id, articleId } })
+    await prisma.favorite.create({ data: { userId: user.id, articleId: id } })
     return { ok: true, isFavorite: true }
   }
 
   const token = await ensureShopSessionToken()
   const existing = await prisma.guestFavorite.findUnique({
-    where: { sessionToken_articleId: { sessionToken: token, articleId } },
+    where: { sessionToken_articleId: { sessionToken: token, articleId: id } },
     select: { articleId: true },
   })
 
   if (existing) {
     await prisma.guestFavorite.delete({
-      where: { sessionToken_articleId: { sessionToken: token, articleId } },
+      where: { sessionToken_articleId: { sessionToken: token, articleId: id } },
     })
     return { ok: true, isFavorite: false }
   }
 
   await prisma.guestFavorite.create({
-    data: { sessionToken: token, articleId },
+    data: { sessionToken: token, articleId: id },
   })
   return { ok: true, isFavorite: true }
 }

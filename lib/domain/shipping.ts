@@ -244,6 +244,16 @@ export function computeChargedShippingCents(
   carrierCostCents: number,
   config: ShippingConfig,
 ): number {
+  // Garde reprise de la version supprimée dans `pricing.ts` : une majoration
+  // négative n'est pas une remise sur le port, c'est un réglage saisi de
+  // travers. Mieux vaut s'arrêter que facturer moins que le transporteur.
+  if (config.shippingMarkupPercent < 0) {
+    throw new Error('La majoration sur le port ne peut pas être négative.')
+  }
+
+  // Entiers d'un bout à l'autre : `× (1 + m/100)` en flottant donnait
+  // 1.1000000000000001 pour 1,00 € majoré de 10 %, donc 1,20 € au lieu de
+  // 1,10 € après arrondi.
   const withMarkup = Math.ceil(
     (carrierCostCents * (100 + config.shippingMarkupPercent)) / 100,
   )

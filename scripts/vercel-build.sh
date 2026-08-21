@@ -28,6 +28,26 @@ eval "$DB_EXPORTS"
 # Étapes
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Variables exigées en production
+# ---------------------------------------------------------------------------
+
+# `trustHost: true` est actif : Auth.js accepte alors l'en-tête Host de la
+# requête pour construire ses URL de rappel. Vercel normalise cet en-tête, donc
+# le vecteur est fermé — TANT QUE `AUTH_URL` est renseignée, ce qui la rend
+# décisive et non facultative.
+#
+# Le risque n'est pas une attaque : c'est une DÉRIVE DE CONFIGURATION. Rien
+# n'exigeait cette variable, donc rien ne garantissait qu'un futur
+# environnement la poserait. On échoue ici plutôt que de le découvrir sur un
+# lien de connexion qui pointe ailleurs.
+if [ "$VERCEL_ENV" = "production" ] && [ -z "$AUTH_URL" ] && [ -z "$NEXTAUTH_URL" ]; then
+  echo "✗ AUTH_URL est requise en production (trustHost est actif)." >&2
+  echo "  Posez-la dans les variables d'environnement Vercel, au domaine" >&2
+  echo "  public exact de la boutique — https://exemple.fr, sans barre finale." >&2
+  exit 1
+fi
+
 echo "→ Génération du client Prisma"
 prisma generate
 

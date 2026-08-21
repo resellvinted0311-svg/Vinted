@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createHmac, randomBytes } from 'node:crypto'
 import {
   isValidShopSessionToken,
@@ -17,11 +17,9 @@ import { GUEST_DATA_RETENTION_DAYS } from '@/lib/config/privacy'
 const SECRET = 'secret-de-test-suffisamment-long-pour-un-hmac'
 
 let savedAuth: string | undefined
-let savedNode: string | undefined
 
 beforeEach(() => {
   savedAuth = process.env.AUTH_SECRET
-  savedNode = process.env.NODE_ENV
   process.env.AUTH_SECRET = SECRET
   __resetServerSecretForTests()
 })
@@ -30,9 +28,9 @@ afterEach(() => {
   if (savedAuth === undefined) delete process.env.AUTH_SECRET
   else process.env.AUTH_SECRET = savedAuth
 
-  if (savedNode === undefined) delete process.env.NODE_ENV
-  else process.env.NODE_ENV = savedNode
-
+  // NODE_ENV est en lecture seule pour TypeScript : `stubEnv` est la seule
+  // façon propre de le faire varier, et il se défait tout seul.
+  vi.unstubAllEnvs()
   __resetServerSecretForTests()
 })
 
@@ -97,11 +95,11 @@ describe('cookie', () => {
     // `__Host-` interdit l'attribut Domain : un sous-domaine ne peut donc plus
     // poser ce cookie sur le domaine parent. C'est la seconde serrure sur la
     // fixation, après la signature.
-    process.env.NODE_ENV = 'production'
+    vi.stubEnv('NODE_ENV', 'production')
     expect(shopSessionCookieName()).toBe('__Host-ND_SESSION')
 
     // Le préfixe est incompatible avec http://localhost, d'où les deux noms.
-    process.env.NODE_ENV = 'development'
+    vi.stubEnv('NODE_ENV', 'development')
     expect(shopSessionCookieName()).toBe('ND_SESSION')
   })
 

@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   computeFloorPriceCents,
   computeNetMarginCents,
-  computeChargedShippingCents,
   computeAutoDropPriceCents,
   roundUpToTenCents,
   stripeFeeCents,
@@ -132,21 +131,6 @@ describe('computeNetMarginCents', () => {
       shippingCostCents: 420,
     })
     expect(margin).toBeLessThan(0)
-  })
-})
-
-describe('computeChargedShippingCents', () => {
-  it('applique la majoration et arrondit aux 10 centimes supérieurs', () => {
-    // 4,20 € × 1,20 = 5,04 € → 5,10 €
-    expect(computeChargedShippingCents(420, 20)).toBe(510)
-  })
-
-  it('accepte une majoration nulle', () => {
-    expect(computeChargedShippingCents(420, 0)).toBe(420)
-  })
-
-  it('refuse une majoration négative', () => {
-    expect(() => computeChargedShippingCents(420, -10)).toThrow()
   })
 })
 

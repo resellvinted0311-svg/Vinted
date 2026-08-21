@@ -89,6 +89,27 @@ describe('majoration', () => {
       computeChargedShippingCents(420, { ...CONFIG, shippingMarkupPercent: 0 }),
     ).toBe(420)
   })
+
+  it('refuse une majoration négative', () => {
+    // Garde reprise de la version supprimée de `pricing.ts` : ce n'est pas une
+    // remise sur le port, c'est un réglage saisi de travers.
+    expect(() =>
+      computeChargedShippingCents(420, { ...CONFIG, shippingMarkupPercent: -10 }),
+    ).toThrow()
+  })
+
+  it('calcule en entiers, sans passer par la virgule flottante', () => {
+    // Le piège dormant qui a motivé la suppression du doublon : 1,00 € majoré
+    // de 10 % vaut 1,10 €. En flottant, 1 × 1.1 donne 1.1000000000000001, donc
+    // 111 après Math.ceil, donc 1,20 € après arrondi à la dizaine.
+    expect(
+      computeChargedShippingCents(100, { ...CONFIG, shippingMarkupPercent: 10 }),
+    ).toBe(110)
+
+    expect(
+      computeChargedShippingCents(700, { ...CONFIG, shippingMarkupPercent: 10 }),
+    ).toBe(770)
+  })
 })
 
 describe('résolution de zone', () => {

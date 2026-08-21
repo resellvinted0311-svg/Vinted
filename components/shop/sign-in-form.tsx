@@ -13,6 +13,7 @@ import {
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { isSafeInternalPath } from '@/lib/security/safe-path'
 
 const initialState: AuthActionState = { status: 'idle' }
 
@@ -35,8 +36,11 @@ export function SignInForm() {
     if (state.status === 'success') {
       // `suite` est posé par le middleware quand une page protégée a été
       // demandée sans session.
+      // `startsWith('/')` laissait passer `//evil.com`, que le navigateur lit
+      // comme une URL absolue : une redirection ouverte, sur la page où l'on
+      // vient de taper son mot de passe.
       const next = searchParams.get('suite')
-      router.replace(next && next.startsWith('/') ? next : '/compte')
+      router.replace(isSafeInternalPath(next) ? (next as string) : '/compte')
       router.refresh()
     }
   }, [state.status, router, searchParams])
