@@ -14,9 +14,15 @@ const SESSION_COOKIE = ['__Secure-authjs.session-token', 'authjs.session-token']
 
 const localePattern = locales.join('|')
 const ADMIN_PATH = new RegExp(`^/(${localePattern})/admin(/|$)`)
-const PRIVATE_PATH = new RegExp(
-  `^/(${localePattern})/(compte|checkout)(/|$)`,
-)
+
+/**
+ * Espaces qui exigent une session.
+ *
+ * `checkout` n'y figure PAS : le paiement sans compte est un choix assumé.
+ * Rediriger vers la connexion au moment de payer, c'est perdre la vente. Le
+ * tunnel demande une adresse e-mail de contact, pas un mot de passe.
+ */
+const PRIVATE_PATH = new RegExp(`^/(${localePattern})/compte(/|$)`)
 
 export default function middleware(request: NextRequest): NextResponse {
   const response = intlMiddleware(request)
@@ -49,9 +55,27 @@ export default function middleware(request: NextRequest): NextResponse {
   return response
 }
 
+/**
+ * Où le middleware s'exécute.
+ *
+ * L'exclusion précédente était `.*\..*` : « tout chemin contenant un point ».
+ * Elle visait les fichiers statiques, mais elle disait bien plus que cela.
+ * `/fr/admin/articles/nike.air` contient un point : le middleware ne s'y
+ * exécutait pas du tout. La redirection vers la connexion sautait, et
+ * l'en-tête `noindex` aussi. Il suffisait d'un point dans un segment
+ * dynamique — un slug, un identifiant, un nom de fichier — pour sortir du
+ * champ de la surveillance.
+ *
+ * On énumère donc les extensions réellement statiques, ancrées en fin de
+ * chemin. Un point AU MILIEU d'une URL ne fait plus rien de particulier.
+ *
+ * Cela ne remplace rien : le contrôle qui fait autorité reste `requireAdmin()`
+ * dans chaque page et chaque action serveur. Un middleware est une commodité
+ * de routage, jamais une frontière de sécurité — il ne voit pas la base, donc
+ * il ne sait pas qui vous êtes.
+ */
 export const config = {
   matcher: [
-    // Tout sauf les fichiers statiques, les images Next et les routes d'API.
-    '/((?!api|_next|_vercel|placeholder|.*\\..*).*)',
+    '/((?!api|_next|_vercel|placeholder|.*\\.(?:ico|png|jpe?g|gif|svg|webp|avif|css|js|mjs|map|txt|xml|json|webmanifest|woff2?|ttf|otf|eot|pdf|mp4|webm)$).*)',
   ],
 }

@@ -108,3 +108,28 @@ export function isArticleListed(
 ): boolean {
   return matches(LISTED_STATUSES, article, now)
 }
+
+/**
+ * La réservation affichée est-elle encore réelle ?
+ *
+ * Le statut RESERVED ne redevient AVAILABLE qu'au passage du balayage — toutes
+ * les cinq minutes, et seulement si la tâche planifiée est bien configurée.
+ * S'en remettre au seul statut pour l'affichage avait deux conséquences :
+ *
+ *  - dans le meilleur des cas, la pastille « en cours d'achat » survivait
+ *    quelques minutes à une réservation déjà éteinte ;
+ *  - dans le pire, si la tâche ne tournait pas, une pièce restait marquée
+ *    ainsi indéfiniment alors qu'elle était parfaitement achetable — un panier
+ *    abandonné suffisait à la retirer de la vente aux yeux de tout le monde.
+ *
+ * L'échéance est donc lue directement. Le balayage redevient ce qu'il doit
+ * être : un rangement, pas une condition de bon fonctionnement.
+ */
+export function isReservationLive(
+  article: { status: ArticleStatus; reservedUntil: Date | null },
+  now = new Date(),
+): boolean {
+  if (article.status !== 'RESERVED') return false
+  if (article.reservedUntil === null) return false
+  return article.reservedUntil > now
+}

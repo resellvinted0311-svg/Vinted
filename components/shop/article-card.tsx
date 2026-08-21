@@ -3,6 +3,7 @@ import { Link } from '@/lib/i18n/navigation'
 import { cn } from '@/lib/utils/cn'
 import { formatPrice, formatGrams, discountPercent } from '@/lib/utils/format'
 import type { PublicArticleCard } from '@/lib/db/selectors'
+import { isReservationLive } from '@/lib/db/visibility'
 import { ArticleImage } from './article-image'
 import { FavoriteButton } from './favorite-button'
 
@@ -69,8 +70,9 @@ export async function ArticleCard({
         )}
 
         {/* Mention honnête : la réservation est réelle et temporaire. Ce n'est
-            pas un compteur d'urgence inventé. */}
-        {article.status === 'RESERVED' ? (
+            pas un compteur d'urgence inventé — et elle disparaît à l'échéance,
+            sans attendre que le balayage soit passé. */}
+        {isReservationLive(article) ? (
           <span className="label-reg absolute left-2 top-2 rounded-input border-[1.5px] border-rule bg-paper px-1.5 py-0.5 text-ink">
             {t('beingPurchased')}
           </span>

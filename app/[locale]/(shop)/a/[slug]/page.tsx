@@ -7,6 +7,7 @@ import {
   getSimilarArticles,
 } from '@/lib/db/queries/articles'
 import { getCategoryPath } from '@/lib/db/queries/taxonomy'
+import { isReservationLive } from '@/lib/db/visibility'
 import { pickTranslation, ArticleCard, ArticleGrid } from '@/components/shop/article-card'
 import { ArticleGallery } from '@/components/shop/article-gallery'
 import { MeasurementsTable } from '@/components/shop/measurements-table'
@@ -81,7 +82,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
 
   const translation = pickTranslation(article.translations, locale)
   const isSold = article.status === 'SOLD'
-  const isReserved = article.status === 'RESERVED'
+  const isReserved = isReservationLive(article)
   const discount = discountPercent(article.priceCents, article.comparePriceCents)
 
   const [similar, categoryPath] = await Promise.all([

@@ -108,6 +108,10 @@ export const publicArticleCardSelect = {
   status: true,
   publishedAt: true,
   soldAt: true,
+  // Rend l'affichage d'une réservation indépendant du balayage : voir
+  // `isReservationLive`. L'échéance est un fait, pas un compteur d'urgence —
+  // elle n'est jamais affichée telle quelle.
+  reservedUntil: true,
   allowOffers: true,
   offersOpenAt: true,
   brand: { select: publicBrandSelect },
@@ -137,6 +141,7 @@ export const publicArticleDetailSelect = {
   status: true,
   publishedAt: true,
   soldAt: true,
+  reservedUntil: true,
   viewCount: true,
   allowOffers: true,
   offersOpenAt: true,

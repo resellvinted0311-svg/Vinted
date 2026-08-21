@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   isArticleVisible,
   isArticleListed,
+  isReservationLive,
   visibleArticleWhere,
   listedArticleWhere,
   LISTED_STATUSES,
@@ -75,5 +76,40 @@ describe('visibilité d’un article', () => {
     for (const where of [visible, listed]) {
       expect(where.publishedAt).toEqual({ not: null, lte: NOW })
     }
+  })
+})
+
+describe('affichage d’une réservation', () => {
+  it('reste affichée tant que l’échéance n’est pas passée', () => {
+    expect(
+      isReservationLive(
+        { status: 'RESERVED', reservedUntil: new Date('2026-08-21T12:10:00Z') },
+        NOW,
+      ),
+    ).toBe(true)
+  })
+
+  it('disparaît à l’échéance, sans attendre le balayage', () => {
+    // C'est le défaut corrigé : le statut ne redevient AVAILABLE qu'au passage
+    // de la tâche planifiée. Si elle ne tourne pas, un panier abandonné
+    // retirait la pièce de la vente aux yeux de tout le monde, sans limite.
+    expect(
+      isReservationLive(
+        { status: 'RESERVED', reservedUntil: new Date('2026-08-21T11:59:59Z') },
+        NOW,
+      ),
+    ).toBe(false)
+  })
+
+  it('ne s’affiche pas sans échéance ni sur un autre statut', () => {
+    expect(isReservationLive({ status: 'RESERVED', reservedUntil: null }, NOW)).toBe(
+      false,
+    )
+    expect(
+      isReservationLive(
+        { status: 'AVAILABLE', reservedUntil: new Date('2026-08-21T12:10:00Z') },
+        NOW,
+      ),
+    ).toBe(false)
   })
 })
