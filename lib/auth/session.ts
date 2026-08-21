@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import type { Session } from 'next-auth'
 import { prisma } from '@/lib/db/client'
 import { isAuthConfigured } from '@/lib/config/site'
+import { rotateShopSessionToken } from '@/lib/shop/session-token'
 import { auth } from './index'
 import {
   SESSION_COOKIE_NAME,
@@ -65,6 +66,13 @@ export async function destroyCurrentSession(): Promise<void> {
     maxAge: 0,
     expires: new Date(0),
   })
+
+  // Le jeton de session BOUTIQUE tourne aussi.
+  //
+  // Il ne porte pas d'identité — mais il porte le panier et les favoris. Le
+  // laisser en place sur un poste partagé ferait hériter la personne suivante
+  // de ce que la précédente avait mis de côté.
+  await rotateShopSessionToken()
 }
 
 /**

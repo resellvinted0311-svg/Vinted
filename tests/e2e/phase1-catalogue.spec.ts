@@ -226,10 +226,19 @@ test.describe('Favoris', () => {
     await page.goto('/fr/favoris')
     await expect(page.locator('article')).toHaveCount(1)
 
+    // Le nom porte le préfixe `__Host-` en production — c'est ce qui interdit
+    // à un sous-domaine de poser ce cookie sur le domaine parent. Les deux
+    // noms sont acceptés ici pour que le test tienne dans les deux modes.
     const cookies = await context.cookies()
-    const session = cookies.find((cookie) => cookie.name === 'ND_SESSION')
+    const session = cookies.find(
+      (cookie) => cookie.name === 'ND_SESSION' || cookie.name === '__Host-ND_SESSION',
+    )
     expect(session, 'le panier/favoris invité doit vivre dans un cookie httpOnly').toBeDefined()
     expect(session!.httpOnly).toBe(true)
+
+    // Et il doit être signé : 32 caractères, un point, 22 caractères. Toute
+    // autre forme était auparavant adoptée telle quelle.
+    expect(session!.value).toMatch(/^[A-Za-z0-9_-]{32}\.[A-Za-z0-9_-]{22}$/)
   })
 })
 

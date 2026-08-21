@@ -8,9 +8,16 @@ dist/
 next-env.d.ts
 *.tsbuildinfo
 
-.env
-.env.local
-.env.*.local
+# Tout fichier d'environnement, sauf l'exemple.
+#
+# La liste précédente nommait .env, .env.local et .env.*.local — mais pas
+# .env.production ni .env.development, que Next.js charge nativement et qu'on
+# crée sans y penser. Un « git add . » les aurait emportés avec la chaîne
+# PostgreSQL complète, AUTH_SECRET et CRON_SECRET.
+#
+# Aucun .env n'a jamais été commité dans ce dépôt. C'est exactement le moment
+# de fermer le motif : la phase 2 va y mettre les clés Stripe.
+.env*
 !.env.example
 
 coverage/

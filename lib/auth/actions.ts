@@ -9,6 +9,7 @@ import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { pseudonymize } from '@/lib/security/pseudonymize'
 import { mergeGuestFavorites } from '@/lib/shop/favorites-merge'
+import { rotateShopSessionToken } from '@/lib/shop/session-token'
 import { isAuthConfigured } from '@/lib/config/site'
 
 export type AuthActionState =
@@ -94,6 +95,10 @@ export async function signUpAction(
   // c'est ce qui rend l'ajout aux favoris utile sans compte.
   await mergeGuestFavorites(user.id)
 
+  // APRÈS la reprise, jamais avant : elle a besoin de l'ancien jeton pour
+  // retrouver ce qu'il faut reprendre.
+  await rotateShopSessionToken()
+
   return { status: 'success' }
 }
 
@@ -178,8 +183,11 @@ export async function signInAction(
     data: { lastSeenAt: new Date() },
   })
 
-  // Reprise des favoris déposés depuis ce navigateur avant la connexion.
+  // Reprise des favoris déposés depuis ce navigateur avant la connexion, puis
+  // renouvellement du jeton : sur un poste partagé, la personne suivante ne
+  // doit pas hériter de ce que la précédente avait mis de côté.
   await mergeGuestFavorites(user.id)
+  await rotateShopSessionToken()
 
   return { status: 'success' }
 }
@@ -204,13 +212,35 @@ export async function magicLinkAction(
     return { status: 'error', messageKey: 'invalidEmail' }
   }
 
-  const allowed = await checkRateLimit({
+  const byOrigin = await checkRateLimit({
     key: `magic:${await clientFingerprint()}`,
     limit: 5,
     windowSeconds: 900,
     sensitive: true,
   })
-  if (!allowed) return { status: 'error', messageKey: 'rateLimited' }
+  if (!byOrigin) return { status: 'error', messageKey: 'rateLimited' }
+
+  // Compter par IP seulement laissait une porte ouverte : un pool de proxys
+  // suffisait à noyer la boîte d'une personne ciblée sous des courriels
+  // LÉGITIMEMENT signés par notre domaine. Le coût ne serait pas pour elle
+  // seule — plaintes pour spam chez Resend, mise en quarantaine de l'adresse
+  // d'envoi, et plus aucun e-mail transactionnel délivré à personne.
+  //
+  // Le compteur porte sur un jeton, jamais sur l'adresse en clair : la clé
+  // part chez un tiers.
+  const byAddress = await checkRateLimit({
+    key: `magic-mail:${pseudonymize({
+      purpose: 'rate-limit:magic-email',
+      value: parsed.data.email,
+      rotateDaily: true,
+    })}`,
+    limit: 3,
+    windowSeconds: 3600,
+    sensitive: true,
+  })
+  // Réponse inchangée : refuser plus explicitement ici rétablirait l'oracle
+  // que le message uniforme ci-dessous a précisément pour but de fermer.
+  if (!byAddress) return { status: 'magic-link-sent' }
 
   await authSignIn('magic-link', {
     email: parsed.data.email,

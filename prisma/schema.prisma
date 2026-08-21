@@ -489,7 +489,11 @@ model Favorite {
 /// Favoris d'un visiteur non connecté : rattachés au jeton de session panier,
 /// jamais au localStorage. Fusionnés dans Favorite à l'inscription.
 model GuestFavorite {
-  sessionToken String
+  /// 64 caractères maximum : c'est une clé indexée, et le jeton signé en
+  /// fait 55. Sans borne, une valeur arbitrairement longue faisait grossir
+  /// l'index jusqu'à la limite de PostgreSQL, au-delà de laquelle chaque
+  /// écriture devient une erreur.
+  sessionToken String @db.VarChar(64)
   articleId    String
 
   createdAt DateTime @default(now())
@@ -584,7 +588,8 @@ model Cart {
   id           String  @id @default(cuid())
   userId       String?
   /// Cookie httpOnly — le panier n'existe jamais en localStorage.
-  sessionToken String  @unique
+  /// Même borne que GuestFavorite : clé indexée et unique.
+  sessionToken String @unique @db.VarChar(64)
   locale       String  @default("fr")
 
   /// Relance panier abandonné.
