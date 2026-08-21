@@ -40,7 +40,7 @@ import {
  */
 
 /** Propriétaire du panier et du verrou de stock. */
-interface CartOwner {
+export interface CartOwner {
   userId: string | null
   sessionToken: string
   /**
@@ -53,7 +53,7 @@ interface CartOwner {
 }
 
 /** Propriétaire pour un chemin d'ÉCRITURE : crée le jeton s'il manque. */
-async function ensureCartOwner(): Promise<CartOwner> {
+export async function ensureCartOwner(): Promise<CartOwner> {
   const user = await getCurrentUser()
   const sessionToken = await ensureShopSessionToken()
   return {
@@ -85,7 +85,7 @@ async function readCartOwner(): Promise<CartOwner | null> {
  * Le compte est cherché EN PREMIER : une personne connectée depuis un nouveau
  * navigateur doit retrouver son panier, pas en ouvrir un vide.
  */
-async function findCart(owner: CartOwner): Promise<{ id: string } | null> {
+export async function findCart(owner: CartOwner): Promise<{ id: string } | null> {
   if (owner.userId) {
     const byUser = await prisma.cart.findFirst({
       where: { userId: owner.userId },
