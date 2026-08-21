@@ -41,6 +41,11 @@ y apparaît sans qu'on ait à y penser.
 
 Vercel et Supabase sont inconditionnels : dès qu'il y a un site, ils traitent.
 
+**Une réserve à connaître :** la page de confidentialité est prérendue au
+build. Ajouter une clé d'API dans Vercel sans redéployer brancherait le
+prestataire sans que la page le dise. Le réflexe est le même que pour n'importe
+quelle variable d'environnement : une nouvelle clé, un nouveau déploiement.
+
 ---
 
 ## 2. Durées de conservation
