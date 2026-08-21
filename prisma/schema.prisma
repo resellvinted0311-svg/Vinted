@@ -666,6 +666,15 @@ model Order {
   stripeSessionId       String? @unique
   stripePaymentIntentId String? @unique
 
+  /// Propriétaire du verrou de stock posé pour cette commande — identifiant de
+  /// compte ou jeton de session boutique.
+  ///
+  /// Sans lui, libérer le stock d'une commande abandonnée revenait à écrire
+  /// « UPDATE Article SET AVAILABLE WHERE status = RESERVED » sans savoir à
+  /// qui appartenait la réservation : une commande expirée volait le verrou de
+  /// l'acheteur suivant, qui payait alors une pièce redevenue libre.
+  lockOwnerId String?
+
   paidAt      DateTime?
   shippedAt   DateTime?
   deliveredAt DateTime?

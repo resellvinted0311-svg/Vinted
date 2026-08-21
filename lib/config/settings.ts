@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { z } from 'zod'
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
 
 /**
@@ -24,7 +25,24 @@ import { prisma } from '@/lib/db/client'
  * Les lire un par un multiplierait les allers-retours — coûteux derrière un
  * pooler, et surtout deux lectures séparées peuvent tomber de part et d'autre
  * d'une modification en back-office et produire un calcul incohérent.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi ces fonctions acceptent un client de transaction
+ * ---------------------------------------------------------------------------
+ * Appelées depuis l'intérieur d'une transaction interactive, elles DOIVENT
+ * utiliser la connexion de cette transaction. Le client global en demanderait
+ * une seconde au pool — or la connexion applicative est réglée à UNE seule en
+ * production (`connection_limit=1`, recommandation de Prisma derrière un
+ * pooler). La transaction tient l'unique connexion, la lecture attend une
+ * connexion qui ne se libérera qu'à la fin de la transaction : interblocage,
+ * jusqu'au délai d'attente du pool.
+ *
+ * Ce défaut ne se voit pas en développement, où la limite n'est pas posée.
+ * D'où le paramètre, plutôt qu'une discipline à retenir.
  */
+
+/** Client Prisma ou client de transaction : les deux savent lire. */
+type Reader = Prisma.TransactionClient | typeof prisma
 
 /** Erreur de configuration : la boutique ne peut pas fonctionner sans. */
 export class MissingSettingError extends Error {
@@ -67,8 +85,9 @@ export type SettingValue<K extends SettingKey> = z.infer<(typeof SCHEMAS)[K]>
 /** Lit plusieurs réglages en une requête, tous validés. */
 export async function getSettings<K extends SettingKey>(
   keys: readonly K[],
+  client: Reader = prisma,
 ): Promise<{ [P in K]: SettingValue<P> }> {
-  const rows = await prisma.setting.findMany({
+  const rows = await client.setting.findMany({
     where: { key: { in: [...keys] } },
     select: { key: true, value: true },
   })
@@ -100,15 +119,16 @@ export async function getSettings<K extends SettingKey>(
 /** Lit un réglage isolé. Préférer `getSettings` dès qu'il y en a deux. */
 export async function getSetting<K extends SettingKey>(
   key: K,
+  client: Reader = prisma,
 ): Promise<SettingValue<K>> {
-  const values = await getSettings([key])
+  const values = await getSettings([key], client)
   return values[key]
 }
 
 /** Configuration du calcul de port, telle que l'attend `lib/domain/shipping`. */
-export async function getShippingConfig(): Promise<{
+export async function getShippingConfig(client: Reader = prisma): Promise<{
   packagingWeightGrams: number
   shippingMarkupPercent: number
 }> {
-  return getSettings(['packagingWeightGrams', 'shippingMarkupPercent'])
+  return getSettings(['packagingWeightGrams', 'shippingMarkupPercent'], client)
 }

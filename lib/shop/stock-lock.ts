@@ -56,7 +56,7 @@ export type StockLockResult =
  * verrou applicatif qu'il faudrait relâcher à la main laisserait un article
  * immobilisé pour toujours au premier plantage.
  */
-async function lockOwnerSerially(
+export async function serializeOwner(
   tx: Prisma.TransactionClient,
   ownerId: string,
 ): Promise<void> {
@@ -81,7 +81,8 @@ export async function acquireStockLocks(
   const ids = [...new Set(input.articleIds)]
   if (ids.length === 0) return { ok: false, unavailableArticleIds: [] }
 
-  await lockOwnerSerially(tx, input.ownerId)
+  // Ré-entrant : si l'appelante l'a déjà pris, ceci ne coûte rien.
+  await serializeOwner(tx, input.ownerId)
 
   // L'échéance est calculée PAR LA BASE, jamais par le serveur applicatif.
   //

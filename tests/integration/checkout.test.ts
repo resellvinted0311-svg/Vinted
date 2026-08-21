@@ -16,10 +16,13 @@ import type { CartOwner } from '@/lib/shop/cart'
  */
 
 const created = vi.hoisted(() => vi.fn())
+const expired = vi.hoisted(() => vi.fn())
 
 vi.mock('@/lib/payments/stripe', () => ({
   isStripeConfigured: () => true,
-  stripe: () => ({ checkout: { sessions: { create: created } } }),
+  stripe: () => ({
+    checkout: { sessions: { create: created, expire: expired } },
+  }),
   StripeNotConfiguredError: class extends Error {},
   __resetStripeClientForTests: () => {},
 }))
@@ -64,6 +67,8 @@ beforeEach(async () => {
   await cleanup()
   created.mockReset()
   created.mockResolvedValue({ id: 'cs_test_1', client_secret: 'cs_secret_1' })
+  expired.mockReset()
+  expired.mockResolvedValue({ id: 'cs_test_1', status: 'expired' })
 })
 
 afterAll(async () => {
@@ -496,5 +501,78 @@ describe('panne du prestataire de paiement', () => {
       select: { status: true },
     })
     expect(article.status).toBe('AVAILABLE')
+  })
+})
+
+describe('un seul paiement vivant par pièce', () => {
+  it('écarte la commande précédente au lieu d’en ouvrir une seconde', async () => {
+    // Reproduit par la revue adverse : le verrou de stock admet volontairement
+    // la reprise par le MÊME propriétaire. Deux onglets du même acheteur
+    // ouvraient donc deux commandes vivantes sur la même pièce, deux sessions,
+    // deux débits — pour un seul exemplaire.
+    const option = await anOption()
+    const articleId = await makeArticle('i1', 2000)
+    const cartId = await makeCart([articleId])
+    const shipping = {
+      carrierCode: option.carrierCode,
+      serviceCode: option.serviceCode,
+    }
+
+    const first = await prepareCheckoutFor(OWNER, cartId, { ...INPUT, shipping })
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+
+    created.mockResolvedValueOnce({ id: 'cs_test_2', client_secret: 'cs_secret_2' })
+    const second = await prepareCheckoutFor(OWNER, cartId, { ...INPUT, shipping })
+    expect(second.ok).toBe(true)
+    if (!second.ok) return
+
+    // La première commande est écartée, pas laissée payable en parallèle.
+    const before = await prisma.order.findUniqueOrThrow({
+      where: { id: first.orderId },
+      select: { status: true },
+    })
+    expect(before.status).toBe('CANCELLED')
+
+    // Et sa session de paiement est réellement fermée chez Stripe : sinon
+    // l'onglet précédent resterait payable.
+    expect(expired).toHaveBeenCalledWith('cs_test_1')
+
+    const live = await prisma.order.count({
+      where: { email: INPUT.email, status: 'PENDING_PAYMENT' },
+    })
+    expect(live).toBe(1)
+  })
+
+  it('résiste à deux tentatives simultanées du même acheteur', async () => {
+    const option = await anOption()
+    const articleId = await makeArticle('i2', 2000)
+    const cartId = await makeCart([articleId])
+    const shipping = {
+      carrierCode: option.carrierCode,
+      serviceCode: option.serviceCode,
+    }
+
+    let n = 0
+    created.mockImplementation(() => {
+      n += 1
+      return Promise.resolve({ id: `cs_race_${n}`, client_secret: `sec_${n}` })
+    })
+
+    // Deux onglets, au même instant. Le verrou consultatif pris en tête de
+    // transaction sérialise les deux : la seconde voit la première.
+    const results = await Promise.all([
+      prepareCheckoutFor(OWNER, cartId, { ...INPUT, shipping }),
+      prepareCheckoutFor(OWNER, cartId, { ...INPUT, shipping }),
+    ])
+
+    for (const result of results) expect(result.ok).toBe(true)
+
+    const live = await prisma.order.count({
+      where: { email: INPUT.email, status: 'PENDING_PAYMENT' },
+    })
+    // L'invariant : une seule commande payable sur cette pièce, quoi qu'il
+    // arrive.
+    expect(live).toBe(1)
   })
 })

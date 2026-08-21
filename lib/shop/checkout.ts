@@ -15,7 +15,11 @@ import {
   computeOrderAmounts,
   assertLinesMatchTotal,
 } from '@/lib/domain/order-total'
-import { acquireStockLocks, releaseStockLocks } from '@/lib/shop/stock-lock'
+import {
+  acquireStockLocks,
+  releaseStockLocks,
+  serializeOwner,
+} from '@/lib/shop/stock-lock'
 import { ensureCartOwner, findCart, type CartOwner } from '@/lib/shop/cart'
 import { evaluateCartLine, isPurchasable } from '@/lib/domain/cart'
 import { isStripeConfigured, stripe } from '@/lib/payments/stripe'
@@ -232,6 +236,16 @@ export async function prepareCheckoutFor(
   input: StartCheckoutInput,
 ): Promise<CheckoutResult> {
   const prepared = await prisma.$transaction(async (tx) => {
+    // Sérialise l'ENSEMBLE de la section critique pour ce propriétaire, pas
+    // seulement la prise de verrou.
+    //
+    // Sans cela — vérifié en exécution — deux onglets du même acheteur
+    // ouvraient deux commandes vivantes sur la même pièce : le verrou de stock
+    // admet volontairement la reprise par le même propriétaire, donc la
+    // seconde tentative reprenait son propre verrou au lieu d'être refusée.
+    // Deux sessions de paiement, deux débits, un seul exemplaire.
+    await serializeOwner(tx, owner.lockOwnerId)
+
     const { lines, blockedArticleIds } = await readCheckoutLines(
       tx,
       owner,
@@ -252,15 +266,23 @@ export async function prepareCheckoutFor(
     // Réglages et grilles lus DANS la transaction : deux lectures séparées
     // peuvent tomber de part et d'autre d'une modification en back-office et
     // produire un devis calculé sur une grille qui n'a jamais existé.
-    const [settings, grids] = await Promise.all([
-      getSettings([
+    // `tx` et non le client global : lues avec le client global depuis
+    // l'intérieur d'une transaction, ces requêtes demanderaient une SECONDE
+    // connexion au pool. Il n'y en a qu'une en production
+    // (`connection_limit=1`) et la transaction la tient — interblocage
+    // jusqu'au délai d'attente, invisible en développement où la limite n'est
+    // pas posée. Séquentiel et non `Promise.all` : une transaction interactive
+    // n'a qu'une connexion, les paralléliser ne gagne rien et brouille l'ordre.
+    const settings = await getSettings(
+      [
         'packagingWeightGrams',
         'shippingMarkupPercent',
         'reservationTtlMinutes',
         'cgvVersion',
-      ]),
-      getShippingGrids(),
-    ])
+      ],
+      tx,
+    )
+    const grids = await getShippingGrids(tx)
 
     const amountsBeforeShipping = computeOrderAmounts({
       itemPricesCents: lines.map((line) => line.priceCents),
@@ -331,6 +353,26 @@ export async function prepareCheckoutFor(
       }
     }
 
+    // Toute commande encore en attente de paiement, du même propriétaire, sur
+    // l'une de ces pièces, est écartée : elle ne doit pas rester payable en
+    // parallèle de celle qu'on ouvre. Sa session Stripe est fermée juste après
+    // le commit — c'est un appel réseau, il n'a rien à faire ici.
+    const superseded = await tx.order.findMany({
+      where: {
+        status: 'PENDING_PAYMENT',
+        lockOwnerId: owner.lockOwnerId,
+        items: { some: { articleId: { in: lines.map((line) => line.articleId) } } },
+      },
+      select: { id: true, stripeSessionId: true },
+    })
+
+    if (superseded.length > 0) {
+      await tx.order.updateMany({
+        where: { id: { in: superseded.map((order) => order.id) } },
+        data: { status: 'CANCELLED', cancelledAt: new Date() },
+      })
+    }
+
     const orderNumber = await nextOrderNumber(tx)
     const billing = input.billingAddress ?? input.shippingAddress
 
@@ -338,6 +380,11 @@ export async function prepareCheckoutFor(
       data: {
         orderNumber,
         userId: owner.userId,
+        // Qui détient le verrou de stock de cette commande. Sans cette
+        // information, la libérer plus tard reviendrait à rendre à la vente
+        // toute pièce réservée du lot, y compris celle qu'un autre acheteur
+        // vient de réserver pour son propre paiement.
+        lockOwnerId: owner.lockOwnerId,
         email: input.email,
         locale: input.locale,
         status: 'PENDING_PAYMENT',
@@ -386,12 +433,21 @@ export async function prepareCheckoutFor(
       amounts,
       option,
       lockedUntil: locked.until,
+      supersededSessionIds: superseded
+        .map((order) => order.stripeSessionId)
+        .filter((id): id is string => Boolean(id)),
     }
   })
 
   if (!prepared.ok) return { ok: false, failure: prepared.failure }
 
-  const { order, lines, amounts, option, lockedUntil } = prepared
+  const { order, lines, amounts, option, lockedUntil, supersededSessionIds } =
+    prepared
+
+  // Fermeture des sessions écartées, hors transaction. Sans cela, l'ancienne
+  // resterait payable : l'acheteur qui reviendrait sur l'onglet précédent
+  // serait débité une seconde fois pour la même pièce.
+  await expireSupersededSessions(supersededSessionIds)
 
   // ---------------------------------------------------------------------
   // Session de paiement — hors transaction
@@ -457,6 +513,29 @@ export async function prepareCheckoutFor(
     // une pièce immobilisée jusqu'à l'expiration du verrou.
     await releaseCheckout(order.id, owner.lockOwnerId, lines.map((l) => l.articleId))
     throw error
+  }
+}
+
+/**
+ * Ferme chez Stripe les sessions des commandes écartées.
+ *
+ * Au mieux : une session déjà expirée ou déjà payée fait lever l'appel, et ce
+ * n'est pas une raison d'empêcher la nouvelle commande de s'ouvrir. L'échec
+ * est journalisé, pas propagé — la commande écartée est de toute façon annulée
+ * en base, donc un paiement tardif dessus la rouvrirait au lieu de disparaître.
+ */
+async function expireSupersededSessions(
+  sessionIds: readonly string[],
+): Promise<void> {
+  for (const sessionId of sessionIds) {
+    try {
+      await stripe().checkout.sessions.expire(sessionId)
+    } catch (error) {
+      console.error(
+        `[checkout] Session ${sessionId} non fermée :`,
+        error instanceof Error ? error.message : 'erreur inconnue',
+      )
+    }
   }
 }
 

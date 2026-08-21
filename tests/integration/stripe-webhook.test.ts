@@ -18,6 +18,7 @@ import { __resetStripeClientForTests } from '@/lib/payments/stripe'
 
 const WEBHOOK_SECRET = 'whsec_test_secret_pour_signature_locale'
 const PREFIX = 'HOOK-'
+const OWNER = 'jeton-test'
 
 let savedKey: string | undefined
 let savedHook: string | undefined
@@ -69,7 +70,7 @@ async function makeOrderWithArticle(suffix: string) {
       floorPriceCents: 1500,
       weightGrams: 500,
       status: 'RESERVED',
-      reservedById: 'jeton-test',
+      reservedById: OWNER,
       reservedUntil: new Date(Date.now() + 900_000),
       publishedAt: new Date('2026-01-01T00:00:00Z'),
       categoryId: category.id,
@@ -80,6 +81,7 @@ async function makeOrderWithArticle(suffix: string) {
   const order = await prisma.order.create({
     data: {
       orderNumber: `${PREFIX}${suffix}`,
+      lockOwnerId: OWNER,
       email: 'acheteuse@exemple.fr',
       locale: 'fr',
       status: 'PENDING_PAYMENT',

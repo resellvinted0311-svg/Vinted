@@ -1,59 +1,113 @@
 import 'server-only'
 
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
 
 /**
  * Confirmation d'une vente.
  *
  * ---------------------------------------------------------------------------
+ * Toute transition d'état est un UPDATE conditionnel
+ * ---------------------------------------------------------------------------
+ * Aucune fonction de ce fichier ne lit un statut puis écrit sans condition.
+ * C'est le patron que `stock-lock.ts` applique déjà à l'article, et pour la
+ * même raison : entre la lecture et l'écriture, rien ne verrouille la ligne.
+ *
+ * Le défaut évité, vérifié : `checkout.session.completed` et le balayage des
+ * commandes anciennes tombent au même instant. Les deux lisent
+ * `PENDING_PAYMENT`. Le paiement écrit PAID et valide. Le balayage, lui, écrit
+ * `status='CANCELLED'` sans prédicat — et écrase PAID. La commande finit
+ * annulée avec une date de paiement, l'argent encaissé, la pièce vendue, et
+ * elle n'apparaît dans aucune liste de commandes à préparer. Silencieusement.
+ *
+ * `UPDATE … WHERE id = … AND status = … RETURNING id` règle cela : zéro ligne
+ * renvoyée signifie que quelqu'un d'autre a fait la transition entre-temps, et
+ * l'on sort sans rien toucher.
+ *
+ * ---------------------------------------------------------------------------
  * Idempotence
  * ---------------------------------------------------------------------------
- * Un webhook est rejoué. Stripe le rejoue en cas de timeout, de 500, de
- * déploiement en cours — et parfois simplement parce qu'il double un envoi.
- * Cette fonction doit donc pouvoir tourner deux fois, dix fois, sans jamais
- * marquer deux ventes, ni écraser une date de paiement par une plus récente.
- *
- * La garde est une lecture du statut dans la transaction : une commande déjà
- * PAID ressort telle quelle.
+ * Un webhook est rejoué : sur timeout, sur 500, pendant un déploiement, et
+ * parfois simplement en doublon. Ces fonctions doivent pouvoir tourner deux
+ * fois, dix fois, sans jamais marquer deux ventes ni écraser une date de
+ * paiement par une plus récente. La transition conditionnelle assure les deux.
  *
  * ---------------------------------------------------------------------------
- * Payer une pièce déjà partie
+ * Le stock ne se libère jamais à l'aveugle
  * ---------------------------------------------------------------------------
- * Ce cas est fermé PAR CONSTRUCTION en amont : le verrou de stock dure au
- * moins aussi longtemps que la session de paiement (voir
- * `STRIPE_MIN_SESSION_MINUTES` dans checkout.ts), donc la fenêtre où une pièce
- * redevient libre pendant que quelqu'un saisit sa carte n'existe pas.
+ * Libérer « toute pièce de cette commande qui est RÉSERVÉE » ignore à qui
+ * appartient la réservation. Une commande abandonnée dont le verrou a expiré,
+ * puis rachetée par quelqu'un d'autre, verrait sa pièce libérée sous le nez de
+ * l'acheteur suivant — au moment exact où il la paie.
  *
- * Le passage en vendu reste malgré tout CONDITIONNEL, parce qu'une garantie de
- * conception n'est pas une garantie d'exécution : un article libéré à la main
- * depuis le back-office, une horloge qui dérive, un verrou relâché par erreur.
- * Le jour où l'un de ces cas se produit, il ne doit pas se traduire par
- * l'écrasement de la vente de quelqu'un d'autre.
- *
- * S'il se produit, l'argent EST pris. La seule chose honnête est de le dire :
- * la commande est marquée payée — nier un débit réel serait pire — et les
- * lignes non honorables partent dans `AuditLog`. Consigné, pas résolu : le
- * remboursement est une décision humaine.
+ * `Order.lockOwnerId` mémorise donc le propriétaire, et toute libération est
+ * bornée à lui.
  */
 
 export interface FulfilmentResult {
-  /** Faux si la commande était déjà payée : rien n'a été refait. */
+  /** Faux si la commande avait déjà quitté l'attente de paiement. */
   applied: boolean
   /** Pièces réellement passées en vendu. */
   soldArticleIds: string[]
   /**
-   * Pièces qui n'ont pas pu l'être — déjà vendues à quelqu'un d'autre.
-   * Non vide = un remboursement est dû.
+   * Pièces qui n'ont pas pu l'être — vendues ou réservées par quelqu'un
+   * d'autre. Non vide = un remboursement est dû.
    */
   unfulfillableArticleIds: string[]
+}
+
+const NOTHING: FulfilmentResult = {
+  applied: false,
+  soldArticleIds: [],
+  unfulfillableArticleIds: [],
+}
+
+/**
+ * Fait passer une commande d'un état à un autre, atomiquement.
+ *
+ * Renvoie faux si la commande n'était plus dans l'un des états attendus : elle
+ * a changé entre-temps, et c'est l'autre transaction qui fait foi.
+ */
+async function transition(
+  tx: Prisma.TransactionClient,
+  input: {
+    orderId: string
+    from: readonly string[]
+    to: string
+    paidAt?: Date
+    cancelledAt?: Date | null
+    paymentIntentId?: string | null
+  },
+): Promise<boolean> {
+  const rows = await tx.$queryRaw<{ id: string }[]>`
+    UPDATE "Order"
+    SET "status" = ${input.to}::"OrderStatus",
+        "paidAt" = COALESCE(${input.paidAt ?? null}::timestamptz, "paidAt"),
+        "cancelledAt" = ${input.cancelledAt ?? null}::timestamptz,
+        "stripePaymentIntentId" = COALESCE(
+          ${input.paymentIntentId ?? null}::text,
+          "stripePaymentIntentId"
+        ),
+        "updatedAt" = now()
+    WHERE "id" = ${input.orderId}
+      AND "status" = ANY(${[...input.from]}::"OrderStatus"[])
+    RETURNING "id"
+  `
+
+  return rows.length > 0
 }
 
 /**
  * Marque une commande payée et ses pièces vendues.
  *
- * `paidAt` vient de l'événement de paiement quand il est connu, jamais de
- * l'horloge du serveur : c'est la date qui figurera sur la facture, et elle
- * doit correspondre au relevé bancaire.
+ * `paidAt` vient de l'événement de paiement, jamais de l'horloge du serveur :
+ * c'est la date qui figurera sur la facture, et elle doit correspondre au
+ * relevé bancaire.
+ *
+ * Une commande ANNULÉE se rouvre. Le balayage annule les commandes dont la
+ * session a expiré, et un paiement peut arriver juste après — Stripe ne
+ * garantit pas l'ordre des événements. Refuser reviendrait à encaisser sans
+ * qu'aucune commande n'existe : le pire des états, parce qu'il est invisible.
  */
 export async function markOrderPaid(input: {
   orderId: string
@@ -65,8 +119,8 @@ export async function markOrderPaid(input: {
       where: { id: input.orderId },
       select: {
         id: true,
-        status: true,
         userId: true,
+        lockOwnerId: true,
         items: { select: { articleId: true } },
       },
     })
@@ -75,28 +129,29 @@ export async function markOrderPaid(input: {
       throw new Error(`Commande introuvable : ${input.orderId}`)
     }
 
-    // Déjà payée : on ne retouche ni la date, ni le stock.
-    //
-    // Une commande ANNULÉE, en revanche, se rouvre. Le balayage annule les
-    // commandes dont la session a expiré, et un paiement peut arriver juste
-    // après — Stripe ne garantit pas l'ordre des événements. Refuser ici
-    // reviendrait à encaisser sans qu'aucune commande n'existe : le pire des
-    // états possibles, parce qu'il est invisible.
-    if (order.status !== 'PENDING_PAYMENT' && order.status !== 'CANCELLED') {
-      return {
-        applied: false,
-        soldArticleIds: [],
-        unfulfillableArticleIds: [],
-      }
-    }
+    // La transition EN PREMIER : elle sérialise cette transaction avec toute
+    // autre qui toucherait la même commande, et elle échoue franchement si la
+    // commande a déjà été payée.
+    const moved = await transition(tx, {
+      orderId: order.id,
+      from: ['PENDING_PAYMENT', 'CANCELLED'],
+      to: 'PAID',
+      paidAt: input.paidAt,
+      // Une commande rouverte n'est plus annulée : laisser la date
+      // d'annulation ferait dire à l'historique « payée » et « annulée ».
+      cancelledAt: null,
+      paymentIntentId: input.paymentIntentId,
+    })
+
+    if (!moved) return NOTHING
 
     const articleIds = order.items.map((item) => item.articleId)
 
-    // Passage en vendu, conditionnel et atomique.
+    // Passage en vendu, conditionnel.
     //
-    // La condition exclut ce qui est DÉJÀ vendu — donc vendu à quelqu'un
-    // d'autre. Un `updateMany` sans condition écraserait la vente de l'autre
-    // personne et ferait disparaître son achat.
+    // Sont vendables : les pièces libres, et celles que CETTE commande a
+    // réservées. Une pièce réservée ou vendue par quelqu'un d'autre ne l'est
+    // pas — la lui prendre ferait disparaître son achat.
     const sold = await tx.$queryRaw<{ id: string }[]>`
       UPDATE "Article"
       SET "status" = 'SOLD',
@@ -105,32 +160,29 @@ export async function markOrderPaid(input: {
           "reservedUntil" = NULL,
           "updatedAt" = now()
       WHERE "id" = ANY(${articleIds}::text[])
-        AND "status" <> 'SOLD'
+        AND (
+          "status" = 'AVAILABLE'
+          OR (
+            "status" = 'RESERVED'
+            AND "reservedById" IS NOT DISTINCT FROM ${order.lockOwnerId}
+          )
+        )
       RETURNING "id"
     `
 
     const soldIds = new Set(sold.map((row) => row.id))
     const unfulfillable = articleIds.filter((id) => !soldIds.has(id))
 
-    await tx.order.update({
-      where: { id: order.id },
-      data: {
-        status: 'PAID',
-        paidAt: input.paidAt,
-        // Une commande rouverte n'est plus annulée : laisser la date
-        // d'annulation ferait mentir l'historique.
-        cancelledAt: null,
-        ...(input.paymentIntentId
-          ? { stripePaymentIntentId: input.paymentIntentId }
-          : {}),
-      },
-    })
-
     // Le panier a fait son travail : il disparaît une fois la commande payée.
     // C'est le seul endroit qui a le droit de le vider — jamais une lecture,
     // jamais un affichage.
     if (order.userId) {
       await tx.cart.deleteMany({ where: { userId: order.userId } })
+    } else if (order.lockOwnerId) {
+      // Sans compte, le panier se retrouve par le jeton de session, qui est
+      // aussi le propriétaire du verrou. Sans cette branche, une visiteuse
+      // repartait avec son panier intact après avoir payé.
+      await tx.cart.deleteMany({ where: { sessionToken: order.lockOwnerId } })
     }
 
     if (unfulfillable.length > 0) {
@@ -157,14 +209,14 @@ export async function markOrderPaid(input: {
  * Annule les commandes dont la fenêtre de paiement est passée.
  *
  * Stripe envoie bien `checkout.session.expired`, mais un webhook peut se
- * perdre — panne, déploiement, désactivation temporaire de l'endpoint. Sans
- * ce balayage, ces commandes resteraient PENDING_PAYMENT pour toujours, alors
- * que le verrou de stock, lui, aurait été relâché : la boutique afficherait
- * une file de commandes fantômes que personne ne peut ni payer ni honorer.
+ * perdre — panne, déploiement, endpoint désactivé. Sans ce balayage, ces
+ * commandes resteraient en attente de paiement pour toujours alors que leur
+ * stock a été rendu : la boutique afficherait une file de commandes fantômes
+ * que personne ne peut ni payer ni honorer.
  *
  * La marge est délibérément large. Annuler trop tôt une commande encore
- * payable ne perdrait pas la vente — `markOrderPaid` rouvre une commande
- * annulée — mais produirait un aller-retour d'états inutile dans l'historique.
+ * payable ne perd pas la vente — `markOrderPaid` rouvre une commande annulée —
+ * mais produirait un aller-retour d'états inutile dans l'historique.
  */
 export async function expireStaleOrders(
   graceMinutes: number,
@@ -191,23 +243,46 @@ export async function expireStaleOrders(
 /**
  * Abandonne une commande jamais payée et rend son stock.
  *
- * Appelée sur expiration de la session de paiement. Ne touche jamais une
- * commande déjà payée : un événement d'expiration peut arriver APRÈS un
- * paiement réussi, et il ne doit surtout pas défaire une vente.
+ * Ne touche jamais une commande déjà payée : un événement d'expiration peut
+ * arriver APRÈS un paiement réussi, et il ne doit surtout pas défaire une
+ * vente. La transition conditionnelle le garantit même en cas de simultanéité.
  */
 export async function expireOrder(orderId: string): Promise<boolean> {
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
       where: { id: orderId },
-      select: { id: true, status: true, items: { select: { articleId: true } } },
+      select: {
+        id: true,
+        lockOwnerId: true,
+        items: { select: { articleId: true } },
+      },
     })
 
-    if (!order || order.status !== 'PENDING_PAYMENT') return false
+    if (!order) return false
+
+    // La transition EN PREMIER. Si un paiement vient de passer cette commande
+    // en PAID, zéro ligne revient et l'on sort sans avoir touché au stock.
+    const moved = await transition(tx, {
+      orderId: order.id,
+      from: ['PENDING_PAYMENT'],
+      to: 'CANCELLED',
+      cancelledAt: new Date(),
+    })
+
+    if (!moved) return false
+
+    // Sans propriétaire connu — commandes antérieures à cette colonne — on ne
+    // libère RIEN. Libérer à l'aveugle risquerait de remettre en vente une
+    // pièce que quelqu'un d'autre est en train de payer ; le balayage des
+    // verrous expirés s'en chargera, lui, sans ce risque.
+    if (!order.lockOwnerId) return true
 
     const articleIds = order.items.map((item) => item.articleId)
 
-    // Seules les pièces encore RÉSERVÉES sont rendues. Une pièce déjà vendue
-    // — à quelqu'un d'autre, entre-temps — n'a pas à être « libérée ».
+    // `reservedById = ${owner}` n'est pas une précaution de style. Sans elle,
+    // une commande abandonnée dont le verrou a expiré, puis rachetée par
+    // quelqu'un d'autre, libérerait la pièce sous le nez de l'acheteur
+    // suivant — au moment exact où il la paie.
     await tx.$executeRaw`
       UPDATE "Article"
       SET "status" = 'AVAILABLE',
@@ -216,12 +291,8 @@ export async function expireOrder(orderId: string): Promise<boolean> {
           "updatedAt" = now()
       WHERE "id" = ANY(${articleIds}::text[])
         AND "status" = 'RESERVED'
+        AND "reservedById" = ${order.lockOwnerId}
     `
-
-    await tx.order.update({
-      where: { id: order.id },
-      data: { status: 'CANCELLED', cancelledAt: new Date() },
-    })
 
     return true
   })

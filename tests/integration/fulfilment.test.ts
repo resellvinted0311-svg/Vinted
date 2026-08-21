@@ -16,6 +16,15 @@ import {
 
 const PREFIX = 'FULFIL-'
 
+/**
+ * Propriétaire du verrou de stock, désormais mémorisé sur la commande.
+ *
+ * Sans lui, libérer le stock d'une commande revenait à rendre à la vente toute
+ * pièce réservée du lot — y compris celle qu'un autre acheteur venait de
+ * réserver pour son propre paiement.
+ */
+const OWNER = 'proprietaire-test'
+
 async function cleanup(): Promise<void> {
   await prisma.orderItem.deleteMany({
     where: { order: { orderNumber: { startsWith: PREFIX } } },
@@ -52,7 +61,7 @@ async function makeArticle(suffix: string, status: 'AVAILABLE' | 'RESERVED' | 'S
       categoryId: category.id,
       ...(status === 'RESERVED'
         ? {
-            reservedById: 'proprietaire-test',
+            reservedById: OWNER,
             reservedUntil: new Date(Date.now() + 900_000),
           }
         : {}),
@@ -62,10 +71,15 @@ async function makeArticle(suffix: string, status: 'AVAILABLE' | 'RESERVED' | 'S
   })
 }
 
-async function makeOrder(suffix: string, articleIds: string[]) {
+async function makeOrder(
+  suffix: string,
+  articleIds: string[],
+  lockOwnerId: string | null = OWNER,
+) {
   return prisma.order.create({
     data: {
       orderNumber: `${PREFIX}${suffix}`,
+      lockOwnerId,
       email: 'acheteuse@exemple.fr',
       locale: 'fr',
       status: 'PENDING_PAYMENT',
@@ -364,5 +378,113 @@ describe('paiement arrivé après une annulation', () => {
     expect(after.status).toBe('PAID')
     // L'historique ne doit pas dire à la fois « payée » et « annulée ».
     expect(after.cancelledAt).toBeNull()
+  })
+})
+
+describe('le stock ne se libère jamais à l’aveugle', () => {
+  it('n’enlève pas la pièce que quelqu’un d’autre est en train de payer', async () => {
+    // Scénario reproduit par la revue adverse : la commande O1 est abandonnée,
+    // son verrou expire, le balayage libère la pièce. Quelqu'un d'autre
+    // l'achète — commande O2, verrou à son nom. Puis O1 est annulée.
+    //
+    // Sans condition de propriétaire, l'annulation de O1 rendait la pièce à la
+    // vente au moment exact où O2 la payait.
+    const article = await makeArticle('e1')
+    const abandoned = await makeOrder('401', [article.id], OWNER)
+
+    // La pièce appartient désormais à un autre paiement en cours.
+    await prisma.article.update({
+      where: { id: article.id },
+      data: {
+        status: 'RESERVED',
+        reservedById: 'un-autre-acheteur',
+        reservedUntil: new Date(Date.now() + 1_800_000),
+      },
+    })
+
+    expect(await expireOrder(abandoned.id)).toBe(true)
+
+    const still = await prisma.article.findUniqueOrThrow({
+      where: { id: article.id },
+      select: { status: true, reservedById: true },
+    })
+    expect(still.status).toBe('RESERVED')
+    expect(still.reservedById).toBe('un-autre-acheteur')
+  })
+
+  it('ne vend pas une pièce réservée par quelqu’un d’autre', async () => {
+    const article = await makeArticle('e2')
+    const order = await makeOrder('402', [article.id], OWNER)
+
+    await prisma.article.update({
+      where: { id: article.id },
+      data: { reservedById: 'un-autre-acheteur' },
+    })
+
+    const result = await markOrderPaid({
+      orderId: order.id,
+      paymentIntentId: 'pi_11',
+      paidAt: PAID_AT,
+    })
+
+    // L'argent est pris — on ne le nie pas — mais la pièce reste à l'autre.
+    expect(result.applied).toBe(true)
+    expect(result.soldArticleIds).toEqual([])
+    expect(result.unfulfillableArticleIds).toEqual([article.id])
+
+    const untouched = await prisma.article.findUniqueOrThrow({
+      where: { id: article.id },
+      select: { status: true, reservedById: true },
+    })
+    expect(untouched.status).toBe('RESERVED')
+    expect(untouched.reservedById).toBe('un-autre-acheteur')
+  })
+
+  it('ne libère rien quand le propriétaire n’est pas connu', async () => {
+    // Commandes antérieures à la colonne : mieux vaut ne rien faire que
+    // libérer au hasard. Le balayage des verrous expirés s'en chargera.
+    const article = await makeArticle('e3')
+    const order = await makeOrder('403', [article.id], null)
+
+    expect(await expireOrder(order.id)).toBe(true)
+
+    const still = await prisma.article.findUniqueOrThrow({
+      where: { id: article.id },
+      select: { status: true },
+    })
+    expect(still.status).toBe('RESERVED')
+  })
+})
+
+describe('transitions concurrentes', () => {
+  it('un paiement et une annulation simultanés ne se marchent pas dessus', async () => {
+    // Reproduction du défaut trouvé par la revue : les deux lisaient
+    // PENDING_PAYMENT, le paiement écrivait PAID, puis l'annulation écrivait
+    // CANCELLED sans prédicat — et écrasait le paiement. La commande finissait
+    // annulée avec une date de paiement, l'argent encaissé, invisible.
+    const article = await makeArticle('f1')
+    const order = await makeOrder('501', [article.id], OWNER)
+
+    const [paid, expired] = await Promise.all([
+      markOrderPaid({ orderId: order.id, paymentIntentId: 'pi_12', paidAt: PAID_AT }),
+      expireOrder(order.id),
+    ])
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: { status: true, paidAt: true, cancelledAt: true },
+    })
+
+    // Exactement une des deux transitions a eu lieu, et l'état est cohérent :
+    // jamais « payée » et « annulée » à la fois.
+    expect([paid.applied, expired]).toContain(true)
+
+    if (after.status === 'PAID') {
+      expect(after.paidAt).not.toBeNull()
+      expect(after.cancelledAt).toBeNull()
+    } else {
+      expect(after.status).toBe('CANCELLED')
+      expect(after.cancelledAt).not.toBeNull()
+    }
   })
 })
