@@ -58,8 +58,10 @@ async function cleanup(): Promise<void> {
     where: { order: { orderNumber: { startsWith: 'CMD-' }, email: INPUT.email } },
   })
   await prisma.order.deleteMany({ where: { email: INPUT.email } })
-  await prisma.cartItem.deleteMany({ where: { cart: { sessionToken: TOKEN } } })
-  await prisma.cart.deleteMany({ where: { sessionToken: TOKEN } })
+  await prisma.cartItem.deleteMany({
+    where: { cart: { sessionToken: { startsWith: TOKEN } } },
+  })
+  await prisma.cart.deleteMany({ where: { sessionToken: { startsWith: TOKEN } } })
   await prisma.article.deleteMany({ where: { sku: { startsWith: PREFIX } } })
 }
 
@@ -103,10 +105,13 @@ async function makeArticle(suffix: string, priceCents: number, weightGrams = 400
   return article.id
 }
 
-async function makeCart(articleIds: string[]): Promise<string> {
+async function makeCart(
+  articleIds: string[],
+  sessionToken: string = TOKEN,
+): Promise<string> {
   const cart = await prisma.cart.create({
     data: {
-      sessionToken: TOKEN,
+      sessionToken,
       items: {
         create: articleIds.map((articleId) => ({
           articleId,
@@ -574,5 +579,76 @@ describe('un seul paiement vivant par pièce', () => {
     // L'invariant : une seule commande payable sur cette pièce, quoi qu'il
     // arrive.
     expect(live).toBe(1)
+  })
+
+  it('deux acheteurs DIFFÉRENTS : un seul obtient la pièce', async () => {
+    // La propriété centrale de cette boutique, testée au bout de la chaîne et
+    // pas seulement au niveau du verrou : chaque pièce existe en UN exemplaire,
+    // et deux personnes ne doivent jamais pouvoir la payer.
+    //
+    // La course entre deux propriétaires distincts n'emprunte PAS le même
+    // chemin que deux onglets du même acheteur : le verrou de stock admet
+    // volontairement la reprise par son propre titulaire, et c'est le verrou
+    // consultatif par propriétaire qui sérialise le cas précédent. Ici, ce sont
+    // deux verrous consultatifs différents — rien ne les sérialise entre eux, et
+    // seul l'échange atomique sur l'article décide.
+    const option = await anOption()
+    const articleId = await makeArticle('duel', 2000)
+
+    const AUTRE: CartOwner = {
+      userId: null,
+      sessionToken: `${TOKEN}-autre`,
+      lockOwnerId: `${TOKEN}-autre`,
+    }
+
+    const panierA = await makeCart([articleId], OWNER.sessionToken)
+    const panierB = await makeCart([articleId], AUTRE.sessionToken)
+
+    const shipping = {
+      carrierCode: option.carrierCode,
+      serviceCode: option.serviceCode,
+    }
+
+    let n = 0
+    created.mockImplementation(() => {
+      n += 1
+      return Promise.resolve({ id: `cs_duel_${n}`, client_secret: `sec_${n}` })
+    })
+
+    const [a, b] = await Promise.all([
+      prepareCheckoutFor(OWNER, panierA, { ...INPUT, shipping }),
+      prepareCheckoutFor(AUTRE, panierB, { ...INPUT, shipping }),
+    ])
+
+    const gagnants = [a, b].filter((r) => r.ok)
+    const perdants = [a, b].filter((r) => !r.ok)
+
+    expect(gagnants).toHaveLength(1)
+    expect(perdants).toHaveLength(1)
+
+    // Le perdant est refusé POUR LA BONNE RAISON, et la pièce est nommée : on
+    // ne lui dit pas « erreur », on lui dit laquelle vient de partir.
+    const refus = perdants[0]
+    expect(refus?.ok).toBe(false)
+    if (refus && !refus.ok) {
+      expect(refus.failure.reason).toBe('stock-taken')
+      if (refus.failure.reason === 'stock-taken') {
+        expect(refus.failure.articleIds).toEqual([articleId])
+      }
+    }
+
+    // Et en base : une seule commande payable, un seul verrou, sur le gagnant.
+    const live = await prisma.order.findMany({
+      where: { status: 'PENDING_PAYMENT' },
+      select: { lockOwnerId: true },
+    })
+    expect(live).toHaveLength(1)
+
+    const article = await prisma.article.findUniqueOrThrow({
+      where: { id: articleId },
+      select: { status: true, reservedById: true },
+    })
+    expect(article.status).toBe('RESERVED')
+    expect(article.reservedById).toBe(live[0]?.lockOwnerId)
   })
 })
