@@ -575,3 +575,61 @@
     top: 0.5rem;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Impression
+   ---------------------------------------------------------------------------
+   Une seule page du site est réellement destinée au papier : la facture. Elle
+   n'est pas un PDF fabriqué côté serveur — le navigateur sait rendre un
+   document, et sait l'enregistrer en PDF depuis la même boîte de dialogue.
+   Cela évite une dépendance, un fichier à stocker, et une seconde mise en page
+   à maintenir en parallèle de celle-ci.
+
+   Les filets sont CONSERVÉS : ce sont eux qui séparent les postes d'une pièce
+   comptable. Ce qui disparaît, ce sont les ombres pleines — elles coûtent de
+   l'encre et ne portent aucune information — et tout ce qui ne s'imprime pas :
+   navigation, pied de page, boutons.
+   --------------------------------------------------------------------------- */
+@media print {
+  /* La palette d'impression est fixe. Un papier n'a pas de thème sombre, et
+     imprimer une page en mode sombre gaspille une cartouche. */
+  :root,
+  :root[data-theme='dark'],
+  :root:not([data-theme='light']) {
+    --paper: #ffffff;
+    --paper-raised: #ffffff;
+    --surface: #ffffff;
+    --ink: #000000;
+    --muted: #444444;
+  }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  [data-print-hide],
+  header,
+  footer,
+  nav {
+    display: none !important;
+  }
+
+  /* Les ombres portées de la charte sont un effet de superposition : sur
+     papier, elles deviennent un aplat gris sans signification. */
+  * {
+    box-shadow: none !important;
+  }
+
+  /* Une facture ne doit pas se couper au milieu d'un total. */
+  article,
+  table,
+  dl {
+    break-inside: avoid;
+  }
+
+  a[href] {
+    text-decoration: none;
+    color: inherit;
+  }
+}

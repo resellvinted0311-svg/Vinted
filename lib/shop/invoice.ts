@@ -1,6 +1,7 @@
 import 'server-only'
 
 import type { Prisma } from '@prisma/client'
+import { readPostalAddress, type PostalAddress } from '@/lib/domain/address'
 import { LEGAL, SITE, hasLegalIdentity } from '@/lib/config/site'
 
 /**
@@ -90,16 +91,13 @@ export function formatInvoiceNumber(value: number): string {
 // Contenu
 // ---------------------------------------------------------------------------
 
-/** Une adresse telle qu'elle a été figée sur la commande. */
-export interface InvoiceAddress {
-  firstName?: string
-  lastName?: string
-  line1?: string
-  line2?: string
-  postalCode?: string
-  city?: string
-  country?: string
-}
+/**
+ * Une adresse telle qu'elle a été figée sur la commande.
+ *
+ * Alias et non seconde définition : le détail de commande affiche la même
+ * adresse, et deux formes déclarées séparément finiraient par diverger.
+ */
+export type InvoiceAddress = PostalAddress
 
 export interface InvoiceLine {
   label: string
@@ -166,32 +164,6 @@ export interface InvoiceSource {
 }
 
 /**
- * Lit une adresse figée en JSON sans jamais inventer de champ manquant.
- *
- * La colonne est un `Json` : rien ne garantit sa forme des années plus tard,
- * si le tunnel change. Une facture doit afficher ce qui s'y trouve, ou rien.
- */
-function readAddress(value: unknown): InvoiceAddress {
-  if (!value || typeof value !== 'object') return {}
-  const record = value as Record<string, unknown>
-
-  const text = (key: string): string | undefined =>
-    typeof record[key] === 'string' && record[key] !== ''
-      ? (record[key] as string)
-      : undefined
-
-  return {
-    firstName: text('firstName'),
-    lastName: text('lastName'),
-    line1: text('line1'),
-    line2: text('line2'),
-    postalCode: text('postalCode'),
-    city: text('city'),
-    country: text('country'),
-  }
-}
-
-/**
  * Compose la facture d'une commande.
  *
  * Lève si l'identité légale manque : une facture sans dénomination ni SIRET
@@ -224,8 +196,10 @@ export function buildInvoice(order: InvoiceSource): Invoice {
 
     customer: {
       email: order.email,
-      billing: readAddress(order.billingAddress),
-      shipping: readAddress(order.shippingAddress),
+      // La lecture vit dans `lib/domain/address.ts`, module pur : le détail
+      // d'une commande en a besoin lui aussi, et ce fichier est `server-only`.
+      billing: readPostalAddress(order.billingAddress),
+      shipping: readPostalAddress(order.shippingAddress),
     },
 
     lines: order.items.map((item) => ({
