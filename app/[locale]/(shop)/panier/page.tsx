@@ -13,6 +13,24 @@ import { TotalsSheet } from '@/components/shop/totals-sheet'
 /** Dépend de la session boutique : jamais mis en cache. */
 export const dynamic = 'force-dynamic'
 
+/**
+ * Pourquoi le tunnel a renvoyé ici.
+ *
+ * `role="status"` : le renvoi vient d'être provoqué par un geste — appuyer sur
+ * « Passer commande » — et personne ne doit avoir à deviner pourquoi la page a
+ * changé. Une redirection silencieuse est la même faute qu'un retrait
+ * silencieux.
+ */
+async function ReturnNotice({ reason }: { reason: ReturnReason }) {
+  const t = await getTranslations('cart.returnReason')
+
+  return (
+    <Notice tone="warning" role="status" className="mt-6">
+      <p>{t(reason)}</p>
+    </Notice>
+  )
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -43,15 +61,36 @@ export async function generateMetadata({
  * estimation ici serait un chiffre qui change ensuite — c'est exactement ce
  * qui fait abandonner un panier, et c'est de l'information trompeuse.
  */
+/**
+ * Motifs de renvoi depuis le tunnel, énumérés ici et nulle part ailleurs.
+ *
+ * Un paramètre d'URL vient du réseau : n'importe qui peut écrire
+ * `?renvoi=nimportequoi`. On ne le passe donc jamais tel quel à `t()` — ce
+ * serait afficher une clé de traduction brute, ou pire, laisser choisir quel
+ * message la boutique affiche.
+ */
+const RETURN_REASONS = ['panier-vide', 'lignes-bloquees'] as const
+type ReturnReason = (typeof RETURN_REASONS)[number]
+
+function readReturnReason(value: string | undefined): ReturnReason | null {
+  return RETURN_REASONS.includes(value as ReturnReason)
+    ? (value as ReturnReason)
+    : null
+}
+
 export default async function CartPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>
+  searchParams: Promise<{ renvoi?: string }>
 }) {
   const { locale } = await params
+  const { renvoi } = await searchParams
   setRequestLocale(locale)
 
   const t = await getTranslations('cart')
+  const reason = readReturnReason(renvoi)
   const cart = await readCart(locale)
   const tally = tallyCart(cart.lines)
 
@@ -63,6 +102,7 @@ export default async function CartPage({
     return (
       <div className="mx-auto max-w-[48rem] px-4 pb-24 pt-12 sm:px-6">
         <h1 className="text-2xl">{t('title')}</h1>
+        {reason ? <ReturnNotice reason={reason} /> : null}
         <div className="grid-reg mt-8 rounded-card ruled bg-surface p-8">
           <p className="text-base text-ink">{t('empty')}</p>
           <p className="mt-1 text-xs text-muted">{t('emptyHint')}</p>
@@ -80,6 +120,8 @@ export default async function CartPage({
       <p data-numeric className="mt-1 text-xs text-muted">
         {t('count', { count: tally.total })}
       </p>
+
+      {reason ? <ReturnNotice reason={reason} /> : null}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_20rem] lg:items-start">
         <div>

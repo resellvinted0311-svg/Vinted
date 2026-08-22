@@ -222,6 +222,10 @@
       "already-in-cart": "Dieses Stück liegt bereits in Ihrem Warenkorb.",
       "cart-full": "Ihr Warenkorb hat sein Zeilenlimit erreicht.",
       "rate-limited": "Zu viele Anfragen in kurzer Zeit. Versuchen Sie es gleich noch einmal."
+    },
+    "returnReason": {
+      "panier-vide": "Ihr Warenkorb war leer, bevor die Bestellung geöffnet werden konnte.",
+      "lignes-bloquees": "Die Bestellung konnte nicht geöffnet werden: Einige Stücke in Ihrem Warenkorb sind nicht mehr verfügbar. Sie sind unten markiert — Sie entscheiden, was damit geschieht."
     }
   },
   "checkout": {

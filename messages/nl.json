@@ -222,6 +222,10 @@
       "already-in-cart": "Dit stuk zit al in je winkelmand.",
       "cart-full": "Je winkelmand heeft de regellimiet bereikt.",
       "rate-limited": "Te veel verzoeken in korte tijd. Probeer het zo meteen opnieuw."
+    },
+    "returnReason": {
+      "panier-vide": "Je winkelmand was leeg voordat de bestelling kon openen.",
+      "lignes-bloquees": "De bestelling kon niet openen: sommige stuks in je winkelmand zijn niet meer beschikbaar. Ze staan hieronder aangegeven — jij beslist wat ermee gebeurt."
     }
   },
   "checkout": {

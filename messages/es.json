@@ -222,6 +222,10 @@
       "already-in-cart": "Esta pieza ya está en tu cesta.",
       "cart-full": "Tu cesta ha alcanzado su límite de líneas.",
       "rate-limited": "Demasiadas peticiones en poco tiempo. Inténtalo dentro de un momento."
+    },
+    "returnReason": {
+      "panier-vide": "Tu cesta se vació antes de abrir el pedido.",
+      "lignes-bloquees": "El pedido no ha podido abrirse: algunas piezas de tu cesta ya no están disponibles. Están señaladas abajo; tú decides qué hacer con ellas."
     }
   },
   "checkout": {

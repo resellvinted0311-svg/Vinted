@@ -222,6 +222,10 @@
       "already-in-cart": "Ta rzecz jest już w Twoim koszyku.",
       "cart-full": "Koszyk osiągnął limit pozycji.",
       "rate-limited": "Zbyt wiele żądań w krótkim czasie. Spróbuj za chwilę."
+    },
+    "returnReason": {
+      "panier-vide": "Twój koszyk opustoszał, zanim zamówienie zdążyło się otworzyć.",
+      "lignes-bloquees": "Zamówienie nie mogło się otworzyć: niektóre rzeczy w koszyku nie są już dostępne. Są oznaczone poniżej — decyzja należy do Ciebie."
     }
   },
   "checkout": {

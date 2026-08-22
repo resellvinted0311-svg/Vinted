@@ -222,6 +222,10 @@
       "already-in-cart": "This item is already in your basket.",
       "cart-full": "Your basket has reached its line limit.",
       "rate-limited": "Too many requests in a short time. Try again in a moment."
+    },
+    "returnReason": {
+      "panier-vide": "Your basket emptied before the order could open.",
+      "lignes-bloquees": "The order could not open: some items in your basket are no longer available. They are flagged below — yours to decide what to do with."
     }
   },
   "checkout": {
