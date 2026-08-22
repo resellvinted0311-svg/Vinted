@@ -52,8 +52,11 @@ export default function middleware(request: NextRequest): NextResponse {
     }
   }
 
-  // Le panier et le compte ne doivent jamais être indexés.
-  if (needsAuth || /\/(panier|checkout)(\/|$)/.test(pathname)) {
+  // Le panier, le tunnel, les commandes et le compte ne doivent jamais être
+  // indexés. `commande` couvre la page de retour de paiement, l'historique et
+  // les factures : l'URL de retour porte l'identifiant de session Stripe, et
+  // une page de commande affiche une adresse postale.
+  if (needsAuth || /\/(panier|checkout|commande)(\/|$)/.test(pathname)) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow')
   }
 

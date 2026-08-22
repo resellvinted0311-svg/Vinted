@@ -8,8 +8,7 @@ import { signIn as authSignIn } from './index'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { pseudonymize } from '@/lib/security/pseudonymize'
-import { mergeGuestFavorites } from '@/lib/shop/favorites-merge'
-import { rotateShopSessionToken } from '@/lib/shop/session-token'
+import { adoptGuestSession } from '@/lib/shop/handover'
 import { isAuthConfigured } from '@/lib/config/site'
 
 export type AuthActionState =
@@ -91,13 +90,11 @@ export async function signUpAction(
 
   await createDatabaseSession(user.id)
 
-  // Les favoris mis de côté avant l'inscription suivent dans le compte :
-  // c'est ce qui rend l'ajout aux favoris utile sans compte.
-  await mergeGuestFavorites(user.id)
-
-  // APRÈS la reprise, jamais avant : elle a besoin de l'ancien jeton pour
-  // retrouver ce qu'il faut reprendre.
-  await rotateShopSessionToken()
+  // Favoris, panier et commandes déposés avant l'inscription suivent dans le
+  // compte, puis le jeton de session est renouvelé. L'ordre des deux est la
+  // seule chose qui compte, et il est tenu dans `adoptGuestSession` : la
+  // reprise a besoin de l'ANCIEN jeton.
+  await adoptGuestSession(user.id, email)
 
   return { status: 'success' }
 }
@@ -183,11 +180,13 @@ export async function signInAction(
     data: { lastSeenAt: new Date() },
   })
 
-  // Reprise des favoris déposés depuis ce navigateur avant la connexion, puis
-  // renouvellement du jeton : sur un poste partagé, la personne suivante ne
-  // doit pas hériter de ce que la précédente avait mis de côté.
-  await mergeGuestFavorites(user.id)
-  await rotateShopSessionToken()
+  // Reprise de ce qui a été déposé depuis ce navigateur avant la connexion,
+  // puis renouvellement du jeton : sur un poste partagé, la personne suivante
+  // ne doit pas hériter de ce que la précédente avait mis de côté.
+  // `email` et non une relecture en base : c'est l'adresse avec laquelle la
+  // personne vient de s'authentifier, donc exactement celle qui doit décider
+  // du rattachement des commandes passées sans compte.
+  await adoptGuestSession(user.id, email)
 
   return { status: 'success' }
 }

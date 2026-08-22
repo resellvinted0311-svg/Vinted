@@ -452,18 +452,26 @@ export async function prepareCheckoutFor(
   // ---------------------------------------------------------------------
   // Session de paiement — hors transaction
   // ---------------------------------------------------------------------
-  const lineItems = buildLineItems(lines, option, input.locale)
-
-  // Dernier filet avant le débit : la somme réellement transmise doit être
-  // égale au centime au total enregistré. Un écart ne produirait aucune erreur
-  // visible — Stripe débiterait SA somme, notre base garderait la nôtre — et
-  // se découvrirait à la comptabilité, des semaines plus tard.
-  assertLinesMatchTotal(
-    lineItems.map((item) => item.price_data.unit_amount),
-    amounts.totalCents,
-  )
-
+  // Tout ce qui suit est DANS le `try`, y compris la construction des lignes
+  // et le contrôle de somme.
+  //
+  // À ce point, la commande existe et le stock est verrouillé pour au moins
+  // trente minutes. Le `catch` défait les deux. Laisser une seule instruction
+  // faillible au-dehors — c'était le cas du contrôle de somme — revenait à
+  // immobiliser une pièce unique jusqu'à l'expiration du verrou, sur une
+  // erreur qui signale justement qu'il ne faut pas encaisser.
   try {
+    const lineItems = buildLineItems(lines, option, input.locale)
+
+    // Dernier filet avant le débit : la somme réellement transmise doit être
+    // égale au centime au total enregistré. Un écart ne produirait aucune
+    // erreur visible — Stripe débiterait SA somme, notre base garderait la
+    // nôtre — et se découvrirait à la comptabilité, des semaines plus tard.
+    assertLinesMatchTotal(
+      lineItems.map((item) => item.price_data.unit_amount),
+      amounts.totalCents,
+    )
+
     const session = await stripe().checkout.sessions.create({
       // Paiement intégré : la personne reste sur la boutique. La saisie de
       // carte se fait dans un cadre servi par Stripe — aucun numéro de carte
