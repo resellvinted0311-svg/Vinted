@@ -8,7 +8,7 @@ import {
   articleIdListSchema,
   MAX_CART_LINES,
 } from '@/lib/validation/shop'
-import { getCurrentUser } from '@/lib/auth/session'
+import { getCurrentUser, type CurrentUser } from '@/lib/auth/session'
 import {
   ensureShopSessionToken,
   readShopSessionToken,
@@ -65,18 +65,38 @@ export async function ensureCartOwner(): Promise<CartOwner> {
 
 /** Propriétaire pour un chemin de LECTURE : n'écrit jamais de cookie. */
 export async function readCartOwner(): Promise<CartOwner | null> {
-  const user = await getCurrentUser()
-  const sessionToken = await readShopSessionToken()
+  return cartOwnerFor(await getCurrentUser())
+}
 
-  if (!user && !sessionToken) return null
+/**
+ * Le même propriétaire, à partir d'une identité DÉJÀ résolue.
+ *
+ * Existe pour les routes d'API, et pour elles seules. `getCurrentUser` est
+ * mémorisée par `cache()` de React, ce qui suffit partout où du rendu a lieu :
+ * une page qui l'appelle deux fois ne décode la session qu'une fois — mesuré,
+ * trois requêtes par chargement au lieu de six.
+ *
+ * Mais `cache()` ne s'applique PAS dans un gestionnaire de route : `/api/session`
+ * y appelait `getCurrentUser` une fois pour l'état de connexion et une seconde
+ * fois par `readCartOwner`, et payait bien deux décodages — mesuré, six requêtes
+ * par appel, sur chaque chargement de page du site.
+ *
+ * D'où ce point d'entrée explicite : l'appelante résout l'identité une fois et
+ * la passe. Elle ne « choisit » pas une identité — elle transmet celle qu'elle
+ * vient d'établir pour la même requête.
+ */
+export function cartOwnerFor(user: CurrentUser | null): Promise<CartOwner | null> {
+  return readShopSessionToken().then((sessionToken) => {
+    if (!user && !sessionToken) return null
 
-  return {
-    userId: user?.id ?? null,
-    // Un compte sans cookie boutique est possible : la chaîne vide ne
-    // correspondra à aucun panier de visiteur, ce qui est exactement voulu.
-    sessionToken: sessionToken ?? '',
-    lockOwnerId: user?.id ?? sessionToken ?? '',
-  }
+    return {
+      userId: user?.id ?? null,
+      // Un compte sans cookie boutique est possible : la chaîne vide ne
+      // correspondra à aucun panier de visiteur, ce qui est exactement voulu.
+      sessionToken: sessionToken ?? '',
+      lockOwnerId: user?.id ?? sessionToken ?? '',
+    }
+  })
 }
 
 /**
@@ -287,8 +307,16 @@ export async function readCart(locale: string): Promise<CartView> {
  * Volontairement séparé de `readCart` : l'en-tête n'a pas besoin des titres,
  * des images ni des traductions, et il est appelé sur chaque page.
  */
-export async function readCartCount(): Promise<number> {
-  const owner = await readCartOwner()
+export async function readCartCount(
+  /**
+   * Propriétaire déjà résolu, quand l'appelante en a un.
+   *
+   * `undefined` — le cas courant — le fait résoudre ici. `null` signifie
+   * « personne d'identifiable », et rend zéro sans toucher à la base.
+   */
+  known?: CartOwner | null,
+): Promise<number> {
+  const owner = known === undefined ? await readCartOwner() : known
   if (!owner) return 0
 
   const cart = await findCart(owner)

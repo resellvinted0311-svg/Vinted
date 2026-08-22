@@ -141,6 +141,62 @@ test.describe('Ce qui ne sort jamais dans la page', () => {
     }
   })
 
+  test('aucun coût interne dans ce que le tunnel envoie au navigateur', async ({
+    page,
+  }) => {
+    // ATTENTION — le HTML ne suffit PAS ici, et l'avoir cru a produit un test
+    // qui passait sur du code volontairement cassé.
+    //
+    // Le devis de port n'arrive pas dans la page : il est demandé par une
+    // ACTION SERVEUR depuis le composant client, et revient dans le corps
+    // d'une réponse POST. `page.content()` ne le voit jamais. On écoute donc
+    // le réseau, et on inspecte ce qui traverse réellement.
+    //
+    // `carrierCostCents` est ce que le transporteur NOUS facture. Il est
+    // reconstruit hors de la vue exprès, et c'est exactement le genre
+    // d'omission qu'une refonte défait sans bruit.
+    // On empile des PROMESSES, pas des chaînes : lire un corps est asynchrone,
+    // et un écouteur `async` qui pousse son résultat plus tard laisse le
+    // tableau vide au moment de l'assertion. Ce piège-là a déjà rendu ce test
+    // vert sur du code volontairement cassé.
+    const corps: Promise<string>[] = []
+    page.on('response', (response) => {
+      const url = response.url()
+      if (!url.startsWith('http://localhost')) return
+      corps.push(response.text().catch(() => ''))
+    })
+
+    await emptyBasket(page)
+    await addFirstAvailableToCart(page)
+    await page.goto('/fr/commande')
+
+    await page.getByLabel('Pays').selectOption('FR')
+    await page.getByLabel('Code postal').fill('59000')
+    await expect(page.getByRole('radio')).not.toHaveCount(0, { timeout: 15_000 })
+    await page.getByRole('radio').first().check()
+
+    // Le HTML de la page compte aussi : un objet passé en propriété à un
+    // composant client y voyage entier.
+    const recueillis = await Promise.all(corps)
+    const tout = [...recueillis, await page.content()].join('\n')
+    expect(tout.length).toBeGreaterThan(1000)
+
+    for (const forbidden of [
+      'carrierCostCents',
+      'costCents',
+      'floorPriceCents',
+      'costCentsSnapshot',
+      'shippingCostCents',
+      'internalNotes',
+      'reservedById',
+    ]) {
+      expect(
+        tout,
+        `champ privé « ${forbidden} » envoyé au navigateur par le tunnel`,
+      ).not.toContain(forbidden)
+    }
+  })
+
   test('le panier et la commande ne sont jamais indexables', async ({ page }) => {
     for (const path of ['/fr/panier', '/fr/commande', '/fr/commande/suivi']) {
       const response = await page.goto(path)

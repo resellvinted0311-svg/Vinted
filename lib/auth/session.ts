@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { cache } from 'react'
 import { randomBytes } from 'node:crypto'
 import { cookies } from 'next/headers'
 import type { Session } from 'next-auth'
@@ -78,10 +79,36 @@ export async function destroyCurrentSession(): Promise<void> {
 /**
  * Identité courante, ou null.
  *
- * Toujours relue en base : un compte suspendu ou supprimé perd l'accès
- * immédiatement, sans attendre l'expiration du cookie.
+ * ---------------------------------------------------------------------------
+ * Toujours relue en base
+ * ---------------------------------------------------------------------------
+ * Un compte suspendu ou supprimé perd l'accès immédiatement, sans attendre
+ * l'expiration du cookie.
+ *
+ * ---------------------------------------------------------------------------
+ * Mémorisée pour la DURÉE D'UNE REQUÊTE, et pas au-delà
+ * ---------------------------------------------------------------------------
+ * `cache()` de React ne conserve rien entre deux requêtes : le résultat est
+ * attaché au rendu en cours. Deux personnes différentes ne peuvent donc pas se
+ * partager une identité, et une suspension prend effet au chargement suivant.
+ *
+ * Sans elle, un seul chargement de page décodait la session et interrogeait la
+ * table des comptes PLUSIEURS fois. Mesuré sur `/fr/compte/commandes`, qui
+ * l'appelle deux fois — une fois pour le contrôle d'accès, une fois par la
+ * portée du panier : six requêtes par chargement avant, trois après.
+ *
+ * ATTENTION — la mémorisation ne s'applique QU'AU RENDU. Un gestionnaire de
+ * route — un fichier `route.ts` sous `app/api` — ne s'exécute pas dans la
+ * portée de `cache()` :
+ * vérifié à la mesure, `/api/session` y payait bien deux décodages. Les routes
+ * doivent donc résoudre l'identité une fois et la passer explicitement — voir
+ * `cartOwnerFor` dans `lib/shop/cart.ts`.
+ *
+ * En production le pool n'accorde qu'UNE connexion par instance, et ces
+ * requêtes s'y sérialisent : chaque appel superflu est un aller-retour ajouté
+ * au temps de réponse.
  */
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<CurrentUser | null> {
   if (!isAuthConfigured()) return null
 
   // `auth` est surchargé — il sert aussi de middleware — donc son type de
@@ -120,7 +147,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     locale: user.locale,
     firstName: user.firstName,
   }
-}
+})
 
 export class AuthorizationError extends Error {
   constructor(message: string) {

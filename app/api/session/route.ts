@@ -3,7 +3,7 @@ import { publicJson } from '@/lib/security/public-json'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { getCurrentUser } from '@/lib/auth/session'
-import { readCartCount } from '@/lib/shop/cart'
+import { cartOwnerFor, readCartCount } from '@/lib/shop/cart'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -49,7 +49,14 @@ export async function GET() {
   // session : l'en-tête est rendu sur des pages statiques, et y lire le panier
   // les rendrait toutes dynamiques. `readCartCount` ne lit qu'un décompte —
   // pas les titres, pas les images, pas les traductions.
-  const cartCount = await readCartCount()
+  //
+  // L'identité est passée, pas relue. `getCurrentUser` est mémorisée par
+  // `cache()` de React, mais cette mémorisation ne s'applique PAS dans un
+  // gestionnaire de route : appeler `readCartCount()` sans argument décodait la
+  // session une SECONDE fois, ici, sur chaque chargement de page du site.
+  // Mesuré : six requêtes sur la table des comptes par appel, contre trois
+  // maintenant.
+  const cartCount = await readCartCount(await cartOwnerFor(user))
 
   const body = user
     ? {
