@@ -234,6 +234,20 @@
     "addresses": "Adresy",
     "settings": "Ustawienia"
   },
+  "orderEmail": {
+    "subject": "Twoje zamówienie {orderNumber}",
+    "greeting": "Dzień dobry,",
+    "intro": "Twoje zamówienie {orderNumber} zostało potwierdzone. Oto co jedzie do Ciebie.",
+    "subtotal": "Suma częściowa",
+    "discount": "Rabat",
+    "shipping": "Wysyłka",
+    "freeShipping": "gratis",
+    "total": "Zapłacona kwota",
+    "deliveryTo": "Dostawa do",
+    "invoice": "Faktura nr {number}, dostępna na Twoim koncie.",
+    "withdrawal": "Masz 14 dni od otrzymania na zmianę zdania. Formularz odstąpienia znajduje się na stronie.",
+    "signature": "Do zobaczenia, {shop}"
+  },
   "privacy": {
     "title": "Prywatność",
     "intro": "Co ta witryna przechowuje na Twój temat, dlaczego, jak długo i co możesz z tym zrobić.",

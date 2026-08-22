@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'node:crypto'
 import { releaseExpiredStockLocks } from '@/lib/shop/stock-lock'
 import { purgeExpiredPersonalData } from '@/lib/privacy/retention'
 import { expireStaleOrders } from '@/lib/shop/fulfilment'
+import { runJobs } from '@/lib/jobs/worker'
 
 /**
  * Travaux périodiques.
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   // Les travaux sont indépendants : l'échec de l'un ne doit pas empêcher les
   // autres. `allSettled` le garantit — une purge qui tombe ne doit pas laisser
   // du stock réservé indéfiniment, et réciproquement.
-  const [locks, purge, orders] = await Promise.allSettled([
+  const [locks, purge, orders, jobs] = await Promise.allSettled([
     releaseExpiredStockLocks(),
     purgeExpiredPersonalData(),
     // Stripe envoie bien `checkout.session.expired`, mais un webhook peut se
@@ -75,6 +76,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // paiement tardif rouvre la commande — mais produit un aller-retour
     // inutile dans l'historique.
     expireStaleOrders(STALE_ORDER_GRACE_MINUTES),
+    // Confirmations de commande et avis à la boutique. Inscrits dans la
+    // transaction de la vente, exécutés ici : un e-mail dû est un e-mail qui
+    // survit à une panne du prestataire.
+    runJobs(),
   ])
 
   if (locks.status === 'rejected') {
@@ -86,12 +91,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (orders.status === 'rejected') {
     console.error('[cron] Balayage des commandes en attente en échec.', orders.reason)
   }
+  if (jobs.status === 'rejected') {
+    console.error('[cron] Exécution des travaux différés en échec.', jobs.reason)
+  }
 
   return NextResponse.json({
-    ok: [locks, purge, orders].every((task) => task.status === 'fulfilled'),
+    ok: [locks, purge, orders, jobs].every(
+      (task) => task.status === 'fulfilled',
+    ),
     releasedLocks: locks.status === 'fulfilled' ? locks.value : null,
     purged: purge.status === 'fulfilled' ? purge.value : null,
     expiredOrders: orders.status === 'fulfilled' ? orders.value : null,
+    jobs: jobs.status === 'fulfilled' ? jobs.value : null,
     durationMs: Date.now() - startedAt,
   })
 }

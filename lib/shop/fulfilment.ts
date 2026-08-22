@@ -2,6 +2,9 @@ import 'server-only'
 
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
+import { hasLegalIdentity } from '@/lib/config/site'
+import { allocateInvoiceNumber } from '@/lib/shop/invoice'
+import { enqueue } from '@/lib/jobs/queue'
 
 /**
  * Confirmation d'une vente.
@@ -172,6 +175,37 @@ export async function markOrderPaid(input: {
 
     const soldIds = new Set(sold.map((row) => row.id))
     const unfulfillable = articleIds.filter((id) => !soldIds.has(id))
+
+    // Numéro de facture attribué ICI, dans la transaction de la vente.
+    //
+    // C'est ce qui rend la suite sans trou : si cette transaction échoue,
+    // l'incrément échoue avec elle. Une séquence PostgreSQL, elle, ne revient
+    // jamais en arrière — voir `lib/shop/invoice.ts`.
+    //
+    // Seulement si l'identité légale est renseignée : une facture sans
+    // dénomination ni SIRET ne vaut rien, et consommer un numéro pour un
+    // document sans valeur ferait un trou dans la suite le jour où on le
+    // corrigerait.
+    if (hasLegalIdentity()) {
+      const invoiceNumber = await allocateInvoiceNumber(tx)
+      await tx.order.update({
+        where: { id: order.id },
+        data: { invoiceNumber },
+      })
+    }
+
+    // Les e-mails sont INSCRITS, pas envoyés : un appel réseau dans une
+    // transaction tiendrait des verrous en attendant un tiers, et un message
+    // parti ne se rembobine pas si la transaction échoue ensuite. S'ils sont
+    // inscrits, c'est que la vente l'est aussi.
+    await enqueue(tx, {
+      type: 'order.confirmation',
+      payload: { orderId: order.id },
+    })
+    await enqueue(tx, {
+      type: 'order.notify-shop',
+      payload: { orderId: order.id },
+    })
 
     // Le panier a fait son travail : il disparaît une fois la commande payée.
     // C'est le seul endroit qui a le droit de le vider — jamais une lecture,

@@ -234,6 +234,20 @@
     "addresses": "Indirizzi",
     "settings": "Impostazioni"
   },
+  "orderEmail": {
+    "subject": "Il suo ordine {orderNumber}",
+    "greeting": "Buongiorno,",
+    "intro": "Il suo ordine {orderNumber} è confermato. Ecco che cosa sta per raggiungerla.",
+    "subtotal": "Subtotale",
+    "discount": "Sconto",
+    "shipping": "Spedizione",
+    "freeShipping": "offerta",
+    "total": "Totale pagato",
+    "deliveryTo": "Consegna a",
+    "invoice": "Fattura n. {number}, disponibile nel suo account.",
+    "withdrawal": "Ha 14 giorni dal ricevimento per cambiare idea. Il modulo di recesso è sul sito.",
+    "signature": "A presto, {shop}"
+  },
   "privacy": {
     "title": "Riservatezza",
     "intro": "Che cosa questo sito conserva su di lei, perché, per quanto tempo e che cosa può farne.",

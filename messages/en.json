@@ -234,6 +234,20 @@
     "addresses": "Addresses",
     "settings": "Settings"
   },
+  "orderEmail": {
+    "subject": "Your order {orderNumber}",
+    "greeting": "Hello,",
+    "intro": "Your order {orderNumber} is confirmed. Here is what is on its way to you.",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "shipping": "Shipping",
+    "freeShipping": "free",
+    "total": "Total paid",
+    "deliveryTo": "Delivery to",
+    "invoice": "Invoice no. {number}, available in your account.",
+    "withdrawal": "You have 14 days from delivery to change your mind. The withdrawal form is on the site.",
+    "signature": "See you soon, {shop}"
+  },
   "privacy": {
     "title": "Privacy",
     "intro": "What this site keeps about you, why, for how long, and what you can do about it.",

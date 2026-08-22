@@ -1119,8 +1119,22 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
-/// Compteur atomique pour les séquences sans trou : numéros de commande et
-/// numéros de facture (obligation comptable).
+/// Compteur atomique pour les séquences SANS TROU.
+///
+/// Réservé aux numéros de facture. L'article 242 nonies A de l'annexe II du
+/// CGI impose « un numéro unique basé sur une séquence chronologique continue,
+/// sans rupture » : un trou dans la numérotation se présume comme une facture
+/// détruite, et c'est au commerçant de prouver le contraire.
+///
+/// Une séquence PostgreSQL ne convient PAS ici : `nextval` ne revient jamais
+/// en arrière, même quand la transaction qui l'a appelée échoue. Elle laisse
+/// donc des trous par conception. Ce compteur, lui, est incrémenté DANS la
+/// transaction qui crée la facture : si elle échoue, l'incrément échoue avec
+/// elle.
+///
+/// Les numéros de COMMANDE, eux, passent par une séquence PostgreSQL
+/// (`order_number_seq`) : ce ne sont pas des pièces comptables, les trous y
+/// sont sans conséquence, et la séquence ne bloque personne.
 model Counter {
   key   String @id
   value Int    @default(0)

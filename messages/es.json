@@ -234,6 +234,20 @@
     "addresses": "Direcciones",
     "settings": "Ajustes"
   },
+  "orderEmail": {
+    "subject": "Su pedido {orderNumber}",
+    "greeting": "Hola:",
+    "intro": "Su pedido {orderNumber} está confirmado. Esto es lo que va camino a usted.",
+    "subtotal": "Subtotal",
+    "discount": "Descuento",
+    "shipping": "Envío",
+    "freeShipping": "gratuito",
+    "total": "Total pagado",
+    "deliveryTo": "Entrega a",
+    "invoice": "Factura n.º {number}, disponible en su cuenta.",
+    "withdrawal": "Dispone de 14 días desde la recepción para cambiar de opinión. El formulario de desistimiento está en el sitio.",
+    "signature": "Hasta pronto, {shop}"
+  },
   "privacy": {
     "title": "Privacidad",
     "intro": "Lo que este sitio conserva sobre usted, por qué, durante cuánto tiempo y qué puede hacer al respecto.",

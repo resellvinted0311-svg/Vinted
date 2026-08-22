@@ -234,6 +234,20 @@
     "addresses": "Adressen",
     "settings": "Einstellungen"
   },
+  "orderEmail": {
+    "subject": "Ihre Bestellung {orderNumber}",
+    "greeting": "Guten Tag,",
+    "intro": "Ihre Bestellung {orderNumber} ist bestätigt. Das ist zu Ihnen unterwegs.",
+    "subtotal": "Zwischensumme",
+    "discount": "Rabatt",
+    "shipping": "Versand",
+    "freeShipping": "kostenlos",
+    "total": "Gezahlter Gesamtbetrag",
+    "deliveryTo": "Lieferung an",
+    "invoice": "Rechnung Nr. {number}, in Ihrem Konto verfügbar.",
+    "withdrawal": "Sie haben ab Erhalt 14 Tage Zeit, es sich anders zu überlegen. Das Widerrufsformular finden Sie auf der Website.",
+    "signature": "Bis bald, {shop}"
+  },
   "privacy": {
     "title": "Datenschutz",
     "intro": "Was diese Website über Sie speichert, warum, wie lange und was Sie damit tun können.",

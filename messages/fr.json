@@ -234,6 +234,20 @@
     "addresses": "Adresses",
     "settings": "Paramètres"
   },
+  "orderEmail": {
+    "subject": "Votre commande {orderNumber}",
+    "greeting": "Bonjour,",
+    "intro": "Votre commande {orderNumber} est confirmée. Voici ce qui part chez vous.",
+    "subtotal": "Sous-total",
+    "discount": "Remise",
+    "shipping": "Livraison",
+    "freeShipping": "offerte",
+    "total": "Total payé",
+    "deliveryTo": "Livraison à",
+    "invoice": "Facture n° {number}, jointe à votre espace personnel.",
+    "withdrawal": "Vous disposez de 14 jours à compter de la réception pour changer d’avis. Le formulaire de rétractation est sur le site.",
+    "signature": "À bientôt, {shop}"
+  },
   "privacy": {
     "title": "Confidentialité",
     "intro": "Ce que ce site conserve à votre sujet, pourquoi, pendant combien de temps, et ce que vous pouvez en faire.",

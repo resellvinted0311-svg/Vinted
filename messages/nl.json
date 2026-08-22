@@ -234,6 +234,20 @@
     "addresses": "Adressen",
     "settings": "Instellingen"
   },
+  "orderEmail": {
+    "subject": "Uw bestelling {orderNumber}",
+    "greeting": "Hallo,",
+    "intro": "Uw bestelling {orderNumber} is bevestigd. Dit is wat naar u onderweg is.",
+    "subtotal": "Subtotaal",
+    "discount": "Korting",
+    "shipping": "Verzending",
+    "freeShipping": "gratis",
+    "total": "Totaal betaald",
+    "deliveryTo": "Levering aan",
+    "invoice": "Factuur nr. {number}, beschikbaar in uw account.",
+    "withdrawal": "U hebt 14 dagen na ontvangst om van gedachten te veranderen. Het herroepingsformulier staat op de site.",
+    "signature": "Tot ziens, {shop}"
+  },
   "privacy": {
     "title": "Privacy",
     "intro": "Wat deze site over u bewaart, waarom, hoe lang, en wat u ermee kunt doen.",
