@@ -64,7 +64,7 @@ export async function ensureCartOwner(): Promise<CartOwner> {
 }
 
 /** Propriétaire pour un chemin de LECTURE : n'écrit jamais de cookie. */
-async function readCartOwner(): Promise<CartOwner | null> {
+export async function readCartOwner(): Promise<CartOwner | null> {
   const user = await getCurrentUser()
   const sessionToken = await readShopSessionToken()
 
@@ -290,6 +290,14 @@ export type CartMutationResult =
         | 'not-purchasable'
         | 'already-in-cart'
         | 'cart-full'
+        /**
+         * Trop d'écritures en peu de temps.
+         *
+         * Motif à part entière : le faire passer pour « pièce non achetable »
+         * afficherait un message faux sur une pièce qui, elle, est disponible.
+         * Posé par la couche réseau (`cart-actions.ts`), jamais ici.
+         */
+        | 'rate-limited'
     }
 
 /**

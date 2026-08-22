@@ -16,9 +16,20 @@ import { runJobs } from '@/lib/jobs/worker'
 const PREFIX = 'INVJOB-'
 
 async function cleanup(): Promise<void> {
-  await prisma.job.deleteMany({
-    where: { payload: { path: ['test'], equals: PREFIX } },
-  })
+  // Toute la file, pas seulement les travaux de ce fichier.
+  //
+  // `claimJobs` prend les travaux prêts de la table ENTIÈRE — c'est sa raison
+  // d'être. Or les autres tests d'intégration marquent des commandes payées,
+  // ce qui met en file de vraies confirmations ; elles survivent à la
+  // suppression de leur commande, puisqu'un travail ne porte qu'un identifiant
+  // dans son contenu JSON, sans clé étrangère.
+  //
+  // Ces travaux orphelins s'accumulaient d'une exécution à l'autre et
+  // finissaient par remplir le lot de dix demandé ici : les assertions
+  // passaient sur une base neuve et échouaient sur une base ayant déjà servi.
+  // Les fichiers de test ne s'exécutent jamais en parallèle
+  // (`fileParallelism: false`), vider la file est donc sans effet de bord.
+  await prisma.job.deleteMany({})
   await prisma.orderItem.deleteMany({
     where: { order: { orderNumber: { startsWith: PREFIX } } },
   })
@@ -106,24 +117,27 @@ describe('file de travaux', () => {
   }
 
   it('ne prend pas un travail programmé plus tard', async () => {
-    await makeJob(new Date(Date.now() + 3_600_000))
+    const id = await makeJob(new Date(Date.now() + 3_600_000))
 
     const claimed = await claimJobs('essai', 10)
-    expect(claimed.map((job) => job.id)).toHaveLength(0)
+    expect(claimed.some((job) => job.id === id)).toBe(false)
   })
 
   it('deux exécutions concurrentes ne prennent pas le même travail', async () => {
     // Vercel ne garantit pas l'exclusion entre deux passages du cron. Sans
     // verrou, chaque e-mail partirait deux fois.
-    await makeJob()
+    const id = await makeJob()
 
     const [a, b] = await Promise.all([
       claimJobs('worker-a', 10),
       claimJobs('worker-b', 10),
     ])
 
-    const total = a.length + b.length
-    expect(total).toBe(1)
+    // On compte les prises de CE travail, pas la taille des lots : la question
+    // est « ce travail a-t-il été pris deux fois ? », et elle se pose de la
+    // même façon que la file contienne un travail ou mille.
+    const taken = [...a, ...b].filter((job) => job.id === id)
+    expect(taken).toHaveLength(1)
   })
 
   it('un travail terminé n’est plus repris', async () => {
