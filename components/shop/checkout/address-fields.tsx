@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils/cn'
+import { NativeSelect } from '@/components/ui/select'
 
 /**
  * Les champs d'adresse du bon de commande.
@@ -166,19 +166,13 @@ export function AddressFields({
 
       <Field className="sm:col-span-2">
         <FieldLabel>{t('country')}</FieldLabel>
-        <select
+        <NativeSelect
           name="country"
           value={values.country}
           onChange={set('country')}
           autoComplete="country"
           required
           disabled={disabled}
-          className={cn(
-            'w-full min-h-[44px] rounded-input bg-surface px-3 py-2',
-            'border-[1.5px] border-rule text-ink',
-            'transition-colors duration-150 ease-out hover:bg-paper-raised',
-            'disabled:cursor-not-allowed disabled:bg-paper-raised disabled:opacity-60',
-          )}
         >
           <option value="">{tCommon('selectPlaceholder')}</option>
           {countries.map((country) => (
@@ -186,7 +180,7 @@ export function AddressFields({
               {country.label}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </Field>
 
       <Field className="sm:col-span-2" hint={t('phoneHint')}>

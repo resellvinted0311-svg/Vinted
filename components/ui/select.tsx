@@ -4,6 +4,7 @@ import * as React from 'react'
 import { Select as RadixSelect } from 'radix-ui'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils/cn'
+import { useFieldControlProps } from './field'
 
 export interface SelectOption {
   value: string
@@ -127,3 +128,53 @@ function ChevronDown() {
     </svg>
   )
 }
+
+/**
+ * Liste déroulante NATIVE, pour les formulaires d'achat.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi pas le composant ci-dessus
+ * ---------------------------------------------------------------------------
+ * `Select` est rendu par Radix dans un portail. Trois conséquences sur un
+ * formulaire d'adresse : le remplissage automatique du navigateur ne reconnaît
+ * plus le champ, mobile perd la roulette native, et la valeur soumise vit dans
+ * un champ caché tenu en parallèle du déclencheur — donc susceptible d'en
+ * diverger.
+ *
+ * Sur un tunnel de commande, la commodité de saisie l'emporte sur
+ * l'uniformité visuelle.
+ *
+ * ---------------------------------------------------------------------------
+ * Elle consomme le contexte de `Field`
+ * ---------------------------------------------------------------------------
+ * C'est tout l'intérêt de la sortir ici plutôt que d'écrire un `<select>` à la
+ * main dans la page : sans `id`, l'étiquette rendue par `FieldLabel` pointe
+ * vers un élément qui n'existe pas. Le champ n'a alors AUCUN intitulé
+ * accessible, cliquer sur son libellé ne fait rien, et l'erreur ne se voit sur
+ * aucune capture d'écran. C'est exactement ce qui était écrit avant qu'un test
+ * de bout en bout ne cherche le champ par son étiquette et ne le trouve pas.
+ */
+export const NativeSelect = React.forwardRef<
+  HTMLSelectElement,
+  React.SelectHTMLAttributes<HTMLSelectElement>
+>(function NativeSelect({ className, children, ...props }, ref) {
+  const fieldProps = useFieldControlProps()
+
+  return (
+    <select
+      ref={ref}
+      {...fieldProps}
+      className={cn(
+        'w-full min-h-[44px] rounded-input bg-surface px-3 py-2',
+        'border-[1.5px] border-rule text-ink',
+        'transition-colors duration-150 ease-out hover:bg-paper-raised',
+        'disabled:cursor-not-allowed disabled:bg-paper-raised disabled:opacity-60',
+        'aria-[invalid=true]:border-danger',
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </select>
+  )
+})

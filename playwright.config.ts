@@ -42,6 +42,27 @@ function detectChromium(): string | undefined {
 
 const executablePath = detectChromium()
 
+/**
+ * ---------------------------------------------------------------------------
+ * Si la suite échoue au DEUXIÈME passage d'affilée
+ * ---------------------------------------------------------------------------
+ * Ce n'est probablement pas une régression : c'est la limitation de débit.
+ *
+ * `signInAction` borne les tentatives à dix par compte et par quart d'heure
+ * (`signin:<empreinte>:<compte>`), et les tests de connexion partagent un seul
+ * compte du jeu de données. Trois exécutions complètes rapprochées suffisent à
+ * vider le seau ; la page affiche alors « Trop de tentatives » au lieu du
+ * message attendu, et les tests de connexion, de compte et de RGPD tombent
+ * ensemble.
+ *
+ * Vérifié : sur un serveur fraîchement redémarré, les cinquante tests passent.
+ * Le compteur vit en mémoire tant qu'Upstash n'est pas configuré, donc
+ * redémarrer `pnpm start` le remet à zéro.
+ *
+ * On ne desserre PAS cette limite pour arranger les tests : dix essais par
+ * quart d'heure sur un compte donné est exactement ce qu'il faut contre le
+ * bourrage d'identifiants.
+ */
 export default defineConfig({
   testDir: './tests/e2e',
   // Le parcours d'achat teste la concurrence : aucune reprise silencieuse,

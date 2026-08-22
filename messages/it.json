@@ -28,7 +28,7 @@
     "howItWorks": {
       "title": "Come funziona",
       "sourcingTitle": "Ricerca",
-      "sourcingBody": "I capi vengono cercati uno per uno nei mercatini, nelle fiere dell'usato e nei negozi conto terzi.",
+      "sourcingBody": "I capi vengono cercati uno per uno nei mercatini, nelle fiere dell’usato e nei negozi conto terzi.",
       "selectionTitle": "Selezione",
       "selectionBody": "Ogni capo viene lavato, controllato e misurato. Le misure reali in centimetri sono indicate nella scheda, insieme agli eventuali difetti.",
       "shippingTitle": "Spedizione",
@@ -119,7 +119,7 @@
     },
     "GOOD": {
       "label": "Buone condizioni",
-      "help": "Indossato regolarmente, lievi segni d'uso senza difetti rilevanti."
+      "help": "Indossato regolarmente, lievi segni d’uso senza difetti rilevanti."
     },
     "FAIR": {
       "label": "Condizioni discrete",
@@ -155,7 +155,7 @@
     "condition": "Condizioni",
     "reference": "Riferimento",
     "addToCart": "Aggiungi al carrello",
-    "makeOffer": "Fai un'offerta",
+    "makeOffer": "Fai un’offerta",
     "offersOpenOn": "Le offerte aprono il {date}.",
     "askQuestion": "Fai una domanda",
     "similar": "Capi simili",
@@ -163,7 +163,7 @@
     "sold": "Venduto",
     "soldHint": "Questo capo è stato venduto. Era un pezzo unico e non tornerà.",
     "reserved": "In corso di acquisto",
-    "reservedHint": "Qualcuno sta completando il proprio acquisto. Se l'ordine non va a buon fine, il capo tornerà disponibile.",
+    "reservedHint": "Qualcuno sta completando il proprio acquisto. Se l’ordine non va a buon fine, il capo tornerà disponibile.",
     "shippingEstimate": "Spedizione",
     "shippingFrom": "A partire da {price}",
     "machineTranslated": "Questa descrizione è stata tradotta automaticamente.",
@@ -195,12 +195,12 @@
     "totalLater": "Noto una volta scelta la spedizione",
     "subtotalScope": "Il subtotale conta solo {purchasable, plural, one {# pezzo disponibile} other {# pezzi disponibili}}. {blocked, plural, one {# riga richiede} other {# righe richiedono}} una decisione.",
     "shippingAtNextStep": "Le spese di spedizione dipendono dalla destinazione. Vengono calcolate al passaggio successivo, prima di qualsiasi pagamento.",
-    "openOrder": "Effettua l'ordine",
+    "openOrder": "Effettua l’ordine",
     "openOrderBlocked": "{count, plural, one {Un pezzo non è più disponibile} other {# pezzi non sono più disponibili}}: rimuovil{count, plural, one {o} other {i}} per continuare.",
     "openOrderNothingPayable": "Nessun pezzo di questo carrello è disponibile al momento.",
     "state": {
-      "priceLowered": "Il prezzo è sceso da quando l'hai aggiunta: {old} → {new}. Viene fatturato il prezzo attuale.",
-      "priceRaised": "Il prezzo è cambiato da quando l'hai aggiunta: {old} → {new}. Viene fatturato il prezzo attuale.",
+      "priceLowered": "Il prezzo è sceso da quando l’hai aggiunta: {old} → {new}. Viene fatturato il prezzo attuale.",
+      "priceRaised": "Il prezzo è cambiato da quando l’hai aggiunta: {old} → {new}. Viene fatturato il prezzo attuale.",
       "reservedByOther": "In corso di acquisto",
       "reservedByOtherUntil": "fino alle {until}",
       "sold": "Questo pezzo ha trovato un acquirente.",
@@ -224,20 +224,20 @@
       "rate-limited": "Troppe richieste in poco tempo. Riprova tra un istante."
     },
     "returnReason": {
-      "panier-vide": "Il tuo carrello si è svuotato prima dell'apertura dell'ordine.",
-      "lignes-bloquees": "L'ordine non ha potuto aprirsi: alcuni pezzi del tuo carrello non sono più disponibili. Sono segnalati qui sotto — sta a te decidere che farne."
+      "panier-vide": "Il tuo carrello si è svuotato prima dell’apertura dell’ordine.",
+      "lignes-bloquees": "L’ordine non ha potuto aprirsi: alcuni pezzi del tuo carrello non sono più disponibili. Sono segnalati qui sotto — sta a te decidere che farne."
     }
   },
   "checkout": {
-    "title": "Buono d'ordine",
+    "title": "Buono d’ordine",
     "recap": "Che cosa stai ordinando",
-    "recapHint": "Ogni pezzo esiste in un solo esemplare. La disponibilità è trattenuta solo all'apertura del pagamento.",
+    "recapHint": "Ogni pezzo esiste in un solo esemplare. La disponibilità è trattenuta solo all’apertura del pagamento.",
     "editOrder": "Modifica il carrello",
     "contact": "Dove contattarti",
     "emailHint": "È lì che arriverà la conferma e poi il tracciamento.",
     "address": "Dove consegnare",
     "note": "Un messaggio alla bottega",
-    "noteHint": "Una precisazione sulla consegna, una richiesta sull'imballaggio. 500 caratteri.",
+    "noteHint": "Una precisazione sulla consegna, una richiesta sull’imballaggio. 500 caratteri.",
     "payment": "Pagare",
     "cardOnly": "Solo carta. I dati si inseriscono in un riquadro servito dal nostro fornitore di pagamento: nessun numero di carta passa da questo sito.",
     "placeOrder": "Ordina — {total}",
@@ -245,7 +245,7 @@
     "paymentOpensBelow": "Il modulo della carta si aprirà proprio qui, senza lasciare questa pagina.",
     "orderRegistered": "Ordine {orderNumber} registrato",
     "totalDue": "Importo da pagare",
-    "editWarning": "L'ordine è registrato e i pezzi restano riservati per il tempo del pagamento. Per modificarlo, torna al carrello: un nuovo ordine sostituirà questo.",
+    "editWarning": "L’ordine è registrato e i pezzi restano riservati per il tempo del pagamento. Per modificarlo, torna al carrello: un nuovo ordine sostituirà questo.",
     "paymentFrameFailed": "Il modulo di pagamento non si è aperto. Il tuo ordine è registrato: scrivici e lo riprendiamo insieme.",
     "field": {
       "email": "Indirizzo e-mail",
@@ -278,7 +278,7 @@
       "link": "Leggerle"
     },
     "privacy": {
-      "notice": "Il tuo indirizzo e-mail, l'indirizzo postale e, se fornito, il telefono servono a trattare questo ordine, spedirlo ed emettere la fattura.",
+      "notice": "Il tuo indirizzo e-mail, l’indirizzo postale e, se fornito, il telefono servono a trattare questo ordine, spedirlo ed emettere la fattura.",
       "link": "Come vengono trattati i tuoi dati"
     },
     "legal": {
@@ -289,14 +289,14 @@
       "blockedLines": "Alcuni pezzi del tuo carrello non sono più disponibili.",
       "stockTaken": "Un pezzo è appena stato preso da qualcun altro.",
       "shippingUnavailable": "Non serviamo questa destinazione.",
-      "shippingOptionGone": "La modalità di spedizione scelta non è più proposta. Scegline un'altra.",
+      "shippingOptionGone": "La modalità di spedizione scelta non è più proposta. Scegline un’altra.",
       "servicePointRequired": "Questa modalità di spedizione richiede un punto di ritiro.",
       "paymentNotConfigured": "Il pagamento non è ancora attivo su questa bottega.",
       "rateLimited": "Troppi tentativi in poco tempo. Attendi un istante.",
-      "invalidAddress": "Controlla l'indirizzo di consegna.",
+      "invalidAddress": "Controlla l’indirizzo di consegna.",
       "termsRequired": "Devi accettare le condizioni generali di vendita.",
       "invalidInput": "Alcune informazioni non sono state comprese. Controlla il modulo.",
-      "unexpectedTitle": "L'ordine non è andato a buon fine",
+      "unexpectedTitle": "L’ordine non è andato a buon fine",
       "unexpected": "Si è verificato un errore durante la registrazione. Se un pagamento è stato avviato, comparirà nei tuoi ordini: non pagare una seconda volta prima di averci scritto.",
       "retry": "Riprova",
       "reference": "Riferimento tecnico: {digest}"
@@ -307,7 +307,7 @@
     "paidStamp": "Pagato",
     "emailSent": "Tra pochi istanti partirà una conferma a {email}.",
     "pendingPayment": "Pagamento in corso di conferma.",
-    "pendingPaymentHint": "Il nostro fornitore ci avviserà da un momento all'altro. Questa pagina si aggiorna da sola: non serve pagare una seconda volta.",
+    "pendingPaymentHint": "Il nostro fornitore ci avviserà da un momento all’altro. Questa pagina si aggiorna da sola: non serve pagare una seconda volta.",
     "pendingTimeout": "La conferma tarda. Il tuo ordine è registrato: la conferma ti arriverà per e-mail e compare già nel tuo registro ordini. Non pagare una seconda volta.",
     "notYours": "Questo ordine non è collegato a questo browser né a questo account.",
     "unknownReference": "Non troviamo alcun ordine per questo riferimento.",
@@ -315,12 +315,12 @@
     "findMyOrder": "Vedi i miei ordini",
     "backToCatalogue": "Torna al catalogo",
     "backToRegister": "Tutti i miei ordini",
-    "backToOrder": "Torna all'ordine",
+    "backToOrder": "Torna all’ordine",
     "viewInvoice": "Vedi la fattura",
     "registerTitle": "I miei ordini",
     "emptyRegister": "Nessun ordine per ora.",
     "emptyRegisterHint": "Gli ordini effettuati da questo browser o con questo account compariranno qui.",
-    "guestRegisterHint": "Senza account, questa lista dipende dal cookie di sessione di questo browser: si perde cambiando dispositivo o cancellando i dati del sito. L'e-mail di conferma, invece, resta.",
+    "guestRegisterHint": "Senza account, questa lista dipende dal cookie di sessione di questo browser: si perde cambiando dispositivo o cancellando i dati del sito. L’e-mail di conferma, invece, resta.",
     "detailTitle": "Ordine {orderNumber}",
     "pieces": "{count, plural, one {# pezzo} other {# pezzi}}",
     "invoiceNumber": "Fattura {number}",
@@ -365,7 +365,7 @@
     "paidAt": "Saldata il {date}",
     "print": "Stampa",
     "notIssued": "Fattura non ancora emessa",
-    "notIssuedHint": "La fattura si emette all'incasso. Comparirà qui appena il pagamento sarà confermato.",
+    "notIssuedHint": "La fattura si emette all’incasso. Comparirà qui appena il pagamento sarà confermato.",
     "unavailable": "La fattura non è disponibile al momento. Scrivici e te la faremo avere."
   },
   "favorites": {
@@ -396,7 +396,7 @@
     "lastName": "Cognome",
     "passwordHint": "Almeno 12 caratteri.",
     "submitSignIn": "Accedi",
-    "submitSignUp": "Crea l'account",
+    "submitSignUp": "Crea l’account",
     "magicLink": "Ricevi un link di accesso via e-mail",
     "magicLinkSent": "Se esiste un account per questo indirizzo, è appena stato inviato un link di accesso.",
     "noAccount": "Non hai ancora un account?",
@@ -413,7 +413,7 @@
       "required": "Questo campo è obbligatorio.",
       "banned": "Questo account è sospeso.",
       "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
-      "generic": "L'operazione non è andata a buon fine. Riprova.",
+      "generic": "L’operazione non è andata a buon fine. Riprova.",
       "notConfigured": "L’accesso non è ancora attivo su questo deploy. Il catalogo e i preferiti funzionano normalmente."
     }
   },
