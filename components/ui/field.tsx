@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { Label } from 'radix-ui'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils/cn'
 
 interface FieldContextValue {
@@ -85,6 +86,10 @@ export function FieldLabel({
   optional?: boolean
 }) {
   const { id } = useField()
+  // Traduit, et non écrit en français dans le composant : cette mention
+  // apparaît dans le tunnel de commande, que huit langues traversent.
+  const t = useTranslations('common')
+
   return (
     <Label.Root
       htmlFor={id}
@@ -93,7 +98,7 @@ export function FieldLabel({
       {children}
       {optional ? (
         <span className="ml-1 normal-case tracking-normal text-muted">
-          (facultatif)
+          {t('optional')}
         </span>
       ) : null}
     </Label.Root>

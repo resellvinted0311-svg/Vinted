@@ -173,6 +173,57 @@
     "addedOn": "Entrée au registre le {date}",
     "identification": "Identification"
   },
+  "cart": {
+    "title": "Panier",
+    "count": "{count, plural, =0 {Aucune pièce} one {# pièce} other {# pièces}}",
+    "summary": "Récapitulatif",
+    "empty": "Votre panier est vide.",
+    "emptyHint": "Chaque pièce du registre existe en un seul exemplaire. Celles que vous mettez de côté vous attendent ici.",
+    "continueShopping": "Poursuivre la visite",
+    "sku": "Réf. {sku}",
+    "remove": "Retirer",
+    "removeNamed": "Retirer {title} du panier",
+    "removed": "{title} retirée du panier",
+    "added": "Ajoutée au panier",
+    "openCart": "Voir le panier",
+    "subtotal": "Sous-total",
+    "discount": "Remise",
+    "shipping": "Livraison",
+    "freeShipping": "Offerte",
+    "shippingLater": "Calculée à l'étape suivante",
+    "total": "Total",
+    "totalLater": "Connu une fois la livraison choisie",
+    "subtotalScope": "Le sous-total ne compte que les {purchasable, plural, one {# pièce disponible} other {# pièces disponibles}}. {blocked, plural, one {# ligne demande} other {# lignes demandent}} une décision.",
+    "shippingAtNextStep": "Les frais de livraison dépendent de la destination. Ils sont calculés à l'étape suivante, avant tout paiement.",
+    "openOrder": "Passer commande",
+    "openOrderBlocked": "{count, plural, one {Une pièce n'est plus disponible} other {# pièces ne sont plus disponibles}} : retirez-{count, plural, one {la} other {les}} pour continuer.",
+    "openOrderNothingPayable": "Aucune pièce de ce panier n'est encore disponible.",
+    "state": {
+      "priceLowered": "Le prix a baissé depuis la mise au panier : {old} → {new}. C'est le prix courant qui est facturé.",
+      "priceRaised": "Le prix a changé depuis la mise au panier : {old} → {new}. C'est le prix courant qui est facturé.",
+      "reservedByOther": "En cours d'achat",
+      "reservedByOtherUntil": "jusqu'à {until}",
+      "sold": "Cette pièce a trouvé preneur.",
+      "unavailable": "Cette pièce a été retirée du registre.",
+      "stampSold": "Vendu",
+      "stampWithdrawn": "Retirée"
+    },
+    "blocked": {
+      "title": "{count, plural, one {Une pièce n'est plus disponible} other {# pièces ne sont plus disponibles}}",
+      "intro": "Elles restent affichées à leur place : rien n'est retiré sans votre accord.",
+      "remove": "Retirer {count, plural, one {cette pièce} other {ces # pièces}}",
+      "removePartial": "Retirer {count} pièces sur {total}",
+      "confirm": "Confirmer le retrait",
+      "keep": "Les garder"
+    },
+    "errors": {
+      "unknown-article": "Cette pièce est introuvable.",
+      "not-purchasable": "Cette pièce n'est plus disponible.",
+      "already-in-cart": "Cette pièce est déjà dans votre panier.",
+      "cart-full": "Votre panier a atteint sa limite de lignes.",
+      "rate-limited": "Trop de demandes en peu de temps. Réessayez dans un instant."
+    }
+  },
   "favorites": {
     "title": "Favoris",
     "empty": "Aucun favori pour le moment.",
@@ -339,6 +390,8 @@
     "free": "Offerte",
     "sold": "Vendu",
     "reserved": "En cours d'achat",
-    "unavailable": "Indisponible"
+    "unavailable": "Indisponible",
+    "optional": "(facultatif)",
+    "selectPlaceholder": "Sélectionner"
   }
 }

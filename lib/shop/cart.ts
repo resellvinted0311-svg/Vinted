@@ -139,7 +139,21 @@ export interface CartLineView {
   sku: string
   title: string
   brandName: string | null
-  imageUrl: string | null
+  /**
+   * Visuel de couverture, avec ses dimensions réelles.
+   *
+   * Dimensions comprises, et non une simple URL : sans elles, la vignette de
+   * chaque ligne réserverait sa place après chargement et ferait sauter tout
+   * le bordereau. `null` quand la pièce n'a pas encore de photo — on n'invente
+   * pas d'image de remplacement.
+   */
+  image: {
+    url: string
+    width: number
+    height: number
+    alt: string | null
+    blurhash: string | null
+  } | null
   /** Prix courant — le seul qui fasse foi. */
   currentPriceCents: number
   weightGrams: number
@@ -193,7 +207,13 @@ export async function readCart(locale: string): Promise<CartView> {
           reservedUntil: true,
           brand: { select: { name: true } },
           images: {
-            select: { url: true },
+            select: {
+              url: true,
+              width: true,
+              height: true,
+              alt: true,
+              blurhash: true,
+            },
             orderBy: { position: 'asc' },
             take: 1,
           },
@@ -234,7 +254,7 @@ export async function readCart(locale: string): Promise<CartView> {
       sku: article.sku,
       title: translation?.title ?? article.sku,
       brandName: article.brand?.name ?? null,
-      imageUrl: article.images[0]?.url ?? null,
+      image: article.images[0] ?? null,
       currentPriceCents: article.priceCents,
       weightGrams: article.weightGrams,
       state: evaluateCartLine({

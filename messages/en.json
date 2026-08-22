@@ -173,6 +173,57 @@
     "addedOn": "Added to the register on {date}",
     "identification": "Identification"
   },
+  "cart": {
+    "title": "Basket",
+    "count": "{count, plural, =0 {No items} one {# item} other {# items}}",
+    "summary": "Summary",
+    "empty": "Your basket is empty.",
+    "emptyHint": "Every piece in the register exists in a single copy. The ones you set aside wait for you here.",
+    "continueShopping": "Keep browsing",
+    "sku": "Ref. {sku}",
+    "remove": "Remove",
+    "removeNamed": "Remove {title} from the basket",
+    "removed": "{title} removed from the basket",
+    "added": "Added to basket",
+    "openCart": "View basket",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "shipping": "Delivery",
+    "freeShipping": "Free",
+    "shippingLater": "Calculated at the next step",
+    "total": "Total",
+    "totalLater": "Known once delivery is chosen",
+    "subtotalScope": "The subtotal only counts the {purchasable, plural, one {# available item} other {# available items}}. {blocked, plural, one {# line needs} other {# lines need}} a decision.",
+    "shippingAtNextStep": "Delivery costs depend on the destination. They are calculated at the next step, before any payment.",
+    "openOrder": "Place order",
+    "openOrderBlocked": "{count, plural, one {One item is no longer available} other {# items are no longer available}}: remove {count, plural, one {it} other {them}} to continue.",
+    "openOrderNothingPayable": "No item in this basket is available right now.",
+    "state": {
+      "priceLowered": "The price went down since you added it: {old} → {new}. The current price is what you pay.",
+      "priceRaised": "The price changed since you added it: {old} → {new}. The current price is what you pay.",
+      "reservedByOther": "Being bought",
+      "reservedByOtherUntil": "until {until}",
+      "sold": "This piece has found a buyer.",
+      "unavailable": "This piece has been withdrawn from the register.",
+      "stampSold": "Sold",
+      "stampWithdrawn": "Withdrawn"
+    },
+    "blocked": {
+      "title": "{count, plural, one {One item is no longer available} other {# items are no longer available}}",
+      "intro": "They stay where they are: nothing is removed without your say-so.",
+      "remove": "Remove {count, plural, one {this item} other {these # items}}",
+      "removePartial": "Remove {count} of {total} items",
+      "confirm": "Confirm removal",
+      "keep": "Keep them"
+    },
+    "errors": {
+      "unknown-article": "This item cannot be found.",
+      "not-purchasable": "This item is no longer available.",
+      "already-in-cart": "This item is already in your basket.",
+      "cart-full": "Your basket has reached its line limit.",
+      "rate-limited": "Too many requests in a short time. Try again in a moment."
+    }
+  },
   "favorites": {
     "title": "Favourites",
     "empty": "No favourites yet.",
@@ -339,6 +390,8 @@
     "free": "Free",
     "sold": "Sold",
     "reserved": "Being purchased",
-    "unavailable": "Unavailable"
+    "unavailable": "Unavailable",
+    "optional": "(optional)",
+    "selectPlaceholder": "Select"
   }
 }

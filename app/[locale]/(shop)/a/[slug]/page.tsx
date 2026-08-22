@@ -13,6 +13,7 @@ import { ArticleGallery } from '@/components/shop/article-gallery'
 import { MeasurementsTable } from '@/components/shop/measurements-table'
 import { FavoriteButton } from '@/components/shop/favorite-button'
 import { Breadcrumbs } from '@/components/shop/breadcrumbs'
+import { AddToCartButton } from '@/components/shop/add-to-cart-button'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Stamp } from '@/components/ui/stamp'
@@ -223,11 +224,16 @@ export default async function ArticlePage({ params }: { params: Params }) {
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {/* Panier et offres arrivent en Phases 2 et 3 : les commandes
-                  sont annoncées mais désactivées, plutôt qu'absentes. */}
-              <Button size="lg" disabled fullWidth>
-                {t('addToCart')}
-              </Button>
+              {/* L'ajout au panier ne réserve RIEN : le verrou de stock est
+                  pris à l'ouverture du paiement. Réserver dès l'ajout
+                  immobiliserait le catalogue pour des paniers abandonnés — et
+                  chaque pièce existe en un seul exemplaire.
+                  Les offres, elles, arrivent en Phase 3 : annoncées et
+                  désactivées, plutôt qu'absentes. */}
+              <AddToCartButton
+                articleId={article.id}
+                label={t('addToCart')}
+              />
 
               {offersOpen ? (
                 <Button variant="outline" disabled fullWidth>

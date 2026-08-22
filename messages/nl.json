@@ -173,6 +173,57 @@
     "addedOn": "Opgenomen in het register op {date}",
     "identification": "Identificatie"
   },
+  "cart": {
+    "title": "Winkelmand",
+    "count": "{count, plural, =0 {Geen stuks} one {# stuk} other {# stuks}}",
+    "summary": "Overzicht",
+    "empty": "Je winkelmand is leeg.",
+    "emptyHint": "Elk stuk in het register bestaat maar één keer. Wat je apart legt, wacht hier op je.",
+    "continueShopping": "Verder kijken",
+    "sku": "Ref. {sku}",
+    "remove": "Verwijderen",
+    "removeNamed": "{title} uit de winkelmand verwijderen",
+    "removed": "{title} uit de winkelmand verwijderd",
+    "added": "Toegevoegd aan winkelmand",
+    "openCart": "Winkelmand bekijken",
+    "subtotal": "Subtotaal",
+    "discount": "Korting",
+    "shipping": "Verzending",
+    "freeShipping": "Gratis",
+    "shippingLater": "Wordt in de volgende stap berekend",
+    "total": "Totaal",
+    "totalLater": "Bekend zodra de verzending gekozen is",
+    "subtotalScope": "Het subtotaal telt alleen {purchasable, plural, one {# beschikbaar stuk} other {# beschikbare stuks}}. {blocked, plural, one {# regel vraagt} other {# regels vragen}} om een beslissing.",
+    "shippingAtNextStep": "De verzendkosten hangen af van de bestemming. Ze worden in de volgende stap berekend, vóór elke betaling.",
+    "openOrder": "Bestelling plaatsen",
+    "openOrderBlocked": "{count, plural, one {Eén stuk is niet meer beschikbaar} other {# stuks zijn niet meer beschikbaar}}: verwijder {count, plural, one {het} other {ze}} om verder te gaan.",
+    "openOrderNothingPayable": "Geen enkel stuk in deze winkelmand is nu beschikbaar.",
+    "state": {
+      "priceLowered": "De prijs is gedaald sinds je het toevoegde: {old} → {new}. De huidige prijs wordt gefactureerd.",
+      "priceRaised": "De prijs is veranderd sinds je het toevoegde: {old} → {new}. De huidige prijs wordt gefactureerd.",
+      "reservedByOther": "Wordt gekocht",
+      "reservedByOtherUntil": "tot {until}",
+      "sold": "Dit stuk heeft een koper gevonden.",
+      "unavailable": "Dit stuk is uit het register gehaald.",
+      "stampSold": "Verkocht",
+      "stampWithdrawn": "Teruggetrokken"
+    },
+    "blocked": {
+      "title": "{count, plural, one {Eén stuk is niet meer beschikbaar} other {# stuks zijn niet meer beschikbaar}}",
+      "intro": "Ze blijven op hun plaats staan: er wordt niets weggehaald zonder jouw akkoord.",
+      "remove": "{count, plural, one {Dit stuk} other {Deze # stuks}} verwijderen",
+      "removePartial": "{count} van {total} stuks verwijderen",
+      "confirm": "Verwijderen bevestigen",
+      "keep": "Behouden"
+    },
+    "errors": {
+      "unknown-article": "Dit stuk is niet te vinden.",
+      "not-purchasable": "Dit stuk is niet meer beschikbaar.",
+      "already-in-cart": "Dit stuk zit al in je winkelmand.",
+      "cart-full": "Je winkelmand heeft de regellimiet bereikt.",
+      "rate-limited": "Te veel verzoeken in korte tijd. Probeer het zo meteen opnieuw."
+    }
+  },
   "favorites": {
     "title": "Favorieten",
     "empty": "Nog geen favorieten.",
@@ -339,6 +390,8 @@
     "free": "Gratis",
     "sold": "Verkocht",
     "reserved": "Wordt gekocht",
-    "unavailable": "Niet beschikbaar"
+    "unavailable": "Niet beschikbaar",
+    "optional": "(optioneel)",
+    "selectPlaceholder": "Selecteren"
   }
 }

@@ -4,6 +4,7 @@ import { Wordmark } from './wordmark'
 import { LocaleSwitcher } from './locale-switcher'
 import { AccountNav } from './account-nav'
 import { SearchBox } from './search-box'
+import { CartCountBadge } from './cart-count-badge'
 
 /**
  * En-tête.
@@ -26,8 +27,8 @@ export async function SiteHeader() {
   ] as const
 
   const services = [
-    { href: '/favoris', label: t('favorites') },
-    { href: '/panier', label: t('cart') },
+    { href: '/favoris', label: t('favorites'), badge: false },
+    { href: '/panier', label: t('cart'), badge: true },
   ] as const
 
   return (
@@ -73,9 +74,16 @@ export async function SiteHeader() {
               <Link
                 key={service.href}
                 href={service.href}
-                className="label-reg whitespace-nowrap text-muted transition-colors duration-150 ease-out hover:text-ink"
+                className="label-reg inline-flex items-center gap-1.5 whitespace-nowrap text-muted transition-colors duration-150 ease-out hover:text-ink"
               >
                 {service.label}
+                {/*
+                  Le compteur se charge après l'hydratation, comme l'état de
+                  session : le lire ici rendrait dynamiques toutes les pages
+                  que cet en-tête traverse, y compris celles qui portent le
+                  référencement.
+                */}
+                {service.badge ? <CartCountBadge /> : null}
               </Link>
             ))}
           </div>

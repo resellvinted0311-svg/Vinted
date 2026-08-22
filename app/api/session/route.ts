@@ -3,6 +3,7 @@ import { publicJson } from '@/lib/security/public-json'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { getCurrentUser } from '@/lib/auth/session'
+import { readCartCount } from '@/lib/shop/cart'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -44,9 +45,20 @@ export async function GET() {
 
   const user = await getCurrentUser()
 
+  // Le compteur du panier vient d'ici pour la même raison que l'état de
+  // session : l'en-tête est rendu sur des pages statiques, et y lire le panier
+  // les rendrait toutes dynamiques. `readCartCount` ne lit qu'un décompte —
+  // pas les titres, pas les images, pas les traductions.
+  const cartCount = await readCartCount()
+
   const body = user
-    ? { signedIn: true as const, firstName: user.firstName, role: user.role }
-    : { signedIn: false as const, firstName: null, role: null }
+    ? {
+        signedIn: true as const,
+        firstName: user.firstName,
+        role: user.role,
+        cartCount,
+      }
+    : { signedIn: false as const, firstName: null, role: null, cartCount }
 
   return publicJson(body, {
     headers: {

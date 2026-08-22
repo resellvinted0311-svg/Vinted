@@ -58,6 +58,14 @@ export interface ShippingOptionsView {
   options: ShippingOptionView[]
   /** Sous-total des lignes payables, celui sur lequel porte la franchise. */
   subtotalCents: number
+  /**
+   * Poids réel du colis, emballage compris.
+   *
+   * Affiché parce qu'il explique le prix : sur une grille au palier, deux
+   * paniers voisins peuvent tomber de part et d'autre d'une limite. C'est un
+   * fait mesuré, pas un argument.
+   */
+  parcelWeightGrams: number
 }
 
 export type ShippingOptionsResult =
@@ -117,6 +125,7 @@ export async function quoteShippingForCart(
     view: {
       zone: quote.quote.zone,
       subtotalCents: amounts.subtotalCents,
+      parcelWeightGrams: quote.quote.parcelWeightGrams,
       options: quote.quote.options.map((option) => ({
         carrierCode: option.carrierCode,
         serviceCode: option.serviceCode,

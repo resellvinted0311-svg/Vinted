@@ -197,3 +197,22 @@ export function tallyCart(
     subtotalCents: computeCartSubtotalCents(lines),
   }
 }
+
+/**
+ * Le tunnel de commande peut-il s'ouvrir ?
+ *
+ * Deux conditions, et elles sont celles du serveur, pas celles de l'écran :
+ * `prepareCheckoutFor` refuse le panier ENTIER dès qu'une seule ligne n'est
+ * plus payable, et refuse un panier vide.
+ *
+ * La règle vit ici — module pur, testable — plutôt que dans le JSX du bouton.
+ * Écrite dans un composant, elle aurait fini par diverger de celle du serveur,
+ * et la divergence se serait vue sous la forme d'un bouton qui mène à une
+ * erreur.
+ *
+ * Un panier bloqué n'est PAS une raison de retirer les lignes fautives : elles
+ * restent affichées, nommées, et la personne décide.
+ */
+export function canOpenCheckout(tally: CartTally): boolean {
+  return tally.purchasable > 0 && tally.blocked === 0
+}

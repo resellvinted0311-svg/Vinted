@@ -173,6 +173,57 @@
     "addedOn": "Registrado el {date}",
     "identification": "Identificación"
   },
+  "cart": {
+    "title": "Cesta",
+    "count": "{count, plural, =0 {Ninguna pieza} one {# pieza} other {# piezas}}",
+    "summary": "Resumen",
+    "empty": "Tu cesta está vacía.",
+    "emptyHint": "Cada pieza del registro existe en un solo ejemplar. Las que apartas te esperan aquí.",
+    "continueShopping": "Seguir mirando",
+    "sku": "Ref. {sku}",
+    "remove": "Quitar",
+    "removeNamed": "Quitar {title} de la cesta",
+    "removed": "{title} retirada de la cesta",
+    "added": "Añadida a la cesta",
+    "openCart": "Ver la cesta",
+    "subtotal": "Subtotal",
+    "discount": "Descuento",
+    "shipping": "Envío",
+    "freeShipping": "Gratuito",
+    "shippingLater": "Se calcula en el paso siguiente",
+    "total": "Total",
+    "totalLater": "Se conocerá al elegir el envío",
+    "subtotalScope": "El subtotal solo cuenta {purchasable, plural, one {# pieza disponible} other {# piezas disponibles}}. {blocked, plural, one {# línea requiere} other {# líneas requieren}} una decisión.",
+    "shippingAtNextStep": "Los gastos de envío dependen del destino. Se calculan en el paso siguiente, antes de cualquier pago.",
+    "openOrder": "Realizar el pedido",
+    "openOrderBlocked": "{count, plural, one {Una pieza ya no está disponible} other {# piezas ya no están disponibles}}: quítala{count, plural, one {} other {s}} para continuar.",
+    "openOrderNothingPayable": "Ninguna pieza de esta cesta está disponible ahora mismo.",
+    "state": {
+      "priceLowered": "El precio ha bajado desde que lo añadiste: {old} → {new}. Se factura el precio actual.",
+      "priceRaised": "El precio ha cambiado desde que lo añadiste: {old} → {new}. Se factura el precio actual.",
+      "reservedByOther": "En proceso de compra",
+      "reservedByOtherUntil": "hasta las {until}",
+      "sold": "Esta pieza ya tiene comprador.",
+      "unavailable": "Esta pieza se ha retirado del registro.",
+      "stampSold": "Vendido",
+      "stampWithdrawn": "Retirada"
+    },
+    "blocked": {
+      "title": "{count, plural, one {Una pieza ya no está disponible} other {# piezas ya no están disponibles}}",
+      "intro": "Siguen en su sitio: no se quita nada sin tu acuerdo.",
+      "remove": "Quitar {count, plural, one {esta pieza} other {estas # piezas}}",
+      "removePartial": "Quitar {count} piezas de {total}",
+      "confirm": "Confirmar la retirada",
+      "keep": "Conservarlas"
+    },
+    "errors": {
+      "unknown-article": "No se encuentra esta pieza.",
+      "not-purchasable": "Esta pieza ya no está disponible.",
+      "already-in-cart": "Esta pieza ya está en tu cesta.",
+      "cart-full": "Tu cesta ha alcanzado su límite de líneas.",
+      "rate-limited": "Demasiadas peticiones en poco tiempo. Inténtalo dentro de un momento."
+    }
+  },
   "favorites": {
     "title": "Favoritos",
     "empty": "Todavía no hay favoritos.",
@@ -339,6 +390,8 @@
     "free": "Gratuito",
     "sold": "Vendido",
     "reserved": "En proceso de compra",
-    "unavailable": "No disponible"
+    "unavailable": "No disponible",
+    "optional": "(opcional)",
+    "selectPlaceholder": "Seleccionar"
   }
 }

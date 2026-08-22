@@ -173,6 +173,57 @@
     "addedOn": "Am {date} ins Register aufgenommen",
     "identification": "Identifikation"
   },
+  "cart": {
+    "title": "Warenkorb",
+    "count": "{count, plural, =0 {Keine Stücke} one {# Stück} other {# Stücke}}",
+    "summary": "Übersicht",
+    "empty": "Ihr Warenkorb ist leer.",
+    "emptyHint": "Jedes Stück im Register gibt es nur einmal. Was Sie zurücklegen, wartet hier auf Sie.",
+    "continueShopping": "Weiter stöbern",
+    "sku": "Ref. {sku}",
+    "remove": "Entfernen",
+    "removeNamed": "{title} aus dem Warenkorb entfernen",
+    "removed": "{title} aus dem Warenkorb entfernt",
+    "added": "In den Warenkorb gelegt",
+    "openCart": "Warenkorb ansehen",
+    "subtotal": "Zwischensumme",
+    "discount": "Rabatt",
+    "shipping": "Versand",
+    "freeShipping": "Kostenlos",
+    "shippingLater": "Wird im nächsten Schritt berechnet",
+    "total": "Gesamt",
+    "totalLater": "Steht nach Wahl des Versands fest",
+    "subtotalScope": "Die Zwischensumme zählt nur {purchasable, plural, one {# verfügbares Stück} other {# verfügbare Stücke}}. {blocked, plural, one {# Zeile erfordert} other {# Zeilen erfordern}} eine Entscheidung.",
+    "shippingAtNextStep": "Die Versandkosten hängen vom Ziel ab. Sie werden im nächsten Schritt berechnet, vor jeder Zahlung.",
+    "openOrder": "Bestellung aufgeben",
+    "openOrderBlocked": "{count, plural, one {Ein Stück ist nicht mehr verfügbar} other {# Stücke sind nicht mehr verfügbar}}: Entfernen Sie {count, plural, one {es} other {sie}}, um fortzufahren.",
+    "openOrderNothingPayable": "Derzeit ist kein Stück in diesem Warenkorb verfügbar.",
+    "state": {
+      "priceLowered": "Der Preis ist seit dem Hinzufügen gesunken: {old} → {new}. Berechnet wird der aktuelle Preis.",
+      "priceRaised": "Der Preis hat sich seit dem Hinzufügen geändert: {old} → {new}. Berechnet wird der aktuelle Preis.",
+      "reservedByOther": "Wird gerade gekauft",
+      "reservedByOtherUntil": "bis {until}",
+      "sold": "Dieses Stück hat einen Käufer gefunden.",
+      "unavailable": "Dieses Stück wurde aus dem Register genommen.",
+      "stampSold": "Verkauft",
+      "stampWithdrawn": "Zurückgezogen"
+    },
+    "blocked": {
+      "title": "{count, plural, one {Ein Stück ist nicht mehr verfügbar} other {# Stücke sind nicht mehr verfügbar}}",
+      "intro": "Sie bleiben an ihrer Stelle stehen: Ohne Ihre Zustimmung wird nichts entfernt.",
+      "remove": "{count, plural, one {Dieses Stück} other {Diese # Stücke}} entfernen",
+      "removePartial": "{count} von {total} Stücken entfernen",
+      "confirm": "Entfernen bestätigen",
+      "keep": "Behalten"
+    },
+    "errors": {
+      "unknown-article": "Dieses Stück ist nicht auffindbar.",
+      "not-purchasable": "Dieses Stück ist nicht mehr verfügbar.",
+      "already-in-cart": "Dieses Stück liegt bereits in Ihrem Warenkorb.",
+      "cart-full": "Ihr Warenkorb hat sein Zeilenlimit erreicht.",
+      "rate-limited": "Zu viele Anfragen in kurzer Zeit. Versuchen Sie es gleich noch einmal."
+    }
+  },
   "favorites": {
     "title": "Favoriten",
     "empty": "Noch keine Favoriten.",
@@ -339,6 +390,8 @@
     "free": "Kostenlos",
     "sold": "Verkauft",
     "reserved": "Wird gerade gekauft",
-    "unavailable": "Nicht verfügbar"
+    "unavailable": "Nicht verfügbar",
+    "optional": "(optional)",
+    "selectPlaceholder": "Auswählen"
   }
 }

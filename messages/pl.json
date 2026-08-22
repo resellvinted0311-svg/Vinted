@@ -173,6 +173,57 @@
     "addedOn": "Wpisano do rejestru {date}",
     "identification": "Identyfikacja"
   },
+  "cart": {
+    "title": "Koszyk",
+    "count": "{count, plural, =0 {Brak sztuk} one {# sztuka} few {# sztuki} many {# sztuk} other {# sztuki}}",
+    "summary": "Podsumowanie",
+    "empty": "Twój koszyk jest pusty.",
+    "emptyHint": "Każda rzecz w rejestrze istnieje w jednym egzemplarzu. Te, które odłożysz, czekają tutaj.",
+    "continueShopping": "Przeglądaj dalej",
+    "sku": "Nr {sku}",
+    "remove": "Usuń",
+    "removeNamed": "Usuń {title} z koszyka",
+    "removed": "Usunięto {title} z koszyka",
+    "added": "Dodano do koszyka",
+    "openCart": "Zobacz koszyk",
+    "subtotal": "Suma częściowa",
+    "discount": "Rabat",
+    "shipping": "Dostawa",
+    "freeShipping": "Bezpłatna",
+    "shippingLater": "Obliczana w następnym kroku",
+    "total": "Razem",
+    "totalLater": "Znane po wybraniu dostawy",
+    "subtotalScope": "Suma częściowa obejmuje tylko {purchasable, plural, one {# dostępną sztukę} few {# dostępne sztuki} many {# dostępnych sztuk} other {# dostępnych sztuk}}. {blocked, plural, one {# pozycja wymaga} few {# pozycje wymagają} many {# pozycji wymaga} other {# pozycji wymaga}} decyzji.",
+    "shippingAtNextStep": "Koszt dostawy zależy od miejsca docelowego. Jest obliczany w następnym kroku, przed jakąkolwiek płatnością.",
+    "openOrder": "Złóż zamówienie",
+    "openOrderBlocked": "{count, plural, one {Jedna sztuka nie jest już dostępna} few {# sztuki nie są już dostępne} many {# sztuk nie jest już dostępnych} other {# sztuk nie jest już dostępnych}}: usuń, aby kontynuować.",
+    "openOrderNothingPayable": "Żadna rzecz z tego koszyka nie jest teraz dostępna.",
+    "state": {
+      "priceLowered": "Cena spadła od dodania do koszyka: {old} → {new}. Naliczana jest cena bieżąca.",
+      "priceRaised": "Cena zmieniła się od dodania do koszyka: {old} → {new}. Naliczana jest cena bieżąca.",
+      "reservedByOther": "W trakcie zakupu",
+      "reservedByOtherUntil": "do {until}",
+      "sold": "Ta rzecz znalazła nabywcę.",
+      "unavailable": "Ta rzecz została wycofana z rejestru.",
+      "stampSold": "Sprzedane",
+      "stampWithdrawn": "Wycofane"
+    },
+    "blocked": {
+      "title": "{count, plural, one {Jedna sztuka nie jest już dostępna} few {# sztuki nie są już dostępne} many {# sztuk nie jest już dostępnych} other {# sztuk nie jest już dostępnych}}",
+      "intro": "Pozostają na swoim miejscu: nic nie znika bez Twojej zgody.",
+      "remove": "Usuń {count, plural, one {tę sztukę} few {te # sztuki} many {tych # sztuk} other {tych # sztuk}}",
+      "removePartial": "Usuń {count} z {total} sztuk",
+      "confirm": "Potwierdź usunięcie",
+      "keep": "Zachowaj"
+    },
+    "errors": {
+      "unknown-article": "Nie można znaleźć tej rzeczy.",
+      "not-purchasable": "Ta rzecz nie jest już dostępna.",
+      "already-in-cart": "Ta rzecz jest już w Twoim koszyku.",
+      "cart-full": "Koszyk osiągnął limit pozycji.",
+      "rate-limited": "Zbyt wiele żądań w krótkim czasie. Spróbuj za chwilę."
+    }
+  },
   "favorites": {
     "title": "Ulubione",
     "empty": "Na razie brak ulubionych.",
@@ -339,6 +390,8 @@
     "free": "Bezpłatna",
     "sold": "Sprzedane",
     "reserved": "W trakcie zakupu",
-    "unavailable": "Niedostępne"
+    "unavailable": "Niedostępne",
+    "optional": "(opcjonalnie)",
+    "selectPlaceholder": "Wybierz"
   }
 }

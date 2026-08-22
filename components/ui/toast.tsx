@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { Toast as RadixToast } from 'radix-ui'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils/cn'
 
 type ToastTone = 'neutral' | 'success' | 'warning' | 'danger'
@@ -43,6 +44,7 @@ const tones: Record<ToastTone, string> = {
  * refusée. Jamais pour créer de l'urgence commerciale.
  */
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('common')
   const [items, setItems] = React.useState<ToastItem[]>([])
 
   const dismiss = React.useCallback((id: string) => {
@@ -102,7 +104,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             ) : null}
 
             <RadixToast.Close
-              aria-label="Fermer"
+              aria-label={t('close')}
               className="shrink-0 text-muted hover:text-ink"
             >
               <svg

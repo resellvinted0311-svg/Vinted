@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { Select as RadixSelect } from 'radix-ui'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils/cn'
 
 export interface SelectOption {
@@ -34,13 +35,18 @@ export function Select({
   value,
   defaultValue,
   onValueChange,
-  placeholder = 'Sélectionner',
+  placeholder,
   disabled = false,
   name,
   ariaLabel,
   className,
   id,
 }: SelectProps) {
+  // Le repli est traduit : ce composant sert huit langues, et un « Sélectionner »
+  // écrit en dur dans le code n'en parle qu'une.
+  const t = useTranslations('common')
+  const shown = placeholder ?? t('selectPlaceholder')
+
   return (
     <RadixSelect.Root
       value={value}
@@ -62,7 +68,7 @@ export function Select({
           className,
         )}
       >
-        <RadixSelect.Value placeholder={placeholder} />
+        <RadixSelect.Value placeholder={shown} />
         <RadixSelect.Icon aria-hidden className="text-muted">
           <ChevronDown />
         </RadixSelect.Icon>

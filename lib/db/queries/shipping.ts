@@ -79,6 +79,32 @@ function readRates(client: Reader) {
   })
 }
 
+/**
+ * Pays réellement desservis, tirés des zones.
+ *
+ * Sert à composer la liste déroulante du tunnel de commande. Elle ne peut pas
+ * être une liste de pays écrite dans le code : proposer un pays qu'aucune zone
+ * ne couvre mènerait la personne à remplir toute son adresse pour s'entendre
+ * dire, à la fin, qu'on ne livre pas chez elle.
+ *
+ * Les codes sont dédoublonnés et triés — un même pays peut apparaître dans
+ * plusieurs zones (métropole et outre-mer portent tous deux `FR`).
+ */
+export async function listServedCountryCodes(
+  client: Reader = prisma,
+): Promise<string[]> {
+  const zones = await client.shippingZone.findMany({
+    select: { countries: true },
+  })
+
+  const codes = new Set<string>()
+  for (const zone of zones) {
+    for (const country of zone.countries) codes.add(country.toUpperCase())
+  }
+
+  return [...codes].sort()
+}
+
 export async function getShippingGrids(
   client: Reader = prisma,
 ): Promise<ShippingGrids> {

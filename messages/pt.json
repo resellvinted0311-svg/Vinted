@@ -173,6 +173,57 @@
     "addedOn": "Registado a {date}",
     "identification": "Identificação"
   },
+  "cart": {
+    "title": "Cesto",
+    "count": "{count, plural, =0 {Nenhuma peça} one {# peça} other {# peças}}",
+    "summary": "Resumo",
+    "empty": "O seu cesto está vazio.",
+    "emptyHint": "Cada peça do registo existe num único exemplar. As que põe de lado esperam por si aqui.",
+    "continueShopping": "Continuar a ver",
+    "sku": "Ref. {sku}",
+    "remove": "Remover",
+    "removeNamed": "Remover {title} do cesto",
+    "removed": "{title} removida do cesto",
+    "added": "Adicionada ao cesto",
+    "openCart": "Ver o cesto",
+    "subtotal": "Subtotal",
+    "discount": "Desconto",
+    "shipping": "Envio",
+    "freeShipping": "Gratuita",
+    "shippingLater": "Calculado no passo seguinte",
+    "total": "Total",
+    "totalLater": "Conhecido depois de escolher o envio",
+    "subtotalScope": "O subtotal conta apenas {purchasable, plural, one {# peça disponível} other {# peças disponíveis}}. {blocked, plural, one {# linha exige} other {# linhas exigem}} uma decisão.",
+    "shippingAtNextStep": "Os portes dependem do destino. São calculados no passo seguinte, antes de qualquer pagamento.",
+    "openOrder": "Fazer a encomenda",
+    "openOrderBlocked": "{count, plural, one {Uma peça já não está disponível} other {# peças já não estão disponíveis}}: remova-{count, plural, one {a} other {as}} para continuar.",
+    "openOrderNothingPayable": "Nenhuma peça deste cesto está disponível neste momento.",
+    "state": {
+      "priceLowered": "O preço baixou desde que a adicionou: {old} → {new}. É o preço atual que é faturado.",
+      "priceRaised": "O preço mudou desde que a adicionou: {old} → {new}. É o preço atual que é faturado.",
+      "reservedByOther": "Em processo de compra",
+      "reservedByOtherUntil": "até às {until}",
+      "sold": "Esta peça encontrou comprador.",
+      "unavailable": "Esta peça foi retirada do registo.",
+      "stampSold": "Vendido",
+      "stampWithdrawn": "Retirada"
+    },
+    "blocked": {
+      "title": "{count, plural, one {Uma peça já não está disponível} other {# peças já não estão disponíveis}}",
+      "intro": "Continuam no seu lugar: nada é retirado sem o seu acordo.",
+      "remove": "Remover {count, plural, one {esta peça} other {estas # peças}}",
+      "removePartial": "Remover {count} peças de {total}",
+      "confirm": "Confirmar a remoção",
+      "keep": "Mantê-las"
+    },
+    "errors": {
+      "unknown-article": "Esta peça não foi encontrada.",
+      "not-purchasable": "Esta peça já não está disponível.",
+      "already-in-cart": "Esta peça já está no seu cesto.",
+      "cart-full": "O seu cesto atingiu o limite de linhas.",
+      "rate-limited": "Demasiados pedidos em pouco tempo. Tente novamente daqui a pouco."
+    }
+  },
   "favorites": {
     "title": "Favoritos",
     "empty": "Ainda não há favoritos.",
@@ -339,6 +390,8 @@
     "free": "Gratuita",
     "sold": "Vendido",
     "reserved": "Em processo de compra",
-    "unavailable": "Indisponível"
+    "unavailable": "Indisponível",
+    "optional": "(opcional)",
+    "selectPlaceholder": "Selecionar"
   }
 }

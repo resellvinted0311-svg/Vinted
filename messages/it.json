@@ -173,6 +173,57 @@
     "addedOn": "Registrato il {date}",
     "identification": "Identificazione"
   },
+  "cart": {
+    "title": "Carrello",
+    "count": "{count, plural, =0 {Nessun pezzo} one {# pezzo} other {# pezzi}}",
+    "summary": "Riepilogo",
+    "empty": "Il tuo carrello è vuoto.",
+    "emptyHint": "Ogni pezzo del registro esiste in un solo esemplare. Quelli che metti da parte ti aspettano qui.",
+    "continueShopping": "Continua a sfogliare",
+    "sku": "Rif. {sku}",
+    "remove": "Rimuovi",
+    "removeNamed": "Rimuovi {title} dal carrello",
+    "removed": "{title} rimossa dal carrello",
+    "added": "Aggiunta al carrello",
+    "openCart": "Vedi il carrello",
+    "subtotal": "Subtotale",
+    "discount": "Sconto",
+    "shipping": "Spedizione",
+    "freeShipping": "Gratuita",
+    "shippingLater": "Calcolata al passaggio successivo",
+    "total": "Totale",
+    "totalLater": "Noto una volta scelta la spedizione",
+    "subtotalScope": "Il subtotale conta solo {purchasable, plural, one {# pezzo disponibile} other {# pezzi disponibili}}. {blocked, plural, one {# riga richiede} other {# righe richiedono}} una decisione.",
+    "shippingAtNextStep": "Le spese di spedizione dipendono dalla destinazione. Vengono calcolate al passaggio successivo, prima di qualsiasi pagamento.",
+    "openOrder": "Effettua l'ordine",
+    "openOrderBlocked": "{count, plural, one {Un pezzo non è più disponibile} other {# pezzi non sono più disponibili}}: rimuovil{count, plural, one {o} other {i}} per continuare.",
+    "openOrderNothingPayable": "Nessun pezzo di questo carrello è disponibile al momento.",
+    "state": {
+      "priceLowered": "Il prezzo è sceso da quando l'hai aggiunta: {old} → {new}. Viene fatturato il prezzo attuale.",
+      "priceRaised": "Il prezzo è cambiato da quando l'hai aggiunta: {old} → {new}. Viene fatturato il prezzo attuale.",
+      "reservedByOther": "In corso di acquisto",
+      "reservedByOtherUntil": "fino alle {until}",
+      "sold": "Questo pezzo ha trovato un acquirente.",
+      "unavailable": "Questo pezzo è stato ritirato dal registro.",
+      "stampSold": "Venduto",
+      "stampWithdrawn": "Ritirato"
+    },
+    "blocked": {
+      "title": "{count, plural, one {Un pezzo non è più disponibile} other {# pezzi non sono più disponibili}}",
+      "intro": "Restano al loro posto: nulla viene tolto senza il tuo consenso.",
+      "remove": "Rimuovi {count, plural, one {questo pezzo} other {questi # pezzi}}",
+      "removePartial": "Rimuovi {count} pezzi su {total}",
+      "confirm": "Conferma la rimozione",
+      "keep": "Tienili"
+    },
+    "errors": {
+      "unknown-article": "Questo pezzo è introvabile.",
+      "not-purchasable": "Questo pezzo non è più disponibile.",
+      "already-in-cart": "Questo pezzo è già nel tuo carrello.",
+      "cart-full": "Il tuo carrello ha raggiunto il limite di righe.",
+      "rate-limited": "Troppe richieste in poco tempo. Riprova tra un istante."
+    }
+  },
   "favorites": {
     "title": "Preferiti",
     "empty": "Nessun preferito per ora.",
@@ -339,6 +390,8 @@
     "free": "Gratuita",
     "sold": "Venduto",
     "reserved": "In corso di acquisto",
-    "unavailable": "Non disponibile"
+    "unavailable": "Non disponibile",
+    "optional": "(facoltativo)",
+    "selectPlaceholder": "Seleziona"
   }
 }

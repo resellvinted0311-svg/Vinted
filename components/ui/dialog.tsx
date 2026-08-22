@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { Dialog as RadixDialog, VisuallyHidden } from 'radix-ui'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils/cn'
 
 export const DialogRoot = RadixDialog.Root
@@ -27,6 +28,8 @@ export function DialogContent({
   footer,
   className,
 }: DialogProps) {
+  const t = useTranslations('common')
+
   return (
     <RadixDialog.Portal>
       <RadixDialog.Overlay
@@ -69,7 +72,7 @@ export function DialogContent({
         ) : null}
 
         <RadixDialog.Close
-          aria-label="Fermer"
+          aria-label={t('close')}
           className={cn(
             'absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center',
             'rounded-input text-muted transition-colors duration-150 ease-out',
