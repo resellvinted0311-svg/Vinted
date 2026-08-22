@@ -224,6 +224,80 @@
       "rate-limited": "Te veel verzoeken in korte tijd. Probeer het zo meteen opnieuw."
     }
   },
+  "checkout": {
+    "title": "Bestelbon",
+    "recap": "Wat je bestelt",
+    "recapHint": "Elk stuk bestaat maar één keer. De voorraad wordt pas vastgehouden zodra de betaling opent.",
+    "editOrder": "Winkelmand wijzigen",
+    "contact": "Waar we je kunnen bereiken",
+    "emailHint": "Daar komt de bevestiging en later de zending aan.",
+    "address": "Waar leveren",
+    "note": "Bericht aan de winkel",
+    "noteHint": "Een leveringsdetail, een verzoek over de verpakking. 500 tekens.",
+    "payment": "Betalen",
+    "cardOnly": "Alleen kaartbetaling. Je vult je gegevens in in een kader van onze betaaldienst: geen enkel kaartnummer gaat via deze site.",
+    "placeOrder": "Bestellen — {total}",
+    "placeOrderNoTotal": "Bestellen",
+    "paymentOpensBelow": "Het kaartformulier opent hier, zonder deze pagina te verlaten.",
+    "orderRegistered": "Bestelling {orderNumber} vastgelegd",
+    "totalDue": "Te betalen bedrag",
+    "editWarning": "De bestelling is vastgelegd en de stuks blijven voor je gereserveerd zolang je betaalt. Ga terug naar de winkelmand om te wijzigen: een nieuwe bestelling vervangt deze.",
+    "paymentFrameFailed": "Het betaalformulier kon niet openen. Je bestelling is vastgelegd: schrijf ons en we pakken het samen op.",
+    "field": {
+      "email": "E-mailadres",
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "line1": "Adres",
+      "line2": "Adresregel 2",
+      "postalCode": "Postcode",
+      "city": "Plaats",
+      "country": "Land",
+      "phone": "Telefoon",
+      "phoneHint": "Sommige vervoerders vragen erom om de levering aan te kondigen."
+    },
+    "shipping": {
+      "legend": "Verzending",
+      "needsAddress": "Vul land en postcode in: de verzendwijzen en hun prijs verschijnen hier.",
+      "quote": "Verzendkosten berekenen…",
+      "days": "{min}–{max} werkdagen",
+      "free": "Gratis",
+      "parcel": "Pakket van {grams}, zone {zone}",
+      "servicePointLabel": "Kenmerk van het afhaalpunt",
+      "servicePointHint": "Het staat op de pagina van het gekozen afhaalpunt bij de vervoerder.",
+      "unavailable": "Deze bestemming bedienen we nog niet. Schrijf ons: we bekijken het geval per geval.",
+      "emptyCart": "Je winkelmand bevat geen beschikbaar stuk meer.",
+      "invalidAddress": "Controleer land en postcode.",
+      "rateLimited": "Te veel berekeningen in korte tijd. Wacht even."
+    },
+    "terms": {
+      "label": "Ik ga akkoord met de algemene verkoopvoorwaarden.",
+      "link": "Lezen"
+    },
+    "privacy": {
+      "notice": "Je e-mailadres, postadres en, indien opgegeven, je telefoonnummer worden gebruikt om deze bestelling te verwerken, te verzenden en te factureren.",
+      "link": "Hoe je gegevens worden verwerkt"
+    },
+    "legal": {
+      "withdrawal": "Je hebt {days} dagen na ontvangst om te herroepen, zonder opgaaf van reden."
+    },
+    "errors": {
+      "emptyCart": "Je winkelmand is leeg.",
+      "blockedLines": "Sommige stuks in je winkelmand zijn niet meer beschikbaar.",
+      "stockTaken": "Een stuk is zojuist door iemand anders genomen.",
+      "shippingUnavailable": "Deze bestemming bedienen we niet.",
+      "shippingOptionGone": "De gekozen verzendwijze wordt niet meer aangeboden. Kies een andere.",
+      "servicePointRequired": "Deze verzendwijze vraagt om een afhaalpunt.",
+      "paymentNotConfigured": "Betalen is in deze winkel nog niet ingeschakeld.",
+      "rateLimited": "Te veel pogingen in korte tijd. Wacht even.",
+      "invalidAddress": "Controleer het afleveradres.",
+      "termsRequired": "Je moet de algemene verkoopvoorwaarden accepteren.",
+      "invalidInput": "Sommige gegevens zijn niet begrepen. Controleer het formulier.",
+      "unexpectedTitle": "De bestelling is niet doorgekomen",
+      "unexpected": "Er ging iets mis bij het vastleggen. Als er een betaling is gestart, verschijnt die bij je bestellingen: betaal geen tweede keer voordat je ons hebt geschreven.",
+      "retry": "Opnieuw proberen",
+      "reference": "Technische referentie: {digest}"
+    }
+  },
   "favorites": {
     "title": "Favorieten",
     "empty": "Nog geen favorieten.",

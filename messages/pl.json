@@ -224,6 +224,80 @@
       "rate-limited": "Zbyt wiele żądań w krótkim czasie. Spróbuj za chwilę."
     }
   },
+  "checkout": {
+    "title": "Formularz zamówienia",
+    "recap": "Co zamawiasz",
+    "recapHint": "Każda rzecz istnieje w jednym egzemplarzu. Rezerwacja następuje dopiero przy otwarciu płatności.",
+    "editOrder": "Zmień koszyk",
+    "contact": "Gdzie się z Tobą skontaktować",
+    "emailHint": "Tam trafi potwierdzenie, a później śledzenie przesyłki.",
+    "address": "Gdzie dostarczyć",
+    "note": "Wiadomość do sklepu",
+    "noteHint": "Szczegół dostawy, prośba dotycząca opakowania. 500 znaków.",
+    "payment": "Zapłać",
+    "cardOnly": "Tylko karta płatnicza. Dane wpisuje się w ramce naszego dostawcy płatności: żaden numer karty nie przechodzi przez tę stronę.",
+    "placeOrder": "Zamów — {total}",
+    "placeOrderNoTotal": "Zamów",
+    "paymentOpensBelow": "Formularz karty otworzy się tutaj, bez opuszczania tej strony.",
+    "orderRegistered": "Zamówienie {orderNumber} zapisane",
+    "totalDue": "Kwota do zapłaty",
+    "editWarning": "Zamówienie jest zapisane, a rzeczy są dla Ciebie zarezerwowane na czas płatności. Aby je zmienić, wróć do koszyka: nowe zamówienie zastąpi to.",
+    "paymentFrameFailed": "Formularz płatności nie mógł się otworzyć. Twoje zamówienie jest zapisane: napisz do nas, wrócimy do niego razem.",
+    "field": {
+      "email": "Adres e-mail",
+      "firstName": "Imię",
+      "lastName": "Nazwisko",
+      "line1": "Adres",
+      "line2": "Dalsze dane adresowe",
+      "postalCode": "Kod pocztowy",
+      "city": "Miejscowość",
+      "country": "Kraj",
+      "phone": "Telefon",
+      "phoneHint": "Niektórzy przewoźnicy proszą o niego, aby zapowiedzieć dostawę."
+    },
+    "shipping": {
+      "legend": "Dostawa",
+      "needsAddress": "Podaj kraj i kod pocztowy: sposoby dostawy i ich ceny pojawią się tutaj.",
+      "quote": "Obliczanie kosztów dostawy…",
+      "days": "{min}–{max} dni roboczych",
+      "free": "Bezpłatna",
+      "parcel": "Paczka {grams}, strefa {zone}",
+      "servicePointLabel": "Identyfikator punktu odbioru",
+      "servicePointHint": "Znajdziesz go na stronie wybranego punktu odbioru u przewoźnika.",
+      "unavailable": "Nie obsługujemy jeszcze tego kierunku. Napisz do nas — rozpatrzymy indywidualnie.",
+      "emptyCart": "W Twoim koszyku nie ma już dostępnej rzeczy.",
+      "invalidAddress": "Sprawdź kraj i kod pocztowy.",
+      "rateLimited": "Zbyt wiele obliczeń w krótkim czasie. Poczekaj chwilę."
+    },
+    "terms": {
+      "label": "Akceptuję ogólne warunki sprzedaży.",
+      "link": "Przeczytaj"
+    },
+    "privacy": {
+      "notice": "Twój adres e-mail, adres pocztowy oraz — jeśli podany — telefon służą do realizacji tego zamówienia, wysyłki i wystawienia faktury.",
+      "link": "Jak przetwarzamy Twoje dane"
+    },
+    "legal": {
+      "withdrawal": "Masz {days} dni od otrzymania na odstąpienie od umowy, bez podawania przyczyny."
+    },
+    "errors": {
+      "emptyCart": "Twój koszyk jest pusty.",
+      "blockedLines": "Niektóre rzeczy w koszyku nie są już dostępne.",
+      "stockTaken": "Jedną z rzeczy właśnie zajął ktoś inny.",
+      "shippingUnavailable": "Nie obsługujemy tego kierunku.",
+      "shippingOptionGone": "Wybrany sposób dostawy nie jest już oferowany. Wybierz inny.",
+      "servicePointRequired": "Ten sposób dostawy wymaga punktu odbioru.",
+      "paymentNotConfigured": "Płatność nie jest jeszcze włączona w tym sklepie.",
+      "rateLimited": "Zbyt wiele prób w krótkim czasie. Poczekaj chwilę.",
+      "invalidAddress": "Sprawdź adres dostawy.",
+      "termsRequired": "Musisz zaakceptować ogólne warunki sprzedaży.",
+      "invalidInput": "Niektórych danych nie udało się odczytać. Sprawdź formularz.",
+      "unexpectedTitle": "Zamówienie nie doszło do skutku",
+      "unexpected": "Podczas zapisywania wystąpił błąd. Jeśli płatność została rozpoczęta, pojawi się w Twoich zamówieniach: nie płać po raz drugi, zanim do nas nie napiszesz.",
+      "retry": "Spróbuj ponownie",
+      "reference": "Odniesienie techniczne: {digest}"
+    }
+  },
   "favorites": {
     "title": "Ulubione",
     "empty": "Na razie brak ulubionych.",

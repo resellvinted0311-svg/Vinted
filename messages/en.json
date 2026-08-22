@@ -224,6 +224,80 @@
       "rate-limited": "Too many requests in a short time. Try again in a moment."
     }
   },
+  "checkout": {
+    "title": "Order form",
+    "recap": "What you are ordering",
+    "recapHint": "Every piece exists in a single copy. Stock is only held once payment opens.",
+    "editOrder": "Edit basket",
+    "contact": "Where to reach you",
+    "emailHint": "This is where the confirmation, then the tracking, will be sent.",
+    "address": "Where to deliver",
+    "note": "A word to the shop",
+    "noteHint": "A delivery detail, a packaging request. 500 characters.",
+    "payment": "Pay",
+    "cardOnly": "Card only. Details are entered in a frame served by our payment provider: no card number passes through this site.",
+    "placeOrder": "Place order — {total}",
+    "placeOrderNoTotal": "Place order",
+    "paymentOpensBelow": "The card form will open right here, without leaving this page.",
+    "orderRegistered": "Order {orderNumber} recorded",
+    "totalDue": "Amount due",
+    "editWarning": "The order is recorded and the pieces are held for you while you pay. To change it, go back to the basket: a new order will replace this one.",
+    "paymentFrameFailed": "The payment form could not open. Your order is recorded: write to us and we will pick it up with you.",
+    "field": {
+      "email": "Email address",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "line1": "Address",
+      "line2": "Address line 2",
+      "postalCode": "Postcode",
+      "city": "City",
+      "country": "Country",
+      "phone": "Phone",
+      "phoneHint": "Some carriers ask for it to announce the delivery."
+    },
+    "shipping": {
+      "legend": "Delivery",
+      "needsAddress": "Enter the country and postcode: delivery options and their prices will appear here.",
+      "quote": "Calculating delivery costs…",
+      "days": "{min}–{max} working days",
+      "free": "Free",
+      "parcel": "Parcel of {grams}, zone {zone}",
+      "servicePointLabel": "Pickup point reference",
+      "servicePointHint": "It appears on the chosen pickup point's page at the carrier.",
+      "unavailable": "We do not serve this destination yet. Write to us: we will look at it case by case.",
+      "emptyCart": "Your basket no longer holds an available item.",
+      "invalidAddress": "Check the country and postcode.",
+      "rateLimited": "Too many calculations in a short time. Wait a moment."
+    },
+    "terms": {
+      "label": "I accept the terms and conditions of sale.",
+      "link": "Read them"
+    },
+    "privacy": {
+      "notice": "Your email address, postal address and, where given, your phone number are used to process this order, ship it and issue the invoice.",
+      "link": "How your data is handled"
+    },
+    "legal": {
+      "withdrawal": "You have {days} days after delivery to withdraw, with no reason to give."
+    },
+    "errors": {
+      "emptyCart": "Your basket is empty.",
+      "blockedLines": "Some items in your basket are no longer available.",
+      "stockTaken": "An item has just been taken by someone else.",
+      "shippingUnavailable": "We do not serve this destination.",
+      "shippingOptionGone": "The chosen delivery option is no longer offered. Pick another one.",
+      "servicePointRequired": "This delivery option needs a pickup point.",
+      "paymentNotConfigured": "Payment is not yet enabled on this shop.",
+      "rateLimited": "Too many attempts in a short time. Wait a moment.",
+      "invalidAddress": "Check the delivery address.",
+      "termsRequired": "You must accept the terms and conditions of sale.",
+      "invalidInput": "Some details were not understood. Check the form.",
+      "unexpectedTitle": "The order did not go through",
+      "unexpected": "Something went wrong while recording it. If a payment was started, it will show in your orders: do not pay a second time before writing to us.",
+      "retry": "Try again",
+      "reference": "Technical reference: {digest}"
+    }
+  },
   "favorites": {
     "title": "Favourites",
     "empty": "No favourites yet.",

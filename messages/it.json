@@ -224,6 +224,80 @@
       "rate-limited": "Troppe richieste in poco tempo. Riprova tra un istante."
     }
   },
+  "checkout": {
+    "title": "Buono d'ordine",
+    "recap": "Che cosa stai ordinando",
+    "recapHint": "Ogni pezzo esiste in un solo esemplare. La disponibilità è trattenuta solo all'apertura del pagamento.",
+    "editOrder": "Modifica il carrello",
+    "contact": "Dove contattarti",
+    "emailHint": "È lì che arriverà la conferma e poi il tracciamento.",
+    "address": "Dove consegnare",
+    "note": "Un messaggio alla bottega",
+    "noteHint": "Una precisazione sulla consegna, una richiesta sull'imballaggio. 500 caratteri.",
+    "payment": "Pagare",
+    "cardOnly": "Solo carta. I dati si inseriscono in un riquadro servito dal nostro fornitore di pagamento: nessun numero di carta passa da questo sito.",
+    "placeOrder": "Ordina — {total}",
+    "placeOrderNoTotal": "Ordina",
+    "paymentOpensBelow": "Il modulo della carta si aprirà proprio qui, senza lasciare questa pagina.",
+    "orderRegistered": "Ordine {orderNumber} registrato",
+    "totalDue": "Importo da pagare",
+    "editWarning": "L'ordine è registrato e i pezzi restano riservati per il tempo del pagamento. Per modificarlo, torna al carrello: un nuovo ordine sostituirà questo.",
+    "paymentFrameFailed": "Il modulo di pagamento non si è aperto. Il tuo ordine è registrato: scrivici e lo riprendiamo insieme.",
+    "field": {
+      "email": "Indirizzo e-mail",
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "line1": "Indirizzo",
+      "line2": "Altre indicazioni",
+      "postalCode": "CAP",
+      "city": "Città",
+      "country": "Paese",
+      "phone": "Telefono",
+      "phoneHint": "Alcuni corrieri lo chiedono per annunciare la consegna."
+    },
+    "shipping": {
+      "legend": "Spedizione",
+      "needsAddress": "Indica il paese e il CAP: le modalità di spedizione e i prezzi appariranno qui.",
+      "quote": "Calcolo delle spese di spedizione…",
+      "days": "{min}–{max} giorni lavorativi",
+      "free": "Gratuita",
+      "parcel": "Pacco da {grams}, zona {zone}",
+      "servicePointLabel": "Identificativo del punto di ritiro",
+      "servicePointHint": "È indicato sulla scheda del punto di ritiro scelto presso il corriere.",
+      "unavailable": "Non serviamo ancora questa destinazione. Scrivici: la valuteremo caso per caso.",
+      "emptyCart": "Il tuo carrello non contiene più pezzi disponibili.",
+      "invalidAddress": "Controlla il paese e il CAP.",
+      "rateLimited": "Troppi calcoli in poco tempo. Attendi un istante."
+    },
+    "terms": {
+      "label": "Accetto le condizioni generali di vendita.",
+      "link": "Leggerle"
+    },
+    "privacy": {
+      "notice": "Il tuo indirizzo e-mail, l'indirizzo postale e, se fornito, il telefono servono a trattare questo ordine, spedirlo ed emettere la fattura.",
+      "link": "Come vengono trattati i tuoi dati"
+    },
+    "legal": {
+      "withdrawal": "Hai {days} giorni dal ricevimento per recedere, senza doverti giustificare."
+    },
+    "errors": {
+      "emptyCart": "Il tuo carrello è vuoto.",
+      "blockedLines": "Alcuni pezzi del tuo carrello non sono più disponibili.",
+      "stockTaken": "Un pezzo è appena stato preso da qualcun altro.",
+      "shippingUnavailable": "Non serviamo questa destinazione.",
+      "shippingOptionGone": "La modalità di spedizione scelta non è più proposta. Scegline un'altra.",
+      "servicePointRequired": "Questa modalità di spedizione richiede un punto di ritiro.",
+      "paymentNotConfigured": "Il pagamento non è ancora attivo su questa bottega.",
+      "rateLimited": "Troppi tentativi in poco tempo. Attendi un istante.",
+      "invalidAddress": "Controlla l'indirizzo di consegna.",
+      "termsRequired": "Devi accettare le condizioni generali di vendita.",
+      "invalidInput": "Alcune informazioni non sono state comprese. Controlla il modulo.",
+      "unexpectedTitle": "L'ordine non è andato a buon fine",
+      "unexpected": "Si è verificato un errore durante la registrazione. Se un pagamento è stato avviato, comparirà nei tuoi ordini: non pagare una seconda volta prima di averci scritto.",
+      "retry": "Riprova",
+      "reference": "Riferimento tecnico: {digest}"
+    }
+  },
   "favorites": {
     "title": "Preferiti",
     "empty": "Nessun preferito per ora.",

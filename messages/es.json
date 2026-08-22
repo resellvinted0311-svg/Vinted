@@ -224,6 +224,80 @@
       "rate-limited": "Demasiadas peticiones en poco tiempo. Inténtalo dentro de un momento."
     }
   },
+  "checkout": {
+    "title": "Hoja de pedido",
+    "recap": "Lo que vas a pedir",
+    "recapHint": "Cada pieza existe en un solo ejemplar. El stock solo se retiene al abrir el pago.",
+    "editOrder": "Modificar la cesta",
+    "contact": "Dónde localizarte",
+    "emailHint": "Ahí llegará la confirmación y después el seguimiento.",
+    "address": "Dónde entregar",
+    "note": "Mensaje para la tienda",
+    "noteHint": "Una precisión de entrega, una petición de embalaje. 500 caracteres.",
+    "payment": "Pagar",
+    "cardOnly": "Solo tarjeta bancaria. Los datos se introducen en un marco servido por nuestro proveedor de pagos: ningún número de tarjeta pasa por este sitio.",
+    "placeOrder": "Pedir — {total}",
+    "placeOrderNoTotal": "Pedir",
+    "paymentOpensBelow": "El formulario de tarjeta se abrirá aquí mismo, sin salir de esta página.",
+    "orderRegistered": "Pedido {orderNumber} registrado",
+    "totalDue": "Importe a pagar",
+    "editWarning": "El pedido está registrado y las piezas quedan reservadas mientras pagas. Para modificarlo, vuelve a la cesta: un nuevo pedido sustituirá a este.",
+    "paymentFrameFailed": "El formulario de pago no ha podido abrirse. Tu pedido está registrado: escríbenos y lo retomamos contigo.",
+    "field": {
+      "email": "Correo electrónico",
+      "firstName": "Nombre",
+      "lastName": "Apellidos",
+      "line1": "Dirección",
+      "line2": "Más señas",
+      "postalCode": "Código postal",
+      "city": "Ciudad",
+      "country": "País",
+      "phone": "Teléfono",
+      "phoneHint": "Algunos transportistas lo piden para avisar de la entrega."
+    },
+    "shipping": {
+      "legend": "Envío",
+      "needsAddress": "Indica el país y el código postal: los modos de envío y sus precios aparecerán aquí.",
+      "quote": "Calculando los gastos de envío…",
+      "days": "{min}–{max} días laborables",
+      "free": "Gratuito",
+      "parcel": "Paquete de {grams}, zona {zone}",
+      "servicePointLabel": "Identificador del punto de recogida",
+      "servicePointHint": "Figura en la ficha del punto de recogida elegido en el transportista.",
+      "unavailable": "Todavía no llegamos a este destino. Escríbenos: lo miraremos caso por caso.",
+      "emptyCart": "Tu cesta ya no contiene ninguna pieza disponible.",
+      "invalidAddress": "Revisa el país y el código postal.",
+      "rateLimited": "Demasiados cálculos en poco tiempo. Espera un momento."
+    },
+    "terms": {
+      "label": "Acepto las condiciones generales de venta.",
+      "link": "Leerlas"
+    },
+    "privacy": {
+      "notice": "Tu correo, tu dirección postal y, si lo das, tu teléfono sirven para tramitar este pedido, enviarlo y emitir la factura.",
+      "link": "Cómo se tratan tus datos"
+    },
+    "legal": {
+      "withdrawal": "Dispones de {days} días tras la recepción para desistir, sin tener que justificarte."
+    },
+    "errors": {
+      "emptyCart": "Tu cesta está vacía.",
+      "blockedLines": "Algunas piezas de tu cesta ya no están disponibles.",
+      "stockTaken": "Acaban de llevarse una pieza.",
+      "shippingUnavailable": "No llegamos a este destino.",
+      "shippingOptionGone": "El modo de envío elegido ya no se ofrece. Elige otro.",
+      "servicePointRequired": "Este modo de envío requiere un punto de recogida.",
+      "paymentNotConfigured": "El pago aún no está activado en esta tienda.",
+      "rateLimited": "Demasiados intentos en poco tiempo. Espera un momento.",
+      "invalidAddress": "Revisa la dirección de entrega.",
+      "termsRequired": "Debes aceptar las condiciones generales de venta.",
+      "invalidInput": "Algunos datos no se han entendido. Revisa el formulario.",
+      "unexpectedTitle": "El pedido no ha llegado a buen puerto",
+      "unexpected": "Ha ocurrido un error al registrarlo. Si se ha iniciado un pago, aparecerá en tus pedidos: no pagues una segunda vez antes de escribirnos.",
+      "retry": "Reintentar",
+      "reference": "Referencia técnica: {digest}"
+    }
+  },
   "favorites": {
     "title": "Favoritos",
     "empty": "Todavía no hay favoritos.",

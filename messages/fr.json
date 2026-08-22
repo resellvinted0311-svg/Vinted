@@ -224,6 +224,80 @@
       "rate-limited": "Trop de demandes en peu de temps. Réessayez dans un instant."
     }
   },
+  "checkout": {
+    "title": "Bon de commande",
+    "recap": "Ce que vous commandez",
+    "recapHint": "Chaque pièce existe en un seul exemplaire. Le stock n'est retenu qu'à l'ouverture du paiement.",
+    "editOrder": "Modifier le panier",
+    "contact": "Où vous joindre",
+    "emailHint": "C'est là que part la confirmation, puis le suivi.",
+    "address": "Où livrer",
+    "note": "Mot à la boutique",
+    "noteHint": "Une précision de livraison, une demande d'emballage. 500 caractères.",
+    "payment": "Régler",
+    "cardOnly": "Carte bancaire uniquement. La saisie se fait dans un cadre servi par notre prestataire de paiement : aucun numéro de carte ne passe par ce site.",
+    "placeOrder": "Commander — {total}",
+    "placeOrderNoTotal": "Commander",
+    "paymentOpensBelow": "Le formulaire de carte s'ouvrira ici même, sans quitter cette page.",
+    "orderRegistered": "Commande {orderNumber} enregistrée",
+    "totalDue": "Montant à régler",
+    "editWarning": "La commande est enregistrée et les pièces vous sont réservées le temps du règlement. Pour la modifier, revenez au panier : une nouvelle commande remplacera celle-ci.",
+    "paymentFrameFailed": "Le formulaire de paiement n'a pas pu s'ouvrir. Votre commande est enregistrée : écrivez-nous et nous la reprendrons avec vous.",
+    "field": {
+      "email": "Adresse e-mail",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "line1": "Adresse",
+      "line2": "Complément d'adresse",
+      "postalCode": "Code postal",
+      "city": "Ville",
+      "country": "Pays",
+      "phone": "Téléphone",
+      "phoneHint": "Demandé par certains transporteurs pour prévenir de la livraison."
+    },
+    "shipping": {
+      "legend": "Acheminement",
+      "needsAddress": "Renseignez le pays et le code postal : les modes de livraison et leur prix s'afficheront ici.",
+      "quote": "Calcul des frais de livraison…",
+      "days": "{min}–{max} jours ouvrés",
+      "free": "Offerte",
+      "parcel": "Colis de {grams}, zone {zone}",
+      "servicePointLabel": "Identifiant du point relais",
+      "servicePointHint": "Il figure sur la fiche du point relais choisi chez le transporteur.",
+      "unavailable": "Nous ne desservons pas encore cette destination. Écrivez-nous : nous regarderons au cas par cas.",
+      "emptyCart": "Votre panier ne contient plus de pièce disponible.",
+      "invalidAddress": "Vérifiez le pays et le code postal.",
+      "rateLimited": "Trop de calculs en peu de temps. Patientez un instant."
+    },
+    "terms": {
+      "label": "J'accepte les conditions générales de vente.",
+      "link": "Les lire"
+    },
+    "privacy": {
+      "notice": "Votre adresse e-mail, votre adresse postale et, le cas échéant, votre téléphone servent à traiter cette commande, à l'expédier et à établir la facture.",
+      "link": "Comment vos données sont traitées"
+    },
+    "legal": {
+      "withdrawal": "Vous disposez de {days} jours après réception pour vous rétracter, sans avoir à vous justifier."
+    },
+    "errors": {
+      "emptyCart": "Votre panier est vide.",
+      "blockedLines": "Des pièces de votre panier ne sont plus disponibles.",
+      "stockTaken": "Une pièce vient d'être prise par quelqu'un d'autre.",
+      "shippingUnavailable": "Nous ne desservons pas cette destination.",
+      "shippingOptionGone": "Le mode de livraison choisi n'est plus proposé. Choisissez-en un autre.",
+      "servicePointRequired": "Ce mode de livraison demande un point relais.",
+      "paymentNotConfigured": "Le paiement n'est pas encore activé sur cette boutique.",
+      "rateLimited": "Trop de tentatives en peu de temps. Patientez un instant.",
+      "invalidAddress": "Vérifiez l'adresse de livraison.",
+      "termsRequired": "Vous devez accepter les conditions générales de vente.",
+      "invalidInput": "Certaines informations n'ont pas été comprises. Vérifiez le formulaire.",
+      "unexpectedTitle": "La commande n'a pas abouti",
+      "unexpected": "Une erreur est survenue pendant l'enregistrement. Si un paiement a été engagé, il apparaîtra dans vos commandes : ne payez pas une seconde fois avant de nous avoir écrit.",
+      "retry": "Réessayer",
+      "reference": "Référence technique : {digest}"
+    }
+  },
   "favorites": {
     "title": "Favoris",
     "empty": "Aucun favori pour le moment.",

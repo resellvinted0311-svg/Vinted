@@ -224,6 +224,80 @@
       "rate-limited": "Zu viele Anfragen in kurzer Zeit. Versuchen Sie es gleich noch einmal."
     }
   },
+  "checkout": {
+    "title": "Bestellschein",
+    "recap": "Was Sie bestellen",
+    "recapHint": "Jedes Stück gibt es nur einmal. Der Bestand wird erst mit dem Öffnen der Zahlung reserviert.",
+    "editOrder": "Warenkorb ändern",
+    "contact": "Wie wir Sie erreichen",
+    "emailHint": "Dorthin gehen die Bestätigung und später die Sendungsverfolgung.",
+    "address": "Wohin liefern",
+    "note": "Nachricht an den Laden",
+    "noteHint": "Ein Hinweis zur Lieferung, ein Wunsch zur Verpackung. 500 Zeichen.",
+    "payment": "Bezahlen",
+    "cardOnly": "Nur Kartenzahlung. Die Eingabe erfolgt in einem Rahmen unseres Zahlungsdienstleisters: Keine Kartennummer läuft über diese Website.",
+    "placeOrder": "Bestellen — {total}",
+    "placeOrderNoTotal": "Bestellen",
+    "paymentOpensBelow": "Das Kartenformular öffnet sich genau hier, ohne diese Seite zu verlassen.",
+    "orderRegistered": "Bestellung {orderNumber} erfasst",
+    "totalDue": "Zu zahlender Betrag",
+    "editWarning": "Die Bestellung ist erfasst und die Stücke sind für die Dauer der Zahlung reserviert. Zum Ändern zurück zum Warenkorb: Eine neue Bestellung ersetzt diese.",
+    "paymentFrameFailed": "Das Zahlungsformular konnte nicht geöffnet werden. Ihre Bestellung ist erfasst: Schreiben Sie uns, wir nehmen sie gemeinsam wieder auf.",
+    "field": {
+      "email": "E-Mail-Adresse",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "line1": "Adresse",
+      "line2": "Adresszusatz",
+      "postalCode": "Postleitzahl",
+      "city": "Ort",
+      "country": "Land",
+      "phone": "Telefon",
+      "phoneHint": "Manche Versanddienste fragen danach, um die Lieferung anzukündigen."
+    },
+    "shipping": {
+      "legend": "Versand",
+      "needsAddress": "Geben Sie Land und Postleitzahl an: Versandarten und Preise erscheinen hier.",
+      "quote": "Versandkosten werden berechnet…",
+      "days": "{min}–{max} Werktage",
+      "free": "Kostenlos",
+      "parcel": "Paket mit {grams}, Zone {zone}",
+      "servicePointLabel": "Kennung der Abholstelle",
+      "servicePointHint": "Sie steht auf der Seite der gewählten Abholstelle beim Versanddienst.",
+      "unavailable": "Dieses Ziel beliefern wir noch nicht. Schreiben Sie uns, wir sehen es uns im Einzelfall an.",
+      "emptyCart": "In Ihrem Warenkorb ist kein verfügbares Stück mehr.",
+      "invalidAddress": "Prüfen Sie Land und Postleitzahl.",
+      "rateLimited": "Zu viele Berechnungen in kurzer Zeit. Bitte kurz warten."
+    },
+    "terms": {
+      "label": "Ich akzeptiere die Allgemeinen Geschäftsbedingungen.",
+      "link": "Lesen"
+    },
+    "privacy": {
+      "notice": "Ihre E-Mail-Adresse, Ihre Postanschrift und gegebenenfalls Ihre Telefonnummer dienen der Bearbeitung dieser Bestellung, dem Versand und der Rechnungsstellung.",
+      "link": "Wie Ihre Daten verarbeitet werden"
+    },
+    "legal": {
+      "withdrawal": "Sie haben nach Erhalt {days} Tage Widerrufsrecht, ohne Angabe von Gründen."
+    },
+    "errors": {
+      "emptyCart": "Ihr Warenkorb ist leer.",
+      "blockedLines": "Einige Stücke in Ihrem Warenkorb sind nicht mehr verfügbar.",
+      "stockTaken": "Ein Stück wurde soeben von jemand anderem genommen.",
+      "shippingUnavailable": "Dieses Ziel beliefern wir nicht.",
+      "shippingOptionGone": "Die gewählte Versandart wird nicht mehr angeboten. Wählen Sie eine andere.",
+      "servicePointRequired": "Diese Versandart benötigt eine Abholstelle.",
+      "paymentNotConfigured": "Die Zahlung ist in diesem Laden noch nicht aktiviert.",
+      "rateLimited": "Zu viele Versuche in kurzer Zeit. Bitte kurz warten.",
+      "invalidAddress": "Prüfen Sie die Lieferadresse.",
+      "termsRequired": "Sie müssen die Allgemeinen Geschäftsbedingungen akzeptieren.",
+      "invalidInput": "Einige Angaben wurden nicht verstanden. Prüfen Sie das Formular.",
+      "unexpectedTitle": "Die Bestellung kam nicht zustande",
+      "unexpected": "Beim Erfassen ist ein Fehler aufgetreten. Falls eine Zahlung begonnen wurde, erscheint sie in Ihren Bestellungen: Zahlen Sie kein zweites Mal, bevor Sie uns geschrieben haben.",
+      "retry": "Erneut versuchen",
+      "reference": "Technische Referenz: {digest}"
+    }
+  },
   "favorites": {
     "title": "Favoriten",
     "empty": "Noch keine Favoriten.",
