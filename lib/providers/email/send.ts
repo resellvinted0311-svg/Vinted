@@ -44,6 +44,10 @@ export function isEmailConfigured(): boolean {
  * En développement, la base pointe parfois sur des données réelles, et une
  * console se partage — capture d'écran, session à deux, fichier de log ramassé
  * par un outil. Une donnée personnelle n'a pas à s'y trouver.
+ *
+ * Ce principe ne valait rien tant que le corps du message était imprimé juste
+ * en dessous : il porte le nom et l'adresse postale. Le corps est donc masqué
+ * lui aussi, sauf demande explicite.
  */
 export function maskAddress(address: string): string {
   const [local = '', domain = ''] = address.split('@')
@@ -69,6 +73,17 @@ export async function sendEmail(message: EmailMessage): Promise<void> {
       throw new EmailNotConfiguredError()
     }
 
+    // Le CORPS est masqué par défaut, et c'était le vrai trou : masquer
+    // l'adresse du destinataire puis imprimer le message entier juste en
+    // dessous ne protège rien du tout. Une confirmation de commande contient
+    // le nom, la rue, le code postal et la ville — c'est-à-dire tout ce que
+    // l'adresse masquée était censée soustraire.
+    //
+    // L'afficher reste possible, mais devient un geste délibéré : c'est la
+    // différence entre une console qu'on peut partager sans y penser et une
+    // console qu'on sait chargée.
+    const showBody = process.env.EMAIL_DEV_SHOW_BODY === '1'
+
     console.info(
       [
         '',
@@ -77,7 +92,11 @@ export async function sendEmail(message: EmailMessage): Promise<void> {
         ` Destinataire : ${maskAddress(message.to)}`,
         ` Objet        : ${message.subject}`,
         '─────────────────────────────────────────────',
-        message.text,
+        showBody
+          ? message.text
+          : ` Corps masqué (${message.text.length} caractères).\n` +
+            ' EMAIL_DEV_SHOW_BODY=1 pour l’afficher — il contient le nom et\n' +
+            ' l’adresse postale de la personne.',
         '─────────────────────────────────────────────',
         '',
       ].join('\n'),

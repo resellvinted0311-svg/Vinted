@@ -469,6 +469,7 @@
       "payment-events": "Les traces techniques de vos paiements",
       "favorites": "Vos favoris",
       "cart": "Votre panier",
+      "cart-guest": "Votre panier, sans compte",
       "marketing": "Les nouveautés par e-mail",
       "security": "La protection contre les attaques"
     },
@@ -485,6 +486,8 @@
     "rights": "Vos droits",
     "rightsIntro": "Accès, rectification, effacement, portabilité, opposition, retrait du consentement. Depuis votre espace personnel, sans justificatif à fournir.",
     "rightsLink": "Ouvrir mon espace personnel",
+    "rightsNoAccount": "Vous avez commandé sans créer de compte ? Vos droits s’exercent aussi, en nous écrivant : nous vérifierons votre identité avant de répondre.",
+    "rightsNoAccountLink": "Nos coordonnées",
     "complaint": "Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir la CNIL (cnil.fr).",
     "myData": {
       "title": "Mes données",

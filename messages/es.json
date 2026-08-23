@@ -469,6 +469,7 @@
       "payment-events": "Los rastros técnicos de tus pagos",
       "favorites": "Sus favoritos",
       "cart": "Su cesta",
+      "cart-guest": "Tu cesta, sin cuenta",
       "marketing": "Novedades por correo",
       "security": "Protección frente a ataques"
     },
@@ -485,6 +486,8 @@
     "rights": "Sus derechos",
     "rightsIntro": "Acceso, rectificación, supresión, portabilidad, oposición y retirada del consentimiento. Desde su cuenta, sin justificantes.",
     "rightsLink": "Abrir mi cuenta",
+    "rightsNoAccount": "¿Has hecho un pedido sin crear una cuenta? Tus derechos se ejercen igualmente: escríbenos y verificaremos tu identidad antes de responder.",
+    "rightsNoAccountLink": "Nuestros datos de contacto",
     "complaint": "Si considera que sus derechos no se respetan, puede reclamar ante su autoridad nacional de protección de datos.",
     "myData": {
       "title": "Mis datos",

@@ -469,6 +469,7 @@
       "payment-events": "Technische Spuren Ihrer Zahlungen",
       "favorites": "Ihre Favoriten",
       "cart": "Ihr Warenkorb",
+      "cart-guest": "Ihr Warenkorb, ohne Konto",
       "marketing": "Neuzugänge per E-Mail",
       "security": "Schutz vor Angriffen"
     },
@@ -485,6 +486,8 @@
     "rights": "Ihre Rechte",
     "rightsIntro": "Auskunft, Berichtigung, Löschung, Übertragbarkeit, Widerspruch und Widerruf der Einwilligung. Aus Ihrem Konto heraus, ohne Nachweise.",
     "rightsLink": "Mein Konto öffnen",
+    "rightsNoAccount": "Ohne Konto bestellt? Ihre Rechte gelten genauso — schreiben Sie uns, wir prüfen Ihre Identität, bevor wir antworten.",
+    "rightsNoAccountLink": "Unsere Kontaktdaten",
     "complaint": "Wenn Sie der Ansicht sind, dass Ihre Rechte nicht gewahrt werden, können Sie sich an Ihre nationale Datenschutzbehörde wenden.",
     "myData": {
       "title": "Meine Daten",

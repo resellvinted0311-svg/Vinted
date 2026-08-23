@@ -469,6 +469,7 @@
       "payment-events": "Techniczne ślady Twoich płatności",
       "favorites": "Twoje ulubione",
       "cart": "Twój koszyk",
+      "cart-guest": "Twój koszyk, bez konta",
       "marketing": "Nowości e-mailem",
       "security": "Ochrona przed atakami"
     },
@@ -485,6 +486,8 @@
     "rights": "Twoje prawa",
     "rightsIntro": "Dostęp, sprostowanie, usunięcie, przenoszenie, sprzeciw i wycofanie zgody. Z poziomu konta, bez żadnych dokumentów.",
     "rightsLink": "Otwórz moje konto",
+    "rightsNoAccount": "Zamówienie bez zakładania konta? Twoje prawa obowiązują tak samo — napisz do nas, a przed odpowiedzią zweryfikujemy Twoją tożsamość.",
+    "rightsNoAccountLink": "Nasze dane kontaktowe",
     "complaint": "Jeśli uważasz, że Twoje prawa nie są respektowane, możesz złożyć skargę do krajowego organu ochrony danych.",
     "myData": {
       "title": "Moje dane",

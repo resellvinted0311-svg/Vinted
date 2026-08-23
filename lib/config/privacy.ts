@@ -153,12 +153,13 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
     // Déclaré, parce qu'un traitement non déclaré est un traitement qu'on
     // oublie de purger — c'est exactement ce qui est arrivé ici.
     key: 'payment-events',
-    tables: ['WebhookEvent'],
+    tables: ['WebhookEvent', 'Job'],
     basis: 'legitimate-interest',
     retentionDays: WEBHOOK_EVENT_RETENTION_DAYS,
     retentionReason:
-      'Trace technique des encaissements, caviardée de toute donnée ' +
-      'personnelle et conservée un mois pour comprendre un échec.',
+      'Traces techniques des encaissements et des envois différés, ' +
+      'caviardées de toute donnée personnelle et conservées un mois pour ' +
+      'comprendre un échec.',
   },
   {
     key: 'favorites',
@@ -169,12 +170,25 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
       'Sans compte, rattachés au cookie de session : ils ne lui survivent pas.',
   },
   {
+    // Deux entrées, parce que les deux durées sont réellement différentes et
+    // qu'une seule ligne en cachait une. Le panier d'un compte n'est PAS
+    // effacé au bout de trente jours — on le retrouve à la connexion suivante,
+    // c'est le comportement attendu — et le déclarer autrement était faux.
     key: 'cart',
-    tables: ['Cart', 'CartItem'],
+    tables: ['Cart (avec compte)', 'CartItem'],
+    basis: 'contract',
+    retentionDays: null,
+    retentionReason:
+      'Retrouvé à chaque connexion, effacé avec le compte ou à sa demande.',
+  },
+  {
+    key: 'cart-guest',
+    tables: ['Cart (sans compte)', 'CartItem'],
     basis: 'contract',
     retentionDays: GUEST_DATA_RETENTION_DAYS,
     retentionReason:
-      'Même durée que le cookie qui permet de le retrouver.',
+      'Même durée que le cookie qui permet de le retrouver : au-delà, plus ' +
+      'personne ne peut y accéder, pas même la personne concernée.',
   },
   {
     key: 'marketing',

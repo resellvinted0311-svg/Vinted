@@ -362,6 +362,10 @@ describe('envoi effectif', () => {
     // dans la console : le gabarit, les traductions et la relecture de la
     // commande sont bien exercés de bout en bout.
     vi.stubEnv('NODE_ENV', 'development')
+    // Le corps est masqué par défaut — il porte le nom et l'adresse postale.
+    // Ce test-ci veut justement l'inspecter, et le demande donc explicitement :
+    // c'est exactement l'usage pour lequel ce drapeau existe.
+    vi.stubEnv('EMAIL_DEV_SHOW_BODY', '1')
     const info = vi.spyOn(console, 'info').mockImplementation(() => {})
 
     const orderId = await makeOrderAndJob('s1')
@@ -381,6 +385,25 @@ describe('envoi effectif', () => {
     expect(printed).toContain(`${PREFIX}s1`)
     expect(printed).toContain('20,00')
     expect(printed).not.toContain('acheteuse@exemple.fr')
+  })
+
+  it('masque le corps du message quand on ne l’a pas demandé', async () => {
+    // Le défaut d'origine : la console masquait soigneusement l'adresse du
+    // destinataire, puis imprimait le message ENTIER juste en dessous — nom,
+    // rue, code postal, ville. Le masque ne protégeait rien.
+    vi.stubEnv('NODE_ENV', 'development')
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+
+    await makeOrderAndJob('s2')
+    await runJobs()
+
+    const printed = info.mock.calls.map((call) => String(call[0])).join('\n')
+
+    // L'objet reste lisible : on sait quel message est parti.
+    expect(printed).toContain(`${PREFIX}s2`)
+    // Le contenu, non.
+    expect(printed).not.toContain('20,00')
+    expect(printed).toContain('EMAIL_DEV_SHOW_BODY')
   })
 
   it('un envoi impossible laisse le travail reprenable, jamais perdu', async () => {

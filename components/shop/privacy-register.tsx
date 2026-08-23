@@ -109,6 +109,26 @@ export async function PrivacyRegister({ locale }: { locale: string }) {
           {t('rightsLink')}
         </Link>
       </p>
+
+      {/*
+        Le paiement sans compte est autorisé : quelqu'un peut donc avoir laissé
+        une adresse postale ici sans jamais avoir eu d'espace personnel. Lui
+        annoncer que ses droits s'exercent « depuis votre espace personnel »
+        le laisse sans voie du tout. On dit la voie qui existe réellement.
+
+        Aucune adresse de contact n'est écrite ici : elle vient des mentions
+        légales, alimentées par la configuration. Rien n'est inventé.
+      */}
+      <p className="text-muted">
+        {t('rightsNoAccount')}{' '}
+        <Link
+          href="/pages/mentions-legales"
+          className="underline underline-offset-4"
+        >
+          {t('rightsNoAccountLink')}
+        </Link>
+      </p>
+
       <p className="text-muted">{t('complaint')}</p>
     </>
   )

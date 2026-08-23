@@ -6,6 +6,7 @@ import { purgeExpiredPersonalData } from '@/lib/privacy/retention'
 import {
   ABANDONED_ORDER_RETENTION_DAYS,
   INACTIVE_ACCOUNT_RETENTION_DAYS,
+  WEBHOOK_EVENT_RETENTION_DAYS,
 } from '@/lib/config/privacy'
 
 /**
@@ -47,6 +48,13 @@ async function cleanup(): Promise<void> {
   })
   await prisma.order.deleteMany({
     where: { orderNumber: { startsWith: PREFIX } },
+  })
+
+  await prisma.webhookEvent.deleteMany({
+    where: { externalId: { startsWith: PREFIX } },
+  })
+  await prisma.job.deleteMany({
+    where: { payload: { path: ['test'], equals: PREFIX } },
   })
 
   await prisma.guestFavorite.deleteMany({
@@ -518,5 +526,70 @@ describe('tunnels de commande abandonnés', () => {
 
     const second = await purgeExpiredPersonalData()
     expect(second.anonymizedAbandonedOrders).toBe(0)
+  })
+})
+
+describe('traces techniques', () => {
+  it('efface une trace d’événement de paiement périmée', async () => {
+    // Elle est déjà caviardée à l'écriture, mais une trace qui ne sert plus
+    // n'a pas à survivre pour autant.
+    await prisma.webhookEvent.create({
+      data: {
+        provider: 'stripe',
+        externalId: `${PREFIX}vieux`,
+        payload: { type: 'checkout.session.completed' },
+        processedAt: new Date(),
+        createdAt: daysAgo(WEBHOOK_EVENT_RETENTION_DAYS + 1),
+      },
+    })
+    await prisma.webhookEvent.create({
+      data: {
+        provider: 'stripe',
+        externalId: `${PREFIX}recent`,
+        payload: { type: 'checkout.session.completed' },
+        processedAt: new Date(),
+      },
+    })
+
+    const report = await purgeExpiredPersonalData()
+    expect(report.webhookEvents).toBeGreaterThanOrEqual(1)
+
+    const reste = await prisma.webhookEvent.findMany({
+      where: { externalId: { startsWith: PREFIX } },
+      select: { externalId: true },
+    })
+    expect(reste.map((e) => e.externalId)).toEqual([`${PREFIX}recent`])
+  })
+
+  it('efface un travail TERMINÉ, jamais un travail en échec', async () => {
+    // Un travail en échec doit rester visible tant qu'il peut être repris ou
+    // compris. Le purger effacerait la trace d'un e-mail jamais parti.
+    await prisma.job.create({
+      data: {
+        type: 'order.confirmation',
+        payload: { test: PREFIX, orderId: 'x' },
+        runAt: daysAgo(WEBHOOK_EVENT_RETENTION_DAYS + 2),
+        completedAt: daysAgo(WEBHOOK_EVENT_RETENTION_DAYS + 1),
+      },
+    })
+    await prisma.job.create({
+      data: {
+        type: 'order.confirmation',
+        payload: { test: PREFIX, orderId: 'y' },
+        runAt: daysAgo(WEBHOOK_EVENT_RETENTION_DAYS + 2),
+        attempts: 5,
+        lastError: 'prestataire indisponible',
+      },
+    })
+
+    const report = await purgeExpiredPersonalData()
+    expect(report.finishedJobs).toBeGreaterThanOrEqual(1)
+
+    const reste = await prisma.job.findMany({
+      where: { payload: { path: ['test'], equals: PREFIX } },
+      select: { lastError: true },
+    })
+    expect(reste).toHaveLength(1)
+    expect(reste[0]?.lastError).toBe('prestataire indisponible')
   })
 })

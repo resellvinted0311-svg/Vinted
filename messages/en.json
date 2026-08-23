@@ -469,6 +469,7 @@
       "payment-events": "Technical traces of your payments",
       "favorites": "Your favourites",
       "cart": "Your basket",
+      "cart-guest": "Your basket, without an account",
       "marketing": "New arrivals by email",
       "security": "Protection against attacks"
     },
@@ -485,6 +486,8 @@
     "rights": "Your rights",
     "rightsIntro": "Access, rectification, erasure, portability, objection, withdrawal of consent. From your account, with no paperwork to provide.",
     "rightsLink": "Open my account",
+    "rightsNoAccount": "Ordered without creating an account? Your rights apply just the same — write to us and we will verify your identity before replying.",
+    "rightsNoAccountLink": "Our contact details",
     "complaint": "If you believe your rights are not being respected, you may lodge a complaint with your national data protection authority.",
     "myData": {
       "title": "My data",

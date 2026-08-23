@@ -469,6 +469,7 @@
       "payment-events": "De technische sporen van je betalingen",
       "favorites": "Uw favorieten",
       "cart": "Uw winkelmandje",
+      "cart-guest": "Je winkelmand, zonder account",
       "marketing": "Nieuwe stukken per e-mail",
       "security": "Bescherming tegen aanvallen"
     },
@@ -485,6 +486,8 @@
     "rights": "Uw rechten",
     "rightsIntro": "Inzage, rectificatie, wissing, overdraagbaarheid, bezwaar en intrekking van toestemming. Vanuit uw account, zonder bewijsstukken.",
     "rightsLink": "Mijn account openen",
+    "rightsNoAccount": "Zonder account besteld? Je rechten gelden net zo goed — schrijf ons en we controleren je identiteit voordat we antwoorden.",
+    "rightsNoAccountLink": "Onze contactgegevens",
     "complaint": "Vindt u dat uw rechten niet worden gerespecteerd, dan kunt u een klacht indienen bij uw nationale toezichthouder.",
     "myData": {
       "title": "Mijn gegevens",

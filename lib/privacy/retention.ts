@@ -51,6 +51,8 @@ export interface PurgeReport {
   abandonedGuestCarts: number
   /** Traces d'événements de paiement, périmées. */
   webhookEvents: number
+  /** Travaux différés terminés, périmés. */
+  finishedJobs: number
   /** Tunnels jamais payés, vidés de leurs coordonnées. */
   anonymizedAbandonedOrders: number
   anonymizedAccounts: number
@@ -103,6 +105,17 @@ export async function purgeExpiredPersonalData(
     where: { createdAt: { lt: webhookCutoff } },
   })
 
+  // Travaux différés TERMINÉS. Leur contenu ne porte qu'un identifiant de
+  // commande — c'est délibéré, le travail relit la commande au moment de
+  // s'exécuter — mais un identifiant reste un identifiant indirect, et une
+  // table qui ne se vide jamais finit par tout garder.
+  //
+  // Seuls les travaux terminés partent : un travail en échec doit rester
+  // visible tant qu'il peut être repris ou compris.
+  const finishedJobs = await prisma.job.deleteMany({
+    where: { completedAt: { not: null, lt: webhookCutoff } },
+  })
+
   // Tunnels de commande jamais payés. On vide, on ne supprime pas : un
   // paiement a pu aboutir sans que le webhook nous parvienne, et la ligne est
   // alors la seule trace d'un débit à retrouver.
@@ -118,6 +131,7 @@ export async function purgeExpiredPersonalData(
     guestFavorites: guestFavorites.count,
     abandonedGuestCarts: abandonedGuestCarts.count,
     webhookEvents: webhookEvents.count,
+    finishedJobs: finishedJobs.count,
     anonymizedAbandonedOrders,
     anonymizedAccounts,
   }
