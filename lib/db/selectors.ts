@@ -66,6 +66,19 @@ export const publicArticleTranslationSelect = {
   title: true,
   description: true,
   isMachineTranslated: true,
+  /**
+   * La fiche doit pouvoir DIRE qu'elle n'est pas traduite.
+   *
+   * Les pièces importées depuis l'application de gestion arrivent en français
+   * et les huit lignes de traduction sont écrites d'emblée — sans quoi le
+   * listing du catalogue, qui joint la locale en INNER JOIN, les ferait
+   * disparaître des sept autres langues.
+   *
+   * Sans ce champ ici, une cliente néerlandaise lirait du français sans aucune
+   * explication, et rien ne distinguerait cette fiche-là d'une fiche
+   * réellement traduite.
+   */
+  isFallback: true,
 } satisfies Prisma.ArticleTranslationSelect
 
 export const publicBrandSelect = {
@@ -146,6 +159,9 @@ export const publicArticleDetailSelect = {
   allowOffers: true,
   offersOpenAt: true,
   lastPriceDropAt: true,
+  // La description a-t-elle été composée par la boutique faute d'en recevoir
+  // une ? La fiche l'annonce, comme elle annonce une traduction automatique.
+  descriptionIsGenerated: true,
   brand: { select: publicBrandSelect },
   category: { select: publicCategorySelect },
   images: {

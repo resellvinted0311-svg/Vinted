@@ -167,6 +167,8 @@
     "shippingEstimate": "Levering",
     "shippingFrom": "Vanaf {price}",
     "machineTranslated": "Deze omschrijving is automatisch vertaald.",
+    "generatedDescription": "Deze beschrijving is automatisch samengesteld uit de vastgelegde kenmerken van dit stuk.",
+    "notTranslated": "Dit item is nog niet vertaald: het wordt in het Frans getoond.",
     "backToCatalogue": "Terug naar de collectie",
     "uniquePiece": "Uniek exemplaar",
     "weight": "Verzendgewicht",

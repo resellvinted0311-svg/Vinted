@@ -3,6 +3,7 @@ import 'server-only'
 import { z } from 'zod'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
+import type { PricingConfig } from '@/lib/domain/pricing'
 
 /**
  * Lecture des réglages métier stockés en base.
@@ -69,10 +70,31 @@ const SCHEMAS = {
   packagingWeightGrams: nonNegativeInt,
   shippingMarkupPercent: nonNegativeInt,
   reservationTtlMinutes: positiveInt,
+  /**
+   * Délai entre la publication d'une pièce et l'ouverture des offres.
+   *
+   * Une pièce négociable dès la première heure ne se vend jamais au prix
+   * affiché : il suffit d'attendre. Le délai laisse au prix demandé le temps
+   * d'exister.
+   */
+  offersOpenAfterDays: nonNegativeInt,
   minMarginCents: nonNegativeInt,
   contributionRateBps: nonNegativeInt,
   stripePercentBps: nonNegativeInt,
   stripeFixedCents: nonNegativeInt,
+  /**
+   * Zone d'expédition qui sert de RÉFÉRENCE au calcul du prix plancher.
+   *
+   * Le plancher intègre le port, parce qu'au-dessus du seuil de livraison
+   * offerte c'est le vendeur qui le supporte. Encore faut-il savoir quel port :
+   * la même pièce coûte 4,20 € à expédier en France et 42,00 € en outre-mer.
+   *
+   * Retenir la zone la moins chère fabriquerait un plancher optimiste, donc
+   * des ventes déficitaires ; retenir la plus chère fabriquerait un plancher
+   * inatteignable. On retient la zone où la boutique vend RÉELLEMENT le plus,
+   * et c'est un réglage, pas une constante écrite dans le code.
+   */
+  floorShippingZoneCode: z.string().min(1).max(32),
   cgvVersion: z.string().min(1),
   withdrawalPeriodDays: positiveInt,
   returnShippingPaidByCustomer: z.boolean(),
@@ -131,4 +153,35 @@ export async function getShippingConfig(client: Reader = prisma): Promise<{
   shippingMarkupPercent: number
 }> {
   return getSettings(['packagingWeightGrams', 'shippingMarkupPercent'], client)
+}
+
+/**
+ * Configuration des calculs de prix, telle que l'attend `lib/domain/pricing`.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi cet accesseur a fini par manquer
+ * ---------------------------------------------------------------------------
+ * `lib/domain/pricing.ts` accepte une configuration PAR DÉFAUT. Pratique pour
+ * les tests, mais tant que personne ne lisait ces quatre réglages, chaque
+ * calcul retombait sur les valeurs écrites dans le code — et les lignes
+ * `minMarginCents`, `contributionRateBps`, `stripePercentBps` et
+ * `stripeFixedCents` de la table `Setting` étaient purement décoratives.
+ *
+ * Le brief l'interdit en toutes lettres : « ne code aucun coefficient en dur ».
+ * Le taux de cotisation d'une micro-entreprise change par arrêté, et la
+ * commission d'un prestataire de paiement change par contrat ; les deux
+ * doivent se corriger en back-office, sans redéploiement.
+ */
+export async function getPricingConfig(
+  client: Reader = prisma,
+): Promise<PricingConfig> {
+  return getSettings(
+    [
+      'minMarginCents',
+      'contributionRateBps',
+      'stripePercentBps',
+      'stripeFixedCents',
+    ],
+    client,
+  )
 }

@@ -356,6 +356,15 @@ model Article {
   /// Dernière synchronisation réussie depuis l'application de gestion.
   externalSyncedAt DateTime?
 
+  /// La description a-t-elle été COMPOSÉE par la boutique, faute d'en recevoir
+  /// une ? Le texte est alors strictement factuel — marque, taille, état,
+  /// matière, mesures — et n'affirme rien qui ne soit dans les colonnes.
+  ///
+  /// Sert à deux choses : un envoi ultérieur portant une vraie description
+  /// l'écrase sans hésiter, et le back-office sait où le travail rédactionnel
+  /// reste à faire.
+  descriptionIsGenerated Boolean @default(false)
+
   status      ArticleStatus @default(DRAFT)
   scheduledAt DateTime?
   publishedAt DateTime?
@@ -423,6 +432,19 @@ model ArticleTranslation {
 
   isMachineTranslated Boolean @default(true)
 
+  /// Cette ligne porte-t-elle le texte de la LANGUE SOURCE faute de traduction ?
+  ///
+  /// Le listing du catalogue joint les traductions en INNER JOIN sur la locale
+  /// demandée : une pièce qui n'aurait qu'une ligne `fr` disparaîtrait des sept
+  /// autres catalogues. On écrit donc les huit lignes dès la création, celles
+  /// qui ne sont pas traduites portant le français.
+  ///
+  /// Ce drapeau existe pour que la fiche le DISE. `isMachineTranslated` ne
+  /// pouvait pas s'en charger : afficher « traduite automatiquement » sous un
+  /// texte français intact serait faux, et c'est exactement le genre de fausse
+  /// mention qui use la confiance dans toutes les autres.
+  isFallback Boolean @default(false)
+
   /// Vecteur de recherche plein texte, maintenu par trigger (voir migration).
   /// Non manipulable depuis Prisma : c'est volontaire.
   searchVector Unsupported("tsvector")?
@@ -441,6 +463,15 @@ model ArticleImage {
   id        String  @id @default(cuid())
   articleId String
   url       String
+  /// URL d'ORIGINE, telle que l'application de gestion l'a envoyée.
+  ///
+  /// Sans elle, une resynchronisation ne peut pas savoir si les visuels ont
+  /// changé : elle retéléchargerait les dix images à chaque correction de
+  /// prix, chez un hébergeur qui n'a rien demandé. Avec elle, la comparaison
+  /// est exacte et le travail n'est inscrit que si la liste a réellement bougé.
+  ///
+  /// Nulle pour les images nées ici — jeu de démonstration, back-office.
+  sourceUrl String?
   blurhash  String?
   width     Int
   height    Int

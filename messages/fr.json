@@ -167,6 +167,8 @@
     "shippingEstimate": "Livraison",
     "shippingFrom": "À partir de {price}",
     "machineTranslated": "Cette description a été traduite automatiquement.",
+    "generatedDescription": "Description établie automatiquement à partir des caractéristiques enregistrées de cette pièce.",
+    "notTranslated": "Cette fiche n’est pas encore traduite : elle est affichée en français.",
     "backToCatalogue": "Retour au catalogue",
     "uniquePiece": "Exemplaire unique",
     "weight": "Poids expédié",

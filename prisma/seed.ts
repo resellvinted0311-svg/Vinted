@@ -74,6 +74,11 @@ async function seedSettings(): Promise<void> {
     { key: 'stripeFixedCents', value: DEFAULT_PRICING_CONFIG.stripeFixedCents },
     { key: 'autoDropSchedule', value: [{ days: 30, percent: 10 }, { days: 60, percent: 20 }] },
 
+    // Zone de référence du prix plancher : celle où la boutique vend le plus.
+    // Le plancher intègre le port, et le port dépend de la zone — sans ce
+    // réglage, il faudrait en choisir une dans le code.
+    { key: 'floorShippingZoneCode', value: 'FR' },
+
     // Auto-acceptation des offres : codée, mais DÉSACTIVÉE par défaut.
     // Si les acheteurs découvrent qu'une offre basse passe seule, le prix
     // affiché devient décoratif.
@@ -587,7 +592,40 @@ async function seedUsers(): Promise<void> {
     update: { passwordHash },
   })
 
-  console.info('  Comptes de démonstration : admin@nina-diego.test · client@nina-diego.test')
+  /**
+   * Second compte client, réservé aux tests de bout en bout du RGPD.
+   *
+   * ---------------------------------------------------------------------------
+   * Pourquoi deux comptes et non un seul
+   * ---------------------------------------------------------------------------
+   * `signInAction` borne les tentatives à DIX par compte et par quart d'heure.
+   * Tant que tous les tests de connexion partageaient `client@`, une seule
+   * exécution complète de la suite en consommait exactement dix — cinq par
+   * navigateur — et les deux derniers tombaient sur « Trop de tentatives ».
+   *
+   * On ne desserre pas la limite : dix essais par quart d'heure sur un compte
+   * donné est exactement ce qu'il faut contre le bourrage d'identifiants. On
+   * répartit les tests sur deux comptes, ce qui est aussi plus proche de la
+   * réalité qu'ils décrivent — plusieurs personnes, pas une seule.
+   */
+  await prisma.user.upsert({
+    where: { email: 'client2@nina-diego.test' },
+    create: {
+      email: 'client2@nina-diego.test',
+      passwordHash,
+      firstName: 'Camille',
+      lastName: 'Cliente',
+      role: 'CUSTOMER',
+      locale: 'fr',
+      emailVerified: new Date(),
+      marketingConsent: false,
+    },
+    update: { passwordHash },
+  })
+
+  console.info(
+    '  Comptes de démonstration : admin@nina-diego.test · client@nina-diego.test · client2@nina-diego.test',
+  )
 }
 
 // ---------------------------------------------------------------------------

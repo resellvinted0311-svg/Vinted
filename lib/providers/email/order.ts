@@ -2,7 +2,7 @@ import 'server-only'
 
 import { createTranslator } from 'next-intl'
 import { SITE, LEGAL } from '@/lib/config/site'
-import { routing, type Locale } from '@/lib/i18n/routing'
+import { loadMessages } from '@/lib/i18n/messages'
 import { formatPrice } from '@/lib/utils/format'
 import { sendEmail, type EmailMessage } from './send'
 
@@ -39,32 +39,9 @@ import { sendEmail, type EmailMessage } from './send'
  * ces gabarits testables sans monter un serveur.
  */
 
-/**
- * Forme des messages, tirée du français.
- *
- * Sert UNIQUEMENT au typage : le test de parité des traductions garantit déjà
- * que les huit langues ont exactement les mêmes clés. Sans ce type, les clés
- * ne seraient plus vérifiées à la compilation et une faute de frappe
- * n'apparaîtrait qu'à l'envoi d'un e-mail réel.
- */
-type Messages = typeof import('../../../messages/fr.json')
-
-/** Messages d'une langue, chargés à la demande et mémorisés. */
-const messagesCache = new Map<string, Messages>()
-
-async function loadMessages(locale: string): Promise<Messages> {
-  const known = (routing.locales as readonly string[]).includes(locale)
-    ? (locale as Locale)
-    : routing.defaultLocale
-
-  const cached = messagesCache.get(known)
-  if (cached) return cached
-
-  const messages = (await import(`../../../messages/${known}.json`))
-    .default as Messages
-  messagesCache.set(known, messages)
-  return messages
-}
+// Le chargement des catalogues vit dans `lib/i18n/messages.ts` : l'import
+// d'inventaire en a besoin lui aussi, et deux caches séparés finiraient par se
+// contredire sur ce qu'est une locale inconnue.
 
 async function translatorFor(locale: string) {
   const messages = await loadMessages(locale)

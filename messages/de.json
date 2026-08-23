@@ -167,6 +167,8 @@
     "shippingEstimate": "Lieferung",
     "shippingFrom": "Ab {price}",
     "machineTranslated": "Diese Beschreibung wurde maschinell übersetzt.",
+    "generatedDescription": "Diese Beschreibung wurde automatisch aus den erfassten Merkmalen dieses Stücks erstellt.",
+    "notTranslated": "Dieser Artikel ist noch nicht übersetzt: Er wird auf Französisch angezeigt.",
     "backToCatalogue": "Zurück zum Katalog",
     "uniquePiece": "Einzelstück",
     "weight": "Versandgewicht",

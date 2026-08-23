@@ -167,6 +167,8 @@
     "shippingEstimate": "Dostawa",
     "shippingFrom": "Od {price}",
     "machineTranslated": "Ten opis został przetłumaczony automatycznie.",
+    "generatedDescription": "Ten opis został utworzony automatycznie na podstawie zapisanych cech tego przedmiotu.",
+    "notTranslated": "Ta karta nie została jeszcze przetłumaczona: jest wyświetlana po francusku.",
     "backToCatalogue": "Powrót do katalogu",
     "uniquePiece": "Jedyny egzemplarz",
     "weight": "Waga wysyłki",
