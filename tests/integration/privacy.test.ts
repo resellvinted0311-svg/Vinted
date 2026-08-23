@@ -262,6 +262,51 @@ describe('effacement d’un compte', () => {
 })
 
 describe('export des données', () => {
+  it('n’omet pas le panier, pourtant déclaré au registre', async () => {
+    // Une omission dans l'export fait mentir la déclaration : le registre
+    // annonce que le panier est conservé, et l'article 15 demande une copie de
+    // TOUT ce qui est détenu — y compris ce qui paraît sans intérêt.
+    const user = await makeUser('panier')
+    const category = await prisma.category.findFirstOrThrow({ select: { id: true } })
+    const article = await prisma.article.create({
+      data: {
+        sku: `${PREFIX}art`,
+        slug: `${PREFIX}art`,
+        condition: 'GOOD',
+        sizeLabel: 'M',
+        sizeNormalized: 'M',
+        priceCents: 1800,
+        costCents: 500,
+        floorPriceCents: 900,
+        weightGrams: 300,
+        publishedAt: new Date('2026-01-01T00:00:00Z'),
+        categoryId: category.id,
+      },
+      select: { id: true },
+    })
+    await prisma.cart.create({
+      data: {
+        userId: user.id,
+        sessionToken: `${PREFIX}cart-export`,
+        items: {
+          create: {
+            articleId: article.id,
+            unitPriceCents: 1800,
+            priceSource: 'LIST',
+          },
+        },
+      },
+    })
+
+    const data = await exportPersonalData(user.id)
+
+    expect(data?.cart).toHaveLength(1)
+    expect(JSON.stringify(data?.cart)).toContain(`${PREFIX}art`)
+
+    await prisma.cart.deleteMany({ where: { userId: user.id } })
+    await prisma.article.delete({ where: { id: article.id } })
+  })
+
   it('donne une copie complète sans jamais livrer l’empreinte du mot de passe', async () => {
     const user = await makeUser('export')
     await makeOrder(user.id, 'cmd-5')

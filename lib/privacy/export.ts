@@ -30,6 +30,8 @@ export interface PersonalDataExport {
   account: Record<string, unknown>
   addresses: unknown[]
   orders: unknown[]
+  /** Le panier en cours. Déclaré au registre, il doit donc être exporté. */
+  cart: unknown[]
   favorites: unknown[]
   offers: unknown[]
   sizeAlerts: unknown[]
@@ -60,7 +62,7 @@ export async function exportPersonalData(
 
   if (!user) return null
 
-  const [addresses, orders, favorites, offers, sizeAlerts, reviews] =
+  const [addresses, orders, cart, favorites, offers, sizeAlerts, reviews] =
     await Promise.all([
       prisma.address.findMany({
         where: { userId },
@@ -113,6 +115,20 @@ export async function exportPersonalData(
           // ce sont des données de l'entreprise, pas de la personne.
         },
       }),
+      // Le panier figure au registre des traitements : l'omettre de l'export
+      // ferait mentir la déclaration, et l'article 15 demande une copie de
+      // TOUT ce qui est détenu — y compris ce qui paraît sans intérêt.
+      prisma.cartItem.findMany({
+        where: { cart: { userId } },
+        select: {
+          articleId: true,
+          unitPriceCents: true,
+          priceSource: true,
+          addedAt: true,
+          article: { select: { sku: true } },
+        },
+        orderBy: { addedAt: 'desc' },
+      }),
       prisma.favorite.findMany({
         where: { userId },
         select: { articleId: true, createdAt: true },
@@ -120,6 +136,10 @@ export async function exportPersonalData(
       prisma.offer.findMany({
         where: { userId },
         select: {
+          // Sans la pièce visée, une offre n'est qu'un montant sans objet :
+          // la personne ne peut pas relire ce qu'elle a proposé, ni sur quoi.
+          articleId: true,
+          article: { select: { sku: true } },
           amountCents: true,
           status: true,
           counterAmountCents: true,
@@ -149,6 +169,7 @@ export async function exportPersonalData(
     account: user,
     addresses,
     orders,
+    cart,
     favorites,
     offers,
     sizeAlerts,
