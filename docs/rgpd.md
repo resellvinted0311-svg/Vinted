@@ -53,10 +53,49 @@ quelle variable d'environnement : une nouvelle clé, un nouveau déploiement.
 | Donnée | Durée | Pourquoi cette durée |
 | --- | --- | --- |
 | Compte | 3 ans sans connexion | Recommandation CNIL pour les clients inactifs |
-| Commandes et factures | 10 ans | Article L123-22 du code de commerce |
+| Commandes **payées** et factures | 10 ans | Article L123-22 du code de commerce |
+| Commandes **jamais payées** | 30 jours | Aucun paiement, donc aucune pièce comptable |
+| Panier d'un compte | Vie du compte | Retrouvé à chaque connexion |
 | Panier et favoris d'un visiteur | 30 jours | Durée de vie du cookie qui permet de les retrouver |
+| Traces d'événements de paiement et travaux différés | 30 jours | Trace technique caviardée, pour comprendre un échec |
 | Sessions et jetons | Jusqu'à leur échéance | Périmés, ils n'ouvrent plus rien |
 | Compteurs anti-force-brute | 1 jour | Jetons non réversibles, renouvelés chaque jour |
+
+### La distinction qui manquait : payée ou pas
+
+La règle « les commandes se gardent dix ans » a longtemps été appliquée à la
+table `Order` **en bloc**, au motif que les factures s'y trouvent. Un tunnel de
+commande abandonné — nom, rue, code postal, ville, téléphone, adresse e-mail —
+n'était donc purgé par rien, indéfiniment. Or il n'est pas une pièce comptable :
+aucun paiement, aucune facture, aucun exercice ne le porte. L'obligation de
+l'article L123-22 ne le couvre pas, l'article 17.3.b du RGPD ne s'y applique
+donc pas non plus, et il ne restait rien pour justifier de le garder
+(article 5.1.e). Les abandons sont plus nombreux que les ventes.
+
+Le prédicat de la purge porte sur `paidAt` et `invoiceNumber`, **pas sur le
+statut** : `CANCELLED` recouvre deux réalités opposées — un tunnel abandonné et
+une vente annulée après encaissement — et seule la date de paiement les
+distingue de façon sûre.
+
+Ces commandes sont **vidées, pas supprimées**. Un paiement a pu aboutir sans que
+le webhook nous parvienne : détruire la ligne effacerait la seule trace d'un
+débit à retrouver, au moment précis où elle servirait. Montants, dates et
+identifiants de paiement restent ; nom, adresse, téléphone, note et jeton de
+session partent.
+
+### Ce que l'événement de paiement archivait
+
+Le webhook Stripe écrivait l'événement **entier** en base. Un
+`checkout.session.completed` transporte `customer_details` : nom, adresse
+e-mail, téléphone, adresse postale complète. C'était une seconde copie des
+données de la personne, hors registre, hors export et hors effacement — elle
+survivait même à l'effacement du compte, juste à côté de la commande qu'on
+venait de vider.
+
+L'événement est désormais caviardé à l'écriture, par liste blanche : on énumère
+les champs voulus, on n'exclut pas les champs privés. La forme des événements
+appartient à Stripe, et un champ ajouté par une version future de leur interface
+ne doit pas arriver dans nos journaux parce que personne n'a pensé à l'exclure.
 
 La ligne « 30 jours » n'est pas arbitraire : les données rattachées au cookie de
 session boutique ne doivent pas lui survivre. Passé ce délai, plus personne — pas
@@ -164,6 +203,25 @@ pas à redécouvrir la question au moment de brancher chacune.
 ## 7. Ce qui reste à faire
 
 Ces points ne se règlent pas dans le code.
+
+0. **Deux durées à trancher, quand la boutique tournera.**
+
+   - *La note libre laissée à la commande.* Sur une commande livrée, elle ne
+     sert plus rien passé le délai de rétractation et celui d'un litige. Elle
+     est aujourd'hui conservée dix ans avec la pièce comptable, ce qui est
+     défendable mais généreux. Fixer une durée demande de connaître la réalité
+     des retours — c'est une décision, pas un calcul.
+
+   - *Les commandes payées sans compte.* Elles relèvent bien des dix ans, mais
+     leur titulaire ne peut pas s'authentifier pour demander la minimisation de
+     ce qui n'est pas obligatoire (note, téléphone). La page de confidentialité
+     indique désormais la voie — nous écrire, identité vérifiée avant réponse —
+     et le traitement est manuel tant qu'il n'y a pas de back-office.
+
+   - *Les transporteurs.* Aucun n'est branché aujourd'hui, donc aucun ne figure
+     dans la liste des sous-traitants — qui se déduit de l'environnement réel.
+     Le jour où un transporteur recevra nom, adresse et téléphone, il devra y
+     entrer, et son contrat de sous-traitance avec.
 
 1. **Identité du responsable de traitement.** Tant que `LEGAL_COMPANY_NAME`,
    `LEGAL_SIRET`, `LEGAL_ADDRESS` et `LEGAL_EMAIL` ne sont pas renseignées, la
