@@ -16,6 +16,7 @@ import {
   type OrderEmailData,
 } from '@/lib/providers/email/order'
 import { fetchArticleImages } from '@/lib/sync/images'
+import { runSyncNotify } from '@/lib/sync/webhook'
 
 /**
  * Exécution des travaux différés.
@@ -133,6 +134,13 @@ async function runOne(job: JobRecord): Promise<void> {
       return runOrderEmail(job, sendOrderConfirmation)
     case 'order.notify-shop':
       return runOrderEmail(job, sendShopNotification)
+    case 'sync.notify':
+      // Une pièce effacée ou détachée de l'application renvoie `false` : le
+      // travail est terminé, pas en échec. Tout le reste — application
+      // indisponible, réponse non `2xx` — lève, et la file reprend selon
+      // l'échelle annoncée au contrat.
+      await runSyncNotify(job.payload)
+      return
     case 'article.images':
       // La valeur de retour ne sert qu'au diagnostic : ce qui compte est que
       // le travail ne lève pas. Une pièce introuvable renvoie `null` et le

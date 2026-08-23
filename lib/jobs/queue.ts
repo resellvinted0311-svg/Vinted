@@ -48,6 +48,15 @@ export type JobType =
    * et l'application de gestion attendrait une réponse qui n'arriverait jamais.
    */
   | 'article.images'
+  /**
+   * Remontée d'un changement d'état vers l'application de gestion.
+   *
+   * Différée pour la même raison que les e-mails : la vente est inscrite dans
+   * la transaction qui l'enregistre, l'appel réseau vient après. Une
+   * application de gestion indisponible ne doit jamais faire échouer un
+   * paiement encaissé.
+   */
+  | 'sync.notify'
 
 export interface JobRecord {
   id: string
@@ -59,11 +68,17 @@ export interface JobRecord {
 /**
  * Au-delà, on cesse de réessayer.
  *
- * Un travail qui échoue cinq fois n'échoue pas par hasard : il échoue parce
- * que quelque chose est cassé, et le réessayer indéfiniment noierait les
- * journaux au lieu d'attirer l'attention.
+ * Un travail qui échoue six fois n'échoue pas par hasard : il échoue parce que
+ * quelque chose est cassé, et le réessayer indéfiniment noierait les journaux
+ * au lieu d'attirer l'attention.
+ *
+ * Six et non cinq : le contrat de synchronisation annonce à l'application de
+ * gestion cinq reprises — une minute, cinq, trente, deux heures, six heures.
+ * Cinq reprises supposent six tentatives. Promettre l'une et en faire quatre
+ * aurait fait abandonner en silence des remontées de vente que l'autre côté
+ * attendait encore.
  */
-export const MAX_ATTEMPTS = 5
+export const MAX_ATTEMPTS = 6
 
 /** Un travail bloqué plus longtemps que cela a perdu son exécutant. */
 const LOCK_TIMEOUT_MINUTES = 15
@@ -133,10 +148,14 @@ export async function completeJob(id: string): Promise<void> {
 /**
  * Délais de reprise, en minutes, selon le nombre de tentatives déjà faites.
  *
+ * Ce sont exactement ceux que `docs/synchronisation.md` annonce à
+ * l'application de gestion : « 1 min, 5 min, 30 min, 2 h, 6 h ». Les e-mails
+ * suivent la même échelle — rien ne justifiait deux tables.
+ *
  * Au-delà de la liste, on garde le dernier délai — jusqu'à `MAX_ATTEMPTS`, qui
  * arrête les frais.
  */
-const RETRY_DELAYS_MINUTES = [1, 5, 30, 120] as const
+const RETRY_DELAYS_MINUTES = [1, 5, 30, 120, 360] as const
 
 /**
  * Enregistre un échec et reprogramme le travail.

@@ -22,6 +22,7 @@ import {
   serializeOwner,
 } from '@/lib/shop/stock-lock'
 import { ensureCartOwner, findCart, type CartOwner } from '@/lib/shop/cart'
+import { enqueueSyncEvents } from '@/lib/sync/outbound'
 import { evaluateCartLine, isPurchasable } from '@/lib/domain/cart'
 import { isStripeConfigured, stripe } from '@/lib/payments/stripe'
 import type { StartCheckoutInput } from '@/lib/validation/checkout'
@@ -353,6 +354,18 @@ export async function prepareCheckoutFor(
         },
       }
     }
+
+    // La réservation remonte à l'application de gestion : une pièce en cours de
+    // paiement ici ne doit pas être vendue en parallèle sur une autre place de
+    // marché. C'est tout l'intérêt de l'annoncer AVANT la vente plutôt qu'après.
+    //
+    // Le verrou est le fait, pas la commande : si la transaction échoue plus
+    // bas, ni le verrou ni la remontée n'existent.
+    await enqueueSyncEvents(tx, {
+      event: 'article.reserved',
+      articleIds: lines.map((line) => line.articleId),
+      occurredAt: new Date(),
+    })
 
     // Toute commande encore en attente de paiement, du même propriétaire, sur
     // l'une de ces pièces, est écartée : elle ne doit pas rester payable en

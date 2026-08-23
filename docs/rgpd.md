@@ -46,6 +46,33 @@ build. Ajouter une clé d'API dans Vercel sans redéployer brancherait le
 prestataire sans que la page le dise. Le réflexe est le même que pour n'importe
 quelle variable d'environnement : une nouvelle clé, un nouveau déploiement.
 
+### L'application de gestion n'est PAS un sous-traitant, et c'est une décision
+
+La boutique appelle une application tierce à chaque vente, réservation ou
+libération de stock (`docs/synchronisation.md`, §3). Elle ne figure pourtant
+dans aucune liste de sous-traitants, et son absence n'est pas un oubli :
+**le corps envoyé ne contient aucune donnée personnelle.**
+
+Ni nom, ni adresse e-mail, ni adresse postale, ni identifiant d'acheteur, ni
+même l'identifiant de la commande — qui permettrait de recouper deux ventes
+faites par la même personne. Ce qui part : l'identifiant de la pièce dans
+l'application, son numéro d'inventaire, l'instant du fait, et des montants.
+Une application de suivi d'inventaire n'a pas besoin de savoir QUI a acheté
+pour savoir qu'une pièce est partie et à quel prix.
+
+Cette frontière est vérifiée par un test, pas seulement affirmée ici :
+`tests/integration/sync-outbound.test.ts` compose une vraie commande avec un
+nom, une adresse et un e-mail, puis balaye le corps réellement transmis à la
+recherche de chacun. Ajouter un champ personnel à la remontée fait échouer la
+suite.
+
+Le jour où ce corps porterait la moindre donnée personnelle, l'application
+deviendrait un destinataire au sens du RGPD : à inscrire au registre, à couvrir
+par un contrat de sous-traitance, à faire figurer sur la page de
+confidentialité, et à sécuriser au même niveau que les autres. Ce n'est pas une
+formalité qu'on ajoute après coup — c'est la raison pour laquelle le corps est
+construit champ par champ plutôt que par recopie d'une ligne de commande.
+
 ---
 
 ## 2. Durées de conservation

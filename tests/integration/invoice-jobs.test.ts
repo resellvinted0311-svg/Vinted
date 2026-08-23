@@ -2,7 +2,13 @@ import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vites
 import { prisma } from '@/lib/db/client'
 import { allocateInvoiceNumber, formatInvoiceNumber } from '@/lib/shop/invoice'
 import { markOrderPaid } from '@/lib/shop/fulfilment'
-import { enqueue, claimJobs, completeJob, failJob } from '@/lib/jobs/queue'
+import {
+  enqueue,
+  claimJobs,
+  completeJob,
+  failJob,
+  MAX_ATTEMPTS,
+} from '@/lib/jobs/queue'
 import { runJobs } from '@/lib/jobs/worker'
 
 /**
@@ -199,10 +205,26 @@ describe('file de travaux', () => {
 
   it('cesse de réessayer au-delà du plafond', async () => {
     const id = await makeJob()
-    await prisma.job.update({ where: { id }, data: { attempts: 5 } })
+
+    // Le plafond est lu, pas recopié : le contrat de synchronisation annonce
+    // cinq reprises — une minute, cinq, trente, deux heures, six heures — donc
+    // six tentatives. Un test qui écrirait « 5 » en dur passerait au vert le
+    // jour où l'on abaisserait le plafond sous ce que le contrat promet.
+    await prisma.job.update({ where: { id }, data: { attempts: MAX_ATTEMPTS } })
 
     const claimed = await claimJobs('essai', 10)
     expect(claimed.some((job) => job.id === id)).toBe(false)
+  })
+
+  it('laisse passer la dernière tentative promise', async () => {
+    const id = await makeJob()
+    await prisma.job.update({
+      where: { id },
+      data: { attempts: MAX_ATTEMPTS - 1 },
+    })
+
+    const claimed = await claimJobs('essai', 10)
+    expect(claimed.some((job) => job.id === id)).toBe(true)
   })
 
   it('une commande disparue est classée, pas réessayée cinq fois', async () => {

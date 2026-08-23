@@ -76,3 +76,64 @@ export function assertLinesMatchTotal(
     throw new OrderTotalMismatchError(totalCents, sum)
   }
 }
+
+/**
+ * Répartit un montant entre des lignes, au prorata de leur poids.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi cette fonction existe
+ * ---------------------------------------------------------------------------
+ * Le port et la commission de paiement s'appliquent à la COMMANDE : un colis,
+ * un encaissement. La remontée de vente vers l'application de gestion, elle,
+ * porte sur une PIÈCE. Il faut donc en attribuer une part à chacune.
+ *
+ * Ce n'est pas un chiffre inventé, mais c'en est une répartition — et elle est
+ * annoncée comme telle dans `docs/synchronisation.md`. Ce qu'on garantit, c'est
+ * que les parts font exactement le tout : une répartition dont la somme dérive
+ * d'un centime fausse la marge cumulée sur des milliers de ventes.
+ *
+ * ---------------------------------------------------------------------------
+ * Plus forts restes, et non arrondi ligne par ligne
+ * ---------------------------------------------------------------------------
+ * Arrondir chaque part séparément perd ou crée des centimes : 100 centimes sur
+ * trois lignes égales donnerait 33 + 33 + 33 = 99. On attribue donc la partie
+ * entière à chacun, puis les centimes restants aux lignes dont le reste est le
+ * plus grand. C'est la méthode du plus fort reste, celle des répartitions de
+ * sièges — pour la même raison : la somme doit tomber juste.
+ *
+ * Poids tous nuls : on répartit à parts égales. Sans ce cas, une commande dont
+ * toutes les pièces seraient offertes ferait une division par zéro.
+ */
+export function allocateProportionally(
+  totalCents: number,
+  weights: readonly number[],
+): number[] {
+  if (weights.length === 0) return []
+
+  const sum = weights.reduce((acc, weight) => acc + weight, 0)
+  const effective = sum > 0 ? weights : weights.map(() => 1)
+  const effectiveSum = sum > 0 ? sum : weights.length
+
+  const exact = effective.map((weight) => (totalCents * weight) / effectiveSum)
+  const floors = exact.map((value) => Math.floor(value))
+
+  let remaining = totalCents - floors.reduce((acc, value) => acc + value, 0)
+
+  // Les restes les plus grands d'abord ; à égalité, la ligne la plus à gauche.
+  // Le départage est explicite pour que la répartition soit REPRODUCTIBLE :
+  // deux exécutions sur la même commande doivent donner exactement les mêmes
+  // parts, sinon une reprise du travail enverrait un second corps différent du
+  // premier, et l'application n'aurait plus aucun moyen de les rapprocher.
+  const order = exact
+    .map((value, index) => ({ index, remainder: value - Math.floor(value) }))
+    .sort((a, b) => b.remainder - a.remainder || a.index - b.index)
+
+  const shares = [...floors]
+  for (const { index } of order) {
+    if (remaining <= 0) break
+    shares[index] = (shares[index] ?? 0) + 1
+    remaining -= 1
+  }
+
+  return shares
+}

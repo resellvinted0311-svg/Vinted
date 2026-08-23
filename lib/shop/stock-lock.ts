@@ -3,6 +3,7 @@ import 'server-only'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
 import { getSetting } from '@/lib/config/settings'
+import { enqueueSyncEvents } from '@/lib/sync/outbound'
 
 /**
  * Verrou de stock.
@@ -152,7 +153,12 @@ export async function releaseStockLocks(
   const ids = [...new Set(input.articleIds)]
   if (ids.length === 0) return 0
 
-  return tx.$executeRaw`
+  // `RETURNING` plutôt qu'un simple compte : la remontée vers l'application de
+  // gestion doit porter sur les pièces RÉELLEMENT libérées. Celles dont le
+  // verrou appartient à quelqu'un d'autre ne le sont pas, et annoncer leur
+  // libération remettrait en vente, dans l'inventaire de l'autre côté, une
+  // pièce que quelqu'un est en train de payer ici.
+  const released = await tx.$queryRaw<{ id: string }[]>`
     UPDATE "Article"
     SET "status" = 'AVAILABLE',
         "reservedById" = NULL,
@@ -161,7 +167,16 @@ export async function releaseStockLocks(
     WHERE "id" = ANY(${ids}::text[])
       AND "status" = 'RESERVED'
       AND "reservedById" = ${input.ownerId}
+    RETURNING "id"
   `
+
+  await enqueueSyncEvents(tx, {
+    event: 'article.released',
+    articleIds: released.map((row) => row.id),
+    occurredAt: new Date(),
+  })
+
+  return released.length
 }
 
 /**
@@ -176,16 +191,31 @@ export async function releaseStockLocks(
  * ils ne redeviennent pas disponibles.
  */
 export async function releaseExpiredStockLocks(): Promise<number> {
-  return prisma.$executeRaw`
-    UPDATE "Article"
-    SET "status" = 'AVAILABLE',
-        "reservedById" = NULL,
-        "reservedUntil" = NULL,
-        "updatedAt" = now()
-    WHERE "status" = 'RESERVED'
-      AND "reservedUntil" IS NOT NULL
-      AND "reservedUntil" < now()
-  `
+  // La libération et sa remontée tiennent dans UNE transaction. Séparées, une
+  // panne entre les deux laisserait la pièce libre ici et réservée dans
+  // l'inventaire de l'application, sans que rien ne le signale — et l'écart ne
+  // se verrait qu'au prochain rapprochement, s'il a lieu.
+  return prisma.$transaction(async (tx) => {
+    const released = await tx.$queryRaw<{ id: string }[]>`
+      UPDATE "Article"
+      SET "status" = 'AVAILABLE',
+          "reservedById" = NULL,
+          "reservedUntil" = NULL,
+          "updatedAt" = now()
+      WHERE "status" = 'RESERVED'
+        AND "reservedUntil" IS NOT NULL
+        AND "reservedUntil" < now()
+      RETURNING "id"
+    `
+
+    await enqueueSyncEvents(tx, {
+      event: 'article.released',
+      articleIds: released.map((row) => row.id),
+      occurredAt: new Date(),
+    })
+
+    return released.length
+  })
 }
 
 /** Durée de vie d'une réservation, lue en base. Jamais codée en dur. */

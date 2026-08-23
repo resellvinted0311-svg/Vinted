@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db/client'
 import { hasLegalIdentity } from '@/lib/config/site'
 import { allocateInvoiceNumber } from '@/lib/shop/invoice'
 import { enqueue } from '@/lib/jobs/queue'
+import { enqueueSyncEvents } from '@/lib/sync/outbound'
 
 /**
  * Confirmation d'une vente.
@@ -207,6 +208,21 @@ export async function markOrderPaid(input: {
       payload: { orderId: order.id },
     })
 
+    // La vente remonte à l'application de gestion, source de vérité de
+    // l'inventaire. Elle ne peut pas la deviner : une pièce ne part pas parce
+    // qu'on l'a déclarée partie, elle part parce qu'un paiement a été encaissé
+    // ici. Inscrite dans CETTE transaction, comme les e-mails, et pour la même
+    // raison — si la vente est enregistrée, la remontée est due.
+    //
+    // `paidAt` et non `now()` : c'est l'instant du fait, et c'est la clé
+    // d'idempotence de l'autre côté.
+    await enqueueSyncEvents(tx, {
+      event: 'article.sold',
+      articleIds: [...soldIds],
+      occurredAt: input.paidAt,
+      orderId: order.id,
+    })
+
     // Le panier a fait son travail : il disparaît une fois la commande payée.
     // C'est le seul endroit qui a le droit de le vider — jamais une lecture,
     // jamais un affichage.
@@ -317,7 +333,11 @@ export async function expireOrder(orderId: string): Promise<boolean> {
     // une commande abandonnée dont le verrou a expiré, puis rachetée par
     // quelqu'un d'autre, libérerait la pièce sous le nez de l'acheteur
     // suivant — au moment exact où il la paie.
-    await tx.$executeRaw`
+    //
+    // `RETURNING` plutôt qu'un simple compte : on remonte à l'application de
+    // gestion les pièces RÉELLEMENT libérées, pas celles qu'on a demandé de
+    // libérer. La différence est exactement le cas ci-dessus.
+    const released = await tx.$queryRaw<{ id: string }[]>`
       UPDATE "Article"
       SET "status" = 'AVAILABLE',
           "reservedById" = NULL,
@@ -326,7 +346,14 @@ export async function expireOrder(orderId: string): Promise<boolean> {
       WHERE "id" = ANY(${articleIds}::text[])
         AND "status" = 'RESERVED'
         AND "reservedById" = ${order.lockOwnerId}
+      RETURNING "id"
     `
+
+    await enqueueSyncEvents(tx, {
+      event: 'article.released',
+      articleIds: released.map((row) => row.id),
+      occurredAt: new Date(),
+    })
 
     return true
   })

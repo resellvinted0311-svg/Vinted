@@ -32,8 +32,9 @@ numérotée sans rupture et e-mails de confirmation : livrés.
 |---|---|
 | `POST /api/sync/articles` | **livré** — §2 ci-dessous fait foi, aux écarts près listés au §8 |
 | Téléchargement des images | **livré** — file de travaux, cron toutes les 5 minutes |
-| Remontée des ventes vers l'application | **à faire** |
-| `GET /api/sync/changes` | **à faire** |
+| Remontée des ventes vers l'application | **livré** — `article.sold`, `article.reserved`, `article.released` |
+| `article.price_dropped` | transport prêt, **aucun déclencheur** — voir §8.2 |
+| `GET /api/sync/changes` | **livré** |
 
 Le §8, en fin de document, liste les points sur lesquels l'implémentation
 s'écarte de ce que les sections précédentes annonçaient, et pourquoi. Il est
@@ -46,7 +47,7 @@ court, mais il fait foi contre elles.
 | Sens | Qui appelle | Quand | Disponible |
 |---|---|---|---|
 | Inventaire | l'application | à chaque création ou modification d'une pièce | **oui** |
-| Vente | la boutique | à chaque vente, réservation ou baisse de prix | pas encore |
+| Vente | la boutique | à chaque vente, réservation ou libération | **oui** |
 
 ---
 
@@ -276,7 +277,7 @@ Trois précisions que l'implémentation a rendues nécessaires :
 
 ## 3. Vente — la boutique appelle l'application
 
-Disponible **après le lot Stripe**.
+Livré.
 
 ### 3.1 Route
 
@@ -314,7 +315,14 @@ Trois exigences côté application, et elles ne sont pas décoratives :
     "priceCents": 3800,
     "shippingPaidCents": 0,
     "paymentFeeCents": 82,
-    "netCents": 3718
+    "netCents": 3718,
+    "orderLineCount": 1
+  },
+  "shipping": {
+    "parcelWeightGrams": 400,
+    "tierMaxGrams": 500,
+    "carrierCostCents": 480,
+    "chargedCents": 0
   }
 }
 ```
@@ -322,9 +330,43 @@ Trois exigences côté application, et elles ne sont pas décoratives :
 Événements : `article.sold`, `article.reserved`, `article.released`,
 `article.price_dropped`.
 
-`netCents` est ce qui reste après les frais de paiement — la **marge réelle**,
-que l'application ne peut pas calculer seule puisqu'elle ignore le port
-effectivement payé et la commission prélevée.
+Les quatre portent toujours `event`, `externalId`, `sku` et `occurredAt`.
+**`sale` et `shipping` ne figurent que sur `article.sold`** ; un événement de
+réservation ou de libération n'a rien d'autre à dire que le fait lui-même.
+
+`netCents` est ce qui reste après les frais de paiement : `priceCents +
+shippingPaidCents − paymentFeeCents`. Le coût transporteur n'en est PAS déduit —
+il figure à part, dans `shipping.carrierCostCents`, et vous connaissez déjà le
+prix d'achat puisque vous l'avez envoyé. À vous la marge complète, avec des
+chiffres dont vous pouvez vérifier la composition plutôt qu'un total pré-mâché.
+
+**`paymentFeeCents` est CALCULÉ, pas relevé.** La commission réelle figure sur
+la transaction de solde du prestataire de paiement, que la boutique ne va pas
+chercher. Elle est recalculée depuis les taux enregistrés en base — les mêmes
+qui servent au prix plancher, et qui se corrigent en back-office. Exacte tant
+qu'ils le sont.
+
+**Sur une commande à plusieurs pièces, `shippingPaidCents` et `paymentFeeCents`
+sont des PARTS.** Un colis, un encaissement : le port et la commission
+s'appliquent à la commande, pas à la pièce. Ils sont répartis au prorata du
+prix, par la méthode du plus fort reste, de sorte que les parts fassent
+exactement le tout. `orderLineCount` vous dit quand la question se pose : à un,
+la part est le tout.
+
+`shipping.parcelWeightGrams` et `shipping.tierMaxGrams` sont recalculés depuis
+la grille COURANTE — c'est voulu, la question qu'ils servent à poser (« ce
+poids frôle-t-il une borne de palier ? ») porte sur la grille avec laquelle on
+expédie aujourd'hui. `carrierCostCents` et `chargedCents`, eux, sont figés sur
+la commande : ce sont les montants réellement engagés. Le bloc `shipping` est
+**omis** si la zone ne se résout plus ou si le coût transporteur n'a pas été
+enregistré — un chiffre approximatif servirait à calibrer une grille, ce qui est
+exactement l'usage où il ne faut pas approximer.
+
+Sur `article.price_dropped`, un bloc `price` remplace les deux autres :
+
+```json
+{ "price": { "previousCents": 3800, "currentCents": 3400 } }
+```
 
 ### 3.4 Aucune donnée personnelle
 
@@ -338,11 +380,26 @@ et à faire figurer dans la politique de confidentialité.
 ### 3.5 Réémission
 
 La boutique réessaie sur échec ou absence de réponse, avec des délais
-croissants : 1 min, 5 min, 30 min, 2 h, 6 h. L'application doit donc être
-**idempotente** — le même `externalId` avec le même `event` et le même
-`occurredAt` ne doit produire qu'un seul effet.
+croissants : 1 min, 5 min, 30 min, 2 h, 6 h — soit **six tentatives** au total,
+après quoi l'événement est abandonné et consigné.
+
+L'application doit donc être **idempotente** : le même `externalId` avec le même
+`event` et le même `occurredAt` ne doit produire qu'un seul effet. C'est pour
+cela qu'`occurredAt` est l'instant du FAIT — l'encaissement du paiement, la
+pose du verrou — et non celui de l'envoi : il ne bouge pas d'une reprise à
+l'autre.
 
 Une réponse `2xx` vaut acquittement. Tout le reste déclenche une réémission.
+Délai d'attente : 10 secondes.
+
+**Aucun ordre n'est garanti.** Deux événements sur la même pièce peuvent se
+croiser si le premier a été repris. Fiez-vous à `occurredAt`, et ignorez un
+événement plus ancien que l'état que vous avez déjà.
+
+**Sans `SYNC_WEBHOOK_URL` et `SYNC_WEBHOOK_SECRET`, rien n'est mis en file.**
+Une boutique dont l'application n'est pas branchée accumulerait sinon des
+travaux morts. Ce qui n'est pas envoyé n'est pas perdu pour autant : c'est
+exactement le rôle du §3.6.
 
 ### 3.6 Filet de rattrapage
 
@@ -353,8 +410,51 @@ GET https://<boutique>/api/sync/changes?since=2026-08-01T00:00:00Z
 Authorization: Bearer <SYNC_API_KEY>
 ```
 
-Renvoie tous les changements d'état depuis cette date. Rien ne se perd, même si
-l'application reste éteinte une semaine.
+Même clé que l'import. 120 appels par minute — c'est une lecture, et un
+rattrapage se pagine.
+
+Paramètres : `since` (obligatoire, ISO 8601), `after` (l'`externalId` rendu par
+l'appel précédent), `limit` (1 à 200, 200 par défaut).
+
+```json
+{
+  "ok": true,
+  "since": "2026-08-01T00:00:00.000Z",
+  "changes": [
+    {
+      "externalId": "abc-123",
+      "sku": "ART-000051",
+      "slug": "chemises-ralph-lauren-l-51",
+      "status": "SOLD",
+      "priceCents": 3800,
+      "publishedAt": "2026-08-02T09:00:00.000Z",
+      "soldAt": "2026-08-14T10:32:11.000Z",
+      "reservedUntil": null,
+      "updatedAt": "2026-08-14T10:32:11.000Z",
+      "imagesPending": false,
+      "imagesError": null
+    }
+  ],
+  "nextSince": "2026-08-14T10:32:11.000Z",
+  "nextAfter": "abc-123",
+  "hasMore": false
+}
+```
+
+**C'est un ÉTAT, pas un journal d'événements.** Une pièce réservée puis libérée
+puis vendue dans la même fenêtre n'apparaît qu'une fois, dans son état final.
+Pour un inventaire, c'est ce qu'il faut : rejouer la même fenêtre deux fois ne
+produit rien de nouveau, et une application qui a manqué trois transitions
+reçoit la seule qui compte encore.
+
+**Repartez toujours de `nextSince` ET de `nextAfter`.** Les deux vont ensemble :
+un import par lot modifie deux cents pièces à la même milliseconde, et `since`
+seul vous les rendrait indéfiniment — ou en sauterait une partie.
+
+`imagesPending` et `imagesError` répondent à la question que l'import ne peut
+pas trancher : une pièce dont tous les visuels ont échoué reste en brouillon,
+invisible, alors que votre appel a bien répondu `created`. C'est ici, et
+seulement ici, que vous l'apprenez.
 
 ---
 
@@ -606,7 +706,33 @@ lecteur de la version initiale se tromperait.
    d'inventaire, et **ne change plus jamais** — un titre corrigé ne déplace pas
    l'adresse d'une page indexée.
 
-### 8.1 Ce qu'il faut savoir côté exploitation
+### 8.2 Remontée des ventes — ce que le §3 ne disait pas
+
+1. **`sale` et `shipping` ne figurent que sur `article.sold`.** Voir §3.3.
+
+2. **`sale` porte `orderLineCount`**, et sur une commande à plusieurs pièces le
+   port et la commission sont des PARTS réparties au prorata du prix. Le §3.3
+   laissait croire à des montants entiers, ce qui aurait triplé la charge dans
+   vos comptes sur une commande de trois pièces.
+
+3. **`shipping` peut être absent** — zone non résolue, coût transporteur non
+   enregistré. Mieux vaut un bloc manquant qu'un poids approximatif dans un
+   calcul de calibration de grille.
+
+4. **`article.price_dropped` : le transport est prêt, aucun déclencheur ne
+   l'émet.** La seule chose qui change un prix aujourd'hui dans la boutique est
+   votre propre import, et vous le renvoyer serait un écho. L'événement partira
+   quand la baisse automatique sera livrée — c'est un lot à part.
+
+5. **Six tentatives, pas cinq.** Le §3.5 promettait cinq reprises ; cinq
+   reprises supposent six tentatives, et le plafond de la file a été relevé
+   pour que la promesse soit tenue. Il l'était à quatre.
+
+6. **`GET /api/sync/changes` rend un état, pas un journal**, et se pagine avec
+   `nextSince` + `nextAfter`. Voir §3.6.
+
+
+### 8.3 Ce qu’il faut savoir côté exploitation
 
 - **Les images arrivent par le cron.** Une pièce créée est publiée au passage
   suivant de la tâche planifiée, pas dans la seconde. En cas d'échec, cinq
