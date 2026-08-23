@@ -142,10 +142,10 @@ describe('réservation', () => {
 
 describe('totaux', () => {
   const ligne = (
-    currentPriceCents: number,
+    payableCents: number,
     state: CartLineState,
-  ): { currentPriceCents: number; state: CartLineState } => ({
-    currentPriceCents,
+  ): { payableCents: number; state: CartLineState } => ({
+    payableCents,
     state,
   })
 
@@ -158,12 +158,19 @@ describe('totaux', () => {
     expect(total).toBe(2000)
   })
 
-  it('compte le prix COURANT, jamais celui mémorisé à l’ajout', () => {
+  it('compte le prix DÛ, jamais celui mémorisé à l’ajout', () => {
     // Le prix mémorisé est un témoin d'écart, pas une valeur monétaire.
     const total = computeCartSubtotalCents([
       ligne(1600, { kind: 'price-lowered', snapshotCents: 2000, currentCents: 1600 }),
     ])
     expect(total).toBe(1600)
+  })
+
+  it('compte le prix NÉGOCIÉ quand il y en a un', () => {
+    // Une offre acceptée encore valable abaisse le montant dû. Additionner les
+    // prix affichés ferait payer le plein tarif à quelqu'un dont l'offre vient
+    // d'être acceptée — l'inverse exact de ce que la boutique lui a écrit.
+    expect(computeCartSubtotalCents([ligne(3000, { kind: 'ok' })])).toBe(3000)
   })
 
   it('ne retient que le poids des lignes payables', () => {

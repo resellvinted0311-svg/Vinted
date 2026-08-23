@@ -6,7 +6,7 @@ import { hasLegalIdentity } from '@/lib/config/site'
 import { allocateInvoiceNumber } from '@/lib/shop/invoice'
 import { enqueue } from '@/lib/jobs/queue'
 import { enqueueSyncEvents } from '@/lib/sync/outbound'
-import { voidOffersForArticles } from '@/lib/shop/offers'
+import { settleOffersForOrder } from '@/lib/shop/offers'
 
 /**
  * Confirmation d'une vente.
@@ -224,14 +224,18 @@ export async function markOrderPaid(input: {
       orderId: order.id,
     })
 
-    // Les négociations en cours sur ces pièces perdent leur objet.
+    // Les négociations de ces pièces se soldent.
     //
-    // Sans cela, une offre acceptée quelques heures plus tard promettrait un
-    // prix sur un vêtement qui n'existe plus — et la personne l'apprendrait au
-    // moment de payer. `VOIDED` et non `REJECTED` : la proposition n'a pas été
-    // jugée, elle a perdu son objet, et confondre les deux ouvrirait un délai
-    // de carence à quelqu'un qui n'a rien fait de mal.
-    await voidOffersForArticles(tx, [...soldIds], input.paidAt)
+    // Celle qui a SERVI à fixer le prix payé est consommée — elle justifie un
+    // montant porté sur une facture. Les autres sont annulées : sans cela, une
+    // offre acceptée quelques heures plus tard promettrait un prix sur un
+    // vêtement qui n'existe plus, et la personne l'apprendrait au moment de
+    // payer.
+    await settleOffersForOrder(
+      tx,
+      { orderId: order.id, articleIds: [...soldIds] },
+      input.paidAt,
+    )
 
     // Le panier a fait son travail : il disparaît une fois la commande payée.
     // C'est le seul endroit qui a le droit de le vider — jamais une lecture,

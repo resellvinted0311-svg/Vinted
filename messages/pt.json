@@ -254,7 +254,8 @@
     "returnReason": {
       "panier-vide": "O seu cesto esvaziou-se antes de a encomenda abrir.",
       "lignes-bloquees": "A encomenda não pôde abrir: algumas peças do seu cesto já não estão disponíveis. Estão assinaladas abaixo — cabe-lhe decidir o que fazer."
-    }
+    },
+    "negotiatedUntil": "Preço negociado, válido até {date}."
   },
   "checkout": {
     "title": "Nota de encomenda",

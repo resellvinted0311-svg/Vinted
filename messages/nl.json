@@ -254,7 +254,8 @@
     "returnReason": {
       "panier-vide": "Je winkelmand was leeg voordat de bestelling kon openen.",
       "lignes-bloquees": "De bestelling kon niet openen: sommige stuks in je winkelmand zijn niet meer beschikbaar. Ze staan hieronder aangegeven — jij beslist wat ermee gebeurt."
-    }
+    },
+    "negotiatedUntil": "Onderhandelde prijs, geldig tot {date}."
   },
   "checkout": {
     "title": "Bestelbon",

@@ -254,7 +254,8 @@
     "returnReason": {
       "panier-vide": "Votre panier s’est vidé avant l’ouverture de la commande.",
       "lignes-bloquees": "La commande n’a pas pu s’ouvrir : des pièces de votre panier ne sont plus disponibles. Elles sont signalées ci-dessous — à vous de décider quoi en faire."
-    }
+    },
+    "negotiatedUntil": "Prix négocié, valable jusqu’au {date}."
   },
   "checkout": {
     "title": "Bon de commande",

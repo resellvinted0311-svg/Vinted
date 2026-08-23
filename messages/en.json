@@ -254,7 +254,8 @@
     "returnReason": {
       "panier-vide": "Your basket emptied before the order could open.",
       "lignes-bloquees": "The order could not open: some items in your basket are no longer available. They are flagged below — yours to decide what to do with."
-    }
+    },
+    "negotiatedUntil": "Negotiated price, valid until {date}."
   },
   "checkout": {
     "title": "Order form",

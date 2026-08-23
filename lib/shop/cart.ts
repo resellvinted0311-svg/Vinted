@@ -3,6 +3,8 @@ import 'server-only'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
 import { isArticleListed } from '@/lib/db/visibility'
+import { payablePriceCents } from '@/lib/domain/offers'
+import { readNegotiatedPrices } from '@/lib/shop/negotiated-price'
 import {
   articleIdSchema,
   articleIdListSchema,
@@ -174,8 +176,28 @@ export interface CartLineView {
     alt: string | null
     blurhash: string | null
   } | null
-  /** Prix courant — le seul qui fasse foi. */
+  /** Prix affiché aujourd'hui. */
   currentPriceCents: number
+  /**
+   * Ce qui est RÉELLEMENT dû pour cette ligne.
+   *
+   * Égal au prix affiché, sauf quand une offre acceptée est encore valable —
+   * et jamais supérieur : une baisse automatique peut avoir amené le prix
+   * affiché sous le prix négocié, et facturer alors l'offre ferait payer plus
+   * cher pour avoir négocié.
+   */
+  payableCents: number
+  /**
+   * L'offre qui explique l'écart, quand il y en a une.
+   *
+   * Sert à l'affichage : une ligne moins chère sans explication ressemble à
+   * une erreur, et une cliente qui ne comprend pas un montant n'achète pas.
+   */
+  negotiated: {
+    offerId: string
+    amountCents: number
+    priceValidUntil: Date
+  } | null
   weightGrams: number
   state: CartLineState
 }
@@ -260,8 +282,19 @@ export async function readCart(locale: string): Promise<CartView> {
   // se voit qu'une fois qu'il a coûté une vente.
   const [{ now }] = await prisma.$queryRaw<[{ now: Date }]>`SELECT now() AS "now"`
 
+  // Les prix négociés du panier, en une seule requête. À la LECTURE et non
+  // figés à l'ajout : on met une pièce au panier, puis on propose un prix, et
+  // la réponse arrive des heures plus tard. Voir `negotiated-price.ts`.
+  const negotiatedByArticle = await readNegotiatedPrices(
+    prisma,
+    owner,
+    items.map((item) => item.articleId),
+    now,
+  )
+
   const lines: CartLineView[] = items.map((item) => {
     const article = item.article
+    const negotiated = negotiatedByArticle.get(item.articleId) ?? null
     const translation =
       article.translations.find((entry) => entry.locale === locale) ??
       article.translations.find((entry) => entry.locale === 'fr') ??
@@ -276,6 +309,10 @@ export async function readCart(locale: string): Promise<CartView> {
       brandName: article.brand?.name ?? null,
       image: article.images[0] ?? null,
       currentPriceCents: article.priceCents,
+      payableCents: payablePriceCents(article.priceCents, negotiated
+        ? { status: 'ACCEPTED', amountCents: negotiated.amountCents, priceValidUntil: negotiated.priceValidUntil }
+        : null, now),
+      negotiated,
       weightGrams: article.weightGrams,
       state: evaluateCartLine({
         snapshotUnitPriceCents: item.unitPriceCents,

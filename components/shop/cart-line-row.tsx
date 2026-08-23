@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { Link } from '@/lib/i18n/navigation'
 import { cn } from '@/lib/utils/cn'
-import { formatPrice } from '@/lib/utils/format'
+import { formatDate, formatPrice } from '@/lib/utils/format'
 import { isPurchasable } from '@/lib/domain/cart'
 import type { CartLineView } from '@/lib/shop/cart'
 import { ArticleImage } from './article-image'
@@ -88,16 +88,51 @@ export function CartLineRow({
           ) : null}
 
           <CartLineStateNote state={line.state} />
+
+          {/*
+            Nommer la raison de l'écart. Le prix barré seul se lit comme une
+            promotion de la boutique ; c'est une négociation, et il vaut jusqu'à
+            une date précise après laquelle le plein tarif revient.
+          */}
+          {line.negotiated ? (
+            <p className="mt-1 text-xs text-muted">
+              {t('negotiatedUntil', {
+                date: formatDate(line.negotiated.priceValidUntil, locale),
+              })}
+            </p>
+          ) : null}
         </div>
 
         <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
           {/*
-            Le prix COURANT, jamais celui mémorisé à la mise au panier : c'est
-            lui qui sera facturé, et c'est lui que totalise le sous-total.
+            Le prix RÉELLEMENT DÛ, jamais celui mémorisé à la mise au panier :
+            c'est lui qui sera facturé, et c'est lui que totalise le sous-total.
+
+            Quand une offre acceptée l'abaisse, le prix affiché reste visible,
+            barré. Montrer le seul montant négocié priverait la personne de la
+            comparaison qu'elle vient précisément d'obtenir — et un montant plus
+            bas sans explication ressemble à une erreur.
           */}
-          <span data-numeric className="text-lg text-ink">
-            {formatPrice(line.currentPriceCents, locale)}
-          </span>
+          <div className="flex items-baseline gap-2 sm:flex-col sm:items-end sm:gap-0.5">
+            {line.negotiated ? (
+              <span
+                data-numeric
+                className="text-xs text-muted line-through"
+                aria-hidden
+              >
+                {formatPrice(line.currentPriceCents, locale)}
+              </span>
+            ) : null}
+            <span
+              data-numeric
+              className={cn(
+                'text-lg',
+                line.negotiated ? 'text-mark' : 'text-ink',
+              )}
+            >
+              {formatPrice(line.payableCents, locale)}
+            </span>
+          </div>
           {children}
         </div>
       </div>

@@ -497,6 +497,56 @@ export async function expireStaleOffers(now = new Date()): Promise<number> {
 }
 
 /**
+ * Solde les négociations d'une commande qui vient d'être payée.
+ *
+ * ---------------------------------------------------------------------------
+ * Deux sorts, et les confondre serait une faute
+ * ---------------------------------------------------------------------------
+ * L'offre qui a SERVI à cette vente est `CONSUMED` : elle a produit son effet,
+ * elle justifie un montant porté sur une facture, et elle ne doit plus pouvoir
+ * en produire un second.
+ *
+ * Les autres — celles de personnes qui négociaient la même pièce — sont
+ * `VOIDED`. Elles ont perdu leur objet, elles n'ont pas été jugées.
+ *
+ * Le défaut que cela corrige : `voidOffersForArticles` éteignait indistinc-
+ * tement tout ce qui était `PENDING` ou `ACCEPTED` sur la pièce vendue, y
+ * compris l'offre acceptée qui venait de servir à fixer le prix payé. Une
+ * facture aurait alors porté un montant justifié par une offre marquée « sans
+ * objet ».
+ *
+ * L'ordre compte : on consomme d'abord, on annule ensuite. À l'inverse,
+ * l'annulation emporterait l'offre utilisée avant qu'on ait pu la consommer.
+ */
+export async function settleOffersForOrder(
+  tx: Prisma.TransactionClient,
+  input: { orderId: string; articleIds: readonly string[] },
+  now = new Date(),
+): Promise<{ consumed: number; voided: number }> {
+  const used = await tx.orderItem.findMany({
+    where: { orderId: input.orderId, offerId: { not: null } },
+    select: { offerId: true },
+  })
+
+  const usedIds = used.flatMap((item) => (item.offerId ? [item.offerId] : []))
+
+  const consumed =
+    usedIds.length === 0
+      ? 0
+      : await tx.$executeRaw`
+          UPDATE "Offer"
+          SET "status" = 'CONSUMED',
+              "updatedAt" = now()
+          WHERE "id" = ANY(${usedIds}::text[])
+            AND "status" = 'ACCEPTED'
+        `
+
+  const voided = await voidOffersForArticles(tx, input.articleIds, now)
+
+  return { consumed, voided }
+}
+
+/**
  * Éteint les offres d'une pièce qui vient de partir.
  *
  * À appeler DANS la transaction de vente. Laisser une offre en attente sur une

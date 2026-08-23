@@ -254,7 +254,8 @@
     "returnReason": {
       "panier-vide": "Tu cesta se vació antes de abrir el pedido.",
       "lignes-bloquees": "El pedido no ha podido abrirse: algunas piezas de tu cesta ya no están disponibles. Están señaladas abajo; tú decides qué hacer con ellas."
-    }
+    },
+    "negotiatedUntil": "Precio negociado, válido hasta el {date}."
   },
   "checkout": {
     "title": "Hoja de pedido",

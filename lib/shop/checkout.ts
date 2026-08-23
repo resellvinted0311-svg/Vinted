@@ -23,6 +23,8 @@ import {
 } from '@/lib/shop/stock-lock'
 import { ensureCartOwner, findCart, type CartOwner } from '@/lib/shop/cart'
 import { enqueueSyncEvents } from '@/lib/sync/outbound'
+import { payablePriceCents } from '@/lib/domain/offers'
+import { readNegotiatedPrices } from '@/lib/shop/negotiated-price'
 import { evaluateCartLine, isPurchasable } from '@/lib/domain/cart'
 import { isStripeConfigured, stripe } from '@/lib/payments/stripe'
 import type { StartCheckoutInput } from '@/lib/validation/checkout'
@@ -98,7 +100,23 @@ const STRIPE_MIN_SESSION_MINUTES = 30
 /** Lignes du panier, relues avec ce qu'il faut pour décider et facturer. */
 type CheckoutLine = {
   articleId: string
+  /**
+   * Ce qui sera FACTURÉ : le prix affiché, ou le prix négocié quand une offre
+   * acceptée est encore valable.
+   *
+   * Recalculé ici, dans la transaction, à partir de la base. Le navigateur n'a
+   * envoyé aucun montant — le brief l'interdit — et la page du panier a beau
+   * afficher le même chiffre, c'est celui-ci qui part au paiement.
+   */
   priceCents: number
+  /**
+   * L'offre qui justifie ce prix, ou `null`.
+   *
+   * Figée sur `OrderItem` : contrairement au panier, où elle est résolue à
+   * chaque lecture, elle ne doit plus bouger une fois la commande passée. Elle
+   * explique un montant porté sur une facture.
+   */
+  offerId: string | null
   costCents: number
   weightGrams: number
   title: string
@@ -151,6 +169,16 @@ async function readCheckoutLines(
 
   const [{ now }] = await tx.$queryRaw<[{ now: Date }]>`SELECT now() AS "now"`
 
+  // Les prix négociés, relus DANS la transaction. Le panier les a déjà
+  // affichés, mais un affichage n'engage rien : une offre peut avoir expiré
+  // entre la page et le clic, et c'est ce calcul-ci qui facture.
+  const negotiatedByArticle = await readNegotiatedPrices(
+    tx,
+    owner,
+    items.map((item) => item.articleId),
+    now,
+  )
+
   const lines: CheckoutLine[] = []
   const blockedArticleIds: string[] = []
 
@@ -183,9 +211,22 @@ async function readCheckoutLines(
       article.translations.find((entry) => entry.locale === 'fr') ??
       article.translations[0]
 
+    const negotiated = negotiatedByArticle.get(item.articleId) ?? null
+
     lines.push({
       articleId: item.articleId,
-      priceCents: article.priceCents,
+      priceCents: payablePriceCents(
+        article.priceCents,
+        negotiated
+          ? {
+              status: 'ACCEPTED',
+              amountCents: negotiated.amountCents,
+              priceValidUntil: negotiated.priceValidUntil,
+            }
+          : null,
+        now,
+      ),
+      offerId: negotiated?.offerId ?? null,
       costCents: article.costCents,
       weightGrams: article.weightGrams,
       title: translation?.title ?? article.sku,
@@ -442,6 +483,10 @@ export async function prepareCheckoutFor(
             titleSnapshot: line.title,
             imageSnapshot: line.imageUrl,
             unitPriceCents: line.priceCents,
+            // L'offre qui justifie le prix, quand il a été négocié. Sans elle,
+            // une ligne de facture à 30 € sur une pièce affichée 38 € serait
+            // inexplicable six mois plus tard.
+            offerId: line.offerId,
             // Instantané du coût d'achat : sert au calcul de marge a
             // posteriori, ne sort jamais côté client.
             costCentsSnapshot: line.costCents,

@@ -145,18 +145,28 @@ export function needsAttention(state: CartLineState): boolean {
 }
 
 /**
- * Sous-total des seules lignes achetables, au prix COURANT.
+ * Sous-total des seules lignes achetables, au prix RÉELLEMENT DÛ.
  *
- * Le prix mémorisé à l'ajout n'entre jamais dans un total : c'est un témoin
- * d'écart, pas une valeur monétaire. S'en servir laisserait payer le prix
- * d'hier une pièce dont le prix a changé — dans un sens comme dans l'autre.
+ * ---------------------------------------------------------------------------
+ * Trois prix cohabitent, et un seul se facture
+ * ---------------------------------------------------------------------------
+ *  - `snapshotUnitPriceCents`, mémorisé à l'ajout : c'est un TÉMOIN D'ÉCART,
+ *    jamais une valeur monétaire. S'en servir laisserait payer le prix d'hier
+ *    une pièce dont le prix a changé, dans un sens comme dans l'autre ;
+ *  - `currentPriceCents`, le prix affiché aujourd'hui ;
+ *  - `payableCents`, ce qui est dû — le prix affiché, ou le prix négocié quand
+ *    une offre acceptée est encore valable.
+ *
+ * Le total lit le dernier. Additionner les prix affichés ferait payer le plein
+ * tarif à quelqu'un dont l'offre vient d'être acceptée, c'est-à-dire
+ * exactement l'inverse de ce que la boutique vient de lui écrire.
  */
 export function computeCartSubtotalCents(
-  lines: readonly { currentPriceCents: number; state: CartLineState }[],
+  lines: readonly { payableCents: number; state: CartLineState }[],
 ): number {
   return lines
     .filter((line) => isPurchasable(line.state))
-    .reduce((sum, line) => sum + line.currentPriceCents, 0)
+    .reduce((sum, line) => sum + line.payableCents, 0)
 }
 
 /** Poids des seules lignes achetables — le reste ne part pas dans le colis. */
@@ -186,7 +196,7 @@ export interface CartTally {
  * devenir indisponible.
  */
 export function tallyCart(
-  lines: readonly { currentPriceCents: number; state: CartLineState }[],
+  lines: readonly { payableCents: number; state: CartLineState }[],
 ): CartTally {
   const purchasable = lines.filter((line) => isPurchasable(line.state))
 

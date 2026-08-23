@@ -254,7 +254,8 @@
     "returnReason": {
       "panier-vide": "Il tuo carrello si è svuotato prima dell’apertura dell’ordine.",
       "lignes-bloquees": "L’ordine non ha potuto aprirsi: alcuni pezzi del tuo carrello non sono più disponibili. Sono segnalati qui sotto — sta a te decidere che farne."
-    }
+    },
+    "negotiatedUntil": "Prezzo negoziato, valido fino al {date}."
   },
   "checkout": {
     "title": "Buono d’ordine",
