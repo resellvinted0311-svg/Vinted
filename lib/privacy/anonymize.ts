@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { prisma } from '@/lib/db/client'
-import type { Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 
 /**
  * Effacement d'un compte — article 17 du RGPD.
@@ -42,6 +42,54 @@ import type { Prisma } from '@prisma/client'
  */
 function tombstoneEmail(userId: string): string {
   return `anonyme-${userId}@anonymise.invalid`
+}
+
+/**
+ * Retire le téléphone d'une adresse figée, sans toucher au reste.
+ *
+ * Les adresses des commandes sont des colonnes `Json` : on ne peut pas les
+ * mettre à jour par champ en SQL sans réécrire l'objet. On le relit donc, on
+ * en retire une clé, et on le réécrit — en préservant tout ce qu'on ne
+ * reconnaît pas, parce que la forme de cet objet a pu changer depuis.
+ */
+function stripPhone(value: Prisma.JsonValue): Prisma.InputJsonValue | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+
+  const record = value as Record<string, Prisma.JsonValue>
+  if (!('phone' in record)) return null
+
+  const { phone: _phone, ...rest } = record
+  return rest as Prisma.InputJsonValue
+}
+
+/**
+ * Retire le téléphone des adresses figées d'un lot de commandes.
+ *
+ * Ligne par ligne, et c'est inévitable : chaque adresse est un objet distinct.
+ * Le nombre de commandes d'une seule personne se compte en dizaines au plus.
+ */
+async function stripPhonesFromOrders(
+  tx: Prisma.TransactionClient,
+  where: Prisma.OrderWhereInput,
+): Promise<void> {
+  const orders = await tx.order.findMany({
+    where,
+    select: { id: true, shippingAddress: true, billingAddress: true },
+  })
+
+  for (const order of orders) {
+    const shipping = stripPhone(order.shippingAddress)
+    const billing = stripPhone(order.billingAddress)
+    if (!shipping && !billing) continue
+
+    await tx.order.update({
+      where: { id: order.id },
+      data: {
+        ...(shipping ? { shippingAddress: shipping } : {}),
+        ...(billing ? { billingAddress: billing } : {}),
+      },
+    })
+  }
 }
 
 /**
@@ -92,10 +140,30 @@ export async function anonymizeUser(
     // obligatoire de la facture (article 242 nonies A de l'annexe II du CGI) :
     // elle s'efface. Le nom et l'adresse de facturation, eux, le sont, et
     // restent. C'est là que passe la frontière de l'article 17.3.b.
+    //
+    // Le NUMÉRO DE TÉLÉPHONE ne figure dans aucune de ces mentions. Il est
+    // demandé pour la livraison, il ne sert plus une fois la pièce remise, et
+    // il est retiré des deux adresses figées — voir `stripPhone` plus bas.
     await tx.order.updateMany({
       where: { userId },
-      data: { email: tombstoneEmail(userId), customerNote: null },
+      data: {
+        email: tombstoneEmail(userId),
+        customerNote: null,
+        // Le propriétaire du verrou de stock porte le JETON DE SESSION
+        // boutique. Il n'a plus aucune utilité une fois la vente conclue — le
+        // verrou est libéré depuis longtemps — et il reste un identifiant
+        // indirect de la personne.
+        //
+        // Surtout : `ownerScope`, dans lib/db/queries/orders.ts, ouvre une
+        // commande à qui présente ce jeton. Le laisser en place après un
+        // effacement laisserait un navigateur encore porteur du cookie rouvrir
+        // la commande et lire l'adresse de facturation conservée. On ferme la
+        // porte en même temps qu'on vide l'identité.
+        lockOwnerId: null,
+      },
     })
+
+    await stripPhonesFromOrders(tx, { userId })
 
     await tx.user.update({
       where: { id: userId },
@@ -147,3 +215,97 @@ export async function eraseAccount(userId: string): Promise<AccountErasure> {
   await anonymizeUser(userId)
   return { outcome: 'anonymized', retainedOrders }
 }
+
+/**
+ * Vide un tunnel de commande ABANDONNÉ de ses coordonnées.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi une commande jamais payée n'est pas une facture
+ * ---------------------------------------------------------------------------
+ * Aucun paiement n'a eu lieu, aucune facture n'a été émise, aucun exercice
+ * comptable ne la porte. L'obligation de dix ans de l'article L123-22 ne la
+ * couvre pas, et l'article 17.3.b du RGPD — qui écarte l'effacement quand une
+ * loi impose la conservation — ne s'applique donc pas non plus.
+ *
+ * Il ne reste alors rien pour justifier de garder un nom, une rue, un code
+ * postal, une ville, un téléphone et une adresse e-mail. C'est l'article 5.1.e :
+ * une durée n'excédant pas ce qui est nécessaire.
+ *
+ * ---------------------------------------------------------------------------
+ * On vide, on ne supprime pas
+ * ---------------------------------------------------------------------------
+ * Trois raisons, dans cet ordre :
+ *
+ *  1. un paiement a PU aboutir sans que le webhook nous parvienne. Supprimer
+ *     la ligne détruirait la seule trace de la tentative, au moment précis où
+ *     elle servirait à retrouver un débit orphelin. On garde donc les
+ *     montants, les dates et les identifiants Stripe ;
+ *  2. la suite des numéros de commande reste continue et vérifiable ;
+ *  3. ce qui subsiste ne désigne plus personne : ni nom, ni adresse, ni
+ *     e-mail, ni note, ni jeton de session.
+ *
+ * ---------------------------------------------------------------------------
+ * Une commande PAYÉE n'est jamais touchée
+ * ---------------------------------------------------------------------------
+ * Le prédicat porte sur `paidAt` et `invoiceNumber`, pas sur le statut.
+ * `CANCELLED` recouvre deux réalités opposées — un tunnel abandonné et une
+ * vente annulée après encaissement — et seule la date de paiement les
+ * distingue de façon sûre.
+ */
+export async function anonymizeAbandonedOrders(
+  cutoff: Date,
+  /**
+   * Borne par passage. La purge tourne sur une fonction serverless au temps
+   * d'exécution borné : traiter des milliers de lignes d'un coup échouerait en
+   * entier, et n'en anonymiserait aucune. Le reste passe au tour suivant.
+   */
+  limit = 200,
+): Promise<number> {
+  const abandoned = await prisma.order.findMany({
+    where: {
+      createdAt: { lt: cutoff },
+      // Jamais payée, sous les deux angles. Les deux, parce qu'une commande
+      // facturée sans `paidAt` serait une anomalie qu'il vaut mieux épargner
+      // que détruire.
+      paidAt: null,
+      invoiceNumber: null,
+      // Déjà vidée : rien à refaire. C'est ce qui rend la purge idempotente.
+      email: { not: { startsWith: ABANDONED_EMAIL_PREFIX } },
+    },
+    select: { id: true },
+    take: limit,
+  })
+
+  if (abandoned.length === 0) return 0
+
+  const ids = abandoned.map((order) => order.id)
+
+  await prisma.$transaction(async (tx) => {
+    for (const id of ids) {
+      await tx.order.update({
+        where: { id },
+        data: {
+          email: `${ABANDONED_EMAIL_PREFIX}${id}@anonymise.invalid`,
+          customerNote: null,
+          // Le jeton de session ouvre la commande via `ownerScope` : il part
+          // avec le reste.
+          lockOwnerId: null,
+          shippingAddress: {},
+          billingAddress: {},
+          servicePointId: null,
+          servicePointData: Prisma.DbNull,
+        },
+      })
+    }
+  })
+
+  return ids.length
+}
+
+/**
+ * Préfixe des adresses de commandes abandonnées.
+ *
+ * Sert de marqueur : une commande déjà vidée ne l'est pas deux fois. Le
+ * domaine `.invalid` est réservé par la RFC 2606 et ne peut être routé.
+ */
+const ABANDONED_EMAIL_PREFIX = 'abandon-'

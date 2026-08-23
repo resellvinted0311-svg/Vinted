@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { locales } from '@/lib/i18n/routing'
+import { PROCESSING_REGISTER } from '@/lib/config/privacy'
 
 /**
  * Les 8 fichiers de traduction doivent porter exactement les mêmes clés.
@@ -89,5 +90,47 @@ describe('fichiers de traduction', () => {
     }
 
     expect(offenders).toEqual([])
+  })
+})
+
+/**
+ * Le registre des traitements est une SOURCE, pas un texte.
+ *
+ * Chaque entrée est rendue sur la page publique de confidentialité par la clé
+ * `processing.<key>`. Ajouter un traitement au registre sans ajouter sa
+ * traduction affiche la clé brute — sur la page qui, précisément, doit être
+ * exacte et lisible.
+ *
+ * C'est arrivé : le traitement des tunnels de commande abandonnés a été
+ * déclaré au registre avant d'exister dans les huit fichiers de messages. Ce
+ * test empêche que ça recommence, et il le fait pour TOUTES les entrées, pas
+ * seulement celle-là.
+ */
+describe('registre des traitements', () => {
+  it('chaque traitement déclaré a son libellé dans les huit langues', () => {
+    const manquantes: string[] = []
+
+    for (const locale of locales) {
+      const messages = loadMessages(locale) as {
+        privacy?: { processing?: Record<string, unknown>; basis?: Record<string, unknown> }
+      }
+
+      for (const processing of PROCESSING_REGISTER) {
+        if (!messages.privacy?.processing?.[processing.key]) {
+          manquantes.push(`${locale} : privacy.processing.${processing.key}`)
+        }
+        // La base légale aussi : elle est rendue par `basis.<valeur>`.
+        if (!messages.privacy?.basis?.[processing.basis]) {
+          manquantes.push(`${locale} : privacy.basis.${processing.basis}`)
+        }
+      }
+    }
+
+    expect(manquantes).toEqual([])
+  })
+
+  it('surveille bien quelque chose', () => {
+    // Sans ce garde-fou, un registre vide rendrait le test ci-dessus vert.
+    expect(PROCESSING_REGISTER.length).toBeGreaterThan(3)
   })
 })

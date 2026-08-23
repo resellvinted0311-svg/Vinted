@@ -464,7 +464,8 @@
     },
     "processing": {
       "account": "Your account",
-      "orders": "Your orders and invoices",
+      "orders": "Your paid orders and invoices",
+      "abandoned-orders": "An order started and then abandoned",
       "favorites": "Your favourites",
       "cart": "Your basket",
       "marketing": "New arrivals by email",

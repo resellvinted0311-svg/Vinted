@@ -464,7 +464,8 @@
     },
     "processing": {
       "account": "Il suo account",
-      "orders": "I suoi ordini e le sue fatture",
+      "orders": "I tuoi ordini pagati e le tue fatture",
+      "abandoned-orders": "Un ordine iniziato e poi abbandonato",
       "favorites": "I suoi preferiti",
       "cart": "Il suo carrello",
       "marketing": "Le novità via e-mail",

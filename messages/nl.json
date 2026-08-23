@@ -464,7 +464,8 @@
     },
     "processing": {
       "account": "Uw account",
-      "orders": "Uw bestellingen en facturen",
+      "orders": "Je betaalde bestellingen en facturen",
+      "abandoned-orders": "Een gestarte en daarna afgebroken bestelling",
       "favorites": "Uw favorieten",
       "cart": "Uw winkelmandje",
       "marketing": "Nieuwe stukken per e-mail",

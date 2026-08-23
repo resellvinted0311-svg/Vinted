@@ -3,7 +3,10 @@ import { prisma } from '@/lib/db/client'
 import { anonymizeUser, eraseAccount } from '@/lib/privacy/anonymize'
 import { exportPersonalData } from '@/lib/privacy/export'
 import { purgeExpiredPersonalData } from '@/lib/privacy/retention'
-import { INACTIVE_ACCOUNT_RETENTION_DAYS } from '@/lib/config/privacy'
+import {
+  ABANDONED_ORDER_RETENTION_DAYS,
+  INACTIVE_ACCOUNT_RETENTION_DAYS,
+} from '@/lib/config/privacy'
 
 /**
  * Droits des personnes, contre une vraie base.
@@ -36,6 +39,15 @@ async function cleanup(): Promise<void> {
     await prisma.userToken.deleteMany({ where: { userId: { in: ids } } })
     await prisma.user.deleteMany({ where: { id: { in: ids } } })
   }
+
+  // Les commandes d'un visiteur n'ont pas de compte : elles ne sont pas
+  // emportées par le nettoyage ci-dessus.
+  await prisma.orderItem.deleteMany({
+    where: { order: { orderNumber: { startsWith: PREFIX } } },
+  })
+  await prisma.order.deleteMany({
+    where: { orderNumber: { startsWith: PREFIX } },
+  })
 
   await prisma.guestFavorite.deleteMany({
     where: { sessionToken: { startsWith: PREFIX } },
@@ -85,6 +97,50 @@ async function makeOrder(userId: string, suffix: string) {
     },
     select: { id: true },
   })
+}
+
+/**
+ * Un tunnel de commande abandonné : jamais payé, aucune facture, mais des
+ * coordonnées complètes — c'est le cas le plus fréquent d'un site marchand.
+ */
+async function makeAbandonedOrder(
+  suffix: string,
+  createdAt: Date,
+  sessionToken = `${PREFIX}jeton-${suffix}`,
+) {
+  return prisma.order.create({
+    data: {
+      orderNumber: `${PREFIX}${suffix}`,
+      userId: null,
+      lockOwnerId: sessionToken,
+      email: `${PREFIX}${suffix}@exemple.fr`,
+      locale: 'fr',
+      status: 'PENDING_PAYMENT',
+      subtotalCents: 2000,
+      shippingCents: 500,
+      totalCents: 2500,
+      shippingAddress: {
+        firstName: 'Nina',
+        lastName: 'Exemple',
+        line1: '12 rue du Registre',
+        postalCode: '59000',
+        city: 'Lille',
+        country: 'FR',
+        phone: '0600000000',
+      },
+      billingAddress: { lastName: 'Exemple', city: 'Lille' },
+      shippingCarrierCode: 'mock',
+      shippingServiceCode: 'relais',
+      servicePointId: 'PR-12345',
+      customerNote: 'Interphone au fond de la cour',
+      createdAt,
+    },
+    select: { id: true },
+  })
+}
+
+function daysAgo(days: number): Date {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 }
 
 describe('effacement d’un compte', () => {
@@ -317,5 +373,150 @@ describe('purge périodique', () => {
       select: { anonymizedAt: true },
     })
     expect(after.anonymizedAt).not.toBeNull()
+  })
+})
+
+describe('tunnels de commande abandonnés', () => {
+  it('vide les coordonnées d’une commande jamais payée', async () => {
+    // Le défaut d'origine : la purge écartait la table `Order` EN BLOC au motif
+    // que les factures s'y trouvent. Un tunnel abandonné — nom, rue, code
+    // postal, ville, téléphone, adresse e-mail — n'était donc purgé par rien,
+    // indéfiniment. Ce n'est pas une pièce comptable : aucun paiement, aucune
+    // facture, aucun exercice ne la porte.
+    const order = await makeAbandonedOrder(
+      'abandon',
+      daysAgo(ABANDONED_ORDER_RETENTION_DAYS + 1),
+    )
+
+    const report = await purgeExpiredPersonalData()
+    expect(report.anonymizedAbandonedOrders).toBeGreaterThanOrEqual(1)
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: {
+        email: true,
+        customerNote: true,
+        lockOwnerId: true,
+        shippingAddress: true,
+        billingAddress: true,
+        servicePointId: true,
+      },
+    })
+
+    // Plus rien ne désigne personne.
+    expect(after.email).not.toContain('exemple.fr')
+    expect(after.customerNote).toBeNull()
+    expect(after.lockOwnerId).toBeNull()
+    expect(after.servicePointId).toBeNull()
+    expect(after.shippingAddress).toEqual({})
+    expect(after.billingAddress).toEqual({})
+
+    // Et on le vérifie sur le contenu sérialisé, pas seulement clé par clé :
+    // une adresse laissée dans un sous-objet ne se voit pas autrement.
+    const serialized = JSON.stringify(after)
+    expect(serialized).not.toContain('rue du Registre')
+    expect(serialized).not.toContain('0600000000')
+    expect(serialized).not.toContain('59000')
+    expect(serialized).not.toContain('Interphone')
+  })
+
+  it('garde la trace de l’abandon : montants, dates, numéro', async () => {
+    // On vide, on ne supprime pas. Un paiement a PU aboutir sans que le webhook
+    // nous parvienne : détruire la ligne effacerait la seule trace d'un débit
+    // à retrouver, au moment précis où elle servirait.
+    const order = await makeAbandonedOrder(
+      'trace',
+      daysAgo(ABANDONED_ORDER_RETENTION_DAYS + 1),
+    )
+
+    await purgeExpiredPersonalData()
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: { orderNumber: true, totalCents: true, status: true },
+    })
+    expect(after.orderNumber).toBe(`${PREFIX}trace`)
+    expect(after.totalCents).toBe(2500)
+  })
+
+  it('ne touche pas une commande abandonnée RÉCENTE', async () => {
+    // Quelqu'un qu'on interrompt au moment de payer doit pouvoir revenir.
+    const order = await makeAbandonedOrder('recent', daysAgo(1))
+
+    await purgeExpiredPersonalData()
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: { email: true, customerNote: true },
+    })
+    expect(after.email).toContain('exemple.fr')
+    expect(after.customerNote).toBe('Interphone au fond de la cour')
+  })
+
+  it('ne touche JAMAIS une commande payée, si ancienne soit-elle', async () => {
+    // L'erreur symétrique, et la plus grave : purger une pièce comptable.
+    // Dix ans, article L123-22 du code de commerce.
+    const order = await makeAbandonedOrder(
+      'payee',
+      daysAgo(ABANDONED_ORDER_RETENTION_DAYS + 400),
+    )
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: 'PAID',
+        paidAt: daysAgo(ABANDONED_ORDER_RETENTION_DAYS + 399),
+        invoiceNumber: `${PREFIX}FA-1`,
+      },
+    })
+
+    await purgeExpiredPersonalData()
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: { email: true, shippingAddress: true, invoiceNumber: true },
+    })
+    expect(after.email).toContain('exemple.fr')
+    expect(JSON.stringify(after.shippingAddress)).toContain('rue du Registre')
+    expect(after.invoiceNumber).toBe(`${PREFIX}FA-1`)
+  })
+
+  it('ne touche pas une commande ANNULÉE APRÈS paiement', async () => {
+    // `CANCELLED` recouvre deux réalités opposées : un tunnel abandonné et une
+    // vente annulée après encaissement. Seule la date de paiement les
+    // distingue — c'est pour cela que le prédicat porte sur `paidAt`, pas sur
+    // le statut.
+    const order = await makeAbandonedOrder(
+      'annulee',
+      daysAgo(ABANDONED_ORDER_RETENTION_DAYS + 10),
+    )
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: 'CANCELLED',
+        paidAt: daysAgo(ABANDONED_ORDER_RETENTION_DAYS + 9),
+        cancelledAt: daysAgo(1),
+      },
+    })
+
+    await purgeExpiredPersonalData()
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: { email: true },
+    })
+    expect(after.email).toContain('exemple.fr')
+  })
+
+  it('est rejouable : le second passage ne trouve plus rien', async () => {
+    await makeAbandonedOrder(
+      'idempotent',
+      daysAgo(ABANDONED_ORDER_RETENTION_DAYS + 1),
+    )
+
+    const premier = await purgeExpiredPersonalData()
+    expect(premier.anonymizedAbandonedOrders).toBeGreaterThanOrEqual(1)
+
+    const second = await purgeExpiredPersonalData()
+    expect(second.anonymizedAbandonedOrders).toBe(0)
   })
 })

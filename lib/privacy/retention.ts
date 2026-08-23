@@ -2,10 +2,11 @@ import 'server-only'
 
 import { prisma } from '@/lib/db/client'
 import {
+  ABANDONED_ORDER_RETENTION_DAYS,
   GUEST_DATA_RETENTION_DAYS,
   INACTIVE_ACCOUNT_RETENTION_DAYS,
 } from '@/lib/config/privacy'
-import { anonymizeUser } from './anonymize'
+import { anonymizeUser, anonymizeAbandonedOrders } from './anonymize'
 
 /**
  * Application des durées de conservation.
@@ -25,10 +26,20 @@ import { anonymizeUser } from './anonymize'
  * ---------------------------------------------------------------------------
  * Ce que la purge ne touche jamais
  * ---------------------------------------------------------------------------
- * Les commandes. Une facture relève de l'obligation comptable — dix ans,
- * article L123-22 du code de commerce — et l'article 17.3.b du RGPD écarte
- * explicitement l'effacement dans ce cas. Un compte inactif est donc
+ * Les commandes PAYÉES. Une facture relève de l'obligation comptable — dix
+ * ans, article L123-22 du code de commerce — et l'article 17.3.b du RGPD
+ * écarte explicitement l'effacement dans ce cas. Un compte inactif est donc
  * ANONYMISÉ, jamais supprimé : la ligne comptable survit, l'identité non.
+ *
+ * ---------------------------------------------------------------------------
+ * L'exception qui manquait : les tunnels abandonnés
+ * ---------------------------------------------------------------------------
+ * Cette règle a longtemps été appliquée à la table `Order` EN BLOC, au motif
+ * que les factures s'y trouvent. Conséquence : une commande jamais payée —
+ * avec nom, rue, code postal, ville, téléphone et adresse e-mail — n'était
+ * purgée par rien, indéfiniment. Or elle n'est pas une pièce comptable : aucun
+ * paiement, aucune facture, aucun exercice ne la porte. Rien ne fondait donc
+ * de la garder, et les abandons sont plus nombreux que les ventes.
  */
 
 export interface PurgeReport {
@@ -37,6 +48,8 @@ export interface PurgeReport {
   expiredUserTokens: number
   guestFavorites: number
   abandonedGuestCarts: number
+  /** Tunnels jamais payés, vidés de leurs coordonnées. */
+  anonymizedAbandonedOrders: number
   anonymizedAccounts: number
 }
 
@@ -53,6 +66,7 @@ export async function purgeExpiredPersonalData(
   now = new Date(),
 ): Promise<PurgeReport> {
   const guestCutoff = daysAgo(GUEST_DATA_RETENTION_DAYS, now)
+  const abandonedOrderCutoff = daysAgo(ABANDONED_ORDER_RETENTION_DAYS, now)
   const inactiveCutoff = daysAgo(INACTIVE_ACCOUNT_RETENTION_DAYS, now)
 
   // Jetons et sessions périmés : ils n'ouvrent plus rien, les garder ne sert
@@ -77,6 +91,12 @@ export async function purgeExpiredPersonalData(
     where: { userId: null, updatedAt: { lt: guestCutoff } },
   })
 
+  // Tunnels de commande jamais payés. On vide, on ne supprime pas : un
+  // paiement a pu aboutir sans que le webhook nous parvienne, et la ligne est
+  // alors la seule trace d'un débit à retrouver.
+  const anonymizedAbandonedOrders =
+    await anonymizeAbandonedOrders(abandonedOrderCutoff)
+
   const anonymizedAccounts = await anonymizeInactiveAccounts(inactiveCutoff)
 
   return {
@@ -85,6 +105,7 @@ export async function purgeExpiredPersonalData(
     expiredUserTokens: expiredUserTokens.count,
     guestFavorites: guestFavorites.count,
     abandonedGuestCarts: abandonedGuestCarts.count,
+    anonymizedAbandonedOrders,
     anonymizedAccounts,
   }
 }

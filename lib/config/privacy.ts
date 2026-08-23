@@ -76,6 +76,27 @@ export const GUEST_DATA_RETENTION_DAYS = 30
 export const ACCOUNTING_RETENTION_DAYS = 365 * 10
 
 /**
+ * Tunnels de commande abandonnés : 30 jours.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi une durée séparée de celle des factures
+ * ---------------------------------------------------------------------------
+ * Une commande qui n'a JAMAIS été payée n'est pas une pièce comptable. Aucune
+ * facture n'a été émise, aucun mouvement n'a eu lieu, aucun exercice ne la
+ * porte. L'obligation de dix ans ne la couvre donc pas — et sans elle, il ne
+ * reste aucune base pour garder un nom, une rue, un code postal, une ville, un
+ * téléphone et une adresse e-mail.
+ *
+ * C'est pourtant ce qui se passait : la purge écartait la table `Order` en
+ * bloc au motif que les factures s'y trouvent, et un tunnel abandonné y
+ * restait indéfiniment. Les abandons sont plus nombreux que les ventes.
+ *
+ * Trente jours : la même durée que le cookie qui permet de retrouver le panier,
+ * et de quoi laisser revenir quelqu'un qui a été interrompu au moment de payer.
+ */
+export const ABANDONED_ORDER_RETENTION_DAYS = 30
+
+/**
  * Comptes inactifs : 3 ans sans connexion.
  *
  * Durée recommandée par la CNIL pour les données de prospects et de clients
@@ -95,11 +116,23 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
   },
   {
     key: 'orders',
-    tables: ['Order', 'OrderItem', 'Address'],
+    tables: ['Order (payées)', 'OrderItem', 'Address'],
     basis: 'legal-obligation',
     retentionDays: ACCOUNTING_RETENTION_DAYS,
     retentionReason:
       'Pièce comptable : dix ans, article L123-22 du code de commerce.',
+  },
+  {
+    // Déclaré à part, parce que la justification n'est PAS la même. Confondre
+    // les deux revenait à couvrir un abandon par une obligation comptable qui
+    // ne le concerne pas — et à annoncer dix ans là où rien ne les fonde.
+    key: 'abandoned-orders',
+    tables: ['Order (jamais payées)'],
+    basis: 'contract',
+    retentionDays: ABANDONED_ORDER_RETENTION_DAYS,
+    retentionReason:
+      'Aucun paiement, donc aucune pièce comptable : les coordonnées sont ' +
+      'effacées au bout de trente jours, la trace anonyme de l’abandon reste.',
   },
   {
     key: 'favorites',
