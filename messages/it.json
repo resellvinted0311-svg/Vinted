@@ -376,6 +376,33 @@
       "PARTIALLY_REFUNDED": "Rimborsato in parte"
     }
   },
+  "offers": {
+    "registerTitle": "Le mie offerte",
+    "registerIntro": "Un’offerta non mette da parte il capo: resta in vendita al prezzo indicato finché qualcuno non lo paga. Un prezzo accettato resta valido per un tempo limitato.",
+    "emptyRegister": "Nessuna offerta per ora.",
+    "emptyRegisterHint": "Sui capi trattabili, sotto il prezzo compare un pulsante «Fare un’offerta».",
+    "backToCatalogue": "Torna al catalogo",
+    "youOffered": "Hai offerto {amount}",
+    "shopCountered": "Il negozio ha controproposto {amount}",
+    "listedPrice": "prezzo indicato {amount}",
+    "payableUntil": "Questo prezzo resta valido fino al {date}.",
+    "answerDueBy": "Risposta attesa entro il {date}.",
+    "lapsedHint": "La validità di questo prezzo è scaduta.",
+    "voidHint": "Il capo è stato venduto prima della risposta.",
+    "rejectedHint": "Offerta rifiutata.",
+    "expiredHint": "Rimasta senza risposta entro il termine.",
+    "usedHint": "Questo prezzo è servito per un acquisto.",
+    "standing": {
+      "awaiting": "In attesa di risposta",
+      "countered": "Controproposta",
+      "payable": "Accettata",
+      "lapsed": "Validità scaduta",
+      "rejected": "Rifiutata",
+      "expired": "Senza risposta",
+      "void": "Senza oggetto",
+      "used": "Utilizzata"
+    }
+  },
   "invoice": {
     "title": "Fattura",
     "issuedAt": "Emessa il {date}",

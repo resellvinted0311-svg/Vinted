@@ -14,11 +14,11 @@ import { mergeGuestCart } from '@/lib/shop/cart'
  * ---------------------------------------------------------------------------
  * Pourquoi tout passe par ici
  * ---------------------------------------------------------------------------
- * Trois choses appartiennent au JETON de session boutique et doivent basculer
- * vers le compte : les favoris, le panier, et les commandes déjà payées sans
- * compte. Elles partagent toutes la même contrainte, et c'est une contrainte
- * qui ne pardonne pas : elles ont besoin de l'ANCIEN jeton, donc elles doivent
- * s'exécuter AVANT son renouvellement.
+ * Quatre choses appartiennent au JETON de session boutique et doivent basculer
+ * vers le compte : les favoris, le panier, les commandes déjà payées sans
+ * compte, et les offres déposées sans compte. Elles partagent toutes la même
+ * contrainte, et c'est une contrainte qui ne pardonne pas : elles ont besoin de
+ * l'ANCIEN jeton, donc elles doivent s'exécuter AVANT son renouvellement.
  *
  * Cette contrainte était écrite en commentaire à deux endroits — l'inscription
  * et la connexion — et respectée pour les seuls favoris. Le panier n'était
@@ -88,10 +88,60 @@ async function attachGuestOrders(
   return result.count
 }
 
+/**
+ * Rattache au compte les offres déposées sans compte depuis ce navigateur.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce que l'oubli coûtait
+ * ---------------------------------------------------------------------------
+ * Une visiteuse négocie une pièce, l'offre est acceptée, un e-mail lui promet
+ * ce prix pendant vingt-quatre heures. Elle ouvre un compte pour payer — le
+ * geste le plus naturel du monde — et le jeton est renouvelé. Le panier, lui,
+ * cherche désormais les offres du COMPTE (`readNegotiatedPrices`), n'en trouve
+ * aucune, et facture le prix affiché.
+ *
+ * Rien n'aurait signalé l'écart : ni erreur, ni message. Juste un prix plus
+ * élevé que celui promis par écrit, au moment de payer. C'est exactement le
+ * défaut que ce fichier a été créé pour éteindre, sur un quatrième objet.
+ *
+ * ---------------------------------------------------------------------------
+ * Les deux mêmes conditions que pour les commandes
+ * ---------------------------------------------------------------------------
+ * Le jeton ET l'adresse. Le jeton seul ferait hériter la personne suivante d'un
+ * poste partagé des négociations de la précédente ; l'adresse seule suffirait à
+ * les lire en créant un compte au nom de quelqu'un, l'inscription par mot de
+ * passe ne vérifiant pas l'adresse.
+ *
+ * ---------------------------------------------------------------------------
+ * Les traces d'invité sont EFFACÉES
+ * ---------------------------------------------------------------------------
+ * Contrairement à `lockOwnerId` sur les commandes, `guestEmail` et
+ * `guestSessionToken` ne servent plus à rien une fois l'offre rattachée : la
+ * portée passe par `userId`, et la réponse part vers l'adresse du compte. Les
+ * garder laisserait une adresse e-mail recopiée hors du compte, sans usage.
+ */
+async function attachGuestOffers(
+  userId: string,
+  sessionToken: string,
+  email: string,
+): Promise<number> {
+  const result = await prisma.offer.updateMany({
+    where: {
+      userId: null,
+      guestSessionToken: sessionToken,
+      guestEmail: { equals: email, mode: 'insensitive' },
+    },
+    data: { userId, guestEmail: null, guestSessionToken: null },
+  })
+
+  return result.count
+}
+
 export interface HandoverReport {
   favorites: number
   cartLines: number
   orders: number
+  offers: number
 }
 
 /**
@@ -112,19 +162,24 @@ export async function adoptGuestSession(
     // Aucun jeton : rien n'a pu être déposé depuis ce navigateur. On en pose
     // tout de même un neuf, comme dans tous les autres cas.
     await rotateShopSessionToken()
-    return { favorites: 0, cartLines: 0, orders: 0 }
+    return { favorites: 0, cartLines: 0, orders: 0, offers: 0 }
   }
 
   // Séquentiel et non `Promise.all` : en production le pool n'accorde qu'une
   // connexion par instance, et `mergeGuestCart` ouvre une transaction
   // interactive qui la retient. Paralléliser n'y gagnerait rien et pourrait
-  // faire attendre les deux autres jusqu'au délai d'expiration.
+  // faire attendre les autres jusqu'au délai d'expiration.
   const favorites = await mergeGuestFavorites(userId)
+  // AVANT le panier : le panier résout le prix négocié à la lecture, et il le
+  // cherche sous l'identité du compte dès que la session est ouverte. Rattacher
+  // les offres ensuite laisserait une fenêtre où le panier fraîchement fusionné
+  // afficherait le prix affiché plutôt que le prix promis.
+  const offers = await attachGuestOffers(userId, token, email)
   const cartLines = await mergeGuestCart(userId)
   const orders = await attachGuestOrders(userId, token, email)
 
-  // EN DERNIER, toujours : les trois reprises ci-dessus lisent l'ancien jeton.
+  // EN DERNIER, toujours : les quatre reprises ci-dessus lisent l'ancien jeton.
   await rotateShopSessionToken()
 
-  return { favorites, cartLines, orders }
+  return { favorites, cartLines, orders, offers }
 }

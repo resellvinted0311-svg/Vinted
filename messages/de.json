@@ -376,6 +376,33 @@
       "PARTIALLY_REFUNDED": "Teilweise erstattet"
     }
   },
+  "offers": {
+    "registerTitle": "Meine Angebote",
+    "registerIntro": "Ein Angebot legt das Stück nicht zurück: Es bleibt zum angezeigten Preis im Verkauf, bis jemand dafür bezahlt. Ein angenommener Preis bleibt für begrenzte Zeit zahlbar.",
+    "emptyRegister": "Noch keine Angebote.",
+    "emptyRegisterHint": "Bei Stücken, über die verhandelt wird, erscheint unter dem Preis die Schaltfläche „Ein Angebot machen“.",
+    "backToCatalogue": "Zurück zum Katalog",
+    "youOffered": "Sie haben {amount} geboten",
+    "shopCountered": "Der Shop hat mit {amount} geantwortet",
+    "listedPrice": "angezeigter Preis {amount}",
+    "payableUntil": "Dieser Preis bleibt bis zum {date} zahlbar.",
+    "answerDueBy": "Antwort erwartet bis zum {date}.",
+    "lapsedHint": "Die Gültigkeit dieses Preises ist abgelaufen.",
+    "voidHint": "Das Stück wurde vor der Antwort verkauft.",
+    "rejectedHint": "Angebot abgelehnt.",
+    "expiredHint": "Innerhalb der Frist kam keine Antwort.",
+    "usedHint": "Dieser Preis wurde für einen Kauf verwendet.",
+    "standing": {
+      "awaiting": "Wartet auf Antwort",
+      "countered": "Gegenangebot",
+      "payable": "Angenommen",
+      "lapsed": "Preis abgelaufen",
+      "rejected": "Abgelehnt",
+      "expired": "Keine Antwort",
+      "void": "Gegenstandslos",
+      "used": "Verwendet"
+    }
+  },
   "invoice": {
     "title": "Rechnung",
     "issuedAt": "Ausgestellt am {date}",

@@ -376,6 +376,33 @@
       "PARTIALLY_REFUNDED": "Reembolsado en parte"
     }
   },
+  "offers": {
+    "registerTitle": "Mis ofertas",
+    "registerIntro": "Una oferta no reserva la prenda: sigue a la venta al precio indicado hasta que alguien la pague. Un precio aceptado sigue vigente durante un tiempo limitado.",
+    "emptyRegister": "Todavía no hay ofertas.",
+    "emptyRegisterHint": "En las prendas que admiten ofertas, aparece un botón «Hacer una oferta» debajo del precio.",
+    "backToCatalogue": "Volver al catálogo",
+    "youOffered": "Has ofrecido {amount}",
+    "shopCountered": "La tienda ha contraofertado {amount}",
+    "listedPrice": "precio indicado {amount}",
+    "payableUntil": "Este precio sigue vigente hasta el {date}.",
+    "answerDueBy": "Se espera respuesta antes del {date}.",
+    "lapsedHint": "La vigencia de este precio ha terminado.",
+    "voidHint": "La prenda se vendió antes de la respuesta.",
+    "rejectedHint": "Oferta rechazada.",
+    "expiredHint": "No hubo respuesta dentro del plazo.",
+    "usedHint": "Este precio se utilizó en una compra.",
+    "standing": {
+      "awaiting": "Esperando respuesta",
+      "countered": "Contraoferta",
+      "payable": "Aceptada",
+      "lapsed": "Vigencia terminada",
+      "rejected": "Rechazada",
+      "expired": "Sin respuesta",
+      "void": "Sin efecto",
+      "used": "Utilizada"
+    }
+  },
   "invoice": {
     "title": "Factura",
     "issuedAt": "Emitida el {date}",

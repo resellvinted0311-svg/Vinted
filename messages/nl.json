@@ -376,6 +376,33 @@
       "PARTIALLY_REFUNDED": "Deels terugbetaald"
     }
   },
+  "offers": {
+    "registerTitle": "Mijn biedingen",
+    "registerIntro": "Een bod legt het stuk niet apart: het blijft te koop tegen de vraagprijs totdat iemand ervoor betaalt. Een aanvaarde prijs blijft beperkte tijd geldig.",
+    "emptyRegister": "Nog geen biedingen.",
+    "emptyRegisterHint": "Bij stukken waarover onderhandeld wordt, verschijnt onder de prijs de knop “Een bod doen”.",
+    "backToCatalogue": "Terug naar de catalogus",
+    "youOffered": "U hebt {amount} geboden",
+    "shopCountered": "De winkel deed een tegenbod van {amount}",
+    "listedPrice": "vraagprijs {amount}",
+    "payableUntil": "Die prijs blijft geldig tot {date}.",
+    "answerDueBy": "Antwoord verwacht vóór {date}.",
+    "lapsedHint": "De geldigheid van die prijs is verstreken.",
+    "voidHint": "Het stuk is vóór het antwoord verkocht.",
+    "rejectedHint": "Bod afgewezen.",
+    "expiredHint": "Binnen de termijn kwam er geen antwoord.",
+    "usedHint": "Die prijs is voor een aankoop gebruikt.",
+    "standing": {
+      "awaiting": "Wacht op antwoord",
+      "countered": "Tegenbod",
+      "payable": "Aanvaard",
+      "lapsed": "Prijs verlopen",
+      "rejected": "Afgewezen",
+      "expired": "Geen antwoord",
+      "void": "Zonder voorwerp",
+      "used": "Gebruikt"
+    }
+  },
   "invoice": {
     "title": "Factuur",
     "issuedAt": "Uitgegeven op {date}",

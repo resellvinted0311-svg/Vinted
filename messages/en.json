@@ -376,6 +376,33 @@
       "PARTIALLY_REFUNDED": "Partly refunded"
     }
   },
+  "offers": {
+    "registerTitle": "My offers",
+    "registerIntro": "An offer does not put the piece aside: it stays on sale at the asking price until someone pays for it. An accepted price stays payable for a limited time.",
+    "emptyRegister": "No offers yet.",
+    "emptyRegisterHint": "On pieces open to offers, a “Make an offer” button appears below the price.",
+    "backToCatalogue": "Back to catalogue",
+    "youOffered": "You offered {amount}",
+    "shopCountered": "The shop countered with {amount}",
+    "listedPrice": "asking price {amount}",
+    "payableUntil": "This price stays payable until {date}.",
+    "answerDueBy": "An answer is due by {date}.",
+    "lapsedHint": "This price is no longer valid.",
+    "voidHint": "The piece was sold before an answer came.",
+    "rejectedHint": "Offer declined.",
+    "expiredHint": "No answer came within the time allowed.",
+    "usedHint": "This price was used for a purchase.",
+    "standing": {
+      "awaiting": "Awaiting reply",
+      "countered": "Counter-offer",
+      "payable": "Accepted",
+      "lapsed": "Price expired",
+      "rejected": "Declined",
+      "expired": "No reply",
+      "void": "No longer applies",
+      "used": "Used"
+    }
+  },
   "invoice": {
     "title": "Invoice",
     "issuedAt": "Issued on {date}",

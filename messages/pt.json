@@ -376,6 +376,33 @@
       "PARTIALLY_REFUNDED": "Reembolsada em parte"
     }
   },
+  "offers": {
+    "registerTitle": "As minhas propostas",
+    "registerIntro": "Uma proposta não reserva a peça: continua à venda pelo preço indicado até que alguém a pague. Um preço aceite mantém-se pagável durante um tempo limitado.",
+    "emptyRegister": "Ainda sem propostas.",
+    "emptyRegisterHint": "Nas peças negociáveis, aparece um botão «Fazer uma proposta» por baixo do preço.",
+    "backToCatalogue": "Voltar ao catálogo",
+    "youOffered": "Propôs {amount}",
+    "shopCountered": "A loja contrapropôs {amount}",
+    "listedPrice": "preço indicado {amount}",
+    "payableUntil": "Esse preço mantém-se pagável até {date}.",
+    "answerDueBy": "Resposta esperada até {date}.",
+    "lapsedHint": "A validade deste preço terminou.",
+    "voidHint": "A peça foi vendida antes da resposta.",
+    "rejectedHint": "Proposta recusada.",
+    "expiredHint": "Ficou sem resposta dentro do prazo.",
+    "usedHint": "Este preço serviu para uma compra.",
+    "standing": {
+      "awaiting": "A aguardar resposta",
+      "countered": "Contraproposta",
+      "payable": "Aceite",
+      "lapsed": "Validade terminada",
+      "rejected": "Recusada",
+      "expired": "Sem resposta",
+      "void": "Sem efeito",
+      "used": "Utilizada"
+    }
+  },
   "invoice": {
     "title": "Fatura",
     "issuedAt": "Emitida a {date}",

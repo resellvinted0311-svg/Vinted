@@ -376,6 +376,33 @@
       "PARTIALLY_REFUNDED": "Zwrócone częściowo"
     }
   },
+  "offers": {
+    "registerTitle": "Moje oferty",
+    "registerIntro": "Oferta nie rezerwuje przedmiotu: pozostaje on w sprzedaży w cenie wywoławczej, dopóki ktoś za niego nie zapłaci. Przyjęta cena obowiązuje przez ograniczony czas.",
+    "emptyRegister": "Na razie brak ofert.",
+    "emptyRegisterHint": "Przy przedmiotach podlegających negocjacjom pod ceną pojawia się przycisk „Złóż ofertę”.",
+    "backToCatalogue": "Wróć do katalogu",
+    "youOffered": "Zaproponowano {amount}",
+    "shopCountered": "Sklep zaproponował w zamian {amount}",
+    "listedPrice": "cena wywoławcza {amount}",
+    "payableUntil": "Ta cena obowiązuje do {date}.",
+    "answerDueBy": "Odpowiedź oczekiwana do {date}.",
+    "lapsedHint": "Ważność tej ceny minęła.",
+    "voidHint": "Przedmiot został sprzedany przed odpowiedzią.",
+    "rejectedHint": "Oferta odrzucona.",
+    "expiredHint": "Brak odpowiedzi w wyznaczonym terminie.",
+    "usedHint": "Ta cena posłużyła do zakupu.",
+    "standing": {
+      "awaiting": "Oczekuje na odpowiedź",
+      "countered": "Kontroferta",
+      "payable": "Przyjęta",
+      "lapsed": "Cena wygasła",
+      "rejected": "Odrzucona",
+      "expired": "Bez odpowiedzi",
+      "void": "Bezprzedmiotowa",
+      "used": "Wykorzystana"
+    }
+  },
   "invoice": {
     "title": "Faktura",
     "issuedAt": "Wystawiona {date}",

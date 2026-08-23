@@ -376,6 +376,33 @@
       "PARTIALLY_REFUNDED": "Remboursée en partie"
     }
   },
+  "offers": {
+    "registerTitle": "Mes offres",
+    "registerIntro": "Une offre ne met pas la pièce de côté : elle reste en vente au prix affiché tant que personne ne l’a payée. Un prix accepté reste payable pendant une durée limitée.",
+    "emptyRegister": "Aucune proposition pour l’instant.",
+    "emptyRegisterHint": "Sur les pièces qui l’acceptent, un bouton « Faire une offre » apparaît sous le prix.",
+    "backToCatalogue": "Parcourir le catalogue",
+    "youOffered": "Vous avez proposé {amount}",
+    "shopCountered": "La boutique a contre-proposé {amount}",
+    "listedPrice": "prix affiché {amount}",
+    "payableUntil": "Ce prix reste payable jusqu’au {date}.",
+    "answerDueBy": "Réponse attendue avant le {date}.",
+    "lapsedHint": "La validité de ce prix est passée.",
+    "voidHint": "La pièce a été vendue avant la réponse.",
+    "rejectedHint": "Proposition refusée.",
+    "expiredHint": "Restée sans réponse dans le délai.",
+    "usedHint": "Ce prix a servi à un achat.",
+    "standing": {
+      "awaiting": "En attente",
+      "countered": "Contre-proposition",
+      "payable": "Acceptée",
+      "lapsed": "Validité passée",
+      "rejected": "Refusée",
+      "expired": "Sans réponse",
+      "void": "Sans objet",
+      "used": "Utilisée"
+    }
+  },
   "invoice": {
     "title": "Facture",
     "issuedAt": "Émise le {date}",

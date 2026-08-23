@@ -84,6 +84,8 @@ construit champ par champ plutôt que par recopie d'une ligne de commande.
 | Commandes **jamais payées** | 30 jours | Aucun paiement, donc aucune pièce comptable |
 | Panier d'un compte | Vie du compte | Retrouvé à chaque connexion |
 | Panier et favoris d'un visiteur | 30 jours | Durée de vie du cookie qui permet de les retrouver |
+| Offres d'un compte | Vie du compte | Mesure précontractuelle, effacée avec le compte |
+| Offres d'un visiteur | 30 jours | Adresse e-mail et jeton : durée de vie du cookie |
 | Traces d'événements de paiement et travaux différés | 30 jours | Trace technique caviardée, pour comprendre un échec |
 | Sessions et jetons | Jusqu'à leur échéance | Périmés, ils n'ouvrent plus rien |
 | Compteurs anti-force-brute | 1 jour | Jetons non réversibles, renouvelés chaque jour |
@@ -129,6 +131,29 @@ session boutique ne doivent pas lui survivre. Passé ce délai, plus personne �
 même la personne concernée — ne peut les retrouver ; les garder ne servirait
 qu'à les garder. Un test vérifie que `GUEST_DATA_RETENTION_DAYS` et
 `SHOP_SESSION_MAX_AGE_SECONDS` disent la même chose.
+
+### Ce qui change de régime quand on ouvre un compte
+
+Quatre choses appartiennent au jeton de session boutique et basculent vers le
+compte à l'inscription comme à la connexion : favoris, panier, commandes payées
+sans compte, offres déposées sans compte (`lib/shop/handover.ts`). Elles passent
+donc de la ligne « 30 jours » à celle du compte, et c'est voulu : la personne
+peut désormais les retrouver, ce qui était le seul argument justifiant la durée
+courte.
+
+Le rapprochement exige **deux** concordances, jamais une : le jeton du
+navigateur **et** l'adresse e-mail. Le jeton seul ferait hériter la personne
+suivante d'un poste partagé de ce que la précédente a laissé ; l'adresse seule
+suffirait à s'en emparer en créant un compte au nom de quelqu'un, puisque
+l'inscription par mot de passe ne vérifie pas l'adresse.
+
+Sur les offres, les colonnes d'invité — `guestEmail`, `guestSessionToken` — sont
+**effacées** au passage. Elles ne servent plus à rien : la portée passe par le
+compte et la réponse part vers l'adresse du compte. Les garder laisserait une
+adresse e-mail recopiée hors du compte, hors de son effacement. Les commandes
+font exception sur `lockOwnerId`, qui n'est pas une donnée personnelle mais le
+propriétaire d'un verrou de stock : le réécrire désynchroniserait
+`Article.reservedById`.
 
 ---
 

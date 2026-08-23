@@ -1,4 +1,4 @@
-import type { ArticleStatus } from '@prisma/client'
+import type { ArticleStatus, OfferStatus } from '@prisma/client'
 
 import { isArticleListed } from '@/lib/db/visibility'
 
@@ -325,4 +325,86 @@ export function payablePriceCents(
 ): number {
   if (!offer || !isAcceptedPriceUsable(offer, now)) return articlePriceCents
   return Math.min(offer.amountCents, articlePriceCents)
+}
+
+// ---------------------------------------------------------------------------
+// Où en est une négociation, du point de vue de l'acheteuse
+// ---------------------------------------------------------------------------
+
+/**
+ * L'état d'une offre TEL QU'IL EST À CET INSTANT.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi `Offer.status` ne suffit pas à l'afficher
+ * ---------------------------------------------------------------------------
+ * Deux colonnes portent une échéance, et aucune ne se met à jour toute seule :
+ *
+ *  - `expiresAt` : une offre reste `PENDING` en base jusqu'à ce que le balayage
+ *    (`expireStaleOffers`, appelé par une tâche planifiée) passe. Entre deux
+ *    passages, afficher « en attente de réponse » sur une offre dont le délai
+ *    est écoulé ferait attendre une réponse qui ne viendra plus.
+ *
+ *  - `priceValidUntil` : une offre reste `ACCEPTED` pour toujours, mais le prix
+ *    n'est payable que pendant sa fenêtre de validité. Afficher « acceptée »
+ *    au-delà promettrait un prix que le panier ne fera pas — et c'est
+ *    exactement la promesse que l'e-mail d'acceptation a faite, datée.
+ *
+ * Les deux dérivations sont ici, pures, plutôt que dans le composant : c'est la
+ * même règle qui décide de ce qu'on affiche et de ce qu'on facture, et la
+ * dupliquer dans une vue est le moyen le plus sûr de les faire diverger.
+ */
+export type OfferStanding =
+  /** Déposée, le délai de réponse court encore. */
+  | 'awaiting'
+  /** La boutique a répondu par une contre-proposition. */
+  | 'countered'
+  /** Acceptée, et le prix est encore payable. */
+  | 'payable'
+  /** Acceptée, mais la validité du prix est passée. */
+  | 'lapsed'
+  /** Refusée — automatiquement ou par le vendeur. */
+  | 'rejected'
+  /** Restée sans réponse au-delà du délai. */
+  | 'expired'
+  /** Sans objet : la pièce est partie avant la réponse. */
+  | 'void'
+  /** A servi à fixer le prix d'un achat. */
+  | 'used'
+
+export function offerStanding(
+  offer: {
+    status: OfferStatus
+    expiresAt: Date
+    priceValidUntil: Date | null
+  },
+  now = new Date(),
+): OfferStanding {
+  switch (offer.status) {
+    case 'PENDING':
+      // Le balayage n'est pas encore passé : c'est l'échéance qui fait foi.
+      return offer.expiresAt <= now ? 'expired' : 'awaiting'
+    case 'ACCEPTED':
+      return isAcceptedPriceUsable(offer, now) ? 'payable' : 'lapsed'
+    case 'COUNTERED':
+      return 'countered'
+    case 'REJECTED':
+      return 'rejected'
+    case 'EXPIRED':
+      return 'expired'
+    case 'VOIDED':
+      return 'void'
+    case 'CONSUMED':
+      return 'used'
+  }
+}
+
+/**
+ * Cette négociation attend-elle un geste de l'acheteuse ?
+ *
+ * Sert à remonter en tête de liste ce qui a une échéance : un prix payable qui
+ * expire ce soir et un refus d'il y a trois semaines n'ont pas à se disputer la
+ * même place.
+ */
+export function offerNeedsAttention(standing: OfferStanding): boolean {
+  return standing === 'payable' || standing === 'countered'
 }

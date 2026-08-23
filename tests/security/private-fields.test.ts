@@ -5,6 +5,7 @@ import {
   publicArticleDetailSelect,
   PRIVATE_ARTICLE_FIELDS,
 } from '@/lib/db/selectors'
+import { offerRegisterSelect } from '@/lib/db/queries/offers'
 
 /**
  * Test n° 8 du brief : aucune réponse publique ne contient costCents.
@@ -52,6 +53,27 @@ describe('sélecteurs publics', () => {
   it('la fiche article expose bien les mesures réelles', () => {
     const keys = selectedKeys(publicArticleDetailSelect)
     expect(keys).toContain('valueCm')
+  })
+
+  it('le registre des offres ne demande aucun champ privé', () => {
+    // Une page de négociation est le pire endroit où laisser fuiter un prix
+    // plancher : il dirait à l'acheteuse exactement jusqu'où descendre.
+    const keys = selectedKeys(offerRegisterSelect)
+
+    for (const field of PRIVATE_ARTICLE_FIELDS) {
+      expect(keys).not.toContain(field)
+    }
+
+    // Propres à l'offre : une note interne sur une décision commerciale, et
+    // les traces d'identité d'un dépôt sans compte.
+    for (const field of [
+      'acceptedBelowFloor',
+      'guestEmail',
+      'guestSessionToken',
+      'minOfferCents',
+    ]) {
+      expect(keys, field).not.toContain(field)
+    }
   })
 })
 

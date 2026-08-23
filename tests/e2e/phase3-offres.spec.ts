@@ -145,3 +145,63 @@ test.describe('Le formulaire d’offre', () => {
     await expect(offerForm(page)).toHaveCount(0)
   })
 })
+
+/**
+ * Le registre des offres, dans l'espace compte.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi une seule connexion dans tout ce fichier
+ * ---------------------------------------------------------------------------
+ * `signInAction` borne les tentatives à dix par compte et par quart d'heure.
+ * Deux projets Playwright rejouent la suite entière, et `rgpd.spec.ts` consomme
+ * déjà quatre tentatives sur ce compte : une seule ici garde une marge
+ * confortable, et desserrer la protection pour arranger des tests n'est pas une
+ * option.
+ */
+const ACCOUNT = 'client2@nina-diego.test'
+const SEED_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? ''
+
+test.describe('Le registre des offres', () => {
+  test('n’est pas servi sans session', async ({ page }) => {
+    await freshVisitor(page)
+    await page.goto('/fr/compte/offres')
+
+    // La page n'a AUCUN paramètre : ni numéro à saisir, ni identifiant dans
+    // l'URL. Toute sa sûreté tient dans la portée de la requête et dans cette
+    // redirection.
+    await expect(page).toHaveURL(/\/fr\/connexion/)
+  })
+
+  test('est atteignable depuis l’espace compte, et dit ce qu’une offre n’est pas', async ({
+    page,
+  }) => {
+    await freshVisitor(page)
+    await page.goto('/fr/connexion')
+    await page
+      .getByLabel('Adresse e-mail')
+      .filter({ visible: true })
+      .first()
+      .fill(ACCOUNT)
+    await page
+      .getByLabel('Mot de passe')
+      .filter({ visible: true })
+      .fill(SEED_PASSWORD)
+    await page.getByRole('button', { name: 'Se connecter' }).click()
+    await expect(page).toHaveURL(/\/fr\/compte/)
+
+    // Le lien existait avant la page : il menait à un 404 depuis l'espace
+    // compte.
+    await page.getByRole('link', { name: 'Mes offres' }).click()
+    await expect(page).toHaveURL(/\/fr\/compte\/offres/)
+
+    await expect(
+      main(page).getByRole('heading', { name: 'Mes offres' }),
+    ).toBeVisible()
+
+    // La règle qui explique tout le reste de la page, y compris pourquoi une
+    // offre acceptée peut finir « sans objet ».
+    await expect(
+      main(page).getByText(/ne met pas la pièce de côté/),
+    ).toBeVisible()
+  })
+})

@@ -3,6 +3,8 @@ import {
   evaluateOffer,
   isAcceptedPriceUsable,
   isBelowFloor,
+  offerNeedsAttention,
+  offerStanding,
   payablePriceCents,
   shouldAutoAccept,
   type OfferArticleFacts,
@@ -335,5 +337,88 @@ describe('prix négocié', () => {
     // Une baisse automatique peut avoir amené le prix affiché sous le prix
     // négocié. Facturer alors le montant de l'offre punirait la négociation.
     expect(payablePriceCents(2500, accepted, NOW)).toBe(2500)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Où en est une négociation, du point de vue de l'acheteuse
+// ---------------------------------------------------------------------------
+
+describe('état affiché d’une offre', () => {
+  const HOUR = 60 * 60 * 1000
+  const later = new Date(NOW.getTime() + 6 * HOUR)
+  const earlier = new Date(NOW.getTime() - 6 * HOUR)
+
+  it('dit « en attente » tant que le délai de réponse court', () => {
+    expect(
+      offerStanding(
+        { status: 'PENDING', expiresAt: later, priceValidUntil: null },
+        NOW,
+      ),
+    ).toBe('awaiting')
+  })
+
+  it('dit « sans réponse » dès l’échéance passée, SANS attendre le balayage', () => {
+    // Le cas qui impose la dérivation : `expireStaleOffers` tourne sur une
+    // tâche planifiée, et une offre reste `PENDING` en base entre deux
+    // passages. Lire le statut brut ferait attendre une réponse qui ne
+    // viendra plus.
+    expect(
+      offerStanding(
+        { status: 'PENDING', expiresAt: earlier, priceValidUntil: null },
+        NOW,
+      ),
+    ).toBe('expired')
+  })
+
+  it('dit « payable » tant que le prix négocié vaut', () => {
+    expect(
+      offerStanding(
+        { status: 'ACCEPTED', expiresAt: earlier, priceValidUntil: later },
+        NOW,
+      ),
+    ).toBe('payable')
+  })
+
+  it('cesse de dire « acceptée » quand la validité est passée', () => {
+    // Une offre reste `ACCEPTED` pour toujours en base. Continuer à l'annoncer
+    // ainsi promettrait un prix que le panier ne fera pas — et c'est
+    // exactement le prix que l'e-mail d'acceptation a promis, daté.
+    expect(
+      offerStanding(
+        { status: 'ACCEPTED', expiresAt: earlier, priceValidUntil: earlier },
+        NOW,
+      ),
+    ).toBe('lapsed')
+  })
+
+  it('n’annonce jamais « payable » sans échéance', () => {
+    expect(
+      offerStanding(
+        { status: 'ACCEPTED', expiresAt: later, priceValidUntil: null },
+        NOW,
+      ),
+    ).toBe('lapsed')
+  })
+
+  it('distingue le refus, la perte d’objet et l’usage', () => {
+    // Les rabattre sur un « terminée » commun ferait lire un refus là où la
+    // pièce est simplement partie — donc ouvrirait un délai de carence dans la
+    // tête de quelqu'un qui n'a rien fait de mal.
+    const rest = { expiresAt: earlier, priceValidUntil: null }
+    expect(offerStanding({ status: 'REJECTED', ...rest }, NOW)).toBe('rejected')
+    expect(offerStanding({ status: 'EXPIRED', ...rest }, NOW)).toBe('expired')
+    expect(offerStanding({ status: 'VOIDED', ...rest }, NOW)).toBe('void')
+    expect(offerStanding({ status: 'CONSUMED', ...rest }, NOW)).toBe('used')
+    expect(offerStanding({ status: 'COUNTERED', ...rest }, NOW)).toBe('countered')
+  })
+
+  it('ne signale que ce qui appelle un geste', () => {
+    expect(offerNeedsAttention('payable')).toBe(true)
+    expect(offerNeedsAttention('countered')).toBe(true)
+
+    for (const standing of ['awaiting', 'lapsed', 'rejected', 'expired', 'void', 'used'] as const) {
+      expect(offerNeedsAttention(standing), standing).toBe(false)
+    }
   })
 })
