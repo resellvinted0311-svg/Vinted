@@ -5,6 +5,7 @@ import type { OfferPolicy } from '@/lib/domain/offers'
 import { markOrderPaid } from '@/lib/shop/fulfilment'
 import {
   expireStaleOffers,
+  readOfferEmailData,
   respondToOffer,
   submitOffer,
   voidOffersForArticles,
@@ -315,6 +316,88 @@ describe('dépôt', () => {
     expect(await submit(3000, ACCOUNT, reserved)).toMatchObject({
       rejection: 'article-unavailable',
     })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Ce qui part par e-mail
+// ---------------------------------------------------------------------------
+
+describe('avis', () => {
+  function jobs(type: string) {
+    return prisma.job.findMany({ where: { type }, select: { payload: true } })
+  }
+
+  it('inscrit l’accusé ET l’avis à la boutique sur une offre en attente', async () => {
+    const result = await submit(3000)
+    if (!result.ok) throw new Error('dépôt refusé')
+
+    // Inscrits dans la transaction du dépôt, pas envoyés : un appel réseau
+    // dedans tiendrait des verrous en attendant un tiers.
+    expect(await jobs('offer.acknowledge')).toEqual([
+      { payload: { offerId: result.offerId } },
+    ])
+    expect(await jobs('offer.notify-shop')).toEqual([
+      { payload: { offerId: result.offerId } },
+    ])
+  })
+
+  it('ne dérange pas la boutique pour une offre déjà tranchée', async () => {
+    const result = await submit(2000)
+    if (!result.ok) throw new Error('dépôt refusé')
+
+    // L'accusé part quand même : sans compte, c'est la seule trace qui reste
+    // de la proposition une fois l'onglet fermé.
+    expect(await jobs('offer.acknowledge')).toHaveLength(1)
+    // L'avis, non : une offre refusée sur-le-champ n'appelle aucun geste, et
+    // l'annoncer noierait ceux qui expirent en quarante-huit heures.
+    expect(await jobs('offer.notify-shop')).toHaveLength(0)
+  })
+
+  it('relit l’offre au moment de composer, sans rien transporter', async () => {
+    const result = await submit(3000, GUEST)
+    if (!result.ok) throw new Error('dépôt refusé')
+
+    const data = await readOfferEmailData(result.offerId)
+
+    expect(data).toMatchObject({
+      email: GUEST.email,
+      amountCents: 3000,
+      outcome: 'pending',
+    })
+    expect(data?.url).toContain('/a/')
+  })
+
+  it('compose l’accusé de l’ACCEPTATION quand elle est intervenue entre-temps', async () => {
+    const result = await submit(3000)
+    if (!result.ok) throw new Error('dépôt refusé')
+
+    // Le travail a été inscrit alors que l'offre attendait. S'il transportait
+    // son contenu, il enverrait « proposition enregistrée » à quelqu'un dont
+    // l'offre vient d'être acceptée.
+    await respondToOffer({
+      offerId: result.offerId,
+      response: { action: 'accept' },
+      policy,
+    })
+
+    const data = await readOfferEmailData(result.offerId)
+    expect(data?.outcome).toBe('accepted')
+    expect(data?.priceValidUntil).not.toBeNull()
+  })
+
+  it('n’a rien à envoyer sans destinataire', async () => {
+    const result = await submit(3000, GUEST)
+    if (!result.ok) throw new Error('dépôt refusé')
+
+    // La purge des trente jours efface les offres sans compte. Un travail
+    // encore en file ne doit pas échouer six fois pour autant.
+    await prisma.offer.update({
+      where: { id: result.offerId },
+      data: { guestEmail: null },
+    })
+
+    expect(await readOfferEmailData(result.offerId)).toBeNull()
   })
 })
 

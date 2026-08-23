@@ -157,6 +157,32 @@
     "addToCart": "Ajouter au panier",
     "makeOffer": "Faire une offre",
     "offersOpenOn": "Les offres ouvrent le {date}.",
+    "offer": {
+      "title": "Faire une offre",
+      "amountLabel": "Votre proposition",
+      "amountHint": "En euros, en dessous du prix affiché.",
+      "emailLabel": "Adresse e-mail",
+      "emailHint": "La réponse arrivera à cette adresse.",
+      "submit": "Envoyer la proposition",
+      "noHold": "Une offre ne met pas la pièce de côté : elle reste en vente au prix affiché tant que personne ne l’a payée.",
+      "pending": "Proposition de {amount} envoyée. Réponse attendue avant le {date}.",
+      "autoRejected": "Proposition de {amount} refusée : elle est trop basse pour cette pièce.",
+      "autoAccepted": "Proposition de {amount} acceptée. Ce prix reste payable jusqu’au {date}.",
+      "errors": {
+        "offersDisabled": "Cette pièce ne se négocie pas.",
+        "offersNotOpenYet": "Les offres ouvrent le {date}.",
+        "articleUnavailable": "Cette pièce n’est plus disponible.",
+        "belowAbsoluteMinimum": "Cette proposition est trop basse pour être examinée.",
+        "notBelowAskingPrice": "Au prix affiché ou au-dessus, mieux vaut acheter directement.",
+        "alreadyPending": "Vous avez déjà une proposition en attente sur cette pièce.",
+        "tooManyAttempts": "Vous avez atteint le nombre de propositions possibles sur cette pièce.",
+        "cooldown": "Vous pourrez proposer à nouveau à partir du {date}.",
+        "rateLimited": "Trop de propositions d’affilée. Réessayez dans quelques minutes.",
+        "emailRequired": "Indiquez une adresse e-mail pour recevoir la réponse.",
+        "invalidAmount": "Indiquez un montant en euros, par exemple 32,50.",
+        "unknown": "La proposition n’a pas pu être enregistrée."
+      }
+    },
     "askQuestion": "Poser une question",
     "similar": "Articles similaires",
     "similarAvailable": "Ces pièces sont disponibles",
@@ -444,6 +470,19 @@
     "deliveryTo": "Livraison à",
     "invoice": "Facture n° {number}, jointe à votre espace personnel.",
     "withdrawal": "Vous disposez de 14 jours à compter de la réception pour changer d’avis. Le formulaire de rétractation est sur le site.",
+    "signature": "À bientôt, {shop}"
+  },
+  "offerEmail": {
+    "subject": {
+      "pending": "Votre proposition pour {reference}",
+      "accepted": "Proposition acceptée — {reference}",
+      "rejected": "Votre proposition pour {reference}"
+    },
+    "greeting": "Bonjour,",
+    "pending": "Votre proposition de {amount} est enregistrée. Une réponse est attendue avant le {date}.",
+    "accepted": "Votre proposition de {amount} est acceptée. Ce prix reste payable jusqu’au {date}.",
+    "rejected": "Votre proposition de {amount} n’a pas été retenue.",
+    "noHold": "Une offre ne met pas la pièce de côté : elle reste en vente au prix affiché tant que personne ne l’a payée.",
     "signature": "À bientôt, {shop}"
   },
   "privacy": {

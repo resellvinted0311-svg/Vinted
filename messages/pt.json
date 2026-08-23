@@ -157,6 +157,32 @@
     "addToCart": "Adicionar ao cesto",
     "makeOffer": "Fazer uma proposta",
     "offersOpenOn": "As propostas abrem a {date}.",
+    "offer": {
+      "title": "Fazer uma proposta",
+      "amountLabel": "A sua proposta",
+      "amountHint": "Em euros, abaixo do preço indicado.",
+      "emailLabel": "Endereço de e-mail",
+      "emailHint": "A resposta chegará a este endereço.",
+      "submit": "Enviar a proposta",
+      "noHold": "Uma proposta não reserva a peça: continua à venda pelo preço indicado até que alguém a pague.",
+      "pending": "Proposta de {amount} enviada. Resposta esperada até {date}.",
+      "autoRejected": "Proposta de {amount} recusada: é demasiado baixa para esta peça.",
+      "autoAccepted": "Proposta de {amount} aceite. Esse preço mantém-se pagável até {date}.",
+      "errors": {
+        "offersDisabled": "Esta peça não é negociável.",
+        "offersNotOpenYet": "As propostas abrem a {date}.",
+        "articleUnavailable": "Esta peça já não está disponível.",
+        "belowAbsoluteMinimum": "Esta proposta é demasiado baixa para ser analisada.",
+        "notBelowAskingPrice": "Ao preço indicado ou acima, é mais simples comprar diretamente.",
+        "alreadyPending": "Já tem uma proposta a aguardar resposta nesta peça.",
+        "tooManyAttempts": "Esgotou as propostas possíveis nesta peça.",
+        "cooldown": "Poderá propor de novo a partir de {date}.",
+        "rateLimited": "Demasiadas propostas seguidas. Tente daqui a alguns minutos.",
+        "emailRequired": "Indique um endereço de e-mail para receber a resposta.",
+        "invalidAmount": "Indique um montante em euros, por exemplo 32,50.",
+        "unknown": "Não foi possível registar a proposta."
+      }
+    },
     "askQuestion": "Fazer uma pergunta",
     "similar": "Artigos semelhantes",
     "similarAvailable": "Estas peças estão disponíveis",
@@ -444,6 +470,19 @@
     "deliveryTo": "Entrega a",
     "invoice": "Fatura n.º {number}, disponível na sua conta.",
     "withdrawal": "Dispõe de 14 dias a contar da receção para mudar de ideias. O formulário de retratação está no site.",
+    "signature": "Até breve, {shop}"
+  },
+  "offerEmail": {
+    "subject": {
+      "pending": "A sua proposta para {reference}",
+      "accepted": "Proposta aceite — {reference}",
+      "rejected": "A sua proposta para {reference}"
+    },
+    "greeting": "Olá,",
+    "pending": "A sua proposta de {amount} ficou registada. Espera-se resposta até {date}.",
+    "accepted": "A sua proposta de {amount} foi aceite. Esse preço mantém-se pagável até {date}.",
+    "rejected": "A sua proposta de {amount} não foi aceite.",
+    "noHold": "Uma proposta não reserva a peça: continua à venda pelo preço indicado até que alguém a pague.",
     "signature": "Até breve, {shop}"
   },
   "privacy": {

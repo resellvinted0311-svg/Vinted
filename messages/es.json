@@ -157,6 +157,32 @@
     "addToCart": "Añadir a la cesta",
     "makeOffer": "Hacer una oferta",
     "offersOpenOn": "Las ofertas se abren el {date}.",
+    "offer": {
+      "title": "Hacer una oferta",
+      "amountLabel": "Tu oferta",
+      "amountHint": "En euros, por debajo del precio indicado.",
+      "emailLabel": "Correo electrónico",
+      "emailHint": "La respuesta llegará a esta dirección.",
+      "submit": "Enviar la oferta",
+      "noHold": "Una oferta no reserva la prenda: sigue a la venta al precio indicado hasta que alguien la pague.",
+      "pending": "Oferta de {amount} enviada. Se espera respuesta antes del {date}.",
+      "autoRejected": "Oferta de {amount} rechazada: es demasiado baja para esta prenda.",
+      "autoAccepted": "Oferta de {amount} aceptada. Ese precio sigue vigente hasta el {date}.",
+      "errors": {
+        "offersDisabled": "Esta prenda no admite ofertas.",
+        "offersNotOpenYet": "Las ofertas abren el {date}.",
+        "articleUnavailable": "Esta prenda ya no está disponible.",
+        "belowAbsoluteMinimum": "Esta oferta es demasiado baja para examinarla.",
+        "notBelowAskingPrice": "Al precio indicado o por encima, es más sencillo comprar directamente.",
+        "alreadyPending": "Ya tienes una oferta pendiente de respuesta en esta prenda.",
+        "tooManyAttempts": "Has agotado las ofertas posibles en esta prenda.",
+        "cooldown": "Podrás volver a ofertar a partir del {date}.",
+        "rateLimited": "Demasiadas ofertas seguidas. Inténtalo dentro de unos minutos.",
+        "emailRequired": "Indica un correo electrónico para recibir la respuesta.",
+        "invalidAmount": "Indica un importe en euros, por ejemplo 32,50.",
+        "unknown": "No se ha podido registrar la oferta."
+      }
+    },
     "askQuestion": "Hacer una pregunta",
     "similar": "Artículos similares",
     "similarAvailable": "Estas piezas están disponibles",
@@ -444,6 +470,19 @@
     "deliveryTo": "Entrega a",
     "invoice": "Factura n.º {number}, disponible en su cuenta.",
     "withdrawal": "Dispone de 14 días desde la recepción para cambiar de opinión. El formulario de desistimiento está en el sitio.",
+    "signature": "Hasta pronto, {shop}"
+  },
+  "offerEmail": {
+    "subject": {
+      "pending": "Tu oferta por {reference}",
+      "accepted": "Oferta aceptada — {reference}",
+      "rejected": "Tu oferta por {reference}"
+    },
+    "greeting": "Hola:",
+    "pending": "Tu oferta de {amount} queda registrada. Se espera respuesta antes del {date}.",
+    "accepted": "Tu oferta de {amount} ha sido aceptada. Ese precio sigue vigente hasta el {date}.",
+    "rejected": "Tu oferta de {amount} no ha sido aceptada.",
+    "noHold": "Una oferta no reserva la prenda: sigue a la venta al precio indicado hasta que alguien la pague.",
     "signature": "Hasta pronto, {shop}"
   },
   "privacy": {

@@ -157,6 +157,32 @@
     "addToCart": "In den Warenkorb",
     "makeOffer": "Angebot machen",
     "offersOpenOn": "Angebote sind ab dem {date} möglich.",
+    "offer": {
+      "title": "Ein Angebot machen",
+      "amountLabel": "Ihr Angebot",
+      "amountHint": "In Euro, unter dem angezeigten Preis.",
+      "emailLabel": "E-Mail-Adresse",
+      "emailHint": "Die Antwort geht an diese Adresse.",
+      "submit": "Angebot senden",
+      "noHold": "Ein Angebot legt das Stück nicht zurück: Es bleibt zum angezeigten Preis im Verkauf, bis jemand dafür bezahlt.",
+      "pending": "Angebot über {amount} gesendet. Antwort erwartet bis zum {date}.",
+      "autoRejected": "Angebot über {amount} abgelehnt: Es ist zu niedrig für dieses Stück.",
+      "autoAccepted": "Angebot über {amount} angenommen. Dieser Preis bleibt bis zum {date} zahlbar.",
+      "errors": {
+        "offersDisabled": "Über dieses Stück wird nicht verhandelt.",
+        "offersNotOpenYet": "Angebote öffnen am {date}.",
+        "articleUnavailable": "Dieses Stück ist nicht mehr verfügbar.",
+        "belowAbsoluteMinimum": "Dieses Angebot ist zu niedrig, um geprüft zu werden.",
+        "notBelowAskingPrice": "Zum angezeigten Preis oder darüber kaufen Sie einfacher direkt.",
+        "alreadyPending": "Sie haben für dieses Stück bereits ein Angebot, das auf Antwort wartet.",
+        "tooManyAttempts": "Sie haben alle möglichen Angebote für dieses Stück genutzt.",
+        "cooldown": "Ab dem {date} können Sie erneut anbieten.",
+        "rateLimited": "Zu viele Angebote hintereinander. Versuchen Sie es in einigen Minuten erneut.",
+        "emailRequired": "Geben Sie eine E-Mail-Adresse an, damit die Antwort Sie erreicht.",
+        "invalidAmount": "Geben Sie einen Betrag in Euro an, zum Beispiel 32,50.",
+        "unknown": "Das Angebot konnte nicht erfasst werden."
+      }
+    },
     "askQuestion": "Frage stellen",
     "similar": "Ähnliche Artikel",
     "similarAvailable": "Diese Stücke sind verfügbar",
@@ -444,6 +470,19 @@
     "deliveryTo": "Lieferung an",
     "invoice": "Rechnung Nr. {number}, in Ihrem Konto verfügbar.",
     "withdrawal": "Sie haben ab Erhalt 14 Tage Zeit, es sich anders zu überlegen. Das Widerrufsformular finden Sie auf der Website.",
+    "signature": "Bis bald, {shop}"
+  },
+  "offerEmail": {
+    "subject": {
+      "pending": "Ihr Angebot für {reference}",
+      "accepted": "Angebot angenommen — {reference}",
+      "rejected": "Ihr Angebot für {reference}"
+    },
+    "greeting": "Guten Tag,",
+    "pending": "Ihr Angebot über {amount} ist erfasst. Eine Antwort wird bis zum {date} erwartet.",
+    "accepted": "Ihr Angebot über {amount} wurde angenommen. Dieser Preis bleibt bis zum {date} zahlbar.",
+    "rejected": "Ihr Angebot über {amount} wurde nicht angenommen.",
+    "noHold": "Ein Angebot legt das Stück nicht zurück: Es bleibt zum angezeigten Preis im Verkauf, bis jemand dafür bezahlt.",
     "signature": "Bis bald, {shop}"
   },
   "privacy": {

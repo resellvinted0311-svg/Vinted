@@ -4,6 +4,9 @@ import type { Prisma } from '@prisma/client'
 
 import { prisma } from '@/lib/db/client'
 import { getOfferPolicy } from '@/lib/config/settings'
+import { enqueue } from '@/lib/jobs/queue'
+import { SITE } from '@/lib/config/site'
+import type { OfferEmailData } from '@/lib/providers/email/offer'
 import {
   evaluateOffer,
   isBelowFloor,
@@ -209,6 +212,28 @@ export async function submitOffer(input: {
       select: { id: true },
     })
 
+    // L'accusé est INSCRIT, pas envoyé : un appel réseau dans une transaction
+    // tiendrait des verrous en attendant un tiers, et un message parti ne se
+    // rembobine pas si la transaction échoue ensuite.
+    //
+    // Il part dans les trois cas. Sans lui, une personne sans compte n'a plus
+    // aucune trace de ce qu'elle a proposé une fois l'onglet fermé — ni du
+    // montant, ni de la date à laquelle une réponse est due.
+    await enqueue(tx, {
+      type: 'offer.acknowledge',
+      payload: { offerId: offer.id },
+    })
+
+    // La boutique n'est prévenue que de ce qui attend une décision. Une offre
+    // tranchée sur-le-champ n'appelle aucun geste, et l'annoncer noierait les
+    // avis qui, eux, expirent en quarante-huit heures faute de réponse.
+    if (!accepted && !rejected) {
+      await enqueue(tx, {
+        type: 'offer.notify-shop',
+        payload: { offerId: offer.id },
+      })
+    }
+
     return {
       ok: true as const,
       offerId: offer.id,
@@ -217,6 +242,72 @@ export async function submitOffer(input: {
       priceValidUntil: verdict.priceValidUntil ?? null,
     }
   })
+}
+
+/**
+ * Relit une offre sous la forme qu'attendent les gabarits d'e-mail.
+ *
+ * Relue et non transportée : la charge utile du travail ne porte qu'un
+ * identifiant. Recopier le montant et l'adresse au moment de l'inscription les
+ * figerait deux fois, et les deux copies finiraient par diverger — une
+ * acceptation qui tombe entre l'inscription et l'envoi, par exemple.
+ */
+export async function readOfferEmailData(
+  offerId: string,
+  locale = 'fr',
+): Promise<OfferEmailData | null> {
+  const offer = await prisma.offer.findUnique({
+    where: { id: offerId },
+    select: {
+      amountCents: true,
+      status: true,
+      expiresAt: true,
+      priceValidUntil: true,
+      guestEmail: true,
+      user: { select: { email: true, locale: true } },
+      article: {
+        select: {
+          sku: true,
+          slug: true,
+          translations: {
+            where: { locale: { in: [locale, 'fr'] } },
+            select: { locale: true, title: true },
+          },
+        },
+      },
+    },
+  })
+
+  if (!offer) return null
+
+  // Sans destinataire, il n'y a rien à envoyer — et rien à réessayer.
+  const email = offer.user?.email ?? offer.guestEmail
+  if (!email) return null
+
+  const language = offer.user?.locale ?? locale
+  const title =
+    offer.article.translations.find((row) => row.locale === language)?.title ??
+    offer.article.translations.find((row) => row.locale === 'fr')?.title ??
+    offer.article.sku
+
+  const outcome =
+    offer.status === 'ACCEPTED'
+      ? ('accepted' as const)
+      : offer.status === 'PENDING'
+        ? ('pending' as const)
+        : ('rejected' as const)
+
+  return {
+    locale: language,
+    email,
+    reference: offer.article.sku,
+    title,
+    amountCents: offer.amountCents,
+    outcome,
+    expiresAt: offer.expiresAt,
+    priceValidUntil: offer.priceValidUntil,
+    url: `${SITE.url}/${language}/a/${offer.article.slug}`,
+  }
 }
 
 // ---------------------------------------------------------------------------

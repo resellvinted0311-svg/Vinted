@@ -8,6 +8,8 @@ import {
 } from '@/lib/db/queries/articles'
 import { getCategoryPath } from '@/lib/db/queries/taxonomy'
 import { isReservationLive } from '@/lib/db/visibility'
+import { getCurrentUser } from '@/lib/auth/session'
+import { OfferForm } from '@/components/shop/offer-form'
 import { pickTranslation, ArticleCard, ArticleGrid } from '@/components/shop/article-card'
 import { ArticleGallery } from '@/components/shop/article-gallery'
 import { MeasurementsTable } from '@/components/shop/measurements-table'
@@ -15,7 +17,6 @@ import { FavoriteButton } from '@/components/shop/favorite-button'
 import { Breadcrumbs } from '@/components/shop/breadcrumbs'
 import { AddToCartButton } from '@/components/shop/add-to-cart-button'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Stamp } from '@/components/ui/stamp'
 import {
   formatPrice,
@@ -109,7 +110,17 @@ export default async function ArticlePage({ params }: { params: Params }) {
   const offersOpen =
     article.allowOffers &&
     article.offersOpenAt !== null &&
-    article.offersOpenAt <= new Date()
+    article.offersOpenAt <= new Date() &&
+    // Ni sur une pièce vendue, ni sur une pièce en cours de paiement. Le
+    // serveur refuserait de toute façon — voir `lib/domain/offers.ts` — mais
+    // afficher un formulaire qui ne peut qu'échouer fait perdre du temps et
+    // donne l'impression d'un site cassé.
+    !isSold &&
+    !isReserved
+
+  // Sans compte, le formulaire demande une adresse : c'est la seule voie par
+  // laquelle la réponse du vendeur peut arriver.
+  const signedIn = (await getCurrentUser()) !== null
 
   // JSON-LD : la disponibilité reflète l'état réel, y compris SoldOut.
   const jsonLd = {
@@ -228,17 +239,18 @@ export default async function ArticlePage({ params }: { params: Params }) {
                   pris à l'ouverture du paiement. Réserver dès l'ajout
                   immobiliserait le catalogue pour des paniers abandonnés — et
                   chaque pièce existe en un seul exemplaire.
-                  Les offres, elles, arrivent en Phase 3 : annoncées et
-                  désactivées, plutôt qu'absentes. */}
+                  Une OFFRE ne réserve rien non plus, et pour la même
+                  raison : le formulaire le dit avant l'envoi, pas dans une
+                  note après coup. */}
               <AddToCartButton
                 articleId={article.id}
                 label={t('addToCart')}
               />
 
               {offersOpen ? (
-                <Button variant="outline" disabled fullWidth>
-                  {t('makeOffer')}
-                </Button>
+                <div className="mt-2 border-t border-sand pt-4">
+                  <OfferForm articleId={article.id} signedIn={signedIn} />
+                </div>
               ) : article.allowOffers && article.offersOpenAt ? (
                 <p className="text-xs text-muted">
                   {t('offersOpenOn', {

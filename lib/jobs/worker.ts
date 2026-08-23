@@ -15,6 +15,12 @@ import {
   sendShopNotification,
   type OrderEmailData,
 } from '@/lib/providers/email/order'
+import {
+  sendOfferAcknowledgement,
+  sendOfferShopNotice,
+  type OfferEmailData,
+} from '@/lib/providers/email/offer'
+import { readOfferEmailData } from '@/lib/shop/offers'
 import { fetchArticleImages } from '@/lib/sync/images'
 import { runSyncNotify } from '@/lib/sync/webhook'
 
@@ -41,6 +47,7 @@ import { runSyncNotify } from '@/lib/sync/webhook'
  */
 
 const orderJobPayload = z.object({ orderId: z.string().min(1).max(64) })
+const offerJobPayload = z.object({ offerId: z.string().min(1).max(64) })
 
 /**
  * Combien de travaux pris à la fois.
@@ -134,6 +141,10 @@ async function runOne(job: JobRecord): Promise<void> {
       return runOrderEmail(job, sendOrderConfirmation)
     case 'order.notify-shop':
       return runOrderEmail(job, sendShopNotification)
+    case 'offer.acknowledge':
+      return runOfferEmail(job, sendOfferAcknowledgement)
+    case 'offer.notify-shop':
+      return runOfferEmail(job, sendOfferShopNotice)
     case 'sync.notify':
       // Une pièce effacée ou détachée de l'application renvoie `false` : le
       // travail est terminé, pas en échec. Tout le reste — application
@@ -154,6 +165,32 @@ async function runOne(job: JobRecord): Promise<void> {
       // échouer proprement plutôt que de le marquer terminé et de le perdre.
       throw new Error(`Type de travail inconnu : ${job.type}`)
   }
+}
+
+/**
+ * E-mails de négociation.
+ *
+ * Même patron que ceux de commande : la charge utile ne porte qu'un
+ * identifiant, et le contenu est relu à l'exécution. Une offre acceptée entre
+ * l'inscription et l'envoi doit produire l'accusé de l'ACCEPTATION, pas celui
+ * de la proposition qu'on avait figée en file.
+ */
+async function runOfferEmail(
+  job: JobRecord,
+  send: (data: OfferEmailData) => Promise<void>,
+): Promise<void> {
+  const parsed = offerJobPayload.safeParse(job.payload)
+  if (!parsed.success) {
+    throw new Error(`Charge utile invalide pour ${job.type}`)
+  }
+
+  const data = await readOfferEmailData(parsed.data.offerId)
+
+  // Offre disparue, ou sans destinataire : rien à envoyer, et rien à
+  // réessayer.
+  if (!data) return
+
+  await send(data)
 }
 
 async function runOrderEmail(

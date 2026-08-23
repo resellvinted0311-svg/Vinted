@@ -157,6 +157,32 @@
     "addToCart": "Dodaj do koszyka",
     "makeOffer": "Złóż ofertę",
     "offersOpenOn": "Oferty otwierają się {date}.",
+    "offer": {
+      "title": "Złóż ofertę",
+      "amountLabel": "Twoja oferta",
+      "amountHint": "W euro, poniżej ceny wywoławczej.",
+      "emailLabel": "Adres e-mail",
+      "emailHint": "Odpowiedź trafi na ten adres.",
+      "submit": "Wyślij ofertę",
+      "noHold": "Oferta nie rezerwuje przedmiotu: pozostaje on w sprzedaży w cenie wywoławczej, dopóki ktoś za niego nie zapłaci.",
+      "pending": "Oferta {amount} wysłana. Odpowiedź oczekiwana do {date}.",
+      "autoRejected": "Oferta {amount} odrzucona: jest zbyt niska dla tego przedmiotu.",
+      "autoAccepted": "Oferta {amount} przyjęta. Ta cena obowiązuje do {date}.",
+      "errors": {
+        "offersDisabled": "Ten przedmiot nie podlega negocjacjom.",
+        "offersNotOpenYet": "Oferty otwierają się {date}.",
+        "articleUnavailable": "Ten przedmiot nie jest już dostępny.",
+        "belowAbsoluteMinimum": "Ta oferta jest zbyt niska, aby ją rozpatrzyć.",
+        "notBelowAskingPrice": "W cenie wywoławczej lub wyżej prościej jest kupić od razu.",
+        "alreadyPending": "Masz już ofertę oczekującą na odpowiedź przy tym przedmiocie.",
+        "tooManyAttempts": "Wykorzystałeś wszystkie możliwe oferty na ten przedmiot.",
+        "cooldown": "Będziesz mógł złożyć ofertę ponownie od {date}.",
+        "rateLimited": "Zbyt wiele ofert pod rząd. Spróbuj za kilka minut.",
+        "emailRequired": "Podaj adres e-mail, aby otrzymać odpowiedź.",
+        "invalidAmount": "Podaj kwotę w euro, na przykład 32,50.",
+        "unknown": "Nie udało się zapisać oferty."
+      }
+    },
     "askQuestion": "Zadaj pytanie",
     "similar": "Podobne przedmioty",
     "similarAvailable": "Te sztuki są dostępne",
@@ -444,6 +470,19 @@
     "deliveryTo": "Dostawa do",
     "invoice": "Faktura nr {number}, dostępna na Twoim koncie.",
     "withdrawal": "Masz 14 dni od otrzymania na zmianę zdania. Formularz odstąpienia znajduje się na stronie.",
+    "signature": "Do zobaczenia, {shop}"
+  },
+  "offerEmail": {
+    "subject": {
+      "pending": "Twoja oferta na {reference}",
+      "accepted": "Oferta przyjęta — {reference}",
+      "rejected": "Twoja oferta na {reference}"
+    },
+    "greeting": "Dzień dobry,",
+    "pending": "Twoja oferta {amount} została zapisana. Odpowiedź oczekiwana do {date}.",
+    "accepted": "Twoja oferta {amount} została przyjęta. Ta cena obowiązuje do {date}.",
+    "rejected": "Twoja oferta {amount} nie została przyjęta.",
+    "noHold": "Oferta nie rezerwuje przedmiotu: pozostaje on w sprzedaży w cenie wywoławczej, dopóki ktoś za niego nie zapłaci.",
     "signature": "Do zobaczenia, {shop}"
   },
   "privacy": {

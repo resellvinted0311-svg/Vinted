@@ -157,6 +157,32 @@
     "addToCart": "In winkelmand",
     "makeOffer": "Een bod doen",
     "offersOpenOn": "Biedingen openen op {date}.",
+    "offer": {
+      "title": "Een bod doen",
+      "amountLabel": "Uw bod",
+      "amountHint": "In euro, onder de vraagprijs.",
+      "emailLabel": "E-mailadres",
+      "emailHint": "Het antwoord komt op dit adres aan.",
+      "submit": "Bod versturen",
+      "noHold": "Een bod legt het stuk niet apart: het blijft te koop tegen de vraagprijs totdat iemand ervoor betaalt.",
+      "pending": "Bod van {amount} verstuurd. Antwoord verwacht vóór {date}.",
+      "autoRejected": "Bod van {amount} afgewezen: het is te laag voor dit stuk.",
+      "autoAccepted": "Bod van {amount} aanvaard. Die prijs blijft geldig tot {date}.",
+      "errors": {
+        "offersDisabled": "Over dit stuk wordt niet onderhandeld.",
+        "offersNotOpenYet": "Biedingen openen op {date}.",
+        "articleUnavailable": "Dit stuk is niet meer beschikbaar.",
+        "belowAbsoluteMinimum": "Dit bod is te laag om te worden bekeken.",
+        "notBelowAskingPrice": "Op of boven de vraagprijs koopt u eenvoudiger rechtstreeks.",
+        "alreadyPending": "U hebt al een bod dat op antwoord wacht voor dit stuk.",
+        "tooManyAttempts": "U hebt alle mogelijke biedingen op dit stuk gebruikt.",
+        "cooldown": "U kunt vanaf {date} opnieuw bieden.",
+        "rateLimited": "Te veel biedingen achter elkaar. Probeer het over enkele minuten opnieuw.",
+        "emailRequired": "Geef een e-mailadres op om het antwoord te ontvangen.",
+        "invalidAmount": "Geef een bedrag in euro op, bijvoorbeeld 32,50.",
+        "unknown": "Het bod kon niet worden vastgelegd."
+      }
+    },
     "askQuestion": "Een vraag stellen",
     "similar": "Vergelijkbare items",
     "similarAvailable": "Deze stuks zijn beschikbaar",
@@ -445,6 +471,19 @@
     "invoice": "Factuur nr. {number}, beschikbaar in uw account.",
     "withdrawal": "U hebt 14 dagen na ontvangst om van gedachten te veranderen. Het herroepingsformulier staat op de site.",
     "signature": "Tot ziens, {shop}"
+  },
+  "offerEmail": {
+    "subject": {
+      "pending": "Uw bod op {reference}",
+      "accepted": "Bod aanvaard — {reference}",
+      "rejected": "Uw bod op {reference}"
+    },
+    "greeting": "Goedendag,",
+    "pending": "Uw bod van {amount} is vastgelegd. Antwoord wordt verwacht vóór {date}.",
+    "accepted": "Uw bod van {amount} is aanvaard. Die prijs blijft geldig tot {date}.",
+    "rejected": "Uw bod van {amount} is niet aanvaard.",
+    "noHold": "Een bod legt het stuk niet apart: het blijft te koop tegen de vraagprijs totdat iemand ervoor betaalt.",
+    "signature": "Tot binnenkort, {shop}"
   },
   "privacy": {
     "title": "Privacy",

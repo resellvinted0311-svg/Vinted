@@ -1,0 +1,147 @@
+import { test, expect, type Page } from '@playwright/test'
+
+/**
+ * Phase 3 : proposer un prix, depuis la fiche article.
+ *
+ * Ce qui se vérifie ici et nulle part ailleurs : que le formulaire existe
+ * réellement sur une pièce négociable, qu'il DIT avant l'envoi qu'une offre ne
+ * met rien de côté, et qu'aucun montant de référence ne traverse le navigateur.
+ */
+
+/**
+ * Une pièce du jeu de données dont les offres sont ouvertes.
+ *
+ * Le seed pose `offersOpenAt` à la publication plus sept jours, et les pièces
+ * de la première vague sont publiées assez anciennement pour que la fenêtre
+ * soit ouverte. Celle-ci en fait partie.
+ */
+const SLUG = 'accessoires-uniqlo-l-7'
+
+/** Une pièce déjà partie : sa page reste consultable, elle ne se négocie plus. */
+const SOLD_SLUG = 't-shirts-adidas-m-43'
+
+/** Le contenu de la page, sans le flux RSC que Next inscrit dans un script. */
+function main(page: Page) {
+  return page.locator('#contenu')
+}
+
+function offerForm(page: Page) {
+  return main(page).locator('form').filter({ has: page.locator('[name="amountEuros"]') })
+}
+
+/** On repart d'une session neuve : les offres se comptent par personne. */
+async function freshVisitor(page: Page): Promise<void> {
+  await page.context().clearCookies()
+}
+
+test.describe('Le formulaire d’offre', () => {
+  test('apparaît sur une pièce négociable', async ({ page }) => {
+    await freshVisitor(page)
+    await page.goto(`/fr/a/${SLUG}`)
+
+    await expect(
+      main(page).getByRole('heading', { name: 'Faire une offre' }),
+    ).toBeVisible()
+    await expect(offerForm(page).getByLabel('Votre proposition')).toBeVisible()
+  })
+
+  test('DIT, avant l’envoi, qu’une offre ne met rien de côté', async ({
+    page,
+  }) => {
+    await freshVisitor(page)
+    await page.goto(`/fr/a/${SLUG}`)
+
+    // Sur un stock où chaque pièce existe en un seul exemplaire, c'est
+    // l'information qui décide. Elle doit être lisible AVANT de proposer, pas
+    // découverte après coup.
+    await expect(
+      main(page).getByText(/ne met pas la pièce de côté/),
+    ).toBeVisible()
+  })
+
+  test('ne transporte AUCUN montant de référence', async ({ page }) => {
+    await freshVisitor(page)
+    await page.goto(`/fr/a/${SLUG}`)
+
+    const names = await offerForm(page)
+      .locator('input, select, textarea')
+      .evaluateAll((nodes) =>
+        nodes
+          .map((node) => (node as HTMLInputElement).name)
+          .filter((name) => name.length > 0)
+          // React 19 pose sa propre tuyauterie d'action serveur — `$ACTION_*`,
+          // qui porte la référence de la fonction et sa clé, jamais de donnée
+          // métier. On regarde ce que NOUS envoyons.
+          .filter((name) => !name.startsWith('$ACTION')),
+      )
+
+    // Un prix affiché, un plancher ou un minimum qui traverserait le
+    // navigateur serait réécrit, et servirait à déclencher une acceptation
+    // automatique en annonçant un prix plus bas qu'il ne l'est.
+    expect(names.sort()).toEqual(['amountEuros', 'articleId', 'email'])
+  })
+
+  test('demande une adresse sans compte', async ({ page }) => {
+    await freshVisitor(page)
+    await page.goto(`/fr/a/${SLUG}`)
+
+    // Sans elle, la réponse du vendeur n'atteindrait personne, et l'offre
+    // serait une proposition que son auteur ne pourrait jamais retrouver.
+    await expect(offerForm(page).getByLabel('Adresse e-mail')).toBeVisible()
+  })
+
+  test('enregistre une proposition et annonce l’échéance', async ({ page }) => {
+    await freshVisitor(page)
+    await page.goto(`/fr/a/${SLUG}`)
+
+    // 30,00 € sur une pièce affichée 37,61 € : sous le prix demandé, et
+    // au-dessus du seuil de refus automatique de cette pièce du jeu de
+    // données. La proposition doit donc ATTENDRE une réponse.
+    await offerForm(page).getByLabel('Votre proposition').fill('30,00')
+    await offerForm(page)
+      .getByLabel('Adresse e-mail')
+      .fill(`offre-${Date.now()}@exemple.test`)
+    await offerForm(page).getByRole('button', { name: 'Envoyer' }).click()
+
+    // `\s` et non une espace : `formatPrice` sépare le nombre du symbole par
+    // une espace fine insécable (U+202F), comme le veut la typographie
+    // française. Une espace ordinaire dans le motif ne correspondrait à rien.
+    await expect(
+      main(page).getByText(/Proposition de 30,00\s€\senvoyée/),
+    ).toBeVisible()
+
+    // Et le rappel reste affiché : c'est pendant l'attente qu'il compte le
+    // plus, puisque la pièce peut partir entre-temps.
+    await expect(
+      main(page).getByText(/ne met pas la pièce de côté/),
+    ).toBeVisible()
+  })
+
+  test('refuse un montant qui n’en est pas un', async ({ page }) => {
+    await freshVisitor(page)
+    await page.goto(`/fr/a/${SLUG}`)
+
+    // `inputMode="decimal"` et non `type="number"` : le navigateur laisse
+    // passer, et c'est le serveur qui tranche. Lire « 32 » dans « 32,5,0 »
+    // ferait proposer un prix que personne n'a saisi.
+    await offerForm(page).getByLabel('Votre proposition').fill('12,5,0')
+    await offerForm(page)
+      .getByLabel('Adresse e-mail')
+      .fill(`offre-${Date.now()}@exemple.test`)
+    await offerForm(page).getByRole('button', { name: 'Envoyer' }).click()
+
+    await expect(main(page).getByText(/montant en euros/)).toBeVisible()
+  })
+
+  test('n’apparaît pas sur une pièce vendue', async ({ page }) => {
+    await freshVisitor(page)
+    await page.goto(`/fr/a/${SOLD_SLUG}`)
+
+    // La page reste consultable — renvoyer 404 sur une pièce vendue détruirait
+    // le référencement acquis — mais elle ne propose pas de négocier. Le
+    // serveur refuserait de toute façon ; afficher un formulaire qui ne peut
+    // qu'échouer fait perdre du temps et donne l'impression d'un site cassé.
+    await expect(main(page).getByText('Vendu').first()).toBeVisible()
+    await expect(offerForm(page)).toHaveCount(0)
+  })
+})

@@ -57,6 +57,21 @@ export type JobType =
    * paiement encaissé.
    */
   | 'sync.notify'
+  /**
+   * Accusé de proposition, à la personne qui l'a déposée.
+   *
+   * Sans lui, une personne sans compte n'a plus aucune trace de ce qu'elle a
+   * proposé une fois l'onglet fermé — ni du montant, ni de la date à laquelle
+   * une réponse est due.
+   */
+  | 'offer.acknowledge'
+  /**
+   * Avis à la boutique : une offre attend une décision.
+   *
+   * Une offre qui n'est pas lue expire au bout de quarante-huit heures. Sans
+   * cet avis, la négociation ne serait qu'un formulaire décoratif.
+   */
+  | 'offer.notify-shop'
 
 export interface JobRecord {
   id: string
