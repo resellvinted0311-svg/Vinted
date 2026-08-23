@@ -567,8 +567,21 @@ model Offer {
   id        String  @id @default(cuid())
   articleId String
   userId    String?
-  /// Offre déposée sans compte : l'identité est l'adresse e-mail.
+  /// Offre déposée sans compte : l'adresse e-mail est la voie de réponse.
   guestEmail String?
+  /// Offre déposée sans compte : le jeton de session boutique est l'IDENTITÉ.
+  ///
+  /// Les deux colonnes ne font pas double emploi. L'adresse dit OÙ répondre ;
+  /// le jeton dit QUI a proposé, et c'est lui qui apparie une personne à ses
+  /// offres précédentes — plafond de tentatives, délai de carence, offre déjà
+  /// en attente.
+  ///
+  /// L'adresse seule ne pouvait pas jouer ce rôle : n'importe qui aurait pu
+  /// compter les offres de quelqu'un d'autre, ou faire ouvrir un délai de
+  /// carence à sa place, en devinant son e-mail. C'est le même appariement que
+  /// pour les commandes sans compte, où le jeton ET l'adresse doivent
+  /// concorder.
+  guestSessionToken String? @db.VarChar(64)
 
   amountCents Int
   status      OfferStatus @default(PENDING)
@@ -605,6 +618,7 @@ model Offer {
   @@index([expiresAt])
   @@index([parentOfferId])
   @@index([guestEmail])
+  @@index([guestSessionToken])
   @@index([priceValidUntil])
   // Chemin chaud : « les offres encore vivantes de cet acheteur sur cet article ».
   @@index([articleId, userId, status])

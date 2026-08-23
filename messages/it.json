@@ -473,6 +473,8 @@
       "favorites": "I suoi preferiti",
       "cart": "Il suo carrello",
       "cart-guest": "Il tuo carrello, senza account",
+      "offers": "Le tue offerte",
+      "offers-guest": "Le tue offerte, senza account",
       "marketing": "Le novità via e-mail",
       "security": "La protezione dagli attacchi"
     },

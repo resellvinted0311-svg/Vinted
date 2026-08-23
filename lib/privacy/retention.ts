@@ -54,6 +54,8 @@ export interface PurgeReport {
   expiredUserTokens: number
   guestFavorites: number
   abandonedGuestCarts: number
+  /** Négociations sans compte, périmées avec le cookie qui les portait. */
+  guestOffers: number
   /** Traces d'événements de paiement, périmées. */
   webhookEvents: number
   /** Travaux différés terminés, périmés. */
@@ -105,6 +107,23 @@ export async function purgeExpiredPersonalData(
     where: { userId: null, updatedAt: { lt: guestCutoff } },
   })
 
+  // Offres déposées sans compte. Elles portent une adresse e-mail et un jeton
+  // de session : deux données personnelles, rattachées à un cookie dont la
+  // durée de vie est de trente jours. Passé ce délai, la personne concernée ne
+  // peut plus retrouver sa propre négociation — la conserver ne lui sert donc
+  // à rien, et la garder nous exposerait pour rien.
+  //
+  // Une offre rattachée à une commande est ÉPARGNÉE : elle justifie le prix
+  // porté sur une facture, et suit alors la durée comptable. La supprimer
+  // laisserait un montant négocié inexplicable sur une pièce comptable.
+  const guestOffers = await prisma.offer.deleteMany({
+    where: {
+      userId: null,
+      createdAt: { lt: guestCutoff },
+      orderItems: { none: {} },
+    },
+  })
+
   // Traces d'événements de paiement. Elles sont déjà caviardées à l'écriture
   // — voir lib/payments/webhook-payload.ts — mais une trace technique qui ne
   // sert plus n'a pas à survivre pour autant. Effacer ne rouvre pas la porte
@@ -143,6 +162,7 @@ export async function purgeExpiredPersonalData(
     expiredUserTokens: expiredUserTokens.count,
     guestFavorites: guestFavorites.count,
     abandonedGuestCarts: abandonedGuestCarts.count,
+    guestOffers: guestOffers.count,
     webhookEvents: webhookEvents.count,
     finishedJobs: finishedJobs.count,
     anonymizedAbandonedOrders,

@@ -3,6 +3,7 @@ import 'server-only'
 import { z } from 'zod'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
+import type { OfferPolicy } from '@/lib/domain/offers'
 import type { PricingConfig } from '@/lib/domain/pricing'
 
 /**
@@ -78,6 +79,37 @@ const SCHEMAS = {
    * d'exister.
    */
   offersOpenAfterDays: nonNegativeInt,
+  /** Temps laissé au vendeur pour répondre à une offre. */
+  offerResponseHours: positiveInt,
+  /** Durée pendant laquelle un prix accepté reste payable. */
+  acceptedOfferValidityHours: positiveInt,
+  /** Plancher ABSOLU d'une offre, toutes pièces confondues. */
+  minOfferAmountCents: nonNegativeInt,
+  /** Combien d'offres une même personne peut déposer sur une même pièce. */
+  maxOffersPerArticlePerUser: positiveInt,
+  /**
+   * Délai de carence après un refus.
+   *
+   * Sans lui, un refus se contourne en renvoyant la même offre à un centime
+   * près, indéfiniment.
+   */
+  offerCooldownAfterRejectionHours: nonNegativeInt,
+  /**
+   * L'acceptation automatique des offres.
+   *
+   * DÉSACTIVÉE par défaut, et le brief l'exige : si les acheteurs découvrent
+   * qu'une offre basse passe toute seule, le prix affiché devient décoratif.
+   */
+  autoAcceptOffersEnabled: z.boolean(),
+  /**
+   * Pourcentage du prix affiché à partir duquel une offre passerait seule.
+   *
+   * Nullable, et nul par défaut : un seuil absent vaut acceptation automatique
+   * inerte, ce qui est le comportement voulu tant que personne n'a tranché.
+   * Le prix plancher reste de toute façon infranchissable par une machine —
+   * voir `lib/domain/offers.ts`.
+   */
+  autoAcceptThresholdPercent: positiveInt.max(100).nullable(),
   minMarginCents: nonNegativeInt,
   contributionRateBps: nonNegativeInt,
   stripePercentBps: nonNegativeInt,
@@ -172,6 +204,24 @@ export async function getShippingConfig(client: Reader = prisma): Promise<{
  * commission d'un prestataire de paiement change par contrat ; les deux
  * doivent se corriger en back-office, sans redéploiement.
  */
+/** Réglages de négociation, tels que l'attend `lib/domain/offers`. */
+export async function getOfferPolicy(
+  client: Reader = prisma,
+): Promise<OfferPolicy> {
+  return getSettings(
+    [
+      'minOfferAmountCents',
+      'maxOffersPerArticlePerUser',
+      'offerCooldownAfterRejectionHours',
+      'offerResponseHours',
+      'acceptedOfferValidityHours',
+      'autoAcceptOffersEnabled',
+      'autoAcceptThresholdPercent',
+    ],
+    client,
+  )
+}
+
 export async function getPricingConfig(
   client: Reader = prisma,
 ): Promise<PricingConfig> {

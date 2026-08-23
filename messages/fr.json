@@ -473,6 +473,8 @@
       "favorites": "Vos favoris",
       "cart": "Votre panier",
       "cart-guest": "Votre panier, sans compte",
+      "offers": "Vos offres",
+      "offers-guest": "Vos offres, sans compte",
       "marketing": "Les nouveautés par e-mail",
       "security": "La protection contre les attaques"
     },

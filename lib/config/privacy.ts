@@ -191,6 +191,28 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
       'personne ne peut y accéder, pas même la personne concernée.',
   },
   {
+    // Deux entrées, pour la même raison que le panier : les deux durées sont
+    // réellement différentes.
+    key: 'offers',
+    tables: ['Offer (avec compte)'],
+    basis: 'contract',
+    retentionDays: null,
+    retentionReason:
+      'Mesure précontractuelle : conservée avec le compte, effacée avec lui ' +
+      'ou à sa demande. Une offre qui a réellement abouti à une vente suit, ' +
+      'elle, la durée comptable : elle justifie le prix porté sur une facture.',
+  },
+  {
+    key: 'offers-guest',
+    tables: ['Offer (sans compte)'],
+    basis: 'contract',
+    retentionDays: GUEST_DATA_RETENTION_DAYS,
+    retentionReason:
+      'Adresse e-mail et jeton de session : même durée que le cookie qui ' +
+      'permet de retrouver la négociation. Au-delà, plus personne ne peut y ' +
+      'accéder, pas même la personne concernée.',
+  },
+  {
     key: 'marketing',
     tables: ['User.marketingConsent'],
     basis: 'consent',
