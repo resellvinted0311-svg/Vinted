@@ -5,6 +5,7 @@ import {
   ABANDONED_ORDER_RETENTION_DAYS,
   GUEST_DATA_RETENTION_DAYS,
   INACTIVE_ACCOUNT_RETENTION_DAYS,
+  WEBHOOK_EVENT_RETENTION_DAYS,
 } from '@/lib/config/privacy'
 import { anonymizeUser, anonymizeAbandonedOrders } from './anonymize'
 
@@ -48,6 +49,8 @@ export interface PurgeReport {
   expiredUserTokens: number
   guestFavorites: number
   abandonedGuestCarts: number
+  /** Traces d'événements de paiement, périmées. */
+  webhookEvents: number
   /** Tunnels jamais payés, vidés de leurs coordonnées. */
   anonymizedAbandonedOrders: number
   anonymizedAccounts: number
@@ -67,6 +70,7 @@ export async function purgeExpiredPersonalData(
 ): Promise<PurgeReport> {
   const guestCutoff = daysAgo(GUEST_DATA_RETENTION_DAYS, now)
   const abandonedOrderCutoff = daysAgo(ABANDONED_ORDER_RETENTION_DAYS, now)
+  const webhookCutoff = daysAgo(WEBHOOK_EVENT_RETENTION_DAYS, now)
   const inactiveCutoff = daysAgo(INACTIVE_ACCOUNT_RETENTION_DAYS, now)
 
   // Jetons et sessions périmés : ils n'ouvrent plus rien, les garder ne sert
@@ -91,6 +95,14 @@ export async function purgeExpiredPersonalData(
     where: { userId: null, updatedAt: { lt: guestCutoff } },
   })
 
+  // Traces d'événements de paiement. Elles sont déjà caviardées à l'écriture
+  // — voir lib/payments/webhook-payload.ts — mais une trace technique qui ne
+  // sert plus n'a pas à survivre pour autant. Effacer ne rouvre pas la porte
+  // au rejeu : la signature Stripe porte un horodatage et refuse l'ancien.
+  const webhookEvents = await prisma.webhookEvent.deleteMany({
+    where: { createdAt: { lt: webhookCutoff } },
+  })
+
   // Tunnels de commande jamais payés. On vide, on ne supprime pas : un
   // paiement a pu aboutir sans que le webhook nous parvienne, et la ligne est
   // alors la seule trace d'un débit à retrouver.
@@ -105,6 +117,7 @@ export async function purgeExpiredPersonalData(
     expiredUserTokens: expiredUserTokens.count,
     guestFavorites: guestFavorites.count,
     abandonedGuestCarts: abandonedGuestCarts.count,
+    webhookEvents: webhookEvents.count,
     anonymizedAbandonedOrders,
     anonymizedAccounts,
   }

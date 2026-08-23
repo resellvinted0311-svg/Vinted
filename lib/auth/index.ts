@@ -2,6 +2,7 @@ import NextAuth, { type DefaultSession } from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import type { Provider } from 'next-auth/providers'
 import { prisma } from '@/lib/db/client'
+import { adoptGuestSession } from '@/lib/shop/handover'
 import { sendMagicLinkEmail } from '@/lib/providers/email/magic-link'
 import {
   SESSION_COOKIE_NAME,
@@ -131,12 +132,38 @@ export const {
   },
 
   events: {
+    /**
+     * Ouverture de session par LIEN MAGIQUE.
+     *
+     * Ce chemin-là ne passe pas par `signInAction` : Auth.js crée la session
+     * lui-même quand la personne clique le lien reçu. Tout ce que la connexion
+     * par mot de passe fait ensuite doit donc être refait ici, sinon deux des
+     * trois portes d'entrée se comportent d'une façon et la troisième d'une
+     * autre.
+     *
+     * Ce qui manquait, et ce que ça coûtait :
+     *  - le panier et les favoris déposés avant la connexion étaient PERDUS,
+     *    exactement comme ils l'étaient sur les deux autres chemins avant
+     *    correction ;
+     *  - les commandes payées sans compte n'étaient pas rattachées ;
+     *  - et surtout le jeton de session boutique n'était pas renouvelé. Sur un
+     *    poste partagé, la personne suivante héritait du panier et des favoris
+     *    de la précédente — c'est précisément ce que le renouvellement existe
+     *    pour empêcher.
+     */
     async signIn({ user }) {
       if (!user.id) return
+
       await prisma.user.update({
         where: { id: user.id },
         data: { lastSeenAt: new Date() },
       })
+
+      if (user.email) {
+        // L'adresse vient du lien vérifié par Auth.js : c'est bien celle avec
+        // laquelle la personne vient de prouver son identité.
+        await adoptGuestSession(user.id, user.email)
+      }
     },
   },
 

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import type Stripe from 'stripe'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
+import { redactStripeEvent } from '@/lib/payments/webhook-payload'
 import { stripe, isStripeConfigured } from '@/lib/payments/stripe'
 import { markOrderPaid, expireOrder } from '@/lib/shop/fulfilment'
 
@@ -104,7 +105,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       data: {
         provider: PROVIDER,
         externalId: event.id,
-        payload: event as unknown as Prisma.InputJsonValue,
+        // L'événement est CAVIARDÉ avant archivage. Tel quel, il porterait
+        // `customer_details` — nom, e-mail, téléphone, adresse postale — dans
+        // une seconde copie hors du registre, hors de l'export de l'article 15
+        // et hors de l'effacement. Voir lib/payments/webhook-payload.ts.
+        payload: redactStripeEvent(event) as unknown as Prisma.InputJsonValue,
       },
     })
   } catch (error) {

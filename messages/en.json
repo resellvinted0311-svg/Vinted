@@ -466,6 +466,7 @@
       "account": "Your account",
       "orders": "Your paid orders and invoices",
       "abandoned-orders": "An order started and then abandoned",
+      "payment-events": "Technical traces of your payments",
       "favorites": "Your favourites",
       "cart": "Your basket",
       "marketing": "New arrivals by email",

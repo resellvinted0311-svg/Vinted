@@ -97,6 +97,21 @@ export const ACCOUNTING_RETENTION_DAYS = 365 * 10
 export const ABANDONED_ORDER_RETENTION_DAYS = 30
 
 /**
+ * Trace des événements de paiement : 30 jours.
+ *
+ * Elle sert à comprendre après coup pourquoi un encaissement a échoué. Passé
+ * un mois, elle ne sert plus à rien : Stripe a cessé ses tentatives depuis
+ * longtemps — sa fenêtre de reprise est de trois jours — et la commande porte
+ * déjà tout ce qui compte.
+ *
+ * Effacer ces lignes ne rouvre PAS la porte au rejeu d'un ancien événement :
+ * `constructEvent` vérifie l'horodatage inclus dans la signature et refuse
+ * tout ce qui dépasse quelques minutes. L'unicité de `externalId` protège la
+ * fenêtre courte, la signature protège le reste.
+ */
+export const WEBHOOK_EVENT_RETENTION_DAYS = 30
+
+/**
  * Comptes inactifs : 3 ans sans connexion.
  *
  * Durée recommandée par la CNIL pour les données de prospects et de clients
@@ -133,6 +148,17 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
     retentionReason:
       'Aucun paiement, donc aucune pièce comptable : les coordonnées sont ' +
       'effacées au bout de trente jours, la trace anonyme de l’abandon reste.',
+  },
+  {
+    // Déclaré, parce qu'un traitement non déclaré est un traitement qu'on
+    // oublie de purger — c'est exactement ce qui est arrivé ici.
+    key: 'payment-events',
+    tables: ['WebhookEvent'],
+    basis: 'legitimate-interest',
+    retentionDays: WEBHOOK_EVENT_RETENTION_DAYS,
+    retentionReason:
+      'Trace technique des encaissements, caviardée de toute donnée ' +
+      'personnelle et conservée un mois pour comprendre un échec.',
   },
   {
     key: 'favorites',
