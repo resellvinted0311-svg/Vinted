@@ -15,6 +15,7 @@ import {
   sendShopNotification,
   type OrderEmailData,
 } from '@/lib/providers/email/order'
+import { fetchArticleImages } from '@/lib/sync/images'
 
 /**
  * Exécution des travaux différés.
@@ -40,8 +41,36 @@ import {
 
 const orderJobPayload = z.object({ orderId: z.string().min(1).max(64) })
 
-/** Combien de travaux au plus par passage. */
-const BATCH = 20
+/**
+ * Combien de travaux pris à la fois.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi un petit paquet plutôt qu'un gros
+ * ---------------------------------------------------------------------------
+ * `claimJobs` INCRÉMENTE le nombre de tentatives au moment de la prise, pas au
+ * moment de l'exécution. Prendre vingt travaux et n'en exécuter que huit avant
+ * de manquer de temps brûlerait donc un essai sur les douze autres, sans les
+ * avoir essayés. Au cinquième passage, ils seraient abandonnés définitivement.
+ *
+ * Ce défaut était invisible tant que la file ne portait que des e-mails, qui
+ * partent en quelques dizaines de millisecondes. Le réhébergement de dix
+ * images, lui, se compte en dizaines de secondes.
+ *
+ * On prend donc par petits paquets, on les exécute en entier, et on redemande
+ * tant qu'il reste du temps. Le dépassement possible est celui d'un seul
+ * paquet, pas celui d'un lot entier.
+ */
+const CHUNK = 4
+
+/**
+ * Temps que le passage s'accorde pour prendre de NOUVEAUX travaux.
+ *
+ * Confortablement sous la durée maximale de la fonction de cron
+ * (`maxDuration`), et sous ce que peuvent tenir les autres travaux périodiques
+ * qui partagent la même requête. Ce n'est pas une limite d'exécution : un
+ * travail commencé va jusqu'au bout.
+ */
+const CLAIM_BUDGET_MS = 35_000
 
 export interface WorkerReport {
   claimed: number
@@ -49,38 +78,53 @@ export interface WorkerReport {
   failed: number
 }
 
-export async function runJobs(now = new Date()): Promise<WorkerReport> {
+export async function runJobs(
+  now = new Date(),
+  budgetMs: number = CLAIM_BUDGET_MS,
+): Promise<WorkerReport> {
   // Identifiant d'exécutant : sert uniquement au diagnostic, pour savoir qui
   // tenait un verrou resté ouvert.
   const workerId = randomUUID()
-  const jobs = await claimJobs(workerId, BATCH, now)
+  const deadline = Date.now() + budgetMs
 
+  let claimed = 0
   let done = 0
   let failed = 0
 
-  for (const job of jobs) {
-    try {
-      await runOne(job)
-      await completeJob(job.id)
-      done += 1
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'erreur inconnue'
-      await failJob(job.id, message)
-      failed += 1
+  while (Date.now() < deadline) {
+    const jobs = await claimJobs(workerId, CHUNK, now)
+    if (jobs.length === 0) break
 
-      // Bruyant au dernier essai seulement : les échecs transitoires — un
-      // prestataire d'e-mail indisponible trente secondes — n'ont pas à
-      // remplir les journaux.
-      if (job.attempts >= MAX_ATTEMPTS) {
-        console.error(
-          `[jobs] ${job.type} abandonné après ${job.attempts} tentatives :`,
-          message,
-        )
+    claimed += jobs.length
+
+    for (const job of jobs) {
+      try {
+        await runOne(job)
+        await completeJob(job.id)
+        done += 1
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'erreur inconnue'
+        // Le nombre de tentatives décide du délai de reprise : sans lui, un
+        // travail en échec serait repris dans le même passage, et ses cinq
+        // essais partiraient en quelques secondes.
+        await failJob(job.id, message, job.attempts)
+        failed += 1
+
+        // Bruyant au dernier essai seulement : les échecs transitoires — un
+        // prestataire d'e-mail indisponible trente secondes — n'ont pas à
+        // remplir les journaux.
+        if (job.attempts >= MAX_ATTEMPTS) {
+          console.error(
+            `[jobs] ${job.type} abandonné après ${job.attempts} tentatives :`,
+            message,
+          )
+        }
       }
     }
   }
 
-  return { claimed: jobs.length, done, failed }
+  return { claimed, done, failed }
 }
 
 async function runOne(job: JobRecord): Promise<void> {
@@ -89,6 +133,13 @@ async function runOne(job: JobRecord): Promise<void> {
       return runOrderEmail(job, sendOrderConfirmation)
     case 'order.notify-shop':
       return runOrderEmail(job, sendShopNotification)
+    case 'article.images':
+      // La valeur de retour ne sert qu'au diagnostic : ce qui compte est que
+      // le travail ne lève pas. Une pièce introuvable renvoie `null` et le
+      // travail est marqué terminé — réessayer cinq fois de télécharger les
+      // photos d'un article effacé ne le fera pas réapparaître.
+      await fetchArticleImages(job.payload)
+      return
     default:
       // Type inconnu : probablement un travail inscrit par une version plus
       // récente du code, sur un déploiement en cours de bascule. On le laisse

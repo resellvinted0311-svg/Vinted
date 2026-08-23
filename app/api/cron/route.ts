@@ -28,6 +28,21 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /**
+ * Durée maximale de la fonction, en secondes.
+ *
+ * La valeur par défaut de Vercel se compte en dizaines de secondes, et elle
+ * suffisait tant que la file ne portait que des e-mails. Le réhébergement des
+ * visuels d'une pièce importée — jusqu'à dix images à télécharger, décoder,
+ * redresser et téléverser — ne tient pas dedans.
+ *
+ * Une fonction tuée en cours de route est le pire des cas : le verrou du
+ * travail reste posé un quart d'heure et rien n'a été écrit. `runJobs` s'arrête
+ * donc de lui-même bien avant cette borne ; celle-ci est le filet, pas le
+ * budget.
+ */
+export const maxDuration = 60
+
+/**
  * Délai avant d'annuler une commande jamais payée, en minutes.
  *
  * Confortablement au-delà de la durée d'une session de paiement (trente

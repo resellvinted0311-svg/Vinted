@@ -268,8 +268,29 @@ export default async function ArticlePage({ params }: { params: Params }) {
             <p className="mt-3 whitespace-pre-line text-base text-ink">
               {translation?.description}
             </p>
+
+            {/*
+              Trois mentions possibles, exclusives, et chacune ne dit que ce
+              qui est vrai.
+
+              La distinction n'est pas cosmétique. Une pièce importée depuis
+              l'application de gestion arrive en français ; ses huit lignes de
+              traduction sont écrites d'emblée, sinon le listing du catalogue —
+              qui joint la locale en INNER JOIN — la ferait disparaître des sept
+              autres langues. Afficher « traduite automatiquement » au-dessus de
+              ce français intact serait faux, et c'est le genre de fausse
+              mention qui use la confiance dans toutes les autres.
+            */}
             {translation?.isMachineTranslated ? (
               <p className="mt-2 text-xs text-muted">{t('machineTranslated')}</p>
+            ) : translation?.isFallback ? (
+              <p className="mt-2 text-xs text-muted">{t('notTranslated')}</p>
+            ) : null}
+
+            {article.descriptionIsGenerated ? (
+              <p className="mt-2 text-xs text-muted">
+                {t('generatedDescription')}
+              </p>
             ) : null}
           </section>
 

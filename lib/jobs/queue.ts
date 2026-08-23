@@ -40,6 +40,14 @@ import { prisma } from '@/lib/db/client'
 export type JobType =
   | 'order.confirmation'
   | 'order.notify-shop'
+  /**
+   * Téléchargement et réhébergement des visuels d'une pièce importée.
+   *
+   * Différé pour une raison de temps, pas de confort : trois cents images dans
+   * l'appel d'import dépasseraient le temps imparti à une fonction serverless,
+   * et l'application de gestion attendrait une réponse qui n'arriverait jamais.
+   */
+  | 'article.images'
 
 export interface JobRecord {
   id: string
@@ -123,22 +131,59 @@ export async function completeJob(id: string): Promise<void> {
 }
 
 /**
- * Enregistre un échec et rend le travail reprenable.
+ * Délais de reprise, en minutes, selon le nombre de tentatives déjà faites.
  *
- * Le verrou est relâché immédiatement : le nombre de tentatives, lui, a déjà
- * été incrémenté à la prise. C'est lui qui finit par arrêter les frais.
+ * Au-delà de la liste, on garde le dernier délai — jusqu'à `MAX_ATTEMPTS`, qui
+ * arrête les frais.
  */
-export async function failJob(id: string, error: string): Promise<void> {
-  await prisma.job.update({
-    where: { id },
-    data: {
-      lockedAt: null,
-      lockedBy: null,
-      // Tronqué : un message d'erreur de bibliothèque peut faire des milliers
-      // de caractères, et seul son début renseigne.
-      lastError: error.slice(0, 500),
-    },
-  })
+const RETRY_DELAYS_MINUTES = [1, 5, 30, 120] as const
+
+/**
+ * Enregistre un échec et reprogramme le travail.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi une reprise DIFFÉRÉE, et non immédiate
+ * ---------------------------------------------------------------------------
+ * Le verrou était relâché sans toucher à `runAt`, ce qui rendait le travail
+ * immédiatement reprenable. Tant que l'exécutant ne prenait qu'un paquet par
+ * passage, cela n'avait pas d'effet visible : la reprise tombait au passage
+ * suivant du cron, cinq minutes plus tard.
+ *
+ * Depuis que l'exécutant redemande du travail tant qu'il lui reste du temps,
+ * ce n'est plus vrai : un travail qui échoue est repris DANS LE MÊME PASSAGE,
+ * et ses cinq tentatives sont brûlées en quelques secondes. Un prestataire
+ * d'e-mail indisponible trente secondes suffirait alors à perdre définitivement
+ * une confirmation de commande.
+ *
+ * Les délais croissent — une minute, cinq, trente, deux heures — parce que la
+ * cause d'un échec change de nature avec le temps : les premières reprises
+ * visent un incident passager, les dernières un incident qu'il a fallu réparer.
+ */
+export async function failJob(
+  id: string,
+  error: string,
+  attempts = 1,
+): Promise<void> {
+  const index = Math.min(
+    Math.max(attempts, 1),
+    RETRY_DELAYS_MINUTES.length,
+  ) - 1
+  const delayMinutes = RETRY_DELAYS_MINUTES[index] ?? 120
+
+  // L'échéance est calculée PAR LA BASE. C'est la même horloge que celle qui
+  // décide, à la prise, si un travail est exigible — deux horloges feraient
+  // reprendre trop tôt ou jamais.
+  await prisma.$executeRaw`
+    UPDATE "Job"
+    SET "lockedAt" = NULL,
+        "lockedBy" = NULL,
+        -- Tronqué : un message d'erreur de bibliothèque peut faire des
+        -- milliers de caractères, et seul son début renseigne.
+        "lastError" = ${error.slice(0, 500)},
+        "runAt" = now() + make_interval(mins => ${delayMinutes}::int),
+        "updatedAt" = now()
+    WHERE "id" = ${id}
+  `
 }
 
 /** Travaux définitivement abandonnés, pour qu'ils ne passent pas inaperçus. */

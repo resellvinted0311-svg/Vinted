@@ -20,10 +20,24 @@ Supabase.
 la commande : articles, traductions, images, mesures, catégories, marques,
 offres, panier, commandes, expéditions, retours, zones et tarifs de port.
 
-**Panier et paiement.** Le panier existe et fonctionne, côté serveur. **Le
-paiement n'existe pas encore** — Stripe est le lot suivant. Aucune vente ne peut
-donc avoir lieu aujourd'hui, et la remontée « vendu » n'aura rien à transporter
-avant que ce lot soit livré.
+**Panier et paiement.** Les deux existent et fonctionnent. Panier serveur,
+tunnel de commande, Stripe Checkout intégré, webhook signé, commande, facture
+numérotée sans rupture et e-mails de confirmation : livrés.
+
+---
+
+## 0 bis. État de la livraison
+
+| Élément | État |
+|---|---|
+| `POST /api/sync/articles` | **livré** — §2 ci-dessous fait foi, aux écarts près listés au §8 |
+| Téléchargement des images | **livré** — file de travaux, cron toutes les 5 minutes |
+| Remontée des ventes vers l'application | **à faire** |
+| `GET /api/sync/changes` | **à faire** |
+
+Le §8, en fin de document, liste les points sur lesquels l'implémentation
+s'écarte de ce que les sections précédentes annonçaient, et pourquoi. Il est
+court, mais il fait foi contre elles.
 
 ---
 
@@ -31,8 +45,8 @@ avant que ce lot soit livré.
 
 | Sens | Qui appelle | Quand | Disponible |
 |---|---|---|---|
-| Inventaire | l'application | à chaque création ou modification d'une pièce | dès que l'endpoint est écrit |
-| Vente | la boutique | à chaque vente, réservation ou baisse de prix | après le lot Stripe |
+| Inventaire | l'application | à chaque création ou modification d'une pièce | **oui** |
+| Vente | la boutique | à chaque vente, réservation ou baisse de prix | pas encore |
 
 ---
 
@@ -64,12 +78,24 @@ d'au plus 100. C'est ce qui rend l'import initial praticable.
 | `sizeLabel` | chaîne | libre — `M`, `W32 L34`, `42` |
 | `priceCents` | entier | > 0. **En centimes**, jamais en euros décimaux |
 | `costCents` | entier | ≥ 0. Prix d'achat, en centimes. Nécessaire au calcul du prix plancher |
-| `weightGrams` | entier | 1 à 5000. Poids de la pièce seule, l'emballage est ajouté par la boutique |
-| `images` | tableau d'URL | 1 à 10, en `https://`, accessibles publiquement |
+| `weightGrams` | entier | > 0. Poids de la pièce SEULE, l'emballage est ajouté par la boutique |
+| `images` | tableau d'URL | 1 à 10, en `https://`, sur un nom de domaine, accessibles publiquement |
 
-**Sur le poids.** Au-delà de 5000 g, aucun tarif transporteur ne couvre le colis
-et la boutique refuse de calculer un port plutôt que d'en inventer un. Une pièce
-plus lourde est rejetée avec un message explicite.
+**Sur le poids.** La borne n'est pas un nombre écrit dans le code : c'est le
+palier le plus lourd RÉELLEMENT tarifé, **emballage compris**. Aujourd'hui,
+5000 g de palier et 80 g d'emballage, donc 4920 g de pièce — et ces deux
+valeurs se règlent en back-office.
+
+Vérifier le poids nu laisserait passer une pièce de 4980 g qui, une fois
+emballée, ne trouverait aucun tarif : le refus tomberait à l'étape du paiement,
+devant l'acheteuse, au lieu de tomber ici. Le message de refus cite le poids du
+colis, la part d'emballage et le palier, pour qu'on n'ait pas à deviner.
+
+**Sur les adresses d'images.** `https` obligatoire, et un NOM DE DOMAINE : une
+adresse IP littérale est refusée. Le nom est ensuite résolu au moment du
+téléchargement, et une pièce dont une seule adresse est privée, locale ou de
+métadonnées d'instance est refusée. Les redirections ne sont pas suivies —
+fournissez l'URL finale.
 
 **Sur le prix d'achat.** Il est indispensable : le prix plancher est calculé à
 partir du coût, du port, des frais de paiement et de la marge minimale. Il ne
@@ -139,13 +165,20 @@ paiement encaissé, pas d'une déclaration.
       "url": "https://<boutique>/fr/a/chemise-ralph-lauren-l-51",
       "floorPriceCents": 2340,
       "belowFloor": false,
-      "estimatedMarginCents": 820
+      "estimatedMarginCents": 820,
+      "imagesPending": true,
+      "published": false
     }
   ]
 }
 ```
 
 `action` vaut `created` ou `updated`.
+
+`imagesPending` dit que les visuels ne sont pas encore stockés ; `published`
+dit si la fiche est visible du public à cet instant. À la création, les deux
+valent respectivement `true` et `false` : c'est normal, et la fiche se publie
+seule quelques minutes plus tard.
 
 **`belowFloor: true`** signifie que le prix envoyé passe sous le plancher
 calculé. **La pièce est quand même publiée** — c'est une décision commerciale
@@ -167,12 +200,36 @@ motif :
 }
 ```
 
-Motifs : `unknown-category`, `unknown-color`, `unknown-material`,
+Motifs par article : `unknown-category`, `unknown-color`, `unknown-material`,
 `unknown-fit`, `weight-not-covered`, `invalid-price`,
-`compare-price-not-higher`, `payload-too-large`, `locked-by-checkout`.
+`compare-price-not-higher`, `locked-by-checkout`, `already-sold`,
+`invalid-field`.
+
+Deux ajouts par rapport à la première version de ce document, et ils sont
+délibérés :
+
+- **`already-sold`** — toute écriture sur une pièce vendue est refusée, pas
+  seulement son archivage. Son prix et son libellé figurent, figés, sur une
+  facture qu'une cliente détient ; réécrire la fiche publique ferait diverger
+  les deux, et un litige se jugerait sur deux versions du même article ;
+- **`invalid-field`** — tout ce qui n'a pas de motif dédié : titre vide,
+  `externalId` trop long, clé inconnue. Écraser ces cas dans un motif
+  approchant — `invalid-price` pour un titre vide — ferait chercher longtemps.
+
+**`payload-too-large` n'est PAS un motif par article** : c'est un `400` global,
+avec le motif en tête de réponse et `results: []`. Un lot de 120 pièces n'est
+pas une collection de pièces invalides, c'est un lot mal découpé ; répondre 120
+refus identiques ferait chercher l'erreur dans les données.
 
 Un lot est traité **article par article** : une pièce rejetée n'annule pas les
 autres.
+
+**Toute clé inconnue est refusée**, elle n'est pas ignorée. Le cas qui a décidé
+de la règle : `colour` au lieu de `color`. Ignorer publierait la pièce SANS sa
+couleur, invisible dans la facette « couleur », et personne ne l'apprendrait
+jamais. Corollaire assumé : le jour où l'application enverra un champ nouveau,
+la boutique refusera jusqu'à ce que les deux côtés soient d'accord — c'est le
+comportement voulu d'un contrat.
 
 ### 2.7 Images
 
@@ -194,8 +251,26 @@ stockées. Une fiche n'est jamais publiée sans visuel.
 
 L'application envoie du **français**. Les sept autres langues retombent dessus
 jusqu'à ce que la traduction automatique soit branchée. Une cliente
-néerlandaise verra donc du français en attendant — l'interface, elle, est bien
-traduite.
+néerlandaise verra donc un TITRE français en attendant — l'interface, elle, est
+bien traduite.
+
+Trois précisions que l'implémentation a rendues nécessaires :
+
+1. **Les huit lignes de traduction sont écrites d'emblée.** Le listing du
+   catalogue joint les traductions en `INNER JOIN` sur la langue demandée : une
+   pièce qui n'aurait qu'une ligne `fr` ne serait pas mal traduite, elle serait
+   **absente** des sept autres catalogues.
+
+2. **La fiche le dit.** Les sept lignes non françaises portent un drapeau, et la
+   page affiche « cette fiche n'est pas encore traduite ». Elle n'affiche pas
+   « traduite automatiquement » : ce serait faux, et une fausse mention use la
+   confiance dans toutes les autres.
+
+3. **La description composée, elle, est bien traduite.** Quand vous n'en
+   fournissez pas, le relevé est assemblé à partir de libellés déjà traduits
+   huit fois — matière, coupe, couleur, état, clés de mesure. Une cliente
+   néerlandaise lit donc un titre français et un relevé néerlandais, et le
+   vecteur de recherche néerlandais contient de vrais mots néerlandais.
 
 ---
 
@@ -442,9 +517,25 @@ variables d'environnement des deux projets Vercel. Ni dépôt, ni conversation.
 
 ### 7.3 Mode d'essai — accepté
 
-`?dryRun=1` ou `"dryRun": true` dans le corps. Valide tout, calcule le prix
-plancher, renvoie **exactement** la même réponse, n'écrit rien. `action` vaut
-alors `would-create` ou `would-update`.
+`?dryRun=1` dans l'URL, ou `"dryRun": true` **à la racine de l'enveloppe** :
+
+```json
+{ "dryRun": true, "articles": [ … ] }
+```
+
+Pas à l'intérieur d'un article. Accepter une clé `dryRun` dans un objet article
+mélangerait une commande et une donnée, et ouvrirait une brèche dans le refus
+des clés inconnues. Un article seul ou un tableau nu n'ont donc que le paramètre
+d'URL.
+
+Valide tout, calcule le prix plancher, n'écrit rien. `action` vaut alors
+`would-create` ou `would-update`.
+
+**Une différence avec la réponse réelle, et une seule** : sur `would-create`,
+`sku`, `slug` et `url` sont ABSENTS. Un essai à blanc ne consomme pas de numéro
+d'inventaire ; en annoncer un serait pire qu'une absence, puisqu'il ne serait
+pas celui attribué à l'écriture réelle. Sur `would-update`, ils sont présents —
+la pièce existe déjà.
 
 Demande justifiée : sans lui, vérifier une correspondance de champs oblige à
 polluer un catalogue réel puis à nettoyer à la main.
@@ -467,7 +558,68 @@ Vous avez raison, `422` global sur un lot partiellement accepté est trompeur.
 | tout accepté | `200` |
 | lot mixte | **`207 Multi-Status`** |
 | tout rejeté | `422` |
-| corps illisible, clé absente ou invalide | `400` / `401` |
+| corps illisible, lot trop grand, lot vide | `400` |
+| clé absente ou invalide | `401` |
+| débit dépassé | `429` + `Retry-After` |
 
 Le corps porte toujours le détail par article. Un `207` signifie « regardez le
 détail », jamais « tout a échoué ».
+
+Un `401` est renvoyé, et non un `404` : de votre côté, il faut pouvoir
+distinguer une clé fausse d'une URL fausse.
+
+---
+
+## 8. Écarts entre ce document et ce qui est livré
+
+Les sections précédentes ont été écrites avant l'implémentation. Là où
+l'écriture du code a montré qu'elles étaient imprécises ou fausses, elles ont
+été corrigées sur place ; ce qui suit récapitule les points sur lesquels un
+lecteur de la version initiale se tromperait.
+
+1. **Le poids ne se borne pas à 5000 g.** La borne est le palier le plus lourd
+   réellement tarifé, **emballage compris**, et les deux valeurs sont des
+   réglages. Voir §2.2.
+
+2. **`payload-too-large` est un `400` global**, pas un motif par article. Voir
+   §2.6.
+
+3. **Deux motifs de refus s'ajoutent** : `already-sold` et `invalid-field`.
+   Voir §2.6.
+
+4. **Toute clé inconnue est refusée.** Voir §2.6.
+
+5. **`dryRun` se met à la racine de l'enveloppe ou dans l'URL**, jamais dans un
+   objet article ; et `would-create` ne porte ni `sku`, ni `slug`, ni `url`.
+   Voir §7.3.
+
+6. **Les huit lignes de traduction sont écrites d'emblée**, et la fiche annonce
+   qu'elle n'est pas traduite. Voir §2.8.
+
+7. **Une pièce archivée puis remise en vente** est publiée à ce moment-là, et
+   c'est sa date de mise en ligne. Elle ne peut pas l'avoir été plus tôt : elle
+   n'a jamais été visible.
+
+8. **Ce que la boutique attribue et ne rend jamais** : `sku` suit une
+   numérotation `ART-000051` continue ; `slug` est composé à la CRÉATION, à
+   partir de la catégorie, de la marque, de la taille et du numéro
+   d'inventaire, et **ne change plus jamais** — un titre corrigé ne déplace pas
+   l'adresse d'une page indexée.
+
+### 8.1 Ce qu'il faut savoir côté exploitation
+
+- **Les images arrivent par le cron.** Une pièce créée est publiée au passage
+  suivant de la tâche planifiée, pas dans la seconde. En cas d'échec, cinq
+  reprises espacées, puis abandon — et la fiche reste en brouillon.
+
+- **`SYNC_API_KEY` absente ferme la route entièrement.** Aucun mode dégradé,
+  aucune ouverture par défaut.
+
+- **Sans hébergement d'images configuré, rien n'est publié.** Le travail échoue
+  bruyamment plutôt que d'écrire vos URL d'origine dans la fiche : une fiche
+  dont les visuels dépendent d'un tiers deviendrait vide sans que personne
+  l'apprenne, ce qui est exactement ce que le réhébergement existe pour éviter.
+
+- **Renvoyer deux fois le même lot ne coûte presque rien.** Les visuels ne sont
+  retéléchargés que si la liste d'URL a changé — la boutique conserve l'URL
+  d'origine de chaque image pour pouvoir le savoir.
