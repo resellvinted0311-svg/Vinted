@@ -275,7 +275,8 @@
     },
     "terms": {
       "label": "I accept the terms and conditions of sale.",
-      "link": "Read them"
+      "link": "Read them",
+      "notPublished": "I accept the terms and conditions of sale. They are not published yet: no acceptance is recorded, and no payment is possible until then."
     },
     "privacy": {
       "notice": "Your email address, postal address and, where given, your phone number are used to process this order, ship it and issue the invoice.",
@@ -320,7 +321,7 @@
     "registerTitle": "My orders",
     "emptyRegister": "No orders yet.",
     "emptyRegisterHint": "Orders placed from this browser or with this account will appear here.",
-    "guestRegisterHint": "Without an account, this list rests on this browser’s session cookie: it is lost when you change device or clear the site’s data. The confirmation email stays.",
+    "guestRegisterHint": "Without an account, this list rests on this browser’s session cookie: it is lost when you change device or clear the site’s data. Keep your order number — the confirmation email carries it — and write to us if you can no longer find your order.",
     "detailTitle": "Order {orderNumber}",
     "pieces": "{count, plural, one {# item} other {# items}}",
     "invoiceNumber": "Invoice {number}",

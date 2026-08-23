@@ -275,7 +275,8 @@
     },
     "terms": {
       "label": "Ich akzeptiere die Allgemeinen Geschäftsbedingungen.",
-      "link": "Lesen"
+      "link": "Lesen",
+      "notPublished": "Ich akzeptiere die Allgemeinen Geschäftsbedingungen. Sie sind noch nicht veröffentlicht: Es wird keine Zustimmung gespeichert, und bis dahin ist keine Zahlung möglich."
     },
     "privacy": {
       "notice": "Ihre E-Mail-Adresse, Ihre Postanschrift und gegebenenfalls Ihre Telefonnummer dienen der Bearbeitung dieser Bestellung, dem Versand und der Rechnungsstellung.",
@@ -320,7 +321,7 @@
     "registerTitle": "Meine Bestellungen",
     "emptyRegister": "Noch keine Bestellungen.",
     "emptyRegisterHint": "Bestellungen aus diesem Browser oder mit diesem Konto erscheinen hier.",
-    "guestRegisterHint": "Ohne Konto hängt diese Liste am Sitzungs-Cookie dieses Browsers: Sie geht verloren, wenn Sie das Gerät wechseln oder die Website-Daten löschen. Die Bestätigungs-E-Mail bleibt.",
+    "guestRegisterHint": "Ohne Konto hängt diese Liste am Sitzungs-Cookie dieses Browsers: Sie geht verloren, wenn Sie das Gerät wechseln oder die Website-Daten löschen. Notieren Sie Ihre Bestellnummer — die Bestätigungs-E-Mail enthält sie — und schreiben Sie uns, wenn Sie Ihre Bestellung nicht mehr finden.",
     "detailTitle": "Bestellung {orderNumber}",
     "pieces": "{count, plural, one {# Stück} other {# Stücke}}",
     "invoiceNumber": "Rechnung {number}",

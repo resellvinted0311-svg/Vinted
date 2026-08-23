@@ -5,6 +5,7 @@ import { exportPersonalData } from '@/lib/privacy/export'
 import { purgeExpiredPersonalData } from '@/lib/privacy/retention'
 import {
   ABANDONED_ORDER_RETENTION_DAYS,
+  ACCOUNTING_RETENTION_DAYS,
   INACTIVE_ACCOUNT_RETENTION_DAYS,
   WEBHOOK_EVENT_RETENTION_DAYS,
 } from '@/lib/config/privacy'
@@ -548,6 +549,67 @@ describe('tunnels de commande abandonnés', () => {
         status: 'CANCELLED',
         paidAt: daysAgo(ABANDONED_ORDER_RETENTION_DAYS + 9),
         cancelledAt: daysAgo(1),
+      },
+    })
+
+    await purgeExpiredPersonalData()
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: { email: true },
+    })
+    expect(after.email).toContain('exemple.fr')
+  })
+
+  it('vide une commande payée dont les dix ans sont écoulés', async () => {
+    // Cette branche ne s'exécutera pas avant dix ans. Ce n'est pas une raison
+    // de ne pas la vérifier : c'en est une de la vérifier maintenant, parce
+    // que dans dix ans personne ne se souviendra qu'elle existe.
+    const order = await makeAbandonedOrder(
+      'echu',
+      daysAgo(ACCOUNTING_RETENTION_DAYS + 40),
+    )
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: 'PAID',
+        paidAt: daysAgo(ACCOUNTING_RETENTION_DAYS + 30),
+        invoiceNumber: `${PREFIX}FA-echu`,
+      },
+    })
+
+    const report = await purgeExpiredPersonalData()
+    expect(report.anonymizedExpiredOrders).toBeGreaterThanOrEqual(1)
+
+    const after = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+      select: {
+        email: true,
+        shippingAddress: true,
+        customerNote: true,
+        invoiceNumber: true,
+        totalCents: true,
+      },
+    })
+    expect(after.email).not.toContain('exemple.fr')
+    expect(after.shippingAddress).toEqual({})
+    expect(after.customerNote).toBeNull()
+    // La ligne comptable survit : la suite des numéros reste continue.
+    expect(after.invoiceNumber).toBe(`${PREFIX}FA-echu`)
+    expect(after.totalCents).toBe(2500)
+  })
+
+  it('ne touche pas une commande payée AVANT les dix ans', async () => {
+    const order = await makeAbandonedOrder(
+      'encours',
+      daysAgo(ACCOUNTING_RETENTION_DAYS - 100),
+    )
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: 'PAID',
+        paidAt: daysAgo(ACCOUNTING_RETENTION_DAYS - 100),
+        invoiceNumber: `${PREFIX}FA-encours`,
       },
     })
 

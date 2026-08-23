@@ -196,9 +196,13 @@ describe('ouverture d’un paiement', () => {
     expect(order.status).toBe('PENDING_PAYMENT')
     expect(order.subtotalCents).toBe(2500)
     expect(order.stripeSessionId).toBe('cs_test_1')
-    // Preuve d'acceptation, horodatée et versionnée.
-    expect(order.cgvVersion).toBeTruthy()
-    expect(order.cgvAcceptedAt).not.toBeNull()
+    // AUCUNE preuve d'acceptation tant que les conditions générales ne sont
+    // pas rédigées — et elles ne le sont pas : la page affiche « contenu
+    // rédigé en Phase 7 ». Ce test exigeait l'inverse, et exigeait donc que la
+    // boutique constitue la preuve écrite qu'une personne a accepté un
+    // document inexistant. Voir lib/config/pages.ts.
+    expect(order.cgvVersion).toBeNull()
+    expect(order.cgvAcceptedAt).toBeNull()
     // Coût transporteur réel : privé, gardé pour le suivi de marge.
     expect(order.shippingCostCents).toBe(option.carrierCostCents)
     expect(order.items[0]?.costCentsSnapshot).toBeGreaterThan(0)
@@ -579,6 +583,41 @@ describe('un seul paiement vivant par pièce', () => {
     // L'invariant : une seule commande payable sur cette pièce, quoi qu'il
     // arrive.
     expect(live).toBe(1)
+  })
+
+  it('enregistre la preuve d’acceptation DÈS que les CGV existent', async () => {
+    // L'autre branche : le jour où `cgv` sortira de la liste des pages non
+    // rédigées, la preuve doit être constituée sans qu'on ait à y repenser.
+    // C'est tout l'intérêt d'une liste unique qui décide des deux.
+    const { areTermsPublished } = await import('@/lib/config/pages')
+    vi.spyOn(
+      await import('@/lib/config/pages'),
+      'areTermsPublished',
+    ).mockReturnValue(true)
+    expect(areTermsPublished).toBeDefined()
+
+    const option = await anOption()
+    const articleId = await makeArticle('cgv', 2500)
+    const cartId = await makeCart([articleId])
+
+    const result = await prepareCheckoutFor(OWNER, cartId, {
+      ...INPUT,
+      shipping: {
+        carrierCode: option.carrierCode,
+        serviceCode: option.serviceCode,
+      },
+    })
+    expect(result.ok).toBe(true)
+
+    const order = await prisma.order.findFirstOrThrow({
+      where: { email: INPUT.email },
+      select: { cgvVersion: true, cgvAcceptedAt: true },
+      orderBy: { createdAt: 'desc' },
+    })
+    expect(order.cgvVersion).toBeTruthy()
+    expect(order.cgvAcceptedAt).not.toBeNull()
+
+    vi.restoreAllMocks()
   })
 
   it('deux acheteurs DIFFÉRENTS : un seul obtient la pièce', async () => {

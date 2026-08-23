@@ -275,7 +275,8 @@
     },
     "terms": {
       "label": "Accetto le condizioni generali di vendita.",
-      "link": "Leggerle"
+      "link": "Leggerle",
+      "notPublished": "Accetto le condizioni generali di vendita. Non sono ancora pubblicate: nessuna accettazione viene registrata e fino ad allora nessun pagamento è possibile."
     },
     "privacy": {
       "notice": "Il tuo indirizzo e-mail, l’indirizzo postale e, se fornito, il telefono servono a trattare questo ordine, spedirlo ed emettere la fattura.",
@@ -320,7 +321,7 @@
     "registerTitle": "I miei ordini",
     "emptyRegister": "Nessun ordine per ora.",
     "emptyRegisterHint": "Gli ordini effettuati da questo browser o con questo account compariranno qui.",
-    "guestRegisterHint": "Senza account, questa lista dipende dal cookie di sessione di questo browser: si perde cambiando dispositivo o cancellando i dati del sito. L’e-mail di conferma, invece, resta.",
+    "guestRegisterHint": "Senza account, questa lista dipende dal cookie di sessione di questo browser: si perde cambiando dispositivo o cancellando i dati del sito. Annota il numero d’ordine — l’e-mail di conferma lo riporta — e scrivici se non ritrovi più il tuo ordine.",
     "detailTitle": "Ordine {orderNumber}",
     "pieces": "{count, plural, one {# pezzo} other {# pezzi}}",
     "invoiceNumber": "Fattura {number}",

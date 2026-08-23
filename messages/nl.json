@@ -275,7 +275,8 @@
     },
     "terms": {
       "label": "Ik ga akkoord met de algemene verkoopvoorwaarden.",
-      "link": "Lezen"
+      "link": "Lezen",
+      "notPublished": "Ik ga akkoord met de algemene verkoopvoorwaarden. Ze zijn nog niet gepubliceerd: er wordt geen akkoord vastgelegd en tot dan is betalen niet mogelijk."
     },
     "privacy": {
       "notice": "Je e-mailadres, postadres en, indien opgegeven, je telefoonnummer worden gebruikt om deze bestelling te verwerken, te verzenden en te factureren.",
@@ -320,7 +321,7 @@
     "registerTitle": "Mijn bestellingen",
     "emptyRegister": "Nog geen bestellingen.",
     "emptyRegisterHint": "Bestellingen vanuit deze browser of met dit account verschijnen hier.",
-    "guestRegisterHint": "Zonder account hangt deze lijst aan de sessiecookie van deze browser: hij gaat verloren als je van apparaat wisselt of de sitegegevens wist. De bevestigingsmail blijft wel.",
+    "guestRegisterHint": "Zonder account hangt deze lijst aan de sessiecookie van deze browser: hij gaat verloren als je van apparaat wisselt of de sitegegevens wist. Noteer je bestelnummer — de bevestigingsmail vermeldt het — en schrijf ons als je je bestelling niet meer terugvindt.",
     "detailTitle": "Bestelling {orderNumber}",
     "pieces": "{count, plural, one {# stuk} other {# stuks}}",
     "invoiceNumber": "Factuur {number}",

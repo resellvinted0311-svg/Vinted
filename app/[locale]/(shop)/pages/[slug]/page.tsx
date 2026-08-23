@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { LEGAL, SITE, hasLegalIdentity, hasMediator } from '@/lib/config/site'
+import { isPlaceholderPage } from '@/lib/config/pages'
 import { locales, localeTags } from '@/lib/i18n/routing'
 import { PrivacyRegister } from '@/components/shop/privacy-register'
 
@@ -202,7 +203,11 @@ export default async function StaticPage({ params }: { params: Params }) {
 
         {slug === 'confidentialite' ? <PrivacyRegister locale={locale} /> : null}
 
-        {['cgv', 'cookies', 'livraison'].includes(slug) ? (
+        {/* La même liste décide de cette mention ET de l'enregistrement d'une
+            acceptation dans le tunnel de commande : on ne peut pas rédiger les
+            conditions sans que la preuve commence à être constituée, ni
+            l'inverse. Voir lib/config/pages.ts. */}
+        {isPlaceholderPage(slug) ? (
           <p className="rounded-card ruled bg-paper-raised p-4 text-muted">
             Contenu rédigé en Phase 7. La structure, les URL et les liens sont
             en place dès maintenant pour que le référencement et la navigation

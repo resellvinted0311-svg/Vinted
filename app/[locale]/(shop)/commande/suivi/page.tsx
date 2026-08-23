@@ -36,8 +36,19 @@ export async function generateMetadata({
  * Un champ « numéro de commande + e-mail » paraît anodin. Il ne l'est pas : le
  * numéro est court et séquentiel, l'adresse se devine souvent, et le
  * formulaire devient une machine à essayer des couples. Une commande se
- * retrouve depuis le navigateur qui l'a passée, ou depuis le compte auquel
- * elle est rattachée — et l'e-mail de confirmation porte le lien.
+ * retrouve donc depuis le navigateur qui l'a passée, ou depuis le compte
+ * auquel elle est rattachée.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce que l'e-mail de confirmation NE fait PAS
+ * ---------------------------------------------------------------------------
+ * Il ne porte aucun lien vers la commande — ce commentaire l'affirmait, et
+ * c'était faux : `lib/providers/email/order.ts` ne construit aucune URL. Il
+ * porte le NUMÉRO, ce qui permet de nous écrire, et rien de plus.
+ *
+ * Un lien signé et borné dans le temps serait le bon dispositif, et il reste à
+ * faire. En attendant, l'écran dit ce qui est vrai plutôt que ce qui serait
+ * commode.
  */
 export default async function OrderRegisterPage({
   params,

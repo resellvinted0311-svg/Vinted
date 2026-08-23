@@ -64,6 +64,7 @@ export function CheckoutForm({
   publishableKey,
   withdrawalPeriodDays,
   paymentConfigured,
+  termsPublished,
 }: {
   lines: readonly CartLineView[]
   subtotalCents: number
@@ -72,6 +73,8 @@ export function CheckoutForm({
   publishableKey: string | null
   withdrawalPeriodDays: number
   paymentConfigured: boolean
+  /** Les conditions générales sont-elles réellement rédigées ? */
+  termsPublished: boolean
 }) {
   const t = useTranslations('checkout')
   const locale = useLocale()
@@ -222,22 +225,35 @@ export function CheckoutForm({
 
       <Volet ordinal="04" title={t('payment')} hint={t('cardOnly')}>
         <div className="flex flex-col gap-4">
+          {/*
+            La case reste, même quand les conditions ne sont pas encore
+            rédigées : un tunnel écrit sans elle serait à reprendre en entier.
+            Mais elle dit ce qu'elle est. Faire cocher « j'accepte les
+            conditions » devant une page qui annonce « contenu rédigé en
+            phase 7 » est un consentement sans objet — et le serveur, de son
+            côté, n'en enregistre aucune preuve tant que le document n'existe
+            pas.
+          */}
           <Checkbox
             name="acceptsTerms"
             checked={terms}
             onChange={(event) => setTerms(event.target.checked)}
             disabled={isPending}
             label={
-              <>
-                {t('terms.label')}{' '}
-                <Link
-                  href="/pages/cgv"
-                  target="_blank"
-                  className="underline underline-offset-4"
-                >
-                  {t('terms.link')}
-                </Link>
-              </>
+              termsPublished ? (
+                <>
+                  {t('terms.label')}{' '}
+                  <Link
+                    href="/pages/cgv"
+                    target="_blank"
+                    className="underline underline-offset-4"
+                  >
+                    {t('terms.link')}
+                  </Link>
+                </>
+              ) : (
+                t('terms.notPublished')
+              )
             }
           />
 

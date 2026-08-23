@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { getSetting } from '@/lib/config/settings'
 import { listServedCountryCodes } from '@/lib/db/queries/shipping'
 import { isStripeConfigured } from '@/lib/payments/stripe'
+import { areTermsPublished } from '@/lib/config/pages'
 import { localeTags, type Locale } from '@/lib/i18n/routing'
 import { CheckoutForm } from '@/components/shop/checkout/checkout-form'
 
@@ -106,6 +107,7 @@ export default async function CheckoutPage({
           }
           withdrawalPeriodDays={withdrawalPeriodDays}
           paymentConfigured={isStripeConfigured()}
+          termsPublished={areTermsPublished()}
         />
       </div>
     </div>

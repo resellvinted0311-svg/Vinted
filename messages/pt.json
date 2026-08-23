@@ -275,7 +275,8 @@
     },
     "terms": {
       "label": "Aceito as condições gerais de venda.",
-      "link": "Lê-las"
+      "link": "Lê-las",
+      "notPublished": "Aceito as condições gerais de venda. Ainda não estão publicadas: nenhuma aceitação é registada e até lá não é possível pagar."
     },
     "privacy": {
       "notice": "O seu e-mail, a sua morada e, se indicado, o seu telefone servem para tratar esta encomenda, expedi-la e emitir a fatura.",
@@ -320,7 +321,7 @@
     "registerTitle": "As minhas encomendas",
     "emptyRegister": "Ainda sem encomendas.",
     "emptyRegisterHint": "As encomendas feitas a partir deste navegador ou com esta conta aparecerão aqui.",
-    "guestRegisterHint": "Sem conta, esta lista depende do cookie de sessão deste navegador: perde-se ao mudar de aparelho ou ao apagar os dados do site. O e-mail de confirmação, esse, fica.",
+    "guestRegisterHint": "Sem conta, esta lista depende do cookie de sessão deste navegador: perde-se ao mudar de aparelho ou ao apagar os dados do site. Anote o número da encomenda — o e-mail de confirmação inclui-o — e escreva-nos se já não encontrar a sua encomenda.",
     "detailTitle": "Encomenda {orderNumber}",
     "pieces": "{count, plural, one {# peça} other {# peças}}",
     "invoiceNumber": "Fatura {number}",

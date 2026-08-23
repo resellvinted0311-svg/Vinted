@@ -81,7 +81,34 @@ export async function exportPersonalData(
         },
       }),
       prisma.order.findMany({
-        where: { userId },
+        // La portée ne peut pas être le seul `userId` : le paiement sans compte
+        // est autorisé, et une commande d'invitée porte `userId: null`. Elle
+        // n'était donc dans AUCUN export, alors qu'elle contient un nom, une
+        // rue, un code postal, une ville, un téléphone et une note libre,
+        // conservés dix ans.
+        //
+        // On élargit à l'adresse e-mail — mais UNIQUEMENT si elle a été
+        // prouvée. Sans cette garde, il suffirait de créer un compte au nom de
+        // quelqu'un pour lire ses commandes : exactement la faille que
+        // `attachGuestOrders` évite déjà en exigeant aussi le jeton d'origine.
+        //
+        // À dire franchement : `emailVerified` n'est aujourd'hui posé que par
+        // la connexion par lien magique. Pour un compte créé par mot de passe,
+        // cette branche reste donc inerte tant que la vérification d'adresse
+        // n'est pas branchée. Elle n'est pas décorative pour autant — elle
+        // couvre déjà un chemin réel, et le jour où la vérification arrive,
+        // elle couvre tout le monde sans qu'on ait à y repenser.
+        where: user.emailVerified
+          ? {
+              OR: [
+                { userId },
+                {
+                  userId: null,
+                  email: { equals: user.email, mode: 'insensitive' },
+                },
+              ],
+            }
+          : { userId },
         orderBy: { createdAt: 'desc' },
         select: {
           orderNumber: true,

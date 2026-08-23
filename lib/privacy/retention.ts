@@ -3,11 +3,16 @@ import 'server-only'
 import { prisma } from '@/lib/db/client'
 import {
   ABANDONED_ORDER_RETENTION_DAYS,
+  ACCOUNTING_RETENTION_DAYS,
   GUEST_DATA_RETENTION_DAYS,
   INACTIVE_ACCOUNT_RETENTION_DAYS,
   WEBHOOK_EVENT_RETENTION_DAYS,
 } from '@/lib/config/privacy'
-import { anonymizeUser, anonymizeAbandonedOrders } from './anonymize'
+import {
+  anonymizeUser,
+  anonymizeAbandonedOrders,
+  anonymizeExpiredOrders,
+} from './anonymize'
 
 /**
  * Application des durées de conservation.
@@ -55,6 +60,8 @@ export interface PurgeReport {
   finishedJobs: number
   /** Tunnels jamais payés, vidés de leurs coordonnées. */
   anonymizedAbandonedOrders: number
+  /** Commandes payées dont les dix ans comptables sont écoulés. */
+  anonymizedExpiredOrders: number
   anonymizedAccounts: number
 }
 
@@ -73,6 +80,7 @@ export async function purgeExpiredPersonalData(
   const guestCutoff = daysAgo(GUEST_DATA_RETENTION_DAYS, now)
   const abandonedOrderCutoff = daysAgo(ABANDONED_ORDER_RETENTION_DAYS, now)
   const webhookCutoff = daysAgo(WEBHOOK_EVENT_RETENTION_DAYS, now)
+  const accountingCutoff = daysAgo(ACCOUNTING_RETENTION_DAYS, now)
   const inactiveCutoff = daysAgo(INACTIVE_ACCOUNT_RETENTION_DAYS, now)
 
   // Jetons et sessions périmés : ils n'ouvrent plus rien, les garder ne sert
@@ -122,6 +130,11 @@ export async function purgeExpiredPersonalData(
   const anonymizedAbandonedOrders =
     await anonymizeAbandonedOrders(abandonedOrderCutoff)
 
+  // Commandes payées dont l'obligation comptable est éteinte. La déclaration
+  // publique annonçait dix ans et rien ne les appliquait : une durée sans
+  // mécanisme est une déclaration fausse.
+  const anonymizedExpiredOrders = await anonymizeExpiredOrders(accountingCutoff)
+
   const anonymizedAccounts = await anonymizeInactiveAccounts(inactiveCutoff)
 
   return {
@@ -133,6 +146,7 @@ export async function purgeExpiredPersonalData(
     webhookEvents: webhookEvents.count,
     finishedJobs: finishedJobs.count,
     anonymizedAbandonedOrders,
+    anonymizedExpiredOrders,
     anonymizedAccounts,
   }
 }

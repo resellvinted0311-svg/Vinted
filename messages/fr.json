@@ -275,7 +275,8 @@
     },
     "terms": {
       "label": "J’accepte les conditions générales de vente.",
-      "link": "Les lire"
+      "link": "Les lire",
+      "notPublished": "J’accepte les conditions générales de vente. Elles ne sont pas encore publiées : aucune acceptation n’est enregistrée, et aucun paiement n’est possible d’ici là."
     },
     "privacy": {
       "notice": "Votre adresse e-mail, votre adresse postale et, le cas échéant, votre téléphone servent à traiter cette commande, à l’expédier et à établir la facture.",
@@ -320,7 +321,7 @@
     "registerTitle": "Mes commandes",
     "emptyRegister": "Aucune commande pour l’instant.",
     "emptyRegisterHint": "Les commandes passées depuis ce navigateur ou avec ce compte apparaîtront ici.",
-    "guestRegisterHint": "Sans compte, cette liste tient au cookie de session de ce navigateur : elle se perd en changeant d’appareil ou en effaçant les données du site. L’e-mail de confirmation, lui, reste.",
+    "guestRegisterHint": "Sans compte, cette liste tient au cookie de session de ce navigateur : elle se perd en changeant d’appareil ou en effaçant les données du site. Notez votre numéro de commande — l’e-mail de confirmation le porte — et écrivez-nous si vous ne retrouvez plus votre commande.",
     "detailTitle": "Commande {orderNumber}",
     "pieces": "{count, plural, one {# pièce} other {# pièces}}",
     "invoiceNumber": "Facture {number}",

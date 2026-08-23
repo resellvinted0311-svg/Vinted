@@ -275,7 +275,8 @@
     },
     "terms": {
       "label": "Akceptuję ogólne warunki sprzedaży.",
-      "link": "Przeczytaj"
+      "link": "Przeczytaj",
+      "notPublished": "Akceptuję ogólne warunki sprzedaży. Nie zostały jeszcze opublikowane: żadna akceptacja nie jest zapisywana i do tego czasu płatność nie jest możliwa."
     },
     "privacy": {
       "notice": "Twój adres e-mail, adres pocztowy oraz — jeśli podany — telefon służą do realizacji tego zamówienia, wysyłki i wystawienia faktury.",
@@ -320,7 +321,7 @@
     "registerTitle": "Moje zamówienia",
     "emptyRegister": "Na razie brak zamówień.",
     "emptyRegisterHint": "Zamówienia złożone z tej przeglądarki lub na tym koncie pojawią się tutaj.",
-    "guestRegisterHint": "Bez konta ta lista opiera się na pliku cookie sesji tej przeglądarki: znika po zmianie urządzenia lub wyczyszczeniu danych witryny. E-mail z potwierdzeniem pozostaje.",
+    "guestRegisterHint": "Bez konta ta lista opiera się na pliku cookie sesji tej przeglądarki: znika po zmianie urządzenia lub wyczyszczeniu danych witryny. Zapisz numer zamówienia — jest w e-mailu z potwierdzeniem — i napisz do nas, jeśli nie możesz znaleźć zamówienia.",
     "detailTitle": "Zamówienie {orderNumber}",
     "pieces": "{count, plural, one {# sztuka} few {# sztuki} many {# sztuk} other {# sztuki}}",
     "invoiceNumber": "Faktura {number}",

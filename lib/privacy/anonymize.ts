@@ -160,6 +160,12 @@ export async function anonymizeUser(
         // la commande et lire l'adresse de facturation conservée. On ferme la
         // porte en même temps qu'on vide l'identité.
         lockOwnerId: null,
+        // Le point relais choisi n'est pas une mention obligatoire de facture.
+        // La purge des tunnels abandonnés l'effaçait déjà ; l'effacement d'un
+        // compte le laissait. Cette asymétrie n'avait aucune raison d'être :
+        // c'est la même donnée, avec la même absence de justification.
+        servicePointId: null,
+        servicePointData: Prisma.DbNull,
       },
     })
 
@@ -309,3 +315,75 @@ export async function anonymizeAbandonedOrders(
  * domaine `.invalid` est réservé par la RFC 2606 et ne peut être routé.
  */
 const ABANDONED_EMAIL_PREFIX = 'abandon-'
+
+/**
+ * Vide une commande PAYÉE dont l'obligation comptable est éteinte.
+ *
+ * ---------------------------------------------------------------------------
+ * Dix ans annoncés, dix ans jamais appliqués
+ * ---------------------------------------------------------------------------
+ * Le registre déclarait publiquement une conservation de dix ans pour les
+ * pièces comptables, et rien ne l'appliquait : aucune ligne de code ne touchait
+ * jamais une commande payée. Une durée annoncée sans mécanisme est une
+ * déclaration fausse — c'est le reproche que ce module adresse lui-même aux
+ * politiques de confidentialité rédigées à la main.
+ *
+ * Passé l'obligation de l'article L123-22, plus rien ne fonde de garder
+ * l'identité de l'acheteuse : l'article 17.3.b cesse de s'appliquer avec elle,
+ * et l'article 5.1.e reprend la main.
+ *
+ * ---------------------------------------------------------------------------
+ * On vide, on ne supprime pas — ici encore
+ * ---------------------------------------------------------------------------
+ * La ligne comptable elle-même, montants et dates, n'a rien de personnel une
+ * fois l'identité retirée, et la suite des numéros de facture reste continue et
+ * vérifiable. Supprimer ferait perdre la seconde propriété sans rien gagner sur
+ * la première.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce code ne s'exécutera pas avant dix ans
+ * ---------------------------------------------------------------------------
+ * Ce n'est pas une raison de l'écrire approximativement, c'en est une de
+ * l'écrire maintenant : dans dix ans, personne ne se souviendra qu'il manque.
+ * Le test se place à la date voulue plutôt que d'attendre.
+ */
+export async function anonymizeExpiredOrders(
+  cutoff: Date,
+  limit = 200,
+): Promise<number> {
+  const expired = await prisma.order.findMany({
+    where: {
+      // La date de PAIEMENT, pas celle de création : c'est elle qui rattache
+      // la pièce à un exercice comptable, et donc elle qui fait courir les dix
+      // ans.
+      paidAt: { not: null, lt: cutoff },
+      email: { not: { startsWith: EXPIRED_EMAIL_PREFIX } },
+    },
+    select: { id: true },
+    take: limit,
+  })
+
+  if (expired.length === 0) return 0
+
+  await prisma.$transaction(async (tx) => {
+    for (const order of expired) {
+      await tx.order.update({
+        where: { id: order.id },
+        data: {
+          email: `${EXPIRED_EMAIL_PREFIX}${order.id}@anonymise.invalid`,
+          customerNote: null,
+          lockOwnerId: null,
+          shippingAddress: {},
+          billingAddress: {},
+          servicePointId: null,
+          servicePointData: Prisma.DbNull,
+        },
+      })
+    }
+  })
+
+  return expired.length
+}
+
+/** Marque des commandes dont la conservation comptable est éteinte. */
+const EXPIRED_EMAIL_PREFIX = 'echu-'

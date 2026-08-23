@@ -3,6 +3,7 @@ import 'server-only'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
 import { SITE } from '@/lib/config/site'
+import { areTermsPublished } from '@/lib/config/pages'
 import { getSettings } from '@/lib/config/settings'
 import { getShippingGrids } from '@/lib/db/queries/shipping'
 import {
@@ -405,11 +406,22 @@ export async function prepareCheckoutFor(
 
         customerNote: input.customerNote ?? null,
 
-        // Preuve d'acceptation, horodatée et versionnée. La case reste
-        // inactive tant que les CGV ne sont pas rédigées, mais la version
-        // acceptée est enregistrée dès le premier paiement réel.
-        cgvVersion: settings.cgvVersion,
-        cgvAcceptedAt: new Date(),
+        // Preuve d'acceptation, horodatée et versionnée — MAIS SEULEMENT si
+        // les conditions générales existent réellement.
+        //
+        // Le commentaire précédent affirmait que « la case reste inactive tant
+        // que les CGV ne sont pas rédigées ». C'était faux : la case est
+        // active, le schéma exige `acceptsTerms: true`, et ces deux lignes
+        // écrivaient `cgvVersion: '2026-01'` avec un horodatage alors que la
+        // page correspondante affiche « Contenu rédigé en Phase 7 ».
+        //
+        // On constituait donc la preuve écrite qu'une personne avait accepté
+        // un document inexistant. Ce n'est pas une preuve incomplète, c'est
+        // une preuve fausse : produite dans un litige, elle se retourne contre
+        // celui qui l'invoque. Mieux vaut n'en avoir aucune.
+        ...(areTermsPublished()
+          ? { cgvVersion: settings.cgvVersion, cgvAcceptedAt: new Date() }
+          : {}),
 
         items: {
           create: lines.map((line) => ({
