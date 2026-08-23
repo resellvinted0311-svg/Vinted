@@ -11,10 +11,22 @@ import { test, expect } from '@playwright/test'
 
 const SEED_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? ''
 
+/**
+ * Ce fichier a SON compte, et ne partage pas celui de `phase0`.
+ *
+ * `signInAction` borne les tentatives à dix par compte et par quart d'heure —
+ * une protection contre le bourrage d'identifiants qu'on ne desserre pas pour
+ * arranger des tests. Or les deux fichiers se connectent chacun plusieurs fois,
+ * dans chacun des deux navigateurs : réunis sur un seul compte, ils
+ * consommaient exactement le seau, et les derniers tombaient sur « Trop de
+ * tentatives » dès la PREMIÈRE exécution complète.
+ */
+const ACCOUNT = 'client2@nina-diego.test'
+
 async function signIn(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('/fr/connexion')
-  await page.getByLabel('Adresse e-mail').first().fill('client@nina-diego.test')
-  await page.getByLabel('Mot de passe').fill(SEED_PASSWORD)
+  await page.getByLabel('Adresse e-mail').filter({ visible: true }).first().fill(ACCOUNT)
+  await page.getByLabel('Mot de passe').filter({ visible: true }).fill(SEED_PASSWORD)
   await page.getByRole('button', { name: 'Se connecter' }).click()
   await expect(page).toHaveURL(/\/fr\/compte/)
 }
@@ -28,7 +40,13 @@ test.describe('Information des personnes', () => {
     // Elle est rendue depuis le registre : ces valeurs ne sont pas saisies
     // dans la page, elles viennent de lib/config/privacy.ts.
     await expect(page.getByRole('heading', { name: 'Vos droits' })).toBeVisible()
-    await expect(page.getByText('Vos commandes et vos factures')).toBeVisible()
+    // « payées » : le registre distingue depuis une commande payée — conservée
+    // dix ans au titre de l'obligation comptable — d'un tunnel abandonné, qui
+    // n'est qu'un contrat non conclu et part au bout de trente jours. Le
+    // libellé a suivi cette scission, et ce test avec lui.
+    await expect(
+      page.getByText('Vos commandes payées et vos factures'),
+    ).toBeVisible()
     await expect(page.getByText('Obligation légale')).toBeVisible()
     await expect(page.getByText('10 ans')).toBeVisible()
 
@@ -89,7 +107,7 @@ test.describe('Exercice des droits', () => {
     const body = Buffer.concat(chunks).toString('utf8')
 
     const parsed = JSON.parse(body) as { account: { email: string } }
-    expect(parsed.account.email).toBe('client@nina-diego.test')
+    expect(parsed.account.email).toBe(ACCOUNT)
 
     // Ni l'empreinte du mot de passe, ni les coûts d'achat.
     expect(body).not.toContain('passwordHash')

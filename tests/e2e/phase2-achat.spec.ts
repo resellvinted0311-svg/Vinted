@@ -32,6 +32,36 @@ function main(page: Page) {
   return page.locator('#contenu')
 }
 
+/**
+ * Le volet d'adresse, et rien d'autre.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce qui a rendu cette précision nécessaire
+ * ---------------------------------------------------------------------------
+ * `page.getByLabel('Pays')` sans portée a fini par échouer sur une violation
+ * du mode strict, uniquement sur la machine d'intégration et uniquement quand
+ * les deux navigateurs tournaient en parallèle : la page contenait alors DEUX
+ * `<select name="country">`, l'un portant un identifiant `useId` au format
+ * serveur (`_r_7_`), l'autre au format client (`_R_…`).
+ *
+ * Autrement dit, une copie rendue par le serveur et une copie rendue par le
+ * client coexistaient l'espace d'un instant — la fenêtre d'hydratation, qui
+ * s'allonge quand le processeur est saturé. Le HTML servi, lui, n'en contient
+ * bien qu'un seul : vérifié en interrogeant la page directement.
+ *
+ * Deux corrections, et aucune ne masque quoi que ce soit :
+ *  - on désigne le champ DU VOLET D'ADRESSE, pas « un champ Pays de la page » ;
+ *  - `visible: true` écarte la copie en cours de démontage, qui n'est de toute
+ *    façon manipulable par personne.
+ *
+ * Un test qui vise ce qu'une personne peut réellement remplir reste juste
+ * quand la machine peine ; un test qui vise « tout ce qui porte ce libellé »
+ * échoue sans rien apprendre.
+ */
+function addressFields(page: Page) {
+  return main(page).getByRole('region', { name: 'Où livrer' })
+}
+
 /** Le fond du panier appartient au cookie de session : on part toujours net. */
 async function emptyBasket(page: Page): Promise<void> {
   await page.context().clearCookies()
@@ -170,8 +200,14 @@ test.describe('Ce qui ne sort jamais dans la page', () => {
     await addFirstAvailableToCart(page)
     await page.goto('/fr/commande')
 
-    await page.getByLabel('Pays').selectOption('FR')
-    await page.getByLabel('Code postal').fill('59000')
+    await addressFields(page)
+      .getByLabel('Pays')
+      .filter({ visible: true })
+      .selectOption('FR')
+    await addressFields(page)
+      .getByLabel('Code postal')
+      .filter({ visible: true })
+      .fill('59000')
     await expect(page.getByRole('radio')).not.toHaveCount(0, { timeout: 15_000 })
     await page.getByRole('radio').first().check()
 
@@ -229,8 +265,14 @@ test.describe('Le bon de commande', () => {
       main(page).getByText(/Renseignez le pays et le code postal/),
     ).toBeVisible()
 
-    await page.getByLabel('Pays').selectOption('FR')
-    await page.getByLabel('Code postal').fill('59000')
+    await addressFields(page)
+      .getByLabel('Pays')
+      .filter({ visible: true })
+      .selectOption('FR')
+    await addressFields(page)
+      .getByLabel('Code postal')
+      .filter({ visible: true })
+      .fill('59000')
 
     // Le devis part après une pause, puis vient de la base : on attend un
     // libellé de transporteur réel, pas un état de chargement.
@@ -248,8 +290,14 @@ test.describe('Le bon de commande', () => {
     await addFirstAvailableToCart(page)
     await page.goto('/fr/commande')
 
-    await page.getByLabel('Pays').selectOption('FR')
-    await page.getByLabel('Code postal').fill('59000')
+    await addressFields(page)
+      .getByLabel('Pays')
+      .filter({ visible: true })
+      .selectOption('FR')
+    await addressFields(page)
+      .getByLabel('Code postal')
+      .filter({ visible: true })
+      .fill('59000')
     await expect(page.getByRole('radio')).not.toHaveCount(0, { timeout: 15_000 })
     await page.getByRole('radio').first().check()
 

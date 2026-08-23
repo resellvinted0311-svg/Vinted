@@ -80,9 +80,10 @@ test.describe('Connexion', () => {
 
     await page
       .getByLabel('Adresse e-mail')
+      .filter({ visible: true })
       .first()
       .fill('client@nina-diego.test')
-    await page.getByLabel('Mot de passe').fill('mauvais-mot-de-passe')
+    await page.getByLabel('Mot de passe').filter({ visible: true }).fill('mauvais-mot-de-passe')
     await page.getByRole('button', { name: 'Se connecter' }).click()
 
     await expect(
@@ -96,9 +97,10 @@ test.describe('Connexion', () => {
 
     await page
       .getByLabel('Adresse e-mail')
+      .filter({ visible: true })
       .first()
       .fill('client@nina-diego.test')
-    await page.getByLabel('Mot de passe').fill(SEED_PASSWORD)
+    await page.getByLabel('Mot de passe').filter({ visible: true }).fill(SEED_PASSWORD)
     await page.getByRole('button', { name: 'Se connecter' }).click()
 
     await expect(page).toHaveURL(/\/fr\/compte/)
@@ -108,18 +110,29 @@ test.describe('Connexion', () => {
       page.getByRole('heading', { name: 'Bonjour Diego' }),
     ).toBeVisible()
 
-    // L'en-tête doit refléter la session, alors même que l'accueil est servi
-    // depuis le cache statique.
+    /*
+      L'en-tête doit refléter la session, alors même que l'accueil est servi
+      depuis le cache statique.
+
+      C'est précisément pour cela que le bouton n'apparaît pas dans le HTML :
+      il attend l'hydratation, puis la réponse de `/api/session`. Deux allers
+      supplémentaires, dont un aller-retour réseau — le délai par défaut de
+      cinq secondes suffit sur une machine au repos, pas sur une machine qui
+      exécute cent tests en parallèle. Le test tombait alors sur un en-tête
+      simplement pas encore à jour, ce qui n'apprenait rien.
+    */
     await page.goto('/fr')
-    await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Se déconnecter' }),
+    ).toBeVisible({ timeout: 15_000 })
   })
 
   test('un compte admin voit l’accès au back-office, pas un client', async ({
     page,
   }) => {
     await page.goto('/fr/connexion')
-    await page.getByLabel('Adresse e-mail').first().fill('admin@nina-diego.test')
-    await page.getByLabel('Mot de passe').fill(SEED_PASSWORD)
+    await page.getByLabel('Adresse e-mail').filter({ visible: true }).first().fill('admin@nina-diego.test')
+    await page.getByLabel('Mot de passe').filter({ visible: true }).fill(SEED_PASSWORD)
     await page.getByRole('button', { name: 'Se connecter' }).click()
 
     await expect(page).toHaveURL(/\/fr\/compte/)
@@ -133,13 +146,19 @@ test.describe('Connexion', () => {
     await page.goto('/fr/connexion')
     await page
       .getByLabel('Adresse e-mail')
+      .filter({ visible: true })
       .first()
       .fill('client@nina-diego.test')
-    await page.getByLabel('Mot de passe').fill(SEED_PASSWORD)
+    await page.getByLabel('Mot de passe').filter({ visible: true }).fill(SEED_PASSWORD)
     await page.getByRole('button', { name: 'Se connecter' }).click()
     await expect(page).toHaveURL(/\/fr\/compte/)
 
-    await page.getByRole('button', { name: 'Se déconnecter' }).click()
+    // Même attente que ci-dessus : le bouton n'existe qu'une fois l'en-tête
+    // renseigné par `/api/session`, et cet aller-retour peut prendre son temps
+    // sur une machine chargée.
+    const signOut = page.getByRole('button', { name: 'Se déconnecter' })
+    await expect(signOut).toBeVisible({ timeout: 15_000 })
+    await signOut.click()
 
     // On attend que l'en-tête ait basculé avant de naviguer : sans cela, le
     // test partirait pendant que l'action serveur est encore en vol et

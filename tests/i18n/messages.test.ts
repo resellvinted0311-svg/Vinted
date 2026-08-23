@@ -3,6 +3,13 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { locales } from '@/lib/i18n/routing'
 import { PROCESSING_REGISTER } from '@/lib/config/privacy'
+import {
+  ARTICLE_COLORS,
+  ARTICLE_CONDITIONS,
+  ARTICLE_FITS,
+  ARTICLE_MATERIALS,
+  MEASUREMENT_KEYS,
+} from '@/lib/domain/vocabulary'
 
 /**
  * Les 8 fichiers de traduction doivent porter exactement les mêmes clés.
@@ -132,5 +139,83 @@ describe('registre des traitements', () => {
   it('surveille bien quelque chose', () => {
     // Sans ce garde-fou, un registre vide rendrait le test ci-dessus vert.
     expect(PROCESSING_REGISTER.length).toBeGreaterThan(3)
+  })
+})
+
+/**
+ * Le vocabulaire fermé des attributs d'article doit être TRADUIT.
+ *
+ * `lib/domain/vocabulary.ts` refuse toute valeur hors liste venue de
+ * l'application de gestion, précisément parce que chaque valeur acceptée est
+ * rendue par un libellé traduit — dans les facettes de filtrage, sur la fiche,
+ * et dans la description composée à défaut d'en recevoir une.
+ *
+ * Ajouter « bleu pétrole » à la liste sans le traduire ferait apparaître
+ * `catalogue.colors.bleu-petrole` dans huit catalogues. Ce test attrape
+ * l'oubli au moment où il est écrit, pas au premier import.
+ */
+describe('vocabulaire des attributs', () => {
+  const GROUPS = [
+    { field: 'colors', values: ARTICLE_COLORS },
+    { field: 'materials', values: ARTICLE_MATERIALS },
+    { field: 'fits', values: ARTICLE_FITS },
+  ] as const
+
+  it('chaque couleur, matière et coupe a son libellé dans les huit langues', () => {
+    const manquantes: string[] = []
+
+    for (const locale of locales) {
+      const messages = loadMessages(locale) as {
+        catalogue?: Record<string, Record<string, unknown> | undefined>
+      }
+
+      for (const group of GROUPS) {
+        for (const value of group.values) {
+          if (!messages.catalogue?.[group.field]?.[value]) {
+            manquantes.push(`${locale} : catalogue.${group.field}.${value}`)
+          }
+        }
+      }
+    }
+
+    expect(manquantes).toEqual([])
+  })
+
+  it('chaque état et chaque clé de mesure a son libellé dans les huit langues', () => {
+    const manquantes: string[] = []
+
+    for (const locale of locales) {
+      const messages = loadMessages(locale) as {
+        condition?: Record<string, { label?: unknown; help?: unknown } | undefined>
+        measurement?: { keys?: Record<string, unknown> }
+      }
+
+      for (const condition of ARTICLE_CONDITIONS) {
+        // Le libellé ET son explication : la description composée utilise les
+        // deux, et « état correct » seul ne dit pas ce qu'on achète.
+        if (!messages.condition?.[condition]?.label) {
+          manquantes.push(`${locale} : condition.${condition}.label`)
+        }
+        if (!messages.condition?.[condition]?.help) {
+          manquantes.push(`${locale} : condition.${condition}.help`)
+        }
+      }
+
+      for (const key of MEASUREMENT_KEYS) {
+        if (!messages.measurement?.keys?.[key]) {
+          manquantes.push(`${locale} : measurement.keys.${key}`)
+        }
+      }
+    }
+
+    expect(manquantes).toEqual([])
+  })
+
+  it('surveille bien quelque chose', () => {
+    expect(ARTICLE_COLORS.length).toBeGreaterThan(3)
+    expect(ARTICLE_MATERIALS.length).toBeGreaterThan(3)
+    expect(ARTICLE_FITS.length).toBeGreaterThan(3)
+    expect(ARTICLE_CONDITIONS.length).toBe(6)
+    expect(MEASUREMENT_KEYS.length).toBe(8)
   })
 })

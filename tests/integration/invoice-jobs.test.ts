@@ -149,16 +149,52 @@ describe('file de travaux', () => {
     expect(again.some((job) => job.id === id)).toBe(false)
   })
 
-  it('un travail en échec redevient prenable, et compte ses tentatives', async () => {
+  it('un travail en échec attend avant d’être repris, puis compte ses tentatives', async () => {
     const id = await makeJob()
 
     const first = await claimJobs('essai', 10)
     expect(first[0]?.attempts).toBe(1)
-    await failJob(id, 'prestataire indisponible')
+    await failJob(id, 'prestataire indisponible', 1)
 
-    const second = await claimJobs('essai', 10)
-    expect(second[0]?.id).toBe(id)
-    expect(second[0]?.attempts).toBe(2)
+    // PAS repris tout de suite. L'exécutant redemande du travail tant qu'il lui
+    // reste du temps : sans ce délai, les cinq tentatives d'un travail
+    // partiraient en quelques secondes, et un prestataire indisponible trente
+    // secondes suffirait à perdre définitivement une confirmation de commande.
+    const immediately = await claimJobs('essai', 10)
+    expect(immediately.some((job) => job.id === id)).toBe(false)
+
+    // Une fois le délai écoulé, il repart — avec une tentative de plus.
+    const later = await claimJobs(
+      'essai',
+      10,
+      new Date(Date.now() + 2 * 60_000),
+    )
+    const retaken = later.find((job) => job.id === id)
+    expect(retaken?.attempts).toBe(2)
+  })
+
+  it('espace les reprises au fil des échecs', async () => {
+    const id = await makeJob()
+    await claimJobs('essai', 10)
+
+    await failJob(id, 'panne', 1)
+    const afterFirst = await prisma.job.findUniqueOrThrow({
+      where: { id },
+      select: { runAt: true },
+    })
+
+    await failJob(id, 'panne', 3)
+    const afterThird = await prisma.job.findUniqueOrThrow({
+      where: { id },
+      select: { runAt: true },
+    })
+
+    // La cause d'un échec change de nature avec le temps : les premières
+    // reprises visent un incident passager, les dernières un incident qu'il a
+    // fallu réparer.
+    expect(afterThird.runAt.getTime()).toBeGreaterThan(
+      afterFirst.runAt.getTime(),
+    )
   })
 
   it('cesse de réessayer au-delà du plafond', async () => {
