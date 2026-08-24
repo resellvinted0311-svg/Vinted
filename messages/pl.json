@@ -472,6 +472,14 @@
       "rateLimited": "Zbyt wiele prób. Spróbuj ponownie za kilka minut.",
       "generic": "Operacja nie została ukończona. Spróbuj ponownie.",
       "notConfigured": "Logowanie nie jest jeszcze włączone w tym wdrożeniu. Katalog i ulubione działają normalnie."
+    },
+    "magicConfirm": {
+      "title": "Potwierdź logowanie",
+      "body": "Wybierz przycisk, aby otworzyć sesję na tym urządzeniu.",
+      "hint": "To potwierdzenie sprawia, że link otwarty bez Twojej wiedzy nie zaloguje Cię na cudze konto.",
+      "confirm": "Zaloguj mnie",
+      "invalid": "Ten link jest nieprawidłowy. Mógł wygasnąć lub zostać już użyty.",
+      "backToSignIn": "Wróć do logowania"
     }
   },
   "account": {
@@ -579,8 +587,13 @@
         "confirmationRequired": "Wpisz EFFACER, aby potwierdzić.",
         "rateLimited": "Zbyt wiele żądań. Spróbuj za godzinę.",
         "unknownAccount": "Nie znaleziono konta.",
-        "invalidInput": "Nieprawidłowe żądanie."
-      }
+        "invalidInput": "Nieprawidłowe żądanie.",
+        "passwordRequired": "Wpisz hasło, aby potwierdzić.",
+        "passwordIncorrect": "Nieprawidłowe hasło.",
+        "invalidRequest": "Nieprawidłowe żądanie. Odśwież stronę i spróbuj ponownie."
+      },
+      "erasePasswordLabel": "Twoje hasło",
+      "erasePasswordHint": "Prosimy o nie, aby sprawdzić, że prośba pochodzi od Ciebie. Zostaw puste, jeśli konto go nie ma."
     }
   },
   "footer": {

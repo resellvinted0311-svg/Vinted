@@ -98,12 +98,49 @@ async function stripPhonesFromOrders(
  * `UserToken` n'a pas de relation Prisma vers User — seulement une colonne
  * `userId`. Aucune cascade ne l'emportera donc : oublier cette ligne
  * laisserait des jetons de réinitialisation vivants sur un compte effacé.
+ *
+ * ---------------------------------------------------------------------------
+ * `VerificationToken` est le même piège, sur la table voisine
+ * ---------------------------------------------------------------------------
+ * Elle n'a elle non plus aucune relation vers `User` : Auth.js l'indexe par
+ * `identifier`, qui EST l'adresse e-mail, en clair. Aucune cascade ne la
+ * touche, et l'effacement l'ignorait.
+ *
+ * Deux conséquences, dont la seconde est la plus grave :
+ *
+ *  - l'adresse survivait à l'effacement du compte jusqu'à l'échéance du jeton ;
+ *  - surtout, un lien magique encore dans la boîte de la personne, cliqué
+ *    après l'effacement, RECRÉAIT un compte à son adresse — le jeton était
+ *    toujours valide et plus aucun compte ne s'y opposait. Quelqu'un qui vient
+ *    de demander la suppression de son compte se retrouvait avec un compte
+ *    neuf, sans avoir rien fait d'autre que cliquer sur un vieux lien.
+ *
+ * On efface donc les jetons de CETTE adresse, dans la même transaction.
  */
 async function deleteUnlinkedRows(
   tx: Prisma.TransactionClient,
   userId: string,
+  email: string | null,
 ): Promise<void> {
   await tx.userToken.deleteMany({ where: { userId } })
+
+  // Les négociations. `Offer.userId` est en `SetNull` : une suppression dure
+  // du compte laissait la ligne derrière elle, orpheline. Elle finissait bien
+  // par tomber — la purge des offres sans compte la ramasse trente jours plus
+  // tard — mais « effacez mon compte » ne doit pas laisser de reliquat qu'un
+  // SECOND mécanisme rattrapera peut-être un mois après.
+  //
+  // Sont épargnées celles qui justifient le prix d'une facture : le montant
+  // porté sur une pièce comptable doit rester explicable.
+  await tx.offer.deleteMany({
+    where: { userId, orderItems: { none: { order: { paidAt: { not: null } } } } },
+  })
+
+  if (email) {
+    await tx.verificationToken.deleteMany({
+      where: { identifier: { equals: email, mode: 'insensitive' } },
+    })
+  }
 }
 
 /**
@@ -120,7 +157,7 @@ export async function anonymizeUser(
   await prisma.$transaction(async (tx) => {
     const user = await tx.user.findUnique({
       where: { id: userId },
-      select: { id: true, anonymizedAt: true },
+      select: { id: true, anonymizedAt: true, email: true },
     })
 
     if (!user || user.anonymizedAt) return
@@ -134,7 +171,13 @@ export async function anonymizeUser(
     await tx.sizeAlert.deleteMany({ where: { userId } })
     await tx.cart.deleteMany({ where: { userId } })
     await tx.pushSubscription.deleteMany({ where: { userId } })
-    await deleteUnlinkedRows(tx, userId)
+    // Les avis portent un texte libre écrit par la personne. Dans la branche
+    // « anonymisé » la ligne `User` est CONSERVÉE — obligation comptable — donc
+    // aucune cascade ne joue : sans cette ligne, l'avis et son texte restaient
+    // en base, attachés à l'identifiant du compte, définitivement. Rien n'en
+    // écrit aujourd'hui ; la lacune se déclencherait au premier avis déposé.
+    await tx.review.deleteMany({ where: { userId } })
+    await deleteUnlinkedRows(tx, userId, user.email)
 
     // L'adresse e-mail portée par la commande n'est PAS une mention
     // obligatoire de la facture (article 242 nonies A de l'annexe II du CGI) :
@@ -210,8 +253,16 @@ export async function eraseAccount(userId: string): Promise<AccountErasure> {
   if (retainedOrders === 0) {
     // Les cascades du schéma emportent sessions, adresses, favoris, paniers,
     // alertes et abonnements ; les jetons, eux, n'ont pas de relation.
+    //
+    // L'adresse est relue DANS la transaction : les jetons de vérification
+    // s'indexent dessus, pas sur l'identifiant du compte, et la ligne qui les
+    // porte est sur le point de disparaître.
     await prisma.$transaction(async (tx) => {
-      await deleteUnlinkedRows(tx, userId)
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      })
+      await deleteUnlinkedRows(tx, userId, user?.email ?? null)
       await tx.user.delete({ where: { id: userId } })
     })
 

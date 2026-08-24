@@ -100,18 +100,76 @@ function isPrivateIPv4(address: string): boolean {
   return false
 }
 
+/**
+ * Une adresse IPv6 vise-t-elle notre propre réseau ?
+ *
+ * ---------------------------------------------------------------------------
+ * Les formes qui passaient au travers
+ * ---------------------------------------------------------------------------
+ * Seule `::ffff:127.0.0.1` — la forme mixte compressée — était reconnue. Or la
+ * même machine s'écrit de plusieurs façons, et un contrôle qui n'en connaît
+ * qu'une ne contrôle rien :
+ *
+ *   ::127.0.0.1                      compatible IPv4 (dépréciée, mais routable)
+ *   ::ffff:7f00:1                    mappée, écrite en hexadécimal
+ *   0:0:0:0:0:ffff:169.254.169.254   mappée, non compressée — l'adresse des
+ *                                    métadonnées d'instance chez la plupart
+ *                                    des hébergeurs
+ *   64:ff9b::a9fe:a9fe               NAT64 : une passerelle la traduit en IPv4
+ *   2002:7f00:1::                    6to4 : idem, l'IPv4 est dans le préfixe
+ *
+ * Les deux dernières familles ne portent pas seulement une écriture : elles
+ * désignent un mécanisme de traduction qui, s'il est présent sur le réseau,
+ * mène bien à l'adresse IPv4 encapsulée. On les refuse toutes, plutôt que de
+ * parier sur la configuration de l'hôte.
+ *
+ * Le principe est celui de tout ce module : à la moindre ambiguïté, on refuse.
+ * Une image non récupérée se voit et se corrige ; une requête sortie vers le
+ * service de métadonnées ne se voit pas.
+ */
 function isPrivateIPv6(address: string): boolean {
   const value = address.toLowerCase()
 
   if (value === '::' || value === '::1') return true
-  // Adresse IPv4 encapsulée : c'est la même machine cible, écrite autrement.
-  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(value)
-  if (mapped?.[1]) return isPrivateIPv4(mapped[1])
 
-  const head = value.split(':')[0] ?? ''
+  // Toute forme portant une IPv4 en notation pointée, compressée ou non :
+  // `::ffff:127.0.0.1`, `::127.0.0.1`, `0:0:0:0:0:ffff:169.254.169.254`.
+  const dotted = /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(value)
+  if (dotted?.[1]) return isPrivateIPv4(dotted[1])
+
+  const groups = value.split(':')
+  const head = groups[0] ?? ''
+
   if (/^f[cd]/.test(head)) return true // local unique, fc00::/7
   if (/^fe[89ab]/.test(head)) return true // lien-local, fe80::/10
-  if (head === 'ff00' || /^ff/.test(head)) return true // multidiffusion
+  if (/^ff/.test(head)) return true // multidiffusion
+
+  // Mappée écrite en hexadécimal : `::ffff:7f00:1`. Les deux derniers groupes
+  // portent l'IPv4, à reconstituer avant de la juger.
+  const ffff = groups.indexOf('ffff')
+  if (ffff !== -1 && groups.length - ffff === 3) {
+    const high = Number.parseInt(groups[groups.length - 2] ?? '', 16)
+    const low = Number.parseInt(groups[groups.length - 1] ?? '', 16)
+    if (Number.isFinite(high) && Number.isFinite(low)) {
+      const quad = [high >> 8, high & 0xff, low >> 8, low & 0xff].join('.')
+      return isPrivateIPv4(quad)
+    }
+  }
+
+  // Compatible IPv4 en hexadécimal (`::7f00:1`) : préfixe entièrement nul.
+  if (/^::[0-9a-f]{1,4}:[0-9a-f]{1,4}$/.test(value)) {
+    const high = Number.parseInt(groups[groups.length - 2] ?? '', 16)
+    const low = Number.parseInt(groups[groups.length - 1] ?? '', 16)
+    if (Number.isFinite(high) && Number.isFinite(low)) {
+      const quad = [high >> 8, high & 0xff, low >> 8, low & 0xff].join('.')
+      return isPrivateIPv4(quad)
+    }
+  }
+
+  // Traductions vers IPv4 : on ne cherche pas à savoir ce qu'elles encapsulent,
+  // on refuse le mécanisme.
+  if (value.startsWith('64:ff9b:')) return true // NAT64, RFC 6052
+  if (head === '2002') return true // 6to4, RFC 3056
 
   return false
 }

@@ -48,6 +48,25 @@ if [ "$VERCEL_ENV" = "production" ] && [ -z "$AUTH_URL" ] && [ -z "$NEXTAUTH_URL
   exit 1
 fi
 
+# La limitation de débit a besoin d'un compteur PARTAGÉ.
+#
+# Sans Upstash, elle retombe sur une `Map` en mémoire. Ce repli est correct en
+# développement et trompeur en production : chaque instance serverless a la
+# sienne, remise à zéro à chaque démarrage à froid. Le plafond réel devient
+# « la limite multipliée par le nombre d'instances », sans borne — c'est-à-dire
+# pas de plafond du tout sur la page de connexion.
+#
+# Le code émet bien un avertissement, une fois par processus, dans des journaux
+# que personne ne lit à ce moment-là. On échoue donc ici, comme pour AUTH_URL,
+# et pour la même raison : c'est une dérive de configuration, pas une attaque,
+# et elle ne se voit pas depuis l'application qui tourne.
+if [ "$VERCEL_ENV" = "production" ] && { [ -z "$UPSTASH_REDIS_REST_URL" ] || [ -z "$UPSTASH_REDIS_REST_TOKEN" ]; }; then
+  echo "✗ UPSTASH_REDIS_REST_URL et UPSTASH_REDIS_REST_TOKEN sont requises en production." >&2
+  echo "  Sans elles, la limitation de débit est locale à chaque instance :" >&2
+  echo "  connexion, inscription et lien de connexion ne sont plus bornés." >&2
+  exit 1
+fi
+
 echo "→ Génération du client Prisma"
 prisma generate
 

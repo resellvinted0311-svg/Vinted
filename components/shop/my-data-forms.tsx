@@ -8,6 +8,10 @@ import {
   setMarketingConsentAction,
   type PrivacyActionState,
 } from '@/lib/privacy/actions'
+import {
+  ERASE_CONFIRMATION_WORD,
+  MARKETING_CONSENT_FORM,
+} from '@/lib/validation/privacy'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -30,6 +34,15 @@ export function MarketingConsentForm({ granted }: { granted: boolean }) {
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
+      {/*
+        Champ témoin, toujours envoyé. Une case décochée n'est PAS transmise
+        par le navigateur : sans lui, le serveur ne pouvait pas distinguer un
+        retrait délibéré d'une requête qui ne porte simplement pas ce champ —
+        et il traitait les deux comme un retrait, ce qui efface la preuve
+        horodatée du consentement.
+      */}
+      <input type="hidden" name="form" value={MARKETING_CONSENT_FORM} />
+
       <label className="flex items-start gap-2 text-sm text-muted">
         <input
           type="checkbox"
@@ -105,7 +118,27 @@ export function EraseAccountForm() {
         />
       </Field>
 
-      <Button type="submit" variant="danger" disabled={pending || confirm !== 'EFFACER'}>
+      {/*
+        La re-saisie du mot de passe est le seul secret que la page ne détient
+        pas : le mot de confirmation, lui, voyage dans le bundle. Le champ est
+        facultatif côté client — un compte ouvert par lien magique n'a pas
+        d'empreinte — et c'est le serveur qui tranche, en regardant s'il en
+        existe une.
+      */}
+      <Field hint={t('erasePasswordHint')}>
+        <FieldLabel>{t('erasePasswordLabel')}</FieldLabel>
+        <Input
+          name="password"
+          type="password"
+          autoComplete="current-password"
+        />
+      </Field>
+
+      <Button
+        type="submit"
+        variant="danger"
+        disabled={pending || confirm !== ERASE_CONFIRMATION_WORD}
+      >
         {t('eraseButton')}
       </Button>
     </form>

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { parseAmountToCents } from '@/lib/domain/money'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
+import { pseudonymize } from '@/lib/security/pseudonymize'
 import { submitOfferSchema } from '@/lib/validation/offers'
 import { ensureCartOwner } from '@/lib/shop/cart'
 import { submitOffer } from '@/lib/shop/offers'
@@ -120,6 +121,59 @@ export async function submitOfferAction(
   // Sans compte, l'adresse est la seule voie de réponse. Accepter une offre
   // qu'on ne pourrait pas répondre reviendrait à la perdre en silence.
   if (!owner.userId && !parsed.data.email) return ERROR('emailRequired')
+
+  // -------------------------------------------------------------------------
+  // Second compteur, par ADRESSE — sans lui, ce formulaire est un robot
+  // d'envoi de courrier vers la boîte de n'importe qui
+  // -------------------------------------------------------------------------
+  //
+  // Le compteur par empreinte ci-dessus ne suffit pas, et pour une raison qui
+  // n'est pas théorique : sans cookie, `ensureCartOwner` FRAPPE UN JETON NEUF
+  // à chaque requête. Les garde-fous de `evaluateOffer` — une seule offre en
+  // attente, plafond de tentatives, carence après refus — s'appuient tous sur
+  // l'identité du propriétaire. Une requête sans cookie repart donc à zéro sur
+  // les trois, indéfiniment.
+  //
+  // Il reste alors, entre l'attaquant et la boîte de sa cible, la seule limite
+  // par IP — que loue un pool de proxys. Chaque offre déposée déclenche un
+  // accusé de réception LÉGITIMEMENT signé par notre domaine d'envoi. Le coût
+  // ne serait pas pour la personne visée seule : plaintes pour spam chez le
+  // prestataire, mise en quarantaine de l'adresse d'envoi, et plus aucun
+  // e-mail transactionnel délivré à personne.
+  //
+  // C'est exactement le défaut déjà corrigé sur le lien magique
+  // (`lib/auth/actions.ts`), sur un formulaire qui envoie le même type de
+  // message à une adresse tout aussi arbitraire.
+  //
+  // Le plafond est plus large que les trois du lien magique : proposer un prix
+  // sur plusieurs pièces au cours d'une même visite est un usage normal, alors
+  // qu'on ne demande pas trois liens de connexion d'affilée. Cinq par heure
+  // laisse passer la visite et arrête le déluge.
+  //
+  // Le compteur porte sur un jeton, jamais sur l'adresse en clair : la clé
+  // part chez un tiers.
+  //
+  // Seulement pour les offres SANS COMPTE : avec un compte, l'accusé part vers
+  // l'adresse du compte, que l'appelant ne choisit pas. Il n'y a personne
+  // d'autre à inonder que soi-même.
+  if (!owner.userId && parsed.data.email) {
+    const byAddress = await checkRateLimit({
+      key: `offer-mail:${pseudonymize({
+        purpose: 'rate-limit:offer-email',
+        value: parsed.data.email.toLowerCase(),
+        rotateDaily: true,
+      })}`,
+      limit: 5,
+      windowSeconds: 3600,
+      sensitive: true,
+    })
+    // Réponse franche, contrairement au lien magique qui doit rester muet pour
+    // ne pas révéler si un compte existe. Ici il n'y a pas d'oracle à fermer :
+    // le compteur ne dit rien de la personne visée, seulement que CETTE
+    // adresse a servi cinq fois dans l'heure — ce que celui qui l'a saisie
+    // sait déjà. Mentir à quelqu'un qui négocie de bonne foi coûterait plus.
+    if (!byAddress) return ERROR('rateLimited')
+  }
 
   const result = await submitOffer({
     articleId: parsed.data.articleId,

@@ -472,6 +472,14 @@
       "rateLimited": "Demasiadas tentativas. Tente novamente dentro de alguns minutos.",
       "generic": "A operação não foi concluída. Tente novamente.",
       "notConfigured": "O início de sessão ainda não está ativado nesta implementação. O catálogo e os favoritos funcionam normalmente."
+    },
+    "magicConfirm": {
+      "title": "Confirmar o início de sessão",
+      "body": "Selecione o botão para abrir a sua sessão neste dispositivo.",
+      "hint": "Esta confirmação existe para que um link aberto sem o seu conhecimento não o ligue a uma conta que não é a sua.",
+      "confirm": "Iniciar sessão",
+      "invalid": "Este link não é válido. Pode ter expirado ou já ter sido usado.",
+      "backToSignIn": "Voltar ao início de sessão"
     }
   },
   "account": {
@@ -579,8 +587,13 @@
         "confirmationRequired": "Escreva EFFACER para confirmar.",
         "rateLimited": "Demasiados pedidos. Tente novamente dentro de uma hora.",
         "unknownAccount": "Conta não encontrada.",
-        "invalidInput": "Pedido inválido."
-      }
+        "invalidInput": "Pedido inválido.",
+        "passwordRequired": "Introduza a sua palavra-passe para confirmar.",
+        "passwordIncorrect": "Palavra-passe incorreta.",
+        "invalidRequest": "Pedido inválido. Recarregue a página e tente de novo."
+      },
+      "erasePasswordLabel": "A sua palavra-passe",
+      "erasePasswordHint": "Pedida para verificar que o pedido vem mesmo de si. Deixe vazio se a sua conta não tiver."
     }
   },
   "footer": {

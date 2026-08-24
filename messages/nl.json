@@ -472,6 +472,14 @@
       "rateLimited": "Te veel pogingen. Probeer het over enkele minuten opnieuw.",
       "generic": "De handeling is niet voltooid. Probeer het opnieuw.",
       "notConfigured": "Inloggen is nog niet ingeschakeld op deze deployment. De catalogus en favorieten werken gewoon."
+    },
+    "magicConfirm": {
+      "title": "Aanmelding bevestigen",
+      "body": "Kies de knop om uw sessie op dit apparaat te openen.",
+      "hint": "Deze bevestiging bestaat zodat een link die buiten uw medeweten wordt geopend, u niet aanmeldt bij een account dat niet het uwe is.",
+      "confirm": "Aanmelden",
+      "invalid": "Deze link is niet geldig. Hij is mogelijk verlopen of al gebruikt.",
+      "backToSignIn": "Terug naar aanmelden"
     }
   },
   "account": {
@@ -579,8 +587,13 @@
         "confirmationRequired": "Typ EFFACER om te bevestigen.",
         "rateLimited": "Te veel verzoeken. Probeer het over een uur opnieuw.",
         "unknownAccount": "Account niet gevonden.",
-        "invalidInput": "Ongeldig verzoek."
-      }
+        "invalidInput": "Ongeldig verzoek.",
+        "passwordRequired": "Voer uw wachtwoord in ter bevestiging.",
+        "passwordIncorrect": "Onjuist wachtwoord.",
+        "invalidRequest": "Ongeldig verzoek. Laad de pagina opnieuw en probeer het nog eens."
+      },
+      "erasePasswordLabel": "Uw wachtwoord",
+      "erasePasswordHint": "Gevraagd om na te gaan of het verzoek echt van u komt. Laat leeg als uw account er geen heeft."
     }
   },
   "footer": {

@@ -123,6 +123,15 @@ export async function exportPersonalData(
           shippingAddress: true,
           billingAddress: true,
           shippingCarrierCode: true,
+          shippingServiceCode: true,
+          // Le point relais choisi. Il manquait, et l'omission était
+          // incohérente avec le reste du module : `anonymizeUser` l'EFFACE à
+          // la demande d'effacement, au motif qu'il n'est pas une mention
+          // obligatoire de facture. Une donnée qu'on juge assez personnelle
+          // pour l'effacer doit figurer dans la copie qu'on remet — c'est un
+          // commerce à quelques rues de chez soi, et la page annonce « tout ce
+          // que ce site conserve à votre sujet ».
+          servicePointId: true,
           customerNote: true,
           invoiceNumber: true,
           cgvVersion: true,

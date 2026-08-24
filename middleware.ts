@@ -11,7 +11,17 @@ const intlMiddleware = createIntlMiddleware(routing)
  * Le middleware s'exécute sur l'Edge : importer lib/auth/cookies.ts tirerait
  * la chaîne jusqu'à Prisma et argon2, qui ne s'y exécutent pas.
  */
-const SESSION_COOKIE = ['__Secure-authjs.session-token', 'authjs.session-token']
+const SESSION_COOKIE = [
+  '__Host-authjs.session-token',
+  // L'ancien nom, le temps que les sessions déjà ouvertes s'éteignent. Sans
+  // lui, un changement de préfixe déconnecterait tout le monde d'un coup.
+  // À retirer une fois la durée de session (30 jours) écoulée après le
+  // déploiement — ce n'est pas une faille tant qu'il reste, seulement un nom
+  // de plus que le middleware accepte : le contrôle qui fait autorité relit la
+  // session en base, page par page.
+  '__Secure-authjs.session-token',
+  'authjs.session-token',
+]
 
 const localePattern = locales.join('|')
 const ADMIN_PATH = new RegExp(`^/(${localePattern})/admin(/|$)`)

@@ -232,13 +232,82 @@ n'ont pas d'objet tant que rien n'est vendu ni déposé.
 
 ---
 
+## 5 bis. Ce que le second audit a trouvé
+
+Quatre lacunes réelles, toutes corrigées, toutes couvertes par un test qui
+échoue si le correctif disparaît (`tests/integration/privacy.test.ts`).
+
+### Une adresse e-mail que rien n'effaçait
+
+La purge des offres sans compte épargnait celles rattachées à une commande —
+condition écrite « aucune ligne de commande ». Mais `OrderItem.offerId` est
+écrit à la **création** de la commande, avant tout paiement. Une offre ayant
+seulement servi à afficher un prix dans un tunnel abandonné sortait donc
+définitivement du champ de la purge.
+
+Le résultat était l'inverse de ce qui est annoncé : trente jours plus tard, le
+tunnel abandonné était consciencieusement vidé de son e-mail et de son adresse
+— et l'adresse e-mail restait, juste à côté, dans `Offer.guestEmail`, avec le
+jeton du navigateur. Indéfiniment.
+
+La bonne frontière n'est pas « une commande existe » mais « une **pièce
+comptable** existe », c'est-à-dire `paidAt` — comme partout ailleurs. Et les
+offres qui ont réellement servi à une vente gardent leur montant, que la
+facture invoque, mais perdent l'adresse et le jeton : la commande porte déjà
+l'identité de l'acheteuse, et elle, elle est anonymisée à l'échéance comptable.
+
+### Un travail différé qui ne mourait jamais
+
+La purge ne prenait que les travaux **terminés**, au motif qu'un travail en
+échec doit rester visible « tant qu'il peut être repris ». Mais la file refuse
+de reprendre au-delà de six tentatives : un travail épuisé n'est jamais repris,
+n'est jamais marqué terminé, et n'était effacé par rien. Une panne du
+prestataire d'e-mail au mauvais moment laissait ainsi, pour toujours, une ligne
+désignant la commande d'une personne et un message d'erreur — quand le registre
+et la page publique annoncent trente jours.
+
+### Deux oublis à l'effacement du compte
+
+`VerificationToken` s'indexe sur l'**adresse e-mail**, pas sur l'identifiant du
+compte : aucune cascade ne la touche, et l'effacement l'ignorait. Deux
+conséquences, dont la seconde est la pire — un lien de connexion encore dans la
+boîte de la personne, cliqué après l'effacement, **recréait un compte à son
+adresse**. Quelqu'un qui venait de demander la suppression de son compte s'en
+retrouvait un neuf, sans avoir rien fait d'autre que cliquer sur un vieux lien.
+
+Les **négociations** d'un compte partaient elles aussi à la dérive :
+`Offer.userId` est en `SetNull`, donc une suppression dure laissait la ligne
+derrière elle. Elle finissait par tomber trente jours plus tard, mais
+« effacez mon compte » ne doit pas laisser de reliquat qu'un second mécanisme
+rattrapera peut-être un mois après. Les avis (`Review`) étaient dans le même
+cas, et pire : dans la branche « anonymisé », la ligne `User` est conservée,
+donc rien ne les emportait jamais.
+
+### Un export incomplet
+
+`Order.servicePointId` — le point relais choisi — manquait à la copie remise.
+L'omission était incohérente avec le reste : l'effacement, lui, l'**efface**,
+au motif qu'il n'est pas une mention obligatoire de facture. Une donnée qu'on
+juge assez personnelle pour la supprimer doit figurer dans la copie qu'on
+remet ; c'est un commerce à quelques rues de chez soi, et la page annonce
+« tout ce que ce site conserve à votre sujet ».
+
+---
+
 ## 6. Colonnes déclarées, jamais alimentées
 
-Le schéma décrit la boutique complète, phases 3 à 8 comprises. Quatre
-ensembles de colonnes existent donc en base sans qu'aucun chemin de code ne
-les écrive. C'est acceptable en avance de phase — **à condition que ce soit
-décidé et écrit**, parce qu'un audit du schéma les fera toutes apparaître
-comme « données collectées ».
+Le schéma décrit la boutique complète, phases 3 à 8 comprises. Des colonnes
+existent donc en base sans qu'aucun chemin de code ne les écrive. C'est
+acceptable en avance de phase — **à condition que ce soit décidé et écrit**,
+parce qu'un audit du schéma les fera toutes apparaître comme « données
+collectées ».
+
+Cette section a longtemps annoncé « quatre ensembles », et le second audit a
+montré que la liste en oubliait huit — dont trois zones de texte libre. Le
+paragraphe qui se voulait rassurant l'était donc à tort : le tableau ci-dessous
+est celui des colonnes **sur lesquelles une décision a été prise**, et la liste
+qui le suit celle des modèles encore en attente. Une liste incomplète qui se
+présente comme exhaustive est pire qu'une liste absente.
 
 | Table / colonne | État | Décision |
 | --- | --- | --- |
@@ -249,6 +318,29 @@ comme « données collectées ».
 
 Ces lignes n'ont pas vocation à rassurer : elles existent pour qu'on n'ait
 pas à redécouvrir la question au moment de brancher chacune.
+
+### Modèles déclarés, jamais écrits, sans décision arrêtée
+
+Vérifié sur `lib/`, `app/` et `components/` : aucun de ces modèles n'a
+d'écriture aujourd'hui.
+
+| Modèle | Données personnelles qu'il portera | À trancher avant de le brancher |
+| --- | --- | --- |
+| `Conversation`, `Message` | `guestEmail`, `body` (texte libre), `attachments` | Durée de conservation d'une conversation, sort des pièces jointes, et ce qu'il advient des messages à l'effacement du compte |
+| `ReturnRequest` | `comment` (texte libre) | Suit-il la durée comptable de la commande, ou une durée propre au litige ? |
+| `Shipment`, `ShipmentEvent` | Numéro de suivi, `raw` (réponse brute du transporteur) | Le `raw` d'un transporteur contient nom et adresse : à caviarder à l'écriture, comme les événements de paiement |
+| `Review` | `rating`, `body` (texte libre) | Un avis publié survit-il à l'effacement du compte, sous pseudonyme ? Aujourd'hui l'effacement l'emporte |
+| `SizeAlert` | Critères de recherche, `maxPriceCents` | Effacée avec le compte. Reste à inscrire au registre le jour où elle notifie |
+| `PushSubscription` | `endpoint` (identifiant de navigateur) | Effacée avec le compte. Le consentement aux notifications devra être horodaté |
+
+Les trois derniers sont **déjà emportés par l'effacement du compte** : ce qui
+manque est leur entrée au registre, pas leur traitement.
+
+Et une table à surveiller, hors périmètre pour l'instant : `AuditLog` n'est
+purgée par rien. Son unique écriture ne porte aujourd'hui que des identifiants
+d'articles et laisse `actorId` nul. Le jour où elle enregistrera un acteur ou
+l'avant/après d'une ligne `User` ou `Order`, elle deviendra une copie de
+données personnelles à conservation illimitée — et il faudra la purger.
 
 ---
 

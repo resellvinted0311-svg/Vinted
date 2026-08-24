@@ -4,6 +4,9 @@ import type { Provider } from 'next-auth/providers'
 import { prisma } from '@/lib/db/client'
 import { adoptGuestSession } from '@/lib/shop/handover'
 import { sendMagicLinkEmail } from '@/lib/providers/email/magic-link'
+import { SITE } from '@/lib/config/site'
+import { locales } from '@/lib/i18n/routing'
+import { confirmationPageUrl } from './magic-link-guard'
 import {
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE_SECONDS,
@@ -29,25 +32,18 @@ declare module 'next-auth' {
  * développement (le lien est alors écrit dans la console).
  *
  * ---------------------------------------------------------------------------
- * À RÉGLER AVEC LE TUNNEL DE COMMANDE — ne pas brancher le paiement sans
+ * Le lien envoyé N'EST PAS le rappel d'Auth.js
  * ---------------------------------------------------------------------------
- * Le rappel du lien est un GET sans contrôle CSRF. C'est le comportement de
- * `@auth/core` pour `type: 'email'`, vérifié dans le code de la bibliothèque,
- * pas une particularité d'ici.
+ * Le rappel d'Auth.js est un GET sans contrôle CSRF — le comportement de
+ * `@auth/core` pour `type: 'email'`, pas une particularité d'ici. Il suffisait
+ * alors d'amener cette adresse devant quelqu'un pour authentifier son
+ * navigateur sur le compte de celui qui avait demandé le lien.
  *
- * Conséquence : quelqu'un demande un lien pour SA PROPRE adresse et l'amène
- * devant une victime — un lien dans un message, une image qui charge l'URL.
- * Le navigateur de la victime se retrouve authentifié sur le compte de
- * l'attaquant, sans qu'aucun écran ne le signale.
- *
- * Aujourd'hui, la victime ne peut y déposer qu'un favori, et le flux est de
- * toute façon inerte tant que Resend n'est pas configuré. **Cela change de
- * nature avec le tunnel de commande** : elle y saisirait son adresse postale
- * et ses coordonnées, qui seraient enregistrées sur le compte d'un tiers.
- *
- * Correctif à poser en même temps que le paiement : une confirmation par
- * bouton (donc un POST) sur la page de rappel, ou un nonce déposé en cookie
- * chez le navigateur demandeur et vérifié au retour.
+ * L'e-mail pointe donc vers une page de CONFIRMATION, qui exige un geste — un
+ * POST, protégé par le contrôle d'origine de Next — avant de laisser passer.
+ * Le rappel lui-même refuse tout GET qui ne présente pas la preuve posée par
+ * ce geste : `app/api/auth/[...nextauth]/route.ts` et
+ * `lib/auth/magic-link-guard.ts`, où le raisonnement est écrit en entier.
  */
 const magicLinkProvider: Provider = {
   id: 'magic-link',
@@ -58,8 +54,30 @@ const magicLinkProvider: Provider = {
   maxAge: 15 * 60,
   options: {},
   async sendVerificationRequest({ identifier, url, expires }) {
-    await sendMagicLinkEmail({ to: identifier, url, expires })
+    await sendMagicLinkEmail({
+      to: identifier,
+      url: confirmationPageUrl(url, localeOf(url)),
+      expires,
+    })
   },
+}
+
+/**
+ * La langue à donner à la page de confirmation.
+ *
+ * Auth.js ne transmet pas la langue du formulaire, mais l'adresse de retour
+ * qu'il a mise dans l'URL de rappel la porte : c'est la page d'où la demande
+ * est partie. À défaut, le français, comme les pages déclarées plus bas.
+ */
+function localeOf(callbackUrl: string): string {
+  try {
+    const after = new URL(callbackUrl).searchParams.get('callbackUrl')
+    if (!after) return 'fr'
+    const segment = new URL(after, SITE.url).pathname.split('/')[1] ?? ''
+    return locales.includes(segment as (typeof locales)[number]) ? segment : 'fr'
+  } catch {
+    return 'fr'
+  }
 }
 
 export const {

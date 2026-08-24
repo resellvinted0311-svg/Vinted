@@ -37,7 +37,12 @@
       "sharp",
       "unrs-resolver",
       "@parcel/watcher"
-    ]
+    ],
+    "overrides": {
+      "sharp": "^0.35.3",
+      "postcss": "^8.5.26",
+      "deepmerge-ts": "^8.0.0"
+    }
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",

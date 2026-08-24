@@ -472,6 +472,14 @@
       "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
       "generic": "L’operazione non è andata a buon fine. Riprova.",
       "notConfigured": "L’accesso non è ancora attivo su questo deploy. Il catalogo e i preferiti funzionano normalmente."
+    },
+    "magicConfirm": {
+      "title": "Confermare l’accesso",
+      "body": "Scegli il pulsante per aprire la tua sessione su questo dispositivo.",
+      "hint": "Questa conferma serve a evitare che un link aperto a tua insaputa ti colleghi a un account che non è il tuo.",
+      "confirm": "Accedi",
+      "invalid": "Questo link non è valido. Potrebbe essere scaduto o già stato usato.",
+      "backToSignIn": "Torna all’accesso"
     }
   },
   "account": {
@@ -579,8 +587,13 @@
         "confirmationRequired": "Digiti EFFACER per confermare.",
         "rateLimited": "Troppe richieste. Riprovi tra un’ora.",
         "unknownAccount": "Account non trovato.",
-        "invalidInput": "Richiesta non valida."
-      }
+        "invalidInput": "Richiesta non valida.",
+        "passwordRequired": "Inserisci la password per confermare.",
+        "passwordIncorrect": "Password errata.",
+        "invalidRequest": "Richiesta non valida. Ricarica la pagina e riprova."
+      },
+      "erasePasswordLabel": "La tua password",
+      "erasePasswordHint": "Richiesta per verificare che la domanda venga da te. Lascia vuoto se il tuo account non ne ha una."
     }
   },
   "footer": {

@@ -3,8 +3,10 @@ import { prisma } from '@/lib/db/client'
 import { anonymizeUser, eraseAccount } from '@/lib/privacy/anonymize'
 import { exportPersonalData } from '@/lib/privacy/export'
 import { purgeExpiredPersonalData } from '@/lib/privacy/retention'
+import { MAX_ATTEMPTS } from '@/lib/jobs/queue'
 import {
   ABANDONED_ORDER_RETENTION_DAYS,
+  GUEST_DATA_RETENTION_DAYS,
   ACCOUNTING_RETENTION_DAYS,
   INACTIVE_ACCOUNT_RETENTION_DAYS,
   WEBHOOK_EVENT_RETENTION_DAYS,
@@ -56,6 +58,14 @@ async function cleanup(): Promise<void> {
   })
   await prisma.job.deleteMany({
     where: { payload: { path: ['test'], equals: PREFIX } },
+  })
+
+  await prisma.offer.deleteMany({
+    where: { article: { sku: { startsWith: PREFIX } } },
+  })
+  await prisma.article.deleteMany({ where: { sku: { startsWith: PREFIX } } })
+  await prisma.verificationToken.deleteMany({
+    where: { identifier: { startsWith: PREFIX } },
   })
 
   await prisma.guestFavorite.deleteMany({
@@ -698,5 +708,283 @@ describe('traces techniques', () => {
     })
     expect(reste).toHaveLength(1)
     expect(reste[0]?.lastError).toBe('prestataire indisponible')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Les lacunes trouvées au second audit
+// ---------------------------------------------------------------------------
+
+/** Une pièce du catalogue, pour accrocher une négociation. */
+async function makeArticle(suffix: string): Promise<string> {
+  const category = await prisma.category.findFirstOrThrow({ select: { id: true } })
+  const article = await prisma.article.create({
+    data: {
+      sku: `${PREFIX}${suffix}`,
+      slug: `${PREFIX}${suffix}`,
+      condition: 'GOOD',
+      sizeLabel: 'M',
+      sizeNormalized: 'M',
+      priceCents: 3000,
+      costCents: 800,
+      floorPriceCents: 1500,
+      weightGrams: 400,
+      status: 'AVAILABLE',
+      publishedAt: new Date('2026-01-01T00:00:00Z'),
+      categoryId: category.id,
+    },
+    select: { id: true },
+  })
+  return article.id
+}
+
+/** Une offre déposée sans compte, ancienne. */
+async function makeOldGuestOffer(articleId: string, suffix: string): Promise<string> {
+  const offer = await prisma.offer.create({
+    data: {
+      articleId,
+      guestEmail: `${PREFIX}${suffix}@exemple.fr`,
+      guestSessionToken: `${PREFIX}jeton-${suffix}`,
+      amountCents: 2400,
+      status: 'ACCEPTED',
+      expiresAt: daysAgo(GUEST_DATA_RETENTION_DAYS + 1),
+      createdAt: daysAgo(GUEST_DATA_RETENTION_DAYS + 5),
+    },
+    select: { id: true },
+  })
+  return offer.id
+}
+
+describe('négociations sans compte, à l’échéance du cookie', () => {
+  it('une offre d’un tunnel ABANDONNÉ est supprimée', async () => {
+    // Le défaut : la condition disait « aucune ligne de commande », or
+    // `OrderItem.offerId` est écrit dès la CRÉATION de la commande, avant tout
+    // paiement. Une offre ayant seulement servi à afficher un prix dans un
+    // tunnel abandonné sortait donc définitivement du champ de la purge —
+    // pendant que la commande, elle, était consciencieusement vidée.
+    const articleId = await makeArticle('abandon')
+    const offerId = await makeOldGuestOffer(articleId, 'abandon')
+
+    const order = await prisma.order.create({
+      data: {
+        orderNumber: `${PREFIX}abandon`,
+        email: `${PREFIX}abandon@exemple.fr`,
+        locale: 'fr',
+        status: 'PENDING_PAYMENT',
+        subtotalCents: 2400,
+        shippingCents: 0,
+        totalCents: 2400,
+        shippingAddress: { city: 'Lille' },
+        billingAddress: {},
+        shippingCarrierCode: 'mock',
+        shippingServiceCode: 'standard',
+        // JAMAIS payée : aucune pièce comptable ne s'y adosse.
+        paidAt: null,
+      },
+      select: { id: true },
+    })
+    await prisma.orderItem.create({
+      data: {
+        orderId: order.id,
+        articleId,
+        offerId,
+        titleSnapshot: 'Pièce',
+        imageSnapshot: '',
+        unitPriceCents: 2400,
+        costCentsSnapshot: 800,
+      },
+    })
+
+    await purgeExpiredPersonalData()
+
+    expect(await prisma.offer.findUnique({ where: { id: offerId } })).toBeNull()
+  })
+
+  it('une offre ayant servi à une VENTE garde son montant, perd l’identité', async () => {
+    // Elle justifie le prix porté sur une facture : la supprimer laisserait un
+    // montant négocié inexplicable sur une pièce comptable. Mais l'adresse et
+    // le jeton du navigateur n'ont rien à y faire — et rien ne les effaçait.
+    const articleId = await makeArticle('vendue')
+    const offerId = await makeOldGuestOffer(articleId, 'vendue')
+
+    const order = await prisma.order.create({
+      data: {
+        orderNumber: `${PREFIX}vendue`,
+        email: `${PREFIX}vendue@exemple.fr`,
+        locale: 'fr',
+        status: 'PAID',
+        paidAt: daysAgo(GUEST_DATA_RETENTION_DAYS + 2),
+        invoiceNumber: `${PREFIX}F-1`,
+        subtotalCents: 2400,
+        shippingCents: 0,
+        totalCents: 2400,
+        shippingAddress: { city: 'Lille' },
+        billingAddress: {},
+        shippingCarrierCode: 'mock',
+        shippingServiceCode: 'standard',
+      },
+      select: { id: true },
+    })
+    await prisma.orderItem.create({
+      data: {
+        orderId: order.id,
+        articleId,
+        offerId,
+        titleSnapshot: 'Pièce',
+        imageSnapshot: '',
+        unitPriceCents: 2400,
+        costCentsSnapshot: 800,
+      },
+    })
+
+    await purgeExpiredPersonalData()
+
+    const kept = await prisma.offer.findUnique({
+      where: { id: offerId },
+      select: { amountCents: true, guestEmail: true, guestSessionToken: true },
+    })
+    expect(kept).toEqual({
+      amountCents: 2400,
+      guestEmail: null,
+      guestSessionToken: null,
+    })
+  })
+})
+
+describe('travaux différés définitivement en échec', () => {
+  it('sont purgés comme les autres traces techniques', async () => {
+    // « Un travail en échec doit rester visible tant qu'il PEUT être repris » —
+    // mais `claimJobs` refuse au-delà du plafond. Un travail arrivé au bout de
+    // ses tentatives n'était donc repris par personne, jamais marqué terminé,
+    // et effacé par rien : une ligne désignant la commande d'une personne, et
+    // le message d'erreur du prestataire, conservés pour toujours.
+    await prisma.job.create({
+      data: {
+        type: 'order.confirmation',
+        payload: { test: PREFIX, orderId: 'epuise' },
+        runAt: daysAgo(WEBHOOK_EVENT_RETENTION_DAYS + 2),
+        createdAt: daysAgo(WEBHOOK_EVENT_RETENTION_DAYS + 2),
+        attempts: MAX_ATTEMPTS,
+        lastError: 'prestataire indisponible',
+      },
+    })
+
+    await purgeExpiredPersonalData()
+
+    const reste = await prisma.job.findMany({
+      where: { payload: { path: ['test'], equals: PREFIX } },
+    })
+    expect(reste).toHaveLength(0)
+  })
+
+  it('un travail encore reprenable est ÉPARGNÉ', async () => {
+    // La frontière est le plafond, pas l'échec : tant qu'une reprise reste
+    // promise, la trace sert à comprendre ce qui se passe.
+    await prisma.job.create({
+      data: {
+        type: 'order.confirmation',
+        payload: { test: PREFIX, orderId: 'reprenable' },
+        runAt: daysAgo(WEBHOOK_EVENT_RETENTION_DAYS + 2),
+        createdAt: daysAgo(WEBHOOK_EVENT_RETENTION_DAYS + 2),
+        attempts: MAX_ATTEMPTS - 1,
+        lastError: 'prestataire indisponible',
+      },
+    })
+
+    await purgeExpiredPersonalData()
+
+    expect(
+      await prisma.job.count({
+        where: { payload: { path: ['test'], equals: PREFIX } },
+      }),
+    ).toBe(1)
+  })
+})
+
+describe('ce que l’effacement du compte emportait pas', () => {
+  it('efface les jetons de lien magique de l’adresse', async () => {
+    // `VerificationToken` s'indexe sur l'ADRESSE, pas sur l'identifiant du
+    // compte : aucune cascade ne la touche. Deux conséquences, dont la seconde
+    // est la pire — un lien encore dans la boîte, cliqué après l'effacement,
+    // RECRÉAIT un compte à cette adresse.
+    const user = await makeUser('jetons')
+    await prisma.verificationToken.create({
+      data: {
+        identifier: `${PREFIX}jetons@exemple.fr`,
+        token: `${PREFIX}jeton-magique`,
+        expires: new Date(Date.now() + 15 * 60 * 1000),
+      },
+    })
+
+    await eraseAccount(user.id)
+
+    expect(
+      await prisma.verificationToken.count({
+        where: { identifier: `${PREFIX}jetons@exemple.fr` },
+      }),
+    ).toBe(0)
+  })
+
+  it('efface aussi les jetons quand le compte est ANONYMISÉ', async () => {
+    // La branche « des commandes existent » conserve la ligne `User` : sans
+    // traitement explicite, rien n'emportait les jetons.
+    const user = await makeUser('jetons-anon')
+    await makeOrder(user.id, 'jetons-anon')
+    await prisma.verificationToken.create({
+      data: {
+        identifier: `${PREFIX}jetons-anon@exemple.fr`,
+        token: `${PREFIX}jeton-magique-2`,
+        expires: new Date(Date.now() + 15 * 60 * 1000),
+      },
+    })
+
+    const result = await eraseAccount(user.id)
+    expect(result.outcome).toBe('anonymized')
+
+    expect(
+      await prisma.verificationToken.count({
+        where: { identifier: `${PREFIX}jetons-anon@exemple.fr` },
+      }),
+    ).toBe(0)
+  })
+
+  it('emporte les négociations qui ne justifient aucune facture', async () => {
+    const user = await makeUser('offres')
+    const articleId = await makeArticle('compte')
+    await prisma.offer.create({
+      data: {
+        articleId,
+        userId: user.id,
+        amountCents: 2400,
+        status: 'PENDING',
+        expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      },
+    })
+
+    await eraseAccount(user.id)
+
+    expect(await prisma.offer.count({ where: { articleId } })).toBe(0)
+  })
+})
+
+describe('complétude de l’export', () => {
+  it('contient le point relais, que l’effacement juge personnel', async () => {
+    // Asymétrie corrigée : `anonymizeUser` EFFACE `servicePointId` au motif
+    // qu'il n'est pas une mention obligatoire de facture — c'est un commerce à
+    // quelques rues de chez soi. Une donnée qu'on juge assez personnelle pour
+    // l'effacer doit figurer dans la copie qu'on remet.
+    const user = await makeUser('relais')
+    const order = await makeOrder(user.id, 'relais')
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { servicePointId: 'RELAIS-4242', paidAt: new Date() },
+    })
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerified: new Date() },
+    })
+
+    const dump = JSON.stringify(await exportPersonalData(user.id))
+    expect(dump).toContain('RELAIS-4242')
   })
 })

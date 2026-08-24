@@ -54,9 +54,19 @@ const csp = [
   "img-src 'self' blob: data: https://res.cloudinary.com",
   "font-src 'self' data:",
   // Aucun script tiers avant consentement : la liste reste minimale et explicite.
+  // `*.supabase.co` a été RETIRÉ. Aucun code navigateur n'utilise Supabase —
+  // pas de dépendance `@supabase/*`, pas de clé publique, et les seules
+  // occurrences du nom sont des chaînes de connexion PostgreSQL côté serveur.
+  //
+  // Le joker autorisait donc, pour une capacité inutilisée, l'envoi de données
+  // vers n'importe quel projet d'un service que chacun ouvre gratuitement en
+  // deux minutes : un canal d'exfiltration prêt à l'emploi, à côté d'un
+  // `script-src` qui n'arrête pas les scripts en ligne. Il rendait fausse la
+  // phrase de l'en-tête de ce fichier — « un script injecté ne pourrait pas
+  // renvoyer ce qu'il vole vers un serveur tiers ».
   isDev
     ? "connect-src 'self' ws: wss:"
-    : "connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co",
+    : "connect-src 'self' https://api.stripe.com",
   "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -70,7 +80,14 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
+  {
+    key: 'Permissions-Policy',
+    // `interest-cohort` visait FLoC, retiré de Chrome : la directive est morte.
+    // On la garde — elle ne coûte rien sur un navigateur ancien — et on ajoute
+    // son successeur vivant, `browsing-topics`, qui lui est bien lu.
+    value:
+      'camera=(), microphone=(), geolocation=(), interest-cohort=(), browsing-topics=()',
+  },
   {
     key: 'Strict-Transport-Security',
     value: 'max-age=63072000; includeSubDomains; preload',

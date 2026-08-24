@@ -472,6 +472,14 @@
       "rateLimited": "Demasiados intentos. Inténtalo de nuevo en unos minutos.",
       "generic": "La operación no se ha completado. Inténtalo de nuevo.",
       "notConfigured": "El inicio de sesión aún no está activado en este despliegue. El catálogo y los favoritos funcionan con normalidad."
+    },
+    "magicConfirm": {
+      "title": "Confirmar el inicio de sesión",
+      "body": "Selecciona el botón para abrir tu sesión en este dispositivo.",
+      "hint": "Esta confirmación existe para que un enlace abierto sin que lo sepas no pueda conectarte a una cuenta que no es la tuya.",
+      "confirm": "Iniciar sesión",
+      "invalid": "Este enlace no es válido. Puede que haya caducado o que ya se haya usado.",
+      "backToSignIn": "Volver al inicio de sesión"
     }
   },
   "account": {
@@ -579,8 +587,13 @@
         "confirmationRequired": "Escriba EFFACER para confirmar.",
         "rateLimited": "Demasiadas solicitudes. Inténtelo dentro de una hora.",
         "unknownAccount": "Cuenta no encontrada.",
-        "invalidInput": "Solicitud no válida."
-      }
+        "invalidInput": "Solicitud no válida.",
+        "passwordRequired": "Escribe tu contraseña para confirmar.",
+        "passwordIncorrect": "Contraseña incorrecta.",
+        "invalidRequest": "Solicitud no válida. Recarga la página e inténtalo de nuevo."
+      },
+      "erasePasswordLabel": "Tu contraseña",
+      "erasePasswordHint": "Se pide para comprobar que la solicitud viene de ti. Déjalo vacío si tu cuenta no tiene."
     }
   },
   "footer": {

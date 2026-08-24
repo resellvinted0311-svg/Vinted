@@ -472,6 +472,14 @@
       "rateLimited": "Too many attempts. Try again in a few minutes.",
       "generic": "The operation did not complete. Try again.",
       "notConfigured": "Sign-in is not enabled on this deployment yet. The catalogue and favourites work normally."
+    },
+    "magicConfirm": {
+      "title": "Confirm sign-in",
+      "body": "Select the button to open your session on this device.",
+      "confirm": "Sign me in",
+      "hint": "This confirmation exists so that a link opened without your knowledge cannot sign you in to an account that is not yours.",
+      "invalid": "This link is not valid. It may have expired, or already been used.",
+      "backToSignIn": "Back to sign-in"
     }
   },
   "account": {
@@ -579,8 +587,13 @@
         "confirmationRequired": "Type EFFACER to confirm.",
         "rateLimited": "Too many requests. Try again in an hour.",
         "unknownAccount": "Account not found.",
-        "invalidInput": "Invalid request."
-      }
+        "invalidInput": "Invalid request.",
+        "passwordRequired": "Enter your password to confirm.",
+        "passwordIncorrect": "Incorrect password.",
+        "invalidRequest": "Invalid request. Reload the page and try again."
+      },
+      "erasePasswordLabel": "Your password",
+      "erasePasswordHint": "Asked to confirm the request really comes from you. Leave empty if your account has none."
     }
   },
   "footer": {

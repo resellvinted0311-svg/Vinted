@@ -472,6 +472,14 @@
       "rateLimited": "Trop de tentatives. Réessayez dans quelques minutes.",
       "generic": "L’opération n’a pas abouti. Réessayez.",
       "notConfigured": "La connexion n’est pas encore activée sur ce déploiement. Le catalogue et les favoris fonctionnent normalement."
+    },
+    "magicConfirm": {
+      "title": "Confirmer la connexion",
+      "body": "Cliquez pour ouvrir votre session sur cet appareil.",
+      "hint": "Cette confirmation existe pour qu’un lien ouvert à votre insu ne puisse pas vous connecter à un compte qui n’est pas le vôtre.",
+      "confirm": "Me connecter",
+      "invalid": "Ce lien n’est pas valide. Il a peut-être expiré, ou déjà servi.",
+      "backToSignIn": "Retour à la connexion"
     }
   },
   "account": {
@@ -579,8 +587,13 @@
         "confirmationRequired": "Tapez EFFACER pour confirmer.",
         "rateLimited": "Trop de demandes. Réessayez dans une heure.",
         "unknownAccount": "Compte introuvable.",
-        "invalidInput": "Demande invalide."
-      }
+        "invalidInput": "Demande invalide.",
+        "passwordRequired": "Saisissez votre mot de passe pour confirmer.",
+        "passwordIncorrect": "Mot de passe incorrect.",
+        "invalidRequest": "Demande invalide. Rechargez la page et réessayez."
+      },
+      "erasePasswordLabel": "Votre mot de passe",
+      "erasePasswordHint": "Demandé pour vérifier que la demande vient bien de vous. Laissez vide si votre compte n’en a pas."
     }
   },
   "footer": {

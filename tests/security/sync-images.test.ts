@@ -121,6 +121,28 @@ describe('adresses refusées', () => {
     expect(isPublicAddress('fe80::1')).toBe(false)
   })
 
+  it('refuse les AUTRES écritures de la même machine', () => {
+    // Une seule forme était reconnue — la mixte compressée, testée juste
+    // au-dessus. La même adresse s'écrit pourtant de plusieurs façons, et un
+    // contrôle qui n'en connaît qu'une ne contrôle rien.
+    //
+    // La plus dangereuse est la troisième : c'est l'adresse des métadonnées
+    // d'instance, celle qui rend les identifiants du serveur, écrite sous une
+    // forme que la liste ne regardait pas.
+    expect(isPublicAddress('::127.0.0.1')).toBe(false) // compatible IPv4
+    expect(isPublicAddress('::ffff:7f00:1')).toBe(false) // mappée, hexadécimal
+    expect(isPublicAddress('0:0:0:0:0:ffff:169.254.169.254')).toBe(false)
+    expect(isPublicAddress('::7f00:1')).toBe(false) // compatible, hexadécimal
+  })
+
+  it('refuse les mécanismes de traduction vers IPv4', () => {
+    // NAT64 et 6to4 ne sont pas des écritures mais des passerelles : si le
+    // réseau en porte une, l'adresse mène bien à l'IPv4 encapsulée. On refuse
+    // le mécanisme plutôt que de parier sur la configuration de l'hôte.
+    expect(isPublicAddress('64:ff9b::a9fe:a9fe')).toBe(false) // NAT64
+    expect(isPublicAddress('2002:7f00:1::')).toBe(false) // 6to4
+  })
+
   it('refuse ce qui n’est pas une adresse', () => {
     expect(isPublicAddress('exemple.fr')).toBe(false)
     expect(isPublicAddress('')).toBe(false)
@@ -133,6 +155,9 @@ describe('adresses refusées', () => {
     expect(isPublicAddress('8.8.8.8')).toBe(true)
     expect(isPublicAddress('93.184.216.34')).toBe(true)
     expect(isPublicAddress('172.32.0.1')).toBe(true)
+    // Et en IPv6 : les refus ci-dessus ne doivent pas fermer la porte à tout.
+    expect(isPublicAddress('2606:4700:4700::1111')).toBe(true)
+    expect(isPublicAddress('2a00:1450:4007:80f::200e')).toBe(true)
     expect(isPublicAddress('2001:4860:4860::8888')).toBe(true)
   })
 })
