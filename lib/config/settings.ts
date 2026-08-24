@@ -4,7 +4,7 @@ import { z } from 'zod'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
 import type { OfferPolicy } from '@/lib/domain/offers'
-import type { PricingConfig } from '@/lib/domain/pricing'
+import type { AutoDropStage, PricingConfig } from '@/lib/domain/pricing'
 
 /**
  * Lecture des réglages métier stockés en base.
@@ -110,6 +110,46 @@ const SCHEMAS = {
    * voir `lib/domain/offers.ts`.
    */
   autoAcceptThresholdPercent: positiveInt.max(100).nullable(),
+  /**
+   * Barème de la baisse automatique : paliers d'ancienneté et remises.
+   *
+   * Chaque pourcentage s'applique au prix d'ORIGINE (voir `AutoDropStage`,
+   * lib/domain/pricing.ts). Borné à 99 : à 100, le « prix » n'en serait plus
+   * un, et le plancher écrêterait de toute façon.
+   *
+   * Un tableau VIDE désactive la baisse — même motif que le seuil
+   * d'acceptation automatique : la désactivation est une valeur explicite,
+   * consignée en base, jamais l'absence d'une clé (qui, elle, lève).
+   */
+  autoDropSchedule: z
+    .array(
+      z
+        .object({
+          days: positiveInt,
+          percent: positiveInt.max(99),
+        })
+        .strict(),
+    )
+    .max(12)
+    .refine(
+      (stages) => new Set(stages.map((stage) => stage.days)).size === stages.length,
+      { message: 'deux paliers portent la même ancienneté' },
+    )
+    .refine(
+      (stages) =>
+        [...stages]
+          .sort((a, b) => a.days - b.days)
+          .every(
+            (stage, index, sorted) =>
+              index === 0 || stage.percent > (sorted[index - 1]?.percent ?? 0),
+          ),
+      // Le palier dû est le plus ANCIEN atteint : avec une remise qui
+      // décroît, une pièce de soixante-dix jours serait moins remisée qu'une
+      // pièce de quarante-cinq — les plus vieilles pièces vendues plus cher
+      // que les jeunes. Un barème pareil est une faute de saisie, pas une
+      // intention : on le refuse à la lecture.
+      { message: 'les remises doivent croître avec l’ancienneté' },
+    ),
   minMarginCents: nonNegativeInt,
   contributionRateBps: nonNegativeInt,
   stripePercentBps: nonNegativeInt,
@@ -234,4 +274,17 @@ export async function getPricingConfig(
     ],
     client,
   )
+}
+
+/**
+ * Barème de la baisse automatique, trié par ancienneté croissante.
+ *
+ * Le tri est refait ici plutôt que supposé : le réglage est un tableau JSON
+ * édité en back-office, et l'ordre d'un document édité n'est pas un invariant.
+ */
+export async function getAutoDropSchedule(
+  client: Reader = prisma,
+): Promise<AutoDropStage[]> {
+  const { autoDropSchedule } = await getSettings(['autoDropSchedule'], client)
+  return [...autoDropSchedule].sort((a, b) => a.days - b.days)
 }

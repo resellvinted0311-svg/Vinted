@@ -369,6 +369,37 @@ describe('corps envoyé', () => {
     expect(call.headers.get('x-nd-signature')).toBe(`sha256=${expected}`)
   })
 
+  it('une baisse de prix porte le bloc price, et rien d’autre', async () => {
+    // §3.3 du contrat : sur article.price_dropped, un bloc price REMPLACE
+    // sale et shipping — il n'y a ni vente ni expédition à décrire.
+    const articleId = await makeArticle('b7', { priceCents: 3400 })
+    const occurredAt = new Date('2026-08-15T09:00:00.000Z')
+
+    await prisma.$transaction((tx) =>
+      enqueueSyncEvents(tx, {
+        event: 'article.price_dropped',
+        articleIds: [articleId],
+        occurredAt,
+        previousPriceCents: 3800,
+      }),
+    )
+
+    const sent = captureFetch()
+    const [job] = await syncJobs()
+    expect(await runSyncNotify(job?.payload)).toBe(true)
+
+    const body = JSON.parse(sent[0]?.body ?? '{}') as Record<string, unknown>
+    expect(body.event).toBe('article.price_dropped')
+    expect(body.externalId).toBe(`${PREFIX}ext-b7`)
+    expect(body.occurredAt).toBe(occurredAt.toISOString())
+    // `previousCents` voyage dans la charge utile — une fois la baisse
+    // écrite, il n'existe plus nulle part. `currentCents` est RELU en base à
+    // l'envoi : c'est le fait actuel.
+    expect(body.price).toEqual({ previousCents: 3800, currentCents: 3400 })
+    expect(body.sale).toBeUndefined()
+    expect(body.shipping).toBeUndefined()
+  })
+
   it('ne porte AUCUNE donnée personnelle', async () => {
     const articleId = await makeArticle('b2')
     const orderId = await makeOrder('b2', [articleId], {

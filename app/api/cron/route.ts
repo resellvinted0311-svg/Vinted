@@ -4,6 +4,7 @@ import { releaseExpiredStockLocks } from '@/lib/shop/stock-lock'
 import { purgeExpiredPersonalData } from '@/lib/privacy/retention'
 import { expireStaleOrders } from '@/lib/shop/fulfilment'
 import { expireStaleOffers } from '@/lib/shop/offers'
+import { applyDuePriceDrops } from '@/lib/shop/price-drop'
 import { runJobs } from '@/lib/jobs/worker'
 
 /**
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   // Les travaux sont indépendants : l'échec de l'un ne doit pas empêcher les
   // autres. `allSettled` le garantit — une purge qui tombe ne doit pas laisser
   // du stock réservé indéfiniment, et réciproquement.
-  const [locks, purge, orders, offers, jobs] = await Promise.allSettled([
+  const [locks, purge, orders, offers, drops, jobs] = await Promise.allSettled([
     releaseExpiredStockLocks(),
     purgeExpiredPersonalData(),
     // Stripe envoie bien `checkout.session.expired`, mais un webhook peut se
@@ -98,6 +99,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // enfermée sur cette pièce puisqu'une offre en attente en interdit une
     // seconde.
     expireStaleOffers(),
+    // Le barème de baisse (Setting.autoDropSchedule) appliqué aux pièces qui
+    // ont atteint un palier d'ancienneté. Chaque baisse inscrit sa remontée
+    // vers l'application de gestion dans la même transaction — sans elle, le
+    // prochain import réécrirait le prix d'avant.
+    applyDuePriceDrops(),
     // Confirmations de commande et avis à la boutique. Inscrits dans la
     // transaction de la vente, exécutés ici : un e-mail dû est un e-mail qui
     // survit à une panne du prestataire.
@@ -116,18 +122,22 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (offers.status === 'rejected') {
     console.error('[cron] Expiration des offres en échec.', offers.reason)
   }
+  if (drops.status === 'rejected') {
+    console.error('[cron] Baisse automatique des prix en échec.', drops.reason)
+  }
   if (jobs.status === 'rejected') {
     console.error('[cron] Exécution des travaux différés en échec.', jobs.reason)
   }
 
   return NextResponse.json({
-    ok: [locks, purge, orders, offers, jobs].every(
+    ok: [locks, purge, orders, offers, drops, jobs].every(
       (task) => task.status === 'fulfilled',
     ),
     releasedLocks: locks.status === 'fulfilled' ? locks.value : null,
     purged: purge.status === 'fulfilled' ? purge.value : null,
     expiredOrders: orders.status === 'fulfilled' ? orders.value : null,
     expiredOffers: offers.status === 'fulfilled' ? offers.value : null,
+    priceDrops: drops.status === 'fulfilled' ? drops.value : null,
     jobs: jobs.status === 'fulfilled' ? jobs.value : null,
     durationMs: Date.now() - startedAt,
   })

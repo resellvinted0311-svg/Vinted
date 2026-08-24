@@ -3,6 +3,7 @@ import {
   computeFloorPriceCents,
   computeNetMarginCents,
   computeAutoDropPriceCents,
+  dueDropStage,
   roundUpToTenCents,
   stripeFeeCents,
   contributionCents,
@@ -153,5 +154,57 @@ describe('computeAutoDropPriceCents', () => {
         percent: 20,
       }),
     ).toBe(1150)
+  })
+})
+
+describe('dueDropStage', () => {
+  const NOW = new Date('2026-08-20T12:00:00.000Z')
+  const DAY = 24 * 60 * 60 * 1000
+  const publishedDaysAgo = (days: number) => new Date(NOW.getTime() - days * DAY)
+
+  const SCHEDULE = [
+    { days: 30, percent: 10 },
+    { days: 60, percent: 20 },
+  ]
+
+  it('ne doit rien avant le premier palier', () => {
+    expect(dueDropStage(SCHEDULE, publishedDaysAgo(29), NOW)).toBeNull()
+  })
+
+  it('doit le premier palier à trente jours révolus', () => {
+    expect(dueDropStage(SCHEDULE, publishedDaysAgo(30), NOW)).toEqual({
+      days: 30,
+      percent: 10,
+    })
+    expect(dueDropStage(SCHEDULE, publishedDaysAgo(59), NOW)).toEqual({
+      days: 30,
+      percent: 10,
+    })
+  })
+
+  it('doit le DERNIER palier atteint, pas le premier', () => {
+    // Une pièce de soixante-dix jours jamais baissée — cron en panne, barème
+    // tout juste activé — va directement à −20 %. Le barème dit où le prix
+    // DOIT être, pas par où il aurait dû passer.
+    expect(dueDropStage(SCHEDULE, publishedDaysAgo(70), NOW)).toEqual({
+      days: 60,
+      percent: 20,
+    })
+  })
+
+  it('ne suppose pas le barème trié', () => {
+    const reversed = [...SCHEDULE].reverse()
+    expect(dueDropStage(reversed, publishedDaysAgo(70), NOW)).toEqual({
+      days: 60,
+      percent: 20,
+    })
+    expect(dueDropStage(reversed, publishedDaysAgo(35), NOW)).toEqual({
+      days: 30,
+      percent: 10,
+    })
+  })
+
+  it('un barème vide ne doit jamais rien', () => {
+    expect(dueDropStage([], publishedDaysAgo(300), NOW)).toBeNull()
   })
 })

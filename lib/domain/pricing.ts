@@ -182,6 +182,51 @@ export function computeNetMarginCents(
 // back-office.
 
 /**
+ * Un palier du barème de baisse automatique.
+ *
+ * Le pourcentage s'applique au prix d'ORIGINE, jamais au prix déjà baissé :
+ * un barème « 30 j → −10 %, 60 j → −20 % » promet −20 % au bout de deux mois,
+ * pas −10 % puis −10 % du reste (−28 %). Composer les remises ferait dire au
+ * barème autre chose que ce que le back-office a réglé.
+ */
+export interface AutoDropStage {
+  /** Ancienneté, en jours depuis la publication, à partir de laquelle il vaut. */
+  days: number
+  /** Remise sur le prix d'origine, en pourcentage entier. */
+  percent: number
+}
+
+export const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Le palier dû pour une pièce, à un instant donné.
+ *
+ * C'est le palier atteint LE PLUS ANCIEN qui vaut, pas le premier : une pièce
+ * de soixante-dix jours dont aucune baisse n'a jamais été appliquée — le cron
+ * était en panne, le barème vient d'être activé — va directement à −20 %.
+ * La faire passer par −10 % ne rattraperait le retard qu'au balayage suivant,
+ * et il n'y a rien à rattraper : le barème dit où le prix DOIT être.
+ *
+ * Un seul parcours, sans tri : l'ordre du tableau — un JSON édité en
+ * back-office — est indifférent, et la fonction est appelée pour chaque pièce
+ * candidate à chaque balayage.
+ */
+export function dueDropStage(
+  schedule: readonly AutoDropStage[],
+  publishedAt: Date,
+  now: Date,
+): AutoDropStage | null {
+  let due: AutoDropStage | null = null
+
+  for (const stage of schedule) {
+    if (publishedAt.getTime() + stage.days * DAY_MS > now.getTime()) continue
+    if (due === null || stage.days > due.days) due = stage
+  }
+
+  return due
+}
+
+/**
  * Baisse de prix automatique.
  *
  * Le prix descend parce que le vendeur l'a décidé au bout d'un certain temps,

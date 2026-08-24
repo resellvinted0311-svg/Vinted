@@ -33,7 +33,7 @@ numérotée sans rupture et e-mails de confirmation : livrés.
 | `POST /api/sync/articles` | **livré** — §2 ci-dessous fait foi, aux écarts près listés au §8 |
 | Téléchargement des images | **livré** — file de travaux, cron toutes les 5 minutes |
 | Remontée des ventes vers l'application | **livré** — `article.sold`, `article.reserved`, `article.released` |
-| `article.price_dropped` | transport prêt, **aucun déclencheur** — voir §8.2 |
+| `article.price_dropped` | **livré** — baisse automatique par le cron, barème `Setting.autoDropSchedule` |
 | `GET /api/sync/changes` | **livré** |
 
 Le §8, en fin de document, liste les points sur lesquels l'implémentation
@@ -719,10 +719,22 @@ lecteur de la version initiale se tromperait.
    enregistré. Mieux vaut un bloc manquant qu'un poids approximatif dans un
    calcul de calibration de grille.
 
-4. **`article.price_dropped` : le transport est prêt, aucun déclencheur ne
-   l'émet.** La seule chose qui change un prix aujourd'hui dans la boutique est
-   votre propre import, et vous le renvoyer serait un écho. L'événement partira
-   quand la baisse automatique sera livrée — c'est un lot à part.
+4. **`article.price_dropped` est émis par la baisse automatique, et par elle
+   seule.** Le déclencheur est le cron (toutes les cinq minutes) : il applique
+   le barème `Setting.autoDropSchedule` — des paliers d'ancienneté depuis la
+   publication, chaque pourcentage calculé sur le prix d'ORIGINE, jamais
+   composé, jamais sous le prix plancher. Votre propre import ne déclenche
+   toujours RIEN : vous renvoyer un prix que vous venez d'écrire serait un
+   écho.
+
+   Deux conséquences pour votre côté :
+
+   - `previousCents` est le prix affiché juste avant CETTE baisse — sur une
+     seconde baisse, c'est le prix déjà baissé, pas le prix d'origine ;
+   - la boutique attend que vous adoptiez le nouveau prix : tant que votre
+     inventaire porte l'ancien, chaque import le réécrit, et le balayage
+     suivant rebaisse — l'événement repartira. Rien ne casse, mais le
+     va-et-vient est du bruit évitable.
 
 5. **Six tentatives, pas cinq.** Le §3.5 promettait cinq reprises ; cinq
    reprises supposent six tentatives, et le plafond de la file a été relevé
