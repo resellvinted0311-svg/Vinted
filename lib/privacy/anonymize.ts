@@ -192,6 +192,65 @@ async function deleteUnlinkedRows(
  * rien et ne lève pas. Une purge qui échoue à mi-chemin peut donc être
  * relancée telle quelle.
  */
+/**
+ * Les commandes qui appartiennent RÉELLEMENT à cette personne.
+ *
+ * ---------------------------------------------------------------------------
+ * Le défaut que ce prédicat vient réparer
+ * ---------------------------------------------------------------------------
+ * L'export de l'article 15 employait une portée LARGE : les commandes du compte,
+ * plus celles passées sans compte à la même adresse, quand celle-ci est
+ * vérifiée. C'est le bon choix — la personne a acheté depuis son téléphone sans
+ * compte, puis ouvert un compte depuis son ordinateur ; ces commandes sont les
+ * siennes, et `handover.ts` ne les rattache pas parce que le jeton de session
+ * du téléphone n'est pas celui de l'ordinateur.
+ *
+ * L'effacement, lui, ne regardait que `userId`. Conséquence mesurable :
+ *
+ *  1. la personne télécharge ses données et reçoit sa commande d'invitée en
+ *     entier — nom, rue, ville, téléphone, note libre ;
+ *  2. elle clique « effacer mon compte » ;
+ *  3. `eraseAccount` compte zéro commande, SUPPRIME la ligne `User`, et
+ *     l'interface affiche « votre compte a été supprimé » ;
+ *  4. la commande d'invitée n'est pas touchée. Elle reste dix ans, avec le
+ *     téléphone et la note libre — dont ce module dit lui-même qu'ils ne sont
+ *     aucune mention obligatoire de facture.
+ *
+ * Et il ne reste plus aucune ligne `User` pour rattacher ces commandes à la
+ * demande d'effacement : la suppression a détruit le seul lien qui rendait la
+ * reprise possible.
+ *
+ * ---------------------------------------------------------------------------
+ * Une seule définition, utilisée des deux côtés
+ * ---------------------------------------------------------------------------
+ * Recopier la clause dans l'effacement aurait refermé ce trou-là et laissé les
+ * deux définitions dériver au prochain remaniement. C'est ici qu'elle vit, et
+ * `lib/privacy/export.ts` l'importe : ce que l'on REMET est exactement ce que
+ * l'on EFFACE, par construction.
+ *
+ * `emailVerified` n'est aujourd'hui posé que par la connexion par lien magique.
+ * Sans lui, la portée reste étroite — et c'est nécessaire : élargir sur une
+ * adresse non vérifiée laisserait n'importe qui réclamer, ou effacer, les
+ * commandes de quelqu'un d'autre en s'inscrivant avec son adresse.
+ */
+export function ownedOrdersWhere(user: {
+  id: string
+  email: string | null
+  emailVerified: Date | null
+}): Prisma.OrderWhereInput {
+  if (!user.emailVerified || !user.email) return { userId: user.id }
+
+  return {
+    OR: [
+      { userId: user.id },
+      {
+        userId: null,
+        email: { equals: user.email, mode: 'insensitive' },
+      },
+    ],
+  }
+}
+
 export async function anonymizeUser(
   userId: string,
   now = new Date(),
@@ -199,7 +258,14 @@ export async function anonymizeUser(
   await prisma.$transaction(async (tx) => {
     const user = await tx.user.findUnique({
       where: { id: userId },
-      select: { id: true, anonymizedAt: true, email: true },
+      select: {
+        id: true,
+        anonymizedAt: true,
+        email: true,
+        // Sans lui, la portée ci-dessous reste étroite et laisse les commandes
+        // d'invitée que l'export vient pourtant de remettre à cette personne.
+        emailVerified: true,
+      },
     })
 
     if (!user || user.anonymizedAt) return
@@ -229,8 +295,27 @@ export async function anonymizeUser(
     // Le NUMÉRO DE TÉLÉPHONE ne figure dans aucune de ces mentions. Il est
     // demandé pour la livraison, il ne sert plus une fois la pièce remise, et
     // il est retiré des deux adresses figées — voir `stripPhone` plus bas.
+    // La portée EXACTE de l'export, pas seulement `userId` : voir
+    // `ownedOrdersWhere`. Ce que l'on remet est ce que l'on efface.
+    //
+    // ---------------------------------------------------------------------
+    // Les identifiants sont FIGÉS avant la moindre écriture
+    // ---------------------------------------------------------------------
+    // Le prédicat retrouve une commande d'invitée par son ADRESSE E-MAIL. Or la
+    // première écriture ci-dessous remplace précisément cette adresse par le
+    // jeton d'anonymisation. Réutiliser le prédicat après coup ne retrouverait
+    // donc plus rien : le téléphone et le numéro de suivi survivraient à
+    // l'effacement, sur les commandes mêmes que ce correctif vise.
+    //
+    // Défaut introduit en écrivant ce correctif, et attrapé par son test.
+    const owned = await tx.order.findMany({
+      where: ownedOrdersWhere(user),
+      select: { id: true },
+    })
+    const ownedIds = { id: { in: owned.map((order) => order.id) } }
+
     await tx.order.updateMany({
-      where: { userId },
+      where: ownedIds,
       data: {
         email: tombstoneEmail(userId),
         customerNote: null,
@@ -254,12 +339,12 @@ export async function anonymizeUser(
       },
     })
 
-    await stripPhonesFromOrders(tx, { userId })
+    await stripPhonesFromOrders(tx, ownedIds)
 
     // Le numéro de suivi ouvre chez le transporteur une page qui porte la
     // destination du colis : le laisser reviendrait à effacer l'adresse d'un
     // côté et à en garder la clé de l'autre.
-    await stripShipmentTracking(tx, { userId })
+    await stripShipmentTracking(tx, ownedIds)
 
     await tx.user.update({
       where: { id: userId },
@@ -295,7 +380,19 @@ export type AccountErasure =
  * confiance qu'on cherchait à gagner.
  */
 export async function eraseAccount(userId: string): Promise<AccountErasure> {
-  const retainedOrders = await prisma.order.count({ where: { userId } })
+  // Relu AVANT le comptage : la portée dépend de `emailVerified`, et compter
+  // sur le seul `userId` faisait basculer vers la suppression pure une personne
+  // qui avait des commandes d'invitée rattachables — lesquelles restaient
+  // ensuite en base, sans plus aucun compte pour les relier à sa demande.
+  const owner = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, emailVerified: true },
+  })
+  if (!owner) return { outcome: 'deleted' }
+
+  const retainedOrders = await prisma.order.count({
+    where: ownedOrdersWhere(owner),
+  })
 
   if (retainedOrders === 0) {
     // Les cascades du schéma emportent sessions, adresses, favoris, paniers,

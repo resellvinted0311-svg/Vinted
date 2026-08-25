@@ -664,6 +664,7 @@
       "audit-trail": "Openstaande beslissingen over uw bestellingen",
       "technical-logs": "De technische logboeken van de site",
       "favorites": "Uw favorieten",
+      "favorites-guest": "Uw favorieten, zonder account",
       "cart": "Uw winkelmandje",
       "cart-guest": "Je winkelmand, zonder account",
       "offers": "Uw biedingen",

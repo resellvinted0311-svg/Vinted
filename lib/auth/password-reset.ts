@@ -159,7 +159,18 @@ export async function lookupPasswordReset(
 }
 
 export type ResetOutcome =
-  | { ok: true; userId: string }
+  | {
+      ok: true
+      userId: string
+      /**
+       * L'adresse du compte, pour la reprise de session.
+       *
+       * Elle est déjà lue dans la transaction : la remonter ne coûte rien, et
+       * sans elle `resetPasswordAction` ne peut pas appeler `adoptGuestSession`,
+       * qui exige les DEUX concordances — le jeton du navigateur et l'adresse.
+       */
+      email: string
+    }
   | { ok: false; reason: 'unknown' | 'used' | 'expired' | 'no-account' }
 
 /**
@@ -211,7 +222,7 @@ export async function consumePasswordReset(
     // produit une fois, et qui recréait un compte supprimé.
     const user = await tx.user.findFirst({
       where: { id: found.userId, anonymizedAt: null },
-      select: { id: true },
+      select: { id: true, email: true },
     })
     if (!user) return { ok: false as const, reason: 'no-account' as const }
 
@@ -224,7 +235,7 @@ export async function consumePasswordReset(
     // connecté.
     await tx.session.deleteMany({ where: { userId: user.id } })
 
-    return { ok: true as const, userId: user.id }
+    return { ok: true as const, userId: user.id, email: user.email }
   })
 }
 

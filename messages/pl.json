@@ -664,6 +664,7 @@
       "audit-trail": "Decyzje oczekujące w sprawie Twoich zamówień",
       "technical-logs": "Dzienniki techniczne strony",
       "favorites": "Twoje ulubione",
+      "favorites-guest": "Twoje ulubione, bez konta",
       "cart": "Twój koszyk",
       "cart-guest": "Twój koszyk, bez konta",
       "offers": "Twoje oferty",

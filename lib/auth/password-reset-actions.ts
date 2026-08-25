@@ -18,6 +18,7 @@ import {
   logResetRequested,
 } from './password-reset'
 import { createDatabaseSession } from './session'
+import { adoptGuestSession } from '@/lib/shop/handover'
 
 /**
  * Réinitialisation de mot de passe — les deux actions serveur.
@@ -197,6 +198,27 @@ export async function resetPasswordAction(
   // vient de prouver qu'elle tient la boîte et de choisir un mot de passe,
   // c'est le moment où elle est le plus authentifiée de toute sa visite.
   await createDatabaseSession(outcome.userId)
+
+  // ---------------------------------------------------------------------------
+  // La QUATRIÈME porte d'entrée, et elle avait été oubliée
+  // ---------------------------------------------------------------------------
+  // L'inscription, la connexion et le lien magique appellent tous
+  // `adoptGuestSession`. La réinitialisation, non — et c'est une bascule
+  // d'identité comme les trois autres.
+  //
+  // Le défaut, concret : une visiteuse négocie une pièce sans compte, l'offre
+  // est acceptée, un e-mail lui promet ce prix pendant vingt-quatre heures.
+  // Elle veut payer, ne retrouve pas son mot de passe, passe par « mot de passe
+  // oublié ». À l'instant où elle se retrouve connectée, `readNegotiatedPrices`
+  // cherche les offres du COMPTE et n'en trouve aucune : son offre acceptée est
+  // restée sur le jeton d'invitée. Elle paie le prix affiché, pas le prix promis
+  // par écrit — sans qu'aucun message ne signale l'écart. Son panier et ses
+  // favoris d'avant sont invisibles de la même façon.
+  //
+  // `adoptGuestSession` renouvelle AUSSI le jeton de session boutique. Sans lui,
+  // sur un poste partagé, la personne qui réinitialise héritait du panier et des
+  // favoris laissés par la précédente.
+  await adoptGuestSession(outcome.userId, outcome.email)
 
   return { status: 'done' }
 }

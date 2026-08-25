@@ -664,6 +664,7 @@
       "audit-trail": "Decisions pending on your orders",
       "technical-logs": "The site’s technical logs",
       "favorites": "Your favourites",
+      "favorites-guest": "Your favourites, without an account",
       "cart": "Your basket",
       "cart-guest": "Your basket, without an account",
       "offers": "Your offers",

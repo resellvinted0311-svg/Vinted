@@ -315,8 +315,35 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
       'supervision, non depuis ce site.',
   },
   {
+    /**
+     * Scindé en deux, comme le panier et les offres l'ont été avant lui — et
+     * pour la même raison, découverte de la même façon.
+     *
+     * L'entrée unique annonçait TRENTE JOURS pour `Favorite` comme pour
+     * `GuestFavorite`. Or rien n'efface jamais les favoris d'un compte à cette
+     * échéance : ils vivent jusqu'à l'effacement du compte, ou jusqu'à
+     * l'anonymisation pour inactivité — c'est-à-dire jusqu'à TROIS ANS.
+     *
+     * La page publique affichait donc une durée cent fois plus courte que la
+     * réalité. C'est la faute symétrique de celle corrigée sur `Address`
+     * (annoncer un traitement qui n'a pas lieu), mais dans le sens le plus
+     * coûteux : SOUS-déclarer une conservation réelle.
+     *
+     * Le correctif est la déclaration, pas la purge. Effacer les favoris d'un
+     * compte au bout de trente jours casserait le comportement attendu — on les
+     * retrouve à chaque connexion, exactement comme le panier.
+     */
     key: 'favorites',
-    tables: ['Favorite', 'GuestFavorite'],
+    tables: ['Favorite'],
+    basis: 'legitimate-interest',
+    retentionDays: null,
+    retentionReason:
+      'Retrouvés à chaque connexion : conservés avec le compte, effacés avec ' +
+      'lui ou à sa demande.',
+  },
+  {
+    key: 'favorites-guest',
+    tables: ['GuestFavorite'],
     basis: 'legitimate-interest',
     retentionDays: GUEST_DATA_RETENTION_DAYS,
     retentionReason:

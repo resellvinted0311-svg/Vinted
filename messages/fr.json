@@ -664,6 +664,7 @@
       "audit-trail": "Les décisions à prendre sur vos commandes",
       "technical-logs": "Les journaux techniques du site",
       "favorites": "Vos favoris",
+      "favorites-guest": "Vos favoris, sans compte",
       "cart": "Votre panier",
       "cart-guest": "Votre panier, sans compte",
       "offers": "Vos offres",

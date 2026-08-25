@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest'
 import { createHmac, randomBytes } from 'node:crypto'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 /**
  * Ce qu'un visiteur laisse derrière lui en ouvrant sa session.
@@ -480,5 +482,71 @@ describe('renouvellement du jeton', () => {
 
     expect(report).toEqual({ favorites: 0, cartLines: 0, orders: 0, offers: 0 })
     expect(jar.get(shopSessionCookieName())).toBeDefined()
+  })
+})
+
+/**
+ * Les QUATRE portes d'entrée, et celle qui avait été oubliée.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi un test qui lit les fichiers plutôt qu'un scénario
+ * ---------------------------------------------------------------------------
+ * Tout ce qui précède exerce le MÉCANISME de reprise : les concordances
+ * exigées, la casse, le vol impossible, l'ordre du renouvellement de jeton. Il
+ * était entièrement vert pendant qu'une bascule d'identité — la réinitialisation
+ * de mot de passe — ne l'appelait pas du tout.
+ *
+ * Le défaut, concret : une visiteuse négocie sans compte, l'offre est acceptée,
+ * un e-mail lui promet ce prix vingt-quatre heures. Elle veut payer, ne
+ * retrouve pas son mot de passe, passe par « mot de passe oublié ». À l'instant
+ * où elle est connectée, `readNegotiatedPrices` cherche les offres du COMPTE et
+ * n'en trouve aucune : la sienne est restée sur le jeton d'invitée. Elle paie
+ * le prix affiché, pas celui qu'on lui a promis par écrit — sans qu'aucun
+ * message ne signale l'écart.
+ *
+ * On ne peut pas écrire un scénario pour une porte qui n'existe pas encore. On
+ * peut, en revanche, exiger que toute porte connue appelle la reprise.
+ */
+describe('toutes les bascules d’identité reprennent la session', () => {
+  const PORTES = [
+    { fichier: join('lib', 'auth', 'actions.ts'), geste: 'inscription et connexion' },
+    { fichier: join('lib', 'auth', 'index.ts'), geste: 'lien magique' },
+    {
+      fichier: join('lib', 'auth', 'password-reset-actions.ts'),
+      geste: 'réinitialisation de mot de passe',
+    },
+  ]
+
+  it('chacune appelle adoptGuestSession', () => {
+    const muettes: string[] = []
+
+    for (const { fichier, geste } of PORTES) {
+      const source = readFileSync(join(process.cwd(), fichier), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\/\/[^\n]*/g, '')
+
+      // `\b…\s*\(` : un import ou une mention en prose ne suffit pas. C'est
+      // exactement le piège qui a laissé passer l'oubli — le module était
+      // connu du fichier, il n'était simplement jamais appelé.
+      if (!/\badoptGuestSession\s*\(/.test(source)) muettes.push(`${geste} (${fichier})`)
+    }
+
+    expect(
+      muettes,
+      'ces bascules d’identité laissent le panier, les favoris, les commandes ' +
+        'et les prix négociés d’avant sur le jeton d’invitée',
+    ).toEqual([])
+  })
+
+  it('surveille bien quelque chose', () => {
+    // Sans ce garde-fou, un chemin renommé rendrait le test ci-dessus vert
+    // pour la pire des raisons : il ne lit plus rien.
+    expect(PORTES.length).toBeGreaterThan(2)
+    for (const { fichier } of PORTES) {
+      expect(
+        readFileSync(join(process.cwd(), fichier), 'utf8').length,
+        fichier,
+      ).toBeGreaterThan(500)
+    }
   })
 })

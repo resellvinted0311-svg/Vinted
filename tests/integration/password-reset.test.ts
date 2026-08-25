@@ -202,7 +202,11 @@ describe('consommation du lien', () => {
     const request = await openPasswordReset(user.id, 'fr')
 
     const outcome = await consumePasswordReset(request.token, NEW_PASSWORD)
-    expect(outcome).toEqual({ ok: true, userId: user.id })
+    // L'adresse est remontée : sans elle, `resetPasswordAction` ne peut pas
+    // appeler `adoptGuestSession`, qui exige les DEUX concordances — le jeton
+    // du navigateur ET l'adresse. C'est ce qui rattache le panier, les favoris
+    // et surtout le prix négocié laissés avant la réinitialisation.
+    expect(outcome).toEqual({ ok: true, userId: user.id, email: user.email })
 
     const after = await prisma.user.findUniqueOrThrow({
       where: { id: user.id },

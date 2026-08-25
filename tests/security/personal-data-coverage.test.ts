@@ -83,7 +83,7 @@ const MODELES_PERSONNELS: Record<string, Entree> = {
   Favorite: { statut: 'declare', sousLaCle: 'favorites', ecriture: 'directe' },
   GuestFavorite: {
     statut: 'declare',
-    sousLaCle: 'favorites',
+    sousLaCle: 'favorites-guest',
     ecriture: 'directe',
   },
   WebhookEvent: {

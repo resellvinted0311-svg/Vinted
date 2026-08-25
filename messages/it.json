@@ -664,6 +664,7 @@
       "audit-trail": "Le decisioni in sospeso sui suoi ordini",
       "technical-logs": "I registri tecnici del sito",
       "favorites": "I suoi preferiti",
+      "favorites-guest": "I suoi preferiti, senza account",
       "cart": "Il suo carrello",
       "cart-guest": "Il tuo carrello, senza account",
       "offers": "Le tue offerte",

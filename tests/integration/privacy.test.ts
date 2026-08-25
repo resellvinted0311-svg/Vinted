@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import { prisma } from '@/lib/db/client'
-import { anonymizeUser, eraseAccount } from '@/lib/privacy/anonymize'
+import {
+  anonymizeUser,
+  eraseAccount,
+} from '@/lib/privacy/anonymize'
 import { exportPersonalData } from '@/lib/privacy/export'
 import { purgeExpiredPersonalData } from '@/lib/privacy/retention'
 import { MAX_ATTEMPTS } from '@/lib/jobs/queue'
@@ -11,6 +14,7 @@ import {
   INACTIVE_ACCOUNT_RETENTION_DAYS,
   WEBHOOK_EVENT_RETENTION_DAYS,
   AUDIT_LOG_RETENTION_DAYS,
+  PROCESSING_REGISTER,
 } from '@/lib/config/privacy'
 
 /**
@@ -717,6 +721,133 @@ describe('traces techniques', () => {
     })
     expect(reste).toHaveLength(1)
     expect(reste[0]?.lastError).toBe('prestataire indisponible')
+  })
+
+  it('applique VRAIMENT ce que le registre annonce pour les favoris', async () => {
+    // ------------------------------------------------------------------
+    // Ce que ce test relie, et qu'aucun autre ne reliait
+    // ------------------------------------------------------------------
+    // Le registre annonçait TRENTE JOURS pour `Favorite` comme pour
+    // `GuestFavorite`, sous une entrée unique. Or rien n'efface jamais les
+    // favoris d'un COMPTE à cette échéance : ils vivent jusqu'à l'effacement du
+    // compte, ou jusqu'à l'anonymisation pour inactivité — trois ans. La page
+    // publique annonçait une durée cent fois plus courte que la réalité.
+    //
+    // Vérifier la déclaration seule ne l'aurait pas attrapé : elle était
+    // cohérente avec elle-même. Ce test confronte la déclaration à ce que la
+    // purge FAIT, en la faisant tourner.
+    const article = await prisma.article.findFirstOrThrow({ select: { id: true } })
+    const user = await prisma.user.create({
+      data: { email: `${PREFIX}favoris@exemple.fr`, locale: 'fr' },
+      select: { id: true },
+    })
+
+    const vieux = daysAgo(GUEST_DATA_RETENTION_DAYS + 30)
+    await prisma.favorite.create({
+      data: { userId: user.id, articleId: article.id, createdAt: vieux },
+    })
+    await prisma.guestFavorite.create({
+      data: {
+        sessionToken: `${PREFIX}jeton-favori`,
+        articleId: article.id,
+        createdAt: vieux,
+      },
+    })
+
+    await purgeExpiredPersonalData()
+
+    const duCompte = await prisma.favorite.count({ where: { userId: user.id } })
+    const invite = await prisma.guestFavorite.count({
+      where: { sessionToken: `${PREFIX}jeton-favori` },
+    })
+
+    // Le favori d'un compte SURVIT : on le retrouve à chaque connexion,
+    // exactement comme le panier. Le purger casserait ce comportement.
+    expect(duCompte).toBe(1)
+    // Celui d'une visiteuse, non : il ne survit pas au cookie qui le retrouve.
+    expect(invite).toBe(0)
+
+    // Et la déclaration doit dire CELA, pas autre chose. C'est le lien qui
+    // manquait : deux entrées distinctes, une par comportement réel.
+    const compte = PROCESSING_REGISTER.find((p) => p.key === 'favorites')
+    const sansCompte = PROCESSING_REGISTER.find((p) => p.key === 'favorites-guest')
+
+    expect(compte?.tables).toEqual(['Favorite'])
+    expect(
+      compte?.retentionDays,
+      'les favoris d’un compte ne sont purgés par rien : annoncer une échéance ' +
+        'en jours serait faux',
+    ).toBeNull()
+
+    expect(sansCompte?.tables).toEqual(['GuestFavorite'])
+    expect(sansCompte?.retentionDays).toBe(GUEST_DATA_RETENTION_DAYS)
+  })
+
+  it('emporte AUSSI la commande d’invitée que l’export a remise', async () => {
+    // ------------------------------------------------------------------
+    // L'asymétrie réparée, et pourquoi elle était grave
+    // ------------------------------------------------------------------
+    // Camille achète depuis son téléphone sans compte, puis ouvre un compte
+    // depuis son ordinateur par lien magique — `emailVerified` est posé, mais
+    // `handover` ne rattache rien : le jeton du téléphone n'est pas celui de
+    // l'ordinateur.
+    //
+    // L'export lui remettait cette commande en entier. L'effacement, lui, ne
+    // comptait que `userId` : il trouvait zéro commande, SUPPRIMAIT la ligne
+    // `User`, et l'écran annonçait « votre compte a été supprimé ». La commande
+    // d'invitée restait dix ans — nom, rue, ville, TÉLÉPHONE, note libre — et
+    // plus aucun compte n'existait pour la relier à sa demande.
+    const email = `${PREFIX}deux-appareils@exemple.fr`
+    const user = await prisma.user.create({
+      data: { email, locale: 'fr', emailVerified: new Date() },
+      select: { id: true },
+    })
+
+    const article = await prisma.article.findFirstOrThrow({ select: { id: true } })
+    await prisma.order.create({
+      data: {
+        orderNumber: `${PREFIX}INVITEE-1`,
+        // Le point du scénario : aucune liaison au compte.
+        userId: null,
+        email,
+        locale: 'fr',
+        status: 'PAID',
+        paidAt: new Date(),
+        subtotalCents: 2000,
+        shippingCents: 490,
+        totalCents: 2490,
+        shippingAddress: { city: 'Lille', phone: '+33612345678' },
+        billingAddress: { city: 'Lille' },
+        shippingCarrierCode: 'mock',
+        shippingServiceCode: 'standard',
+        customerNote: 'laissez chez la voisine',
+        items: {
+          create: {
+            articleId: article.id,
+            titleSnapshot: 'Pull',
+            imageSnapshot: '',
+            unitPriceCents: 2000,
+            costCentsSnapshot: 600,
+          },
+        },
+      },
+    })
+
+    const outcome = await eraseAccount(user.id)
+
+    // Une commande rattachable existe : la ligne `User` doit être CONSERVÉE et
+    // vidée, jamais supprimée — sans quoi le lien disparaît avec elle.
+    expect(outcome.outcome).toBe('anonymized')
+
+    const after = await prisma.order.findFirstOrThrow({
+      where: { orderNumber: `${PREFIX}INVITEE-1` },
+      select: { email: true, customerNote: true, shippingAddress: true },
+    })
+
+    expect(after.email).not.toBe(email)
+    expect(after.customerNote).toBeNull()
+    // Le téléphone n'est aucune mention obligatoire de facture : il part.
+    expect(JSON.stringify(after.shippingAddress)).not.toContain('+33612345678')
   })
 
   it('efface une trace d’audit dont la commande décrite est hors conservation', async () => {

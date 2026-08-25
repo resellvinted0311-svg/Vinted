@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { prisma } from '@/lib/db/client'
+import { ownedOrdersWhere } from './anonymize'
 
 /**
  * Droit d'accès et portabilité — articles 15 et 20 du RGPD.
@@ -92,23 +93,22 @@ export async function exportPersonalData(
         // quelqu'un pour lire ses commandes : exactement la faille que
         // `attachGuestOrders` évite déjà en exigeant aussi le jeton d'origine.
         //
+        // La portée vit dans `lib/privacy/anonymize.ts`, et c'est le point
+        // important : ce que l'on REMET ici doit être exactement ce que l'on
+        // EFFACE là-bas.
+        //
+        // Elle était recopiée. L'effacement, lui, ne regardait que `userId` —
+        // si bien que cette copie remettait à la personne une commande
+        // d'invitée, puis « votre compte a été supprimé » la laissait en base
+        // dix ans, avec son téléphone et sa note libre, sans plus aucun compte
+        // pour la relier à sa demande.
+        //
         // À dire franchement : `emailVerified` n'est aujourd'hui posé que par
         // la connexion par lien magique. Pour un compte créé par mot de passe,
         // cette branche reste donc inerte tant que la vérification d'adresse
         // n'est pas branchée. Elle n'est pas décorative pour autant — elle
-        // couvre déjà un chemin réel, et le jour où la vérification arrive,
-        // elle couvre tout le monde sans qu'on ait à y repenser.
-        where: user.emailVerified
-          ? {
-              OR: [
-                { userId },
-                {
-                  userId: null,
-                  email: { equals: user.email, mode: 'insensitive' },
-                },
-              ],
-            }
-          : { userId },
+        // couvre déjà un chemin réel.
+        where: ownedOrdersWhere(user),
         orderBy: { createdAt: 'desc' },
         select: {
           orderNumber: true,

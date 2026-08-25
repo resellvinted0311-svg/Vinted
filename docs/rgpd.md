@@ -350,6 +350,77 @@ traitement, et `activeProcessors()` — qui annonçait déjà Sentry dès que
 
 ---
 
+## 5 quater. Ce qu'un audit adversarial a trouvé
+
+Une ronde d'audit à cinq lentilles, chaque constat attaqué par un sceptique
+chargé de le réfuter. Trois ont survécu du côté RGPD, et tous les trois étaient
+des écarts entre ce que le code annonce et ce qu'il fait.
+
+### L'effacement était plus ÉTROIT que l'export
+
+L'export de l'article 15 employait une portée large : les commandes du compte,
+plus celles passées **sans compte** à la même adresse, quand celle-ci est
+vérifiée. C'est le bon choix — quelqu'un achète depuis son téléphone sans
+compte, puis ouvre un compte depuis son ordinateur ; `handover.ts` ne rattache
+rien, les deux jetons de session étant différents.
+
+L'effacement, lui, ne regardait que `userId`. Le scénario complet :
+
+1. la personne télécharge ses données et reçoit sa commande d'invitée en
+   entier — nom, rue, ville, téléphone, note libre ;
+2. elle clique « effacer mon compte » ;
+3. `eraseAccount` compte zéro commande, **supprime** la ligne `User`, et l'écran
+   annonce « votre compte a été supprimé » ;
+4. la commande d'invitée reste dix ans. Et plus aucun compte n'existe pour la
+   relier à sa demande — la suppression a détruit le seul lien.
+
+Le correctif n'est pas de recopier la clause : `ownedOrdersWhere` vit désormais
+dans `lib/privacy/anonymize.ts` et `lib/privacy/export.ts` l'importe. **Ce que
+l'on remet est exactement ce que l'on efface, par construction.**
+
+Un second défaut est apparu en écrivant ce correctif, attrapé par son propre
+test : le prédicat retrouve une commande d'invitée par son **adresse e-mail**,
+que la première écriture remplace justement par le jeton d'anonymisation. Le
+réutiliser ensuite ne retrouvait plus rien, et le téléphone survivait. Les
+identifiants sont maintenant figés avant la moindre écriture.
+
+### Le registre sous-déclarait la conservation des favoris
+
+Une entrée unique annonçait trente jours pour `Favorite` comme pour
+`GuestFavorite`. Rien n'efface jamais les favoris d'un **compte** à cette
+échéance : ils vivent jusqu'à l'effacement, ou jusqu'à l'anonymisation pour
+inactivité — trois ans. La page publique annonçait une durée cent fois plus
+courte que la réalité.
+
+C'est la faute **symétrique** de celle corrigée sur `Address` — annoncer un
+traitement qui n'a pas lieu — mais dans le sens le plus coûteux : sous-déclarer
+une conservation réelle. L'entrée est scindée, comme l'avaient été le panier et
+les offres.
+
+Vérifier la déclaration seule ne l'aurait pas attrapée : elle était cohérente
+avec elle-même. Le test confronte désormais la déclaration à ce que la purge
+FAIT, en la faisant tourner.
+
+### La réinitialisation de mot de passe ne reprenait pas la session
+
+L'inscription, la connexion et le lien magique appellent tous
+`adoptGuestSession`. La quatrième porte d'entrée, écrite plus tard, ne
+l'appelait pas.
+
+Conséquence : une visiteuse négocie sans compte, l'offre est acceptée, un
+e-mail lui promet ce prix vingt-quatre heures. Elle passe par « mot de passe
+oublié », se retrouve connectée — et `readNegotiatedPrices` cherche les offres
+du **compte**, sans en trouver aucune. Elle paie le prix affiché, pas celui
+qu'on lui a promis par écrit, sans qu'aucun message ne signale l'écart. Son
+panier et ses favoris d'avant sont invisibles de la même façon, et le jeton de
+session boutique n'était pas renouvelé — sur un poste partagé, elle héritait de
+ce que la précédente avait laissé.
+
+Le fichier de tests de reprise était entièrement vert : il exerçait le
+**mécanisme**, pas la liste de ses appelants. Il porte maintenant les deux.
+
+---
+
 ## 6. Colonnes déclarées, jamais alimentées
 
 Le schéma décrit la boutique complète, phases 3 à 8 comprises. Des colonnes
