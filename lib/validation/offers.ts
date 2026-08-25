@@ -72,3 +72,17 @@ export const respondOfferSchema = z
   )
 
 export type RespondOfferInput = z.infer<typeof respondOfferSchema>
+
+/**
+ * Réponse de l'ACHETEUSE à une contre-proposition.
+ *
+ * Elle n'envoie qu'un identifiant et un verbe. Aucun montant : le prix est
+ * celui que la boutique a inscrit, relu en base au moment d'agir. Laisser
+ * passer un montant ici reviendrait à laisser choisir son prix.
+ */
+export const answerCounterSchema = z.object({
+  counterOfferId: articleIdSchema,
+  answer: z.enum(['accept', 'decline']),
+})
+
+export type AnswerCounterInput = z.infer<typeof answerCounterSchema>

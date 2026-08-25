@@ -405,6 +405,20 @@
       "expired": "Keine Antwort",
       "void": "Gegenstandslos",
       "used": "Verwendet"
+    },
+    "acceptCounter": "Diesen Preis annehmen",
+    "declineCounter": "Ablehnen",
+    "counterAccepted": "Preis angenommen. Er bleibt bis zum {date} zahlbar. Das Stück wird dadurch nicht reserviert.",
+    "counterDeclined": "Vorschlag abgelehnt. Sie können erneut ein Angebot für dieses Stück machen.",
+    "counterErrors": {
+      "signInRequired": "Melden Sie sich an, um auf diesen Vorschlag zu antworten.",
+      "invalidRequest": "Ungültige Anfrage. Laden Sie die Seite neu.",
+      "rateLimited": "Zu viele Aktionen in kurzer Zeit. Versuchen Sie es gleich erneut.",
+      "not-found": "Dieser Vorschlag wurde nicht gefunden.",
+      "not-a-counter": "Diese Zeile ist kein Vorschlag des Shops.",
+      "not-pending": "Dieser Vorschlag wurde bereits beantwortet.",
+      "expired": "Die Antwortfrist ist abgelaufen.",
+      "article-unavailable": "Das Stück wurde zwischenzeitlich verkauft."
     }
   },
   "invoice": {
@@ -546,8 +560,14 @@
         "offerAlreadyAnswered": "Dieses Angebot wurde bereits beantwortet oder ist gerade abgelaufen.",
         "articleSold": "Das Stück wurde zwischenzeitlich verkauft.",
         "floorConfirmationRequired": "Setzen Sie das Häkchen, um unter dem Mindestpreis anzunehmen.",
-        "unknown": "Die Antwort konnte nicht erfasst werden."
-      }
+        "unknown": "Die Antwort konnte nicht erfasst werden.",
+        "invalidCounter": "Ungültiger Betrag: er muss über dem erhaltenen Angebot und unter dem angezeigten Preis liegen.",
+        "counterNeedsAccount": "Dieses Angebot wurde ohne Konto abgegeben: es gibt keinen Bildschirm zum Antworten. Annehmen oder ablehnen."
+      },
+      "counter": "Gegenvorschlag",
+      "counterLabel": "Gegenvorschlag",
+      "counterHint": "Zwischen dem erhaltenen Angebot und dem angezeigten Preis. Die Person nimmt ihn im Konto an oder ab.",
+      "countered": "Gegenvorschlag gesendet. Die Person wird per E-Mail benachrichtigt und kann ihn annehmen oder ablehnen."
     },
     "orders": "Zu versendende Bestellungen",
     "ordersIntro": "Bezahlte Bestellungen, die älteste zuerst. Eine versandte Bestellung wartet nicht mehr auf Sie.",
@@ -605,12 +625,14 @@
     "subject": {
       "pending": "Ihr Angebot für {reference}",
       "accepted": "Angebot angenommen — {reference}",
-      "rejected": "Ihr Angebot für {reference}"
+      "rejected": "Ihr Angebot für {reference}",
+      "countered": "Ein Gegenvorschlag für {reference}"
     },
     "greeting": "Guten Tag,",
     "pending": "Ihr Angebot über {amount} ist erfasst. Eine Antwort wird bis zum {date} erwartet.",
     "accepted": "Ihr Angebot über {amount} wurde angenommen. Dieser Preis bleibt bis zum {date} zahlbar.",
     "rejected": "Ihr Angebot über {amount} wurde nicht angenommen.",
+    "countered": "Ihr Angebot von {amount} wurde so nicht angenommen. Der Shop schlägt Ihnen {counter} vor. Bis zum {date} in Ihrem Konto annehmen oder ablehnen.",
     "noHold": "Ein Angebot legt das Stück nicht zurück: Es bleibt zum angezeigten Preis im Verkauf, bis jemand dafür bezahlt.",
     "signature": "Bis bald, {shop}"
   },

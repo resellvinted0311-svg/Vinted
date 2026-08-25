@@ -117,11 +117,11 @@ Phases 4 à 8 non réalisées. En conséquence, sur le déploiement :
   une proposition se fait depuis `/admin/offres`, préparer, expédier et
   constater la livraison depuis `/admin/commandes`. Le reste — catalogue,
   réglages, retours — n'a pas d'écran ;
-- **la contre-proposition n'est pas exposée**, et c'est délibéré : elle
-  créerait une offre en attente au nom de l'acheteuse, qui ne pourrait ni
-  l'accepter ni en déposer une autre — donc bloquée quarante-huit heures pour
-  avoir négocié. Le raisonnement complet, et les deux points à traiter avec
-  elle, sont en tête de `lib/admin/offer-actions.ts` ;
+- **la contre-proposition est exposée des deux côtés** : le vendeur l'émet
+  depuis `/admin/offres`, l'acheteuse l'accepte ou la décline depuis
+  `/compte/offres`. Elle n'est possible que sur une offre portée par un
+  COMPTE — une invitée n'a aucun écran où y répondre, et lui en adresser une la
+  bloquerait sur cette pièce jusqu'à l'échéance ;
 - **aucun transporteur n'est appelé** : les grilles de port sont en base, et le
   numéro de suivi est recopié à la main depuis le bordereau — la ligne
   `Shipment` est créée en `provider: 'manual'`. Aucune étiquette n'est achetée,
@@ -141,7 +141,8 @@ Phases 4 à 8 non réalisées. En conséquence, sur le déploiement :
 Ce qui fonctionne : l'accueil, le catalogue avec filtres et recherche, les
 fiches articles avec mesures, les favoris, les 8 langues, la connexion, le
 panier, le paiement Stripe avec factures et e-mails, la négociation (dépôt,
-registre au compte, prix payable), la baisse automatique des prix, le suivi
+registre au compte, prix payable, contre-proposition), la baisse automatique
+des prix, le suivi
 d'expédition de la commande payée jusqu'à la livraison, et la synchronisation
 avec l'application de gestion dans les deux sens.
 

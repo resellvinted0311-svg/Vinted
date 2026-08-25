@@ -405,6 +405,20 @@
       "expired": "Senza risposta",
       "void": "Senza oggetto",
       "used": "Utilizzata"
+    },
+    "acceptCounter": "Accettare questo prezzo",
+    "declineCounter": "Rifiutare",
+    "counterAccepted": "Prezzo accettato. Resta pagabile fino al {date}. Il capo non viene messo da parte.",
+    "counterDeclined": "Proposta rifiutata. Può fare di nuovo un’offerta su questo capo.",
+    "counterErrors": {
+      "signInRequired": "Acceda per rispondere a questa proposta.",
+      "invalidRequest": "Richiesta non valida. Ricarichi la pagina.",
+      "rateLimited": "Troppe azioni in poco tempo. Riprovi tra un momento.",
+      "not-found": "Questa proposta non è stata trovata.",
+      "not-a-counter": "Questa riga non è una proposta del negozio.",
+      "not-pending": "Questa proposta ha già ricevuto risposta.",
+      "expired": "Il termine di risposta è scaduto.",
+      "article-unavailable": "Il capo è stato venduto nel frattempo."
     }
   },
   "invoice": {
@@ -546,8 +560,14 @@
         "offerAlreadyAnswered": "Questa offerta ha già ricevuto risposta, o è appena scaduta.",
         "articleSold": "Il capo è stato venduto nel frattempo.",
         "floorConfirmationRequired": "Spunta la conferma per accettare sotto il prezzo minimo.",
-        "unknown": "Non è stato possibile registrare la risposta."
-      }
+        "unknown": "Non è stato possibile registrare la risposta.",
+        "invalidCounter": "Importo non valido: deve superare l’offerta ricevuta ed essere inferiore al prezzo esposto.",
+        "counterNeedsAccount": "Questa offerta è stata fatta senza account: non esiste alcuna schermata per rispondere. Accetti o rifiuti."
+      },
+      "counter": "Controproporre",
+      "counterLabel": "Controproposta",
+      "counterHint": "Tra l’offerta ricevuta e il prezzo esposto. La persona l’accetta o la rifiuta dal suo account.",
+      "countered": "Controproposta inviata. La persona è avvisata per e-mail e può accettarla o rifiutarla."
     },
     "orders": "Ordini da spedire",
     "ordersIntro": "Gli ordini pagati, prima il più vecchio. Un ordine spedito non aspetta più nulla da te.",
@@ -605,12 +625,14 @@
     "subject": {
       "pending": "La tua offerta per {reference}",
       "accepted": "Offerta accettata — {reference}",
-      "rejected": "La tua offerta per {reference}"
+      "rejected": "La tua offerta per {reference}",
+      "countered": "Una controproposta per {reference}"
     },
     "greeting": "Buongiorno,",
     "pending": "La tua offerta di {amount} è registrata. Risposta attesa entro il {date}.",
     "accepted": "La tua offerta di {amount} è stata accettata. Questo prezzo resta valido fino al {date}.",
     "rejected": "La tua offerta di {amount} non è stata accolta.",
+    "countered": "La sua proposta di {amount} non è stata accettata così com’è. Il negozio le propone {counter}. Da accettare o rifiutare dal suo account entro il {date}.",
     "noHold": "Un’offerta non mette da parte il capo: resta in vendita al prezzo indicato finché qualcuno non lo paga.",
     "signature": "A presto, {shop}"
   },

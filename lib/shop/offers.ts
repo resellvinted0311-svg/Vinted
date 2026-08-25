@@ -158,10 +158,20 @@ export async function submitOffer(input: {
       tx.offer.count({
         where: { articleId: article.id, status: 'PENDING', ...mine },
       }),
+      // `parentOfferId: null`, comme pour le compteur de tentatives, et pour
+      // la même raison — mais le défaut évité est ici plus rude.
+      //
+      // La carence existe pour qu'un REFUS ne se contourne pas en renvoyant la
+      // même offre à un centime près. Sans ce prédicat, une contre-proposition
+      // que l'acheteuse DÉCLINE porte elle aussi `REJECTED`, et déclenche donc
+      // la carence : elle serait punie d'avoir dit non à une proposition que le
+      // vendeur lui a faite. Elle n'a rien demandé, et se retrouve interdite de
+      // proposer pendant des heures.
       tx.offer.findFirst({
         where: {
           articleId: article.id,
           status: 'REJECTED',
+          parentOfferId: null,
           ...mine,
         },
         orderBy: { respondedAt: 'desc' },
@@ -263,8 +273,21 @@ export async function readOfferEmailData(
       status: true,
       expiresAt: true,
       priceValidUntil: true,
+      counterAmountCents: true,
       guestEmail: true,
       user: { select: { email: true, locale: true } },
+      /**
+       * La contre-proposition émise, quand il y en a une.
+       *
+       * On la lit pour son ÉCHÉANCE : celle de l'offre d'origine est celle du
+       * délai de réponse du vendeur, déjà consommé. Annoncer cette date-là à
+       * l'acheteuse lui donnerait pour répondre un délai qui vient d'expirer.
+       */
+      counters: {
+        select: { expiresAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
       article: {
         select: {
           sku: true,
@@ -290,12 +313,22 @@ export async function readOfferEmailData(
     offer.article.translations.find((row) => row.locale === 'fr')?.title ??
     offer.article.sku
 
+  // ---------------------------------------------------------------------------
+  // `COUNTERED` n'est PAS un refus, et le confondre était un mensonge
+  // ---------------------------------------------------------------------------
+  // La forme précédente rabattait tout ce qui n'était ni accepté ni en attente
+  // sur « refusée ». Une contre-proposition serait donc annoncée à l'acheteuse
+  // comme un refus, au moment précis où la boutique lui propose un prix. Elle
+  // aurait lu « votre offre a été refusée » puis trouvé, dans son espace
+  // compte, une proposition en attente de sa réponse.
   const outcome =
     offer.status === 'ACCEPTED'
       ? ('accepted' as const)
       : offer.status === 'PENDING'
         ? ('pending' as const)
-        : ('rejected' as const)
+        : offer.status === 'COUNTERED'
+          ? ('countered' as const)
+          : ('rejected' as const)
 
   return {
     locale: language,
@@ -304,7 +337,13 @@ export async function readOfferEmailData(
     title,
     amountCents: offer.amountCents,
     outcome,
-    expiresAt: offer.expiresAt,
+    counterAmountCents: offer.counterAmountCents,
+    // Sur une contre-proposition, l'échéance qui compte est celle de la
+    // proposition elle-même, pas celle de l'offre d'origine.
+    expiresAt:
+      outcome === 'countered'
+        ? (offer.counters[0]?.expiresAt ?? offer.expiresAt)
+        : offer.expiresAt,
     priceValidUntil: offer.priceValidUntil,
     url: `${SITE.url}/${language}/a/${offer.article.slug}`,
   }
@@ -317,10 +356,41 @@ export async function readOfferEmailData(
 export type OfferResponse =
   | { action: 'accept' }
   | { action: 'reject' }
-  | { action: 'counter'; counterAmountCents: number }
+  | {
+      action: 'counter'
+      counterAmountCents: number
+      /**
+       * Le vendeur assume de proposer sous son propre prix plancher.
+       *
+       * Le domaine autorise la vente à perte — c'est une décision commerciale —
+       * mais exige qu'elle soit prise en connaissance de cause et laisse une
+       * trace. Sans ce garde-fou, `respondToOffer` ne comparait la contre-offre
+       * à RIEN : la boutique pouvait proposer elle-même un prix déficitaire,
+       * l'acheteuse l'accepter, et `acceptedBelowFloor` rester faux — la
+       * colonne prévue pour garder cette trace n'aurait rien gardé.
+       */
+      confirmBelowFloor?: boolean
+    }
 
 export type RespondResult =
-  | { ok: false; reason: 'not-found' | 'not-pending' | 'article-unavailable' | 'invalid-counter' }
+  | {
+      ok: false
+      reason:
+        | 'not-found'
+        | 'not-pending'
+        | 'article-unavailable'
+        | 'invalid-counter'
+        /**
+         * Contre-proposition demandée sur une offre déposée SANS COMPTE.
+         *
+         * Voir l'en-tête de `respondToOffer` : une invitée n'a aucun écran où
+         * répondre, et lui adresser une contre-proposition la bloquerait sur
+         * cette pièce jusqu'à l'échéance.
+         */
+        | 'counter-needs-account'
+        /** Contre-offre sous le prix plancher, sans déclaration explicite. */
+        | 'counter-below-floor'
+    }
   | {
       ok: true
       status: 'ACCEPTED' | 'REJECTED' | 'COUNTERED'
@@ -393,10 +463,40 @@ export async function respondToOffer(input: {
 
     if (input.response.action === 'counter') {
       const amount = input.response.counterAmountCents
+
+      // ---------------------------------------------------------------------
+      // Sans compte, pas de contre-proposition — et c'est ce qui ferme le piège
+      // ---------------------------------------------------------------------
+      // Une contre-proposition crée une offre EN ATTENTE au nom de l'acheteuse.
+      // Tant qu'elle attend, `already-pending` lui interdit d'en déposer une
+      // autre sur cette pièce. C'est correct — à condition qu'elle puisse y
+      // répondre.
+      //
+      // Or le registre des offres vit sous `/compte`. Une personne qui a
+      // négocié sans compte n'a aucun écran où voir la proposition, donc aucun
+      // moyen de l'accepter ni de la décliner : elle serait bloquée jusqu'à
+      // l'échéance pour avoir négocié. Lui ouvrir ce chemin demanderait une
+      // page publique porteuse d'un jeton signé — une surface entière, avec ses
+      // propres questions d'énumération et de rejeu.
+      //
+      // On refuse donc franchement plutôt que de livrer une moitié de chemin.
+      if (!offer.userId) {
+        return { ok: false as const, reason: 'counter-needs-account' as const }
+      }
+
       // Une contre-offre au-dessus du prix affiché n'en est pas une, et une
       // contre-offre sous l'offre reçue reviendrait à négocier contre soi.
       if (amount <= offer.amountCents || amount >= offer.article.priceCents) {
         return { ok: false as const, reason: 'invalid-counter' as const }
+      }
+
+      // Le plancher est relu EN BASE, dans la transaction : un montant de
+      // référence qui traverse le navigateur est un montant qu'on réécrit.
+      if (
+        isBelowFloor(amount, offer.article.floorPriceCents) &&
+        !input.response.confirmBelowFloor
+      ) {
+        return { ok: false as const, reason: 'counter-below-floor' as const }
       }
     }
 
@@ -479,15 +579,16 @@ export async function respondToOffer(input: {
     // se rembobine pas si l'écriture échoue ensuite, et un appel réseau tenu
     // dans une transaction garderait des verrous en attendant un tiers.
     //
-    // La contre-offre est écartée : son gabarit dirait « refusée », et le lot
-    // qui l'expose n'est pas celui-ci (voir l'en-tête de
-    // `lib/admin/offer-actions.ts`).
-    if (input.response.action !== 'counter') {
-      await enqueue(tx, {
-        type: 'offer.respond',
-        payload: { offerId: offer.id },
-      })
-    }
+    // La contre-proposition part elle aussi, désormais.
+    //
+    // Elle était écartée tant que son gabarit disait « refusée » : annoncer un
+    // refus au moment précis où l'on propose un prix aurait été pire que le
+    // silence. `readOfferEmailData` distingue maintenant `COUNTERED`, et le
+    // message porte le montant proposé et la date avant laquelle répondre.
+    await enqueue(tx, {
+      type: 'offer.respond',
+      payload: { offerId: offer.id },
+    })
 
     return {
       ok: true as const,
@@ -496,6 +597,145 @@ export async function respondToOffer(input: {
       priceValidUntil,
       ...(counterOfferId ? { counterOfferId } : {}),
     }
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Réponse de l'acheteuse à une contre-proposition
+// ---------------------------------------------------------------------------
+
+export type CounterAnswer = 'accept' | 'decline'
+
+export type AnswerCounterResult =
+  | {
+      ok: false
+      reason:
+        /** Aucune ligne de ce nom, ou elle ne lui appartient pas. */
+        | 'not-found'
+        /** Ce n'est pas une contre-proposition mais une offre qu'elle a faite. */
+        | 'not-a-counter'
+        /** Déjà répondue, ou éteinte par le balayage entre-temps. */
+        | 'not-pending'
+        /** Le délai de réponse est passé. */
+        | 'expired'
+        /** La pièce est partie avant qu'elle ne réponde. */
+        | 'article-unavailable'
+    }
+  | { ok: true; accepted: boolean; priceValidUntil: Date | null }
+
+/**
+ * L'acheteuse accepte ou décline la contre-proposition de la boutique.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce que ce chemin vient ouvrir, et le piège qu'il referme
+ * ---------------------------------------------------------------------------
+ * `respondToOffer` savait émettre une contre-proposition depuis le premier
+ * jour. Rien ne permettait d'y répondre. Le résultat aurait été le contraire du
+ * but recherché : la contre-proposition est une offre EN ATTENTE au nom de
+ * l'acheteuse, et `already-pending` lui interdit d'en déposer une autre tant
+ * qu'elle attend. Elle se serait retrouvée bloquée sur cette pièce, pour avoir
+ * négocié, sans aucun moyen d'en sortir avant l'échéance.
+ *
+ * C'est la raison pour laquelle le lot précédent n'a PAS exposé la
+ * contre-proposition côté vendeur. Les deux côtés existent maintenant, ou
+ * aucun.
+ *
+ * ---------------------------------------------------------------------------
+ * La portée vient du COMPTE, jamais de l'identifiant reçu
+ * ---------------------------------------------------------------------------
+ * Un identifiant d'offre suffirait sinon à accepter — donc à rendre payable —
+ * le prix négocié par quelqu'un d'autre. La lecture est bornée à
+ * `userId`, et l'écriture porte le même prédicat.
+ *
+ * ---------------------------------------------------------------------------
+ * Accepter ne réserve toujours rien
+ * ---------------------------------------------------------------------------
+ * Comme pour une offre acceptée par le vendeur : le prix devient payable
+ * pendant un temps borné, la pièce reste en vente. Rien ici ne pose de verrou.
+ */
+export async function answerCounterOffer(input: {
+  counterOfferId: string
+  /** Le compte qui répond. La contre-proposition n'existe que pour un compte. */
+  userId: string
+  answer: CounterAnswer
+  now?: Date
+  policy?: OfferPolicy
+}): Promise<AnswerCounterResult> {
+  const now = input.now ?? new Date()
+  const policy = input.policy ?? (await getOfferPolicy())
+
+  return prisma.$transaction(async (tx) => {
+    const counter = await tx.offer.findFirst({
+      // La portée est ici, pas dans l'appelant : une lecture bornée au
+      // propriétaire ne peut pas être élargie par erreur plus tard.
+      where: { id: input.counterOfferId, userId: input.userId },
+      select: {
+        id: true,
+        status: true,
+        amountCents: true,
+        expiresAt: true,
+        parentOfferId: true,
+        article: { select: { status: true, floorPriceCents: true } },
+      },
+    })
+
+    if (!counter) return { ok: false as const, reason: 'not-found' as const }
+
+    // Une offre qu'elle a déposée elle-même n'est pas une contre-proposition :
+    // l'accepter serait s'auto-accorder un prix.
+    if (counter.parentOfferId === null) {
+      return { ok: false as const, reason: 'not-a-counter' as const }
+    }
+
+    if (counter.status !== 'PENDING') {
+      return { ok: false as const, reason: 'not-pending' as const }
+    }
+
+    // Le balayage ne passe que toutes les cinq minutes : c'est l'échéance qui
+    // fait foi, pas le statut.
+    if (counter.expiresAt <= now) {
+      return { ok: false as const, reason: 'expired' as const }
+    }
+
+    if (counter.article.status === 'SOLD') {
+      return { ok: false as const, reason: 'article-unavailable' as const }
+    }
+
+    const accepted = input.answer === 'accept'
+
+    const priceValidUntil = accepted
+      ? new Date(
+          now.getTime() + policy.acceptedOfferValidityHours * 60 * 60 * 1000,
+        )
+      : null
+
+    // La trace de la vente à perte est posée ICI, à l'acceptation : c'est
+    // l'instant où le prix devient réellement dû. Le vendeur l'a déjà déclarée
+    // en émettant la contre-proposition ; sans cette seconde écriture, la
+    // colonne resterait fausse sur la ligne qui porte le prix payé.
+    const belowFloor =
+      accepted && isBelowFloor(counter.amountCents, counter.article.floorPriceCents)
+
+    const moved = await tx.$executeRaw`
+      UPDATE "Offer"
+      SET "status" = ${accepted ? 'ACCEPTED' : 'REJECTED'}::"OfferStatus",
+          "respondedAt" = ${now},
+          "priceValidUntil" = ${priceValidUntil},
+          "acceptedBelowFloor" = ${belowFloor},
+          "rejectionReason" = ${accepted ? null : 'MANUAL'},
+          "updatedAt" = now()
+      WHERE "id" = ${counter.id}
+        AND "userId" = ${input.userId}
+        AND "status" = 'PENDING'
+    `
+
+    // Zéro ligne : le balayage, ou un second onglet, a fait la transition entre
+    // la lecture et l'écriture.
+    if (moved === 0) {
+      return { ok: false as const, reason: 'not-pending' as const }
+    }
+
+    return { ok: true as const, accepted, priceValidUntil }
   })
 }
 

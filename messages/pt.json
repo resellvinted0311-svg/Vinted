@@ -405,6 +405,20 @@
       "expired": "Sem resposta",
       "void": "Sem efeito",
       "used": "Utilizada"
+    },
+    "acceptCounter": "Aceitar este preço",
+    "declineCounter": "Recusar",
+    "counterAccepted": "Preço aceite. Continua pagável até {date}. A peça não fica reservada.",
+    "counterDeclined": "Proposta recusada. Pode voltar a fazer uma oferta por esta peça.",
+    "counterErrors": {
+      "signInRequired": "Inicie sessão para responder a esta proposta.",
+      "invalidRequest": "Pedido inválido. Recarregue a página.",
+      "rateLimited": "Demasiadas ações em pouco tempo. Tente novamente daqui a pouco.",
+      "not-found": "Não foi possível encontrar esta proposta.",
+      "not-a-counter": "Esta linha não é uma proposta da loja.",
+      "not-pending": "Esta proposta já recebeu resposta.",
+      "expired": "O prazo de resposta terminou.",
+      "article-unavailable": "A peça foi vendida entretanto."
     }
   },
   "invoice": {
@@ -546,8 +560,14 @@
         "offerAlreadyAnswered": "Esta proposta já teve resposta, ou acabou de expirar.",
         "articleSold": "A peça foi vendida entretanto.",
         "floorConfirmationRequired": "Assinale a confirmação para aceitar abaixo do preço mínimo.",
-        "unknown": "Não foi possível registar a resposta."
-      }
+        "unknown": "Não foi possível registar a resposta.",
+        "invalidCounter": "Montante inválido: tem de ser superior à oferta recebida e inferior ao preço apresentado.",
+        "counterNeedsAccount": "Esta oferta foi feita sem conta: não existe ecrã onde responder. Aceite-a ou recuse-a."
+      },
+      "counter": "Contrapropor",
+      "counterLabel": "Contraproposta",
+      "counterHint": "Entre a oferta recebida e o preço apresentado. A pessoa aceita-a ou recusa-a na sua conta.",
+      "countered": "Contraproposta enviada. A pessoa é avisada por e-mail e pode aceitá-la ou recusá-la."
     },
     "orders": "Encomendas a expedir",
     "ordersIntro": "As encomendas pagas, a mais antiga primeiro. Uma encomenda expedida já não espera nada de si.",
@@ -605,12 +625,14 @@
     "subject": {
       "pending": "A sua proposta para {reference}",
       "accepted": "Proposta aceite — {reference}",
-      "rejected": "A sua proposta para {reference}"
+      "rejected": "A sua proposta para {reference}",
+      "countered": "Uma contraproposta para {reference}"
     },
     "greeting": "Olá,",
     "pending": "A sua proposta de {amount} ficou registada. Espera-se resposta até {date}.",
     "accepted": "A sua proposta de {amount} foi aceite. Esse preço mantém-se pagável até {date}.",
     "rejected": "A sua proposta de {amount} não foi aceite.",
+    "countered": "A sua proposta de {amount} não foi aceite tal como está. A loja propõe-lhe {counter}. Aceite ou recuse na sua conta até {date}.",
     "noHold": "Uma proposta não reserva a peça: continua à venda pelo preço indicado até que alguém a pague.",
     "signature": "Até breve, {shop}"
   },

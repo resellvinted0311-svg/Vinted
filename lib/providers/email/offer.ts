@@ -47,8 +47,15 @@ export interface OfferEmailData {
   reference: string
   title: string
   amountCents: number
-  /** `pending`, `accepted` ou `rejected`. */
-  outcome: 'pending' | 'accepted' | 'rejected'
+  /** L'issue telle qu'elle sera annoncée. */
+  outcome: 'pending' | 'accepted' | 'rejected' | 'countered'
+  /**
+   * Le montant que la BOUTIQUE propose, sur une contre-proposition.
+   *
+   * Nul partout ailleurs. Sans lui, l'e-mail de contre-proposition n'aurait
+   * rien à annoncer — et c'est précisément le chiffre pour lequel il part.
+   */
+  counterAmountCents: number | null
   /** Échéance de réponse, sur une offre en attente. */
   expiresAt: Date | null
   /** Validité du prix, sur une offre acceptée. */
@@ -72,14 +79,22 @@ export async function buildOfferAcknowledgement(
             ? formatDate(data.priceValidUntil, data.locale)
             : '',
         })
-      : data.outcome === 'rejected'
-        ? t('rejected', { amount })
-        : t('pending', {
+      : data.outcome === 'countered'
+        ? t('countered', {
             amount,
+            counter: formatPrice(data.counterAmountCents ?? 0, data.locale),
             date: data.expiresAt
               ? formatDate(data.expiresAt, data.locale)
               : '',
           })
+        : data.outcome === 'rejected'
+          ? t('rejected', { amount })
+          : t('pending', {
+              amount,
+              date: data.expiresAt
+                ? formatDate(data.expiresAt, data.locale)
+                : '',
+            })
 
   const lines = [
     t('greeting'),

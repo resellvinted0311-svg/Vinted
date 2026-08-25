@@ -405,6 +405,20 @@
       "expired": "Sin respuesta",
       "void": "Sin efecto",
       "used": "Utilizada"
+    },
+    "acceptCounter": "Aceptar este precio",
+    "declineCounter": "Rechazar",
+    "counterAccepted": "Precio aceptado. Sigue siendo pagadero hasta el {date}. La prenda no queda reservada.",
+    "counterDeclined": "Propuesta rechazada. Puede volver a hacer una oferta por esta prenda.",
+    "counterErrors": {
+      "signInRequired": "Inicie sesión para responder a esta propuesta.",
+      "invalidRequest": "Solicitud no válida. Recargue la página.",
+      "rateLimited": "Demasiadas acciones en poco tiempo. Inténtelo de nuevo en un momento.",
+      "not-found": "No se encuentra esta propuesta.",
+      "not-a-counter": "Esta línea no es una propuesta de la tienda.",
+      "not-pending": "Esta propuesta ya ha recibido respuesta.",
+      "expired": "El plazo de respuesta ha vencido.",
+      "article-unavailable": "La prenda se vendió mientras tanto."
     }
   },
   "invoice": {
@@ -546,8 +560,14 @@
         "offerAlreadyAnswered": "Esta oferta ya tiene respuesta, o acaba de caducar.",
         "articleSold": "La prenda se vendió mientras tanto.",
         "floorConfirmationRequired": "Marca la confirmación para aceptar por debajo del precio mínimo.",
-        "unknown": "No se ha podido registrar la respuesta."
-      }
+        "unknown": "No se ha podido registrar la respuesta.",
+        "invalidCounter": "Importe no válido: debe superar la oferta recibida y ser inferior al precio indicado.",
+        "counterNeedsAccount": "Esta oferta se hizo sin cuenta: no hay pantalla donde responder. Acéptela o recházala."
+      },
+      "counter": "Contraproponer",
+      "counterLabel": "Contrapropuesta",
+      "counterHint": "Entre la oferta recibida y el precio indicado. La persona la acepta o la rechaza desde su cuenta.",
+      "countered": "Contrapropuesta enviada. La persona recibe un correo y puede aceptarla o rechazarla."
     },
     "orders": "Pedidos por enviar",
     "ordersIntro": "Los pedidos pagados, el más antiguo primero. Un pedido enviado ya no espera nada de ti.",
@@ -605,12 +625,14 @@
     "subject": {
       "pending": "Tu oferta por {reference}",
       "accepted": "Oferta aceptada — {reference}",
-      "rejected": "Tu oferta por {reference}"
+      "rejected": "Tu oferta por {reference}",
+      "countered": "Una contrapropuesta para {reference}"
     },
     "greeting": "Hola:",
     "pending": "Tu oferta de {amount} queda registrada. Se espera respuesta antes del {date}.",
     "accepted": "Tu oferta de {amount} ha sido aceptada. Ese precio sigue vigente hasta el {date}.",
     "rejected": "Tu oferta de {amount} no ha sido aceptada.",
+    "countered": "Su propuesta de {amount} no se aceptó tal cual. La tienda le propone {counter}. Acéptela o recházala desde su cuenta antes del {date}.",
     "noHold": "Una oferta no reserva la prenda: sigue a la venta al precio indicado hasta que alguien la pague.",
     "signature": "Hasta pronto, {shop}"
   },

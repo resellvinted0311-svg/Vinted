@@ -139,7 +139,11 @@ export default async function AdminOffersPage({
                   <p className="text-xs text-danger">{t('belowFloorWarning')}</p>
                 ) : null}
 
-                <OfferResponseForm offerId={offer.id} belowFloor={offer.belowFloor} />
+                <OfferResponseForm
+                  offerId={offer.id}
+                  belowFloor={offer.belowFloor}
+                  hasAccount={offer.hasAccount}
+                />
               </div>
             </li>
           ))}

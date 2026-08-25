@@ -36,6 +36,7 @@ const DATA: OfferEmailData = {
   title: 'Chemise en coton rayée',
   amountCents: 3000,
   outcome: 'pending',
+  counterAmountCents: null,
   expiresAt: new Date('2026-08-22T12:00:00.000Z'),
   priceValidUntil: null,
   url: 'https://boutique.test/fr/a/chemises-l-51',

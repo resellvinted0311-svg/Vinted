@@ -5,6 +5,7 @@ import { ArticleImage } from '@/components/shop/article-image'
 import { formatPrice, formatDate } from '@/lib/utils/format'
 import type { OfferRegisterEntry } from '@/lib/db/queries/offers'
 import { OfferStandingBadge } from './offer-standing-badge'
+import { CounterAnswerForm } from './counter-answer-form'
 
 /**
  * Une ligne du registre des offres.
@@ -112,6 +113,20 @@ export function OfferRegisterRow({ offer }: { offer: OfferRegisterEntry }) {
           {standing === 'expired' ? t('expiredHint') : null}
           {standing === 'used' ? t('usedHint') : null}
         </p>
+
+        {/*
+          Le geste est sur la ligne de la CONTRE-PROPOSITION, pas sur l'offre
+          d'origine. Les deux coexistent dans le registre : la première porte
+          désormais « countered » et raconte ce qui s'est passé, la seconde est
+          « awaiting » et attend une réponse. Mettre les boutons sur la
+          première — le réflexe, puisque c'est elle qui porte l'état
+          « contre-proposée » — les poserait sur une ligne close.
+
+          `canAnswer` est dérivé serveur par `buyerMayAnswer` : la vue ne
+          rejuge rien, sans quoi l'affichage et le serveur finiraient par
+          diverger.
+        */}
+        {offer.canAnswer ? <CounterAnswerForm counterOfferId={offer.id} /> : null}
       </div>
 
       <div className="flex shrink-0 items-start">

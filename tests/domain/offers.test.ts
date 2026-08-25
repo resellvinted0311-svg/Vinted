@@ -10,6 +10,7 @@ import {
   type OfferArticleFacts,
   type OfferHistoryFacts,
   type OfferPolicy,
+  buyerMayAnswer,
 } from '@/lib/domain/offers'
 
 /**
@@ -420,5 +421,47 @@ describe('état affiché d’une offre', () => {
     for (const standing of ['awaiting', 'lapsed', 'rejected', 'expired', 'void', 'used'] as const) {
       expect(offerNeedsAttention(standing), standing).toBe(false)
     }
+  })
+})
+
+describe('buyerMayAnswer', () => {
+  const base = {
+    status: 'PENDING' as const,
+    parentOfferId: 'offre-mere',
+    expiresAt: new Date('2026-09-01T00:00:00Z'),
+  }
+  const avant = new Date('2026-08-25T00:00:00Z')
+
+  it('accepte une contre-proposition en attente et non échue', () => {
+    expect(buyerMayAnswer(base, avant)).toBe(true)
+  })
+
+  it('refuse une offre que l’acheteuse a déposée elle-même', () => {
+    // Sans ce contrôle, l'identifiant de sa propre offre suffirait à
+    // s'accorder son propre prix.
+    expect(buyerMayAnswer({ ...base, parentOfferId: null }, avant)).toBe(false)
+  })
+
+  it('refuse une ligne déjà répondue', () => {
+    for (const status of ['ACCEPTED', 'REJECTED', 'EXPIRED', 'VOIDED', 'CONSUMED', 'COUNTERED'] as const) {
+      expect(buyerMayAnswer({ ...base, status }, avant), status).toBe(false)
+    }
+  })
+
+  it('refuse une contre-proposition échue même si le statut dit « en attente »', () => {
+    // Le balayage ne passe que toutes les cinq minutes : c'est l'échéance qui
+    // fait foi. Sans cela, un bouton s'afficherait sur un geste que le serveur
+    // refusera.
+    const apres = new Date('2026-09-02T00:00:00Z')
+    expect(buyerMayAnswer(base, apres)).toBe(false)
+  })
+
+  it('ne dit jamais oui là où offerStanding dit « contre-proposée »', () => {
+    // Les deux lignes coexistent : celle qui PORTE l'état « countered » est
+    // l'offre d'origine, close. Confondre les deux poserait les boutons sur la
+    // mauvaise.
+    const mere = { status: 'COUNTERED' as const, parentOfferId: null, expiresAt: base.expiresAt }
+    expect(offerStanding({ ...mere, priceValidUntil: null }, avant)).toBe('countered')
+    expect(buyerMayAnswer(mere, avant)).toBe(false)
   })
 })

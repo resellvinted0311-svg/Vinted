@@ -4,7 +4,7 @@ import type { Prisma } from '@prisma/client'
 
 import { prisma } from '@/lib/db/client'
 import type { ArticleImageData } from '@/components/shop/article-image'
-import { offerStanding, type OfferStanding } from '@/lib/domain/offers'
+import { buyerMayAnswer, offerStanding, type OfferStanding } from '@/lib/domain/offers'
 
 /**
  * Lecture des négociations, côté acheteuse.
@@ -96,6 +96,15 @@ export interface OfferRegisterEntry {
   standing: OfferStanding
   /** Vrai quand la boutique a proposé ce montant, et non l'acheteuse. */
   fromShop: boolean
+  /**
+   * L'acheteuse peut-elle accepter ou décliner cette ligne MAINTENANT ?
+   *
+   * Dérivé serveur par `buyerMayAnswer`, jamais recalculé dans la vue : c'est
+   * la même règle qui décide d'afficher un bouton et d'accepter le geste, et la
+   * dupliquer les ferait diverger — un bouton qui échoue, ou un geste possible
+   * que rien ne propose.
+   */
+  canAnswer: boolean
   expiresAt: Date
   priceValidUntil: Date | null
   createdAt: Date
@@ -137,6 +146,7 @@ function toEntry(row: OfferRegisterRow, locale: string, now: Date): OfferRegiste
     amountCents: row.amountCents,
     standing: offerStanding(row, now),
     fromShop: row.parentOfferId !== null,
+    canAnswer: buyerMayAnswer(row, now),
     expiresAt: row.expiresAt,
     priceValidUntil: row.priceValidUntil,
     createdAt: row.createdAt,

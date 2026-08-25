@@ -50,6 +50,22 @@ export const respondToOfferSchema = z.discriminatedUnion('action', [
     offerId: articleIdSchema,
     action: z.literal('reject'),
   }),
+  z.object({
+    offerId: articleIdSchema,
+    action: z.literal('counter'),
+    /**
+     * Le montant proposé, en euros tels que saisis.
+     *
+     * Converti en centimes côté serveur, comme le dépôt d'une offre : une
+     * personne francophone tape une virgule décimale, et un `type="number"`
+     * la refuse sous Safari. Aucun prix de référence ne l'accompagne — ni
+     * l'offre reçue, ni le prix affiché, ni le plancher : `respondToOffer` les
+     * relit tous en base, dans sa transaction.
+     */
+    counterAmountEuros: z.string().trim().min(1).max(20),
+    /** Coché quand le vendeur assume de proposer sous son prix plancher. */
+    confirmBelowFloor: z.literal('on').optional(),
+  }),
 ])
 
 export type RespondToOfferInput = z.infer<typeof respondToOfferSchema>

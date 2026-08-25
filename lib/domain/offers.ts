@@ -408,3 +408,38 @@ export function offerStanding(
 export function offerNeedsAttention(standing: OfferStanding): boolean {
   return standing === 'payable' || standing === 'countered'
 }
+
+/**
+ * L'acheteuse peut-elle répondre à cette ligne ?
+ *
+ * ---------------------------------------------------------------------------
+ * Deux lignes pour une seule négociation, et une seule est actionnable
+ * ---------------------------------------------------------------------------
+ * Quand la boutique contre-propose, deux lignes coexistent : l'offre d'origine,
+ * passée en `COUNTERED`, et la contre-proposition, créée en `PENDING` avec
+ * `parentOfferId` renseigné. La première raconte ce qui s'est passé ; c'est la
+ * seconde qui attend un geste.
+ *
+ * Confondre les deux est l'erreur naturelle — `offerStanding` rend « countered »
+ * pour la PREMIÈRE — et elle donnerait des boutons sur une ligne close, aucun
+ * sur celle qui compte.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi l'échéance est relue ici
+ * ---------------------------------------------------------------------------
+ * Le balayage ne passe que toutes les cinq minutes. Une contre-proposition
+ * échue il y a trois minutes porte encore `PENDING` en base : afficher un
+ * bouton dessus ferait cliquer sur un geste que le serveur refusera.
+ */
+export function buyerMayAnswer(
+  offer: {
+    status: OfferStatus
+    parentOfferId: string | null
+    expiresAt: Date
+  },
+  now = new Date(),
+): boolean {
+  if (offer.parentOfferId === null) return false
+  if (offer.status !== 'PENDING') return false
+  return offer.expiresAt > now
+}

@@ -405,6 +405,20 @@
       "expired": "Geen antwoord",
       "void": "Zonder voorwerp",
       "used": "Gebruikt"
+    },
+    "acceptCounter": "Deze prijs aanvaarden",
+    "declineCounter": "Weigeren",
+    "counterAccepted": "Prijs aanvaard. Hij blijft betaalbaar tot {date}. Het stuk wordt daarmee niet gereserveerd.",
+    "counterDeclined": "Voorstel geweigerd. U kunt opnieuw een bod doen op dit stuk.",
+    "counterErrors": {
+      "signInRequired": "Log in om op dit voorstel te antwoorden.",
+      "invalidRequest": "Ongeldig verzoek. Laad de pagina opnieuw.",
+      "rateLimited": "Te veel acties in korte tijd. Probeer het zo weer.",
+      "not-found": "Dit voorstel is niet gevonden.",
+      "not-a-counter": "Deze regel is geen voorstel van de winkel.",
+      "not-pending": "Dit voorstel is al beantwoord.",
+      "expired": "De antwoordtermijn is verstreken.",
+      "article-unavailable": "Het stuk is intussen verkocht."
     }
   },
   "invoice": {
@@ -546,8 +560,14 @@
         "offerAlreadyAnswered": "Dit bod is al beantwoord, of is net verlopen.",
         "articleSold": "Het stuk is intussen verkocht.",
         "floorConfirmationRequired": "Vink de bevestiging aan om onder de bodemprijs te aanvaarden.",
-        "unknown": "Het antwoord kon niet worden vastgelegd."
-      }
+        "unknown": "Het antwoord kon niet worden vastgelegd.",
+        "invalidCounter": "Ongeldig bedrag: het moet boven het ontvangen bod en onder de getoonde prijs liggen.",
+        "counterNeedsAccount": "Dit bod is zonder account gedaan: er is geen scherm om op te antwoorden. Aanvaard of weiger het."
+      },
+      "counter": "Tegenvoorstel",
+      "counterLabel": "Tegenvoorstel",
+      "counterHint": "Tussen het ontvangen bod en de getoonde prijs. De persoon aanvaardt of weigert het in haar account.",
+      "countered": "Tegenvoorstel verstuurd. De persoon krijgt een e-mail en kan het aanvaarden of weigeren."
     },
     "orders": "Te verzenden bestellingen",
     "ordersIntro": "De betaalde bestellingen, de oudste eerst. Een verzonden bestelling wacht niet meer op u.",
@@ -605,12 +625,14 @@
     "subject": {
       "pending": "Uw bod op {reference}",
       "accepted": "Bod aanvaard — {reference}",
-      "rejected": "Uw bod op {reference}"
+      "rejected": "Uw bod op {reference}",
+      "countered": "Een tegenvoorstel voor {reference}"
     },
     "greeting": "Goedendag,",
     "pending": "Uw bod van {amount} is vastgelegd. Antwoord wordt verwacht vóór {date}.",
     "accepted": "Uw bod van {amount} is aanvaard. Die prijs blijft geldig tot {date}.",
     "rejected": "Uw bod van {amount} is niet aanvaard.",
+    "countered": "Uw bod van {amount} is niet als zodanig aanvaard. De winkel stelt {counter} voor. Accepteer of weiger dit in uw account vóór {date}.",
     "noHold": "Een bod legt het stuk niet apart: het blijft te koop tegen de vraagprijs totdat iemand ervoor betaalt.",
     "signature": "Tot binnenkort, {shop}"
   },

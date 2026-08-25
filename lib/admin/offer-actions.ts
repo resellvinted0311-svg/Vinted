@@ -7,6 +7,7 @@ import { requireAdmin } from '@/lib/auth/session'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { respondToOfferSchema } from '@/lib/validation/admin'
 import { isBelowFloor } from '@/lib/domain/offers'
+import { parseAmountToCents } from '@/lib/domain/money'
 import { respondToOffer } from '@/lib/shop/offers'
 
 /**
@@ -36,36 +37,41 @@ import { respondToOffer } from '@/lib/shop/offers'
  * déclaration d'intention.
  *
  * ---------------------------------------------------------------------------
- * La contre-proposition n'est PAS exposée, et c'est délibéré
+ * La contre-proposition est exposée — et ce qu'il a fallu réparer d'abord
  * ---------------------------------------------------------------------------
- * `respondToOffer` la gère, elle est testée, et le bouton tiendrait en dix
- * lignes. Elle est absente parce qu'elle enfermerait l'acheteuse :
+ * Elle était volontairement absente, parce qu'elle enfermait l'acheteuse : une
+ * contre-offre crée une ligne `PENDING` à son nom, `already-pending` lui
+ * interdit alors d'en déposer une autre, et rien ne lui permettait de répondre.
+ * Elle aurait été bloquée quarante-huit heures pour avoir négocié.
  *
- *  - une contre-offre crée une nouvelle ligne `PENDING` à son nom ;
- *  - `evaluateOffer` refuse toute nouvelle proposition tant qu'une offre est en
- *    attente (`already-pending`) ;
- *  - et rien, aujourd'hui, ne lui permet d'ACCEPTER cette contre-offre — le
- *    registre `/compte/offres` l'affiche, sans action.
+ * Trois défauts ont été corrigés avec elle, et aucun n'était visible tant que
+ * le bouton n'existait pas :
  *
- * Elle serait donc bloquée quarante-huit heures, sans recours, pour avoir
- * négocié. Livrer le bouton du vendeur sans la réponse de l'acheteuse
- * fabriquerait exactement le genre de fonctionnalité à moitié construite que ce
- * lot est venu réparer.
+ *  - `readOfferEmailData` rabattait tout statut autre qu'`ACCEPTED` ou
+ *    `PENDING` sur « refusée ». Une contre-proposition aurait annoncé un REFUS
+ *    à quelqu'un à qui l'on propose un prix. Elle a désormais son gabarit, qui
+ *    porte le montant et la date avant laquelle répondre ;
  *
- * Deux choses à traiter avec elle, le jour où elle arrivera :
- *  - `readOfferEmailData` (`lib/shop/offers.ts`) rabat tout statut autre
- *    qu'`ACCEPTED` ou `PENDING` sur « refusée » : une contre-offre annoncerait
- *    un refus. Il lui faut son propre gabarit ;
- *  - `respondToOffer` ne compare PAS une contre-offre au prix plancher — les
- *    seules bornes sont l'offre reçue et le prix affiché — et force
- *    `acceptedBelowFloor` à `false`. Le vendeur peut donc contre-proposer sous
- *    son propre plancher sans garde-fou ni trace.
+ *  - `respondToOffer` ne comparait la contre-offre à AUCUN plancher — les
+ *    seules bornes étaient l'offre reçue et le prix affiché. Le vendeur pouvait
+ *    proposer sous son propre plancher sans garde-fou ni trace. La déclaration
+ *    est maintenant exigée, ici comme pour l'acceptation, et `acceptedBelowFloor`
+ *    est posée à l'acceptation par l'acheteuse — l'instant où le prix devient dû ;
+ *
+ *  - le délai de carence se déclenchait sur la dernière offre `REJECTED`, sans
+ *    écarter les contre-propositions. Décliner une proposition DU VENDEUR
+ *    l'aurait punie d'un délai d'attente. La requête écarte désormais les
+ *    lignes chaînées, comme le fait déjà le compteur de tentatives.
+ *
+ * Une contre-proposition n'est possible que sur une offre portée par un COMPTE.
+ * `respondToOffer` refuse les autres : une invitée n'a aucun écran où répondre,
+ * et lui en adresser une reproduirait le piège qu'on vient de fermer.
  */
 
 export type AdminOfferActionState =
   | { status: 'idle' }
   | { status: 'error'; messageKey: string }
-  | { status: 'done'; outcome: 'accepted' | 'rejected' }
+  | { status: 'done'; outcome: 'accepted' | 'rejected' | 'countered' }
 
 const ERROR = (messageKey: string): AdminOfferActionState => ({
   status: 'error',
@@ -84,6 +90,12 @@ function messageKeyFor(reason: string): string {
       return 'offerAlreadyAnswered'
     case 'article-unavailable':
       return 'articleSold'
+    case 'invalid-counter':
+      return 'invalidCounter'
+    case 'counter-needs-account':
+      return 'counterNeedsAccount'
+    case 'counter-below-floor':
+      return 'floorConfirmationRequired'
     default:
       return 'unknown'
   }
@@ -98,11 +110,18 @@ export async function respondToOfferAction(
   // révélerait la forme attendue.
   const admin = await requireAdmin()
 
+  const action = formData.get('action')
   const parsed = respondToOfferSchema.safeParse({
     offerId: formData.get('offerId'),
-    action: formData.get('action'),
+    action,
     ...(formData.get('confirmBelowFloor')
       ? { confirmBelowFloor: formData.get('confirmBelowFloor') }
+      : {}),
+    // Le montant n'est présenté qu'à la contre-proposition : le schéma le
+    // refuse ailleurs, ce qui est le bon comportement mais donnerait un
+    // mauvais message d'erreur sur une acceptation.
+    ...(action === 'counter'
+      ? { counterAmountEuros: formData.get('counterAmountEuros') }
       : {}),
   })
   if (!parsed.success) return ERROR('invalidRequest')
@@ -146,10 +165,28 @@ export async function respondToOfferAction(
     }
   }
 
+  // La conversion se fait ICI, sur la chaîne saisie, comme pour le dépôt d'une
+  // offre : une personne francophone tape une virgule décimale, et un montant
+  // en centimes qui traverserait le navigateur serait un montant réécrit.
+  let counterAmountCents = 0
+  if (parsed.data.action === 'counter') {
+    const amount = parseAmountToCents(parsed.data.counterAmountEuros)
+    if (amount === null || amount <= 0) return ERROR('invalidCounter')
+    counterAmountCents = amount
+  }
+
   const result = await respondToOffer({
     offerId: parsed.data.offerId,
     response:
-      parsed.data.action === 'accept' ? { action: 'accept' } : { action: 'reject' },
+      parsed.data.action === 'accept'
+        ? { action: 'accept' }
+        : parsed.data.action === 'reject'
+          ? { action: 'reject' }
+          : {
+              action: 'counter',
+              counterAmountCents,
+              confirmBelowFloor: parsed.data.confirmBelowFloor === 'on',
+            },
   })
 
   if (!result.ok) return ERROR(messageKeyFor(result.reason))
@@ -160,6 +197,11 @@ export async function respondToOfferAction(
 
   return {
     status: 'done',
-    outcome: result.status === 'ACCEPTED' ? 'accepted' : 'rejected',
+    outcome:
+      result.status === 'ACCEPTED'
+        ? 'accepted'
+        : result.status === 'COUNTERED'
+          ? 'countered'
+          : 'rejected',
   }
 }

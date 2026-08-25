@@ -405,6 +405,20 @@
       "expired": "Sans réponse",
       "void": "Sans objet",
       "used": "Utilisée"
+    },
+    "acceptCounter": "Accepter ce prix",
+    "declineCounter": "Décliner",
+    "counterAccepted": "Prix accepté. Il reste payable jusqu’au {date}. La pièce n’est pas mise de côté pour autant.",
+    "counterDeclined": "Proposition déclinée. Vous pouvez de nouveau faire une offre sur cette pièce.",
+    "counterErrors": {
+      "signInRequired": "Connectez-vous pour répondre à cette proposition.",
+      "invalidRequest": "Demande invalide. Rechargez la page.",
+      "rateLimited": "Trop d’actions en peu de temps. Réessayez dans un moment.",
+      "not-found": "Cette proposition est introuvable.",
+      "not-a-counter": "Cette ligne n’est pas une proposition de la boutique.",
+      "not-pending": "Cette proposition a déjà reçu une réponse.",
+      "expired": "Le délai de réponse est passé.",
+      "article-unavailable": "La pièce a été vendue entre-temps."
     }
   },
   "invoice": {
@@ -546,8 +560,14 @@
         "offerAlreadyAnswered": "Cette offre a déjà reçu une réponse, ou vient d’expirer.",
         "articleSold": "La pièce a été vendue entre-temps.",
         "floorConfirmationRequired": "Cochez la confirmation pour accepter sous le prix plancher.",
-        "unknown": "La réponse n’a pas pu être enregistrée."
-      }
+        "unknown": "La réponse n’a pas pu être enregistrée.",
+        "invalidCounter": "Montant invalide : il doit être supérieur à l’offre reçue et inférieur au prix affiché.",
+        "counterNeedsAccount": "Cette offre a été déposée sans compte : il n’existe aucun écran où y répondre. Acceptez ou refusez."
+      },
+      "counter": "Contre-proposer",
+      "counterLabel": "Contre-proposition",
+      "counterHint": "Entre l’offre reçue et le prix affiché. La personne l’accepte ou la décline depuis son compte.",
+      "countered": "Contre-proposition envoyée. La personne est prévenue par e-mail et peut l’accepter ou la décliner."
     },
     "orders": "Commandes à expédier",
     "ordersIntro": "Les commandes payées, la plus ancienne en premier. Une commande expédiée n’attend plus rien de vous.",
@@ -605,12 +625,14 @@
     "subject": {
       "pending": "Votre proposition pour {reference}",
       "accepted": "Proposition acceptée — {reference}",
-      "rejected": "Votre proposition pour {reference}"
+      "rejected": "Votre proposition pour {reference}",
+      "countered": "Une proposition pour {reference}"
     },
     "greeting": "Bonjour,",
     "pending": "Votre proposition de {amount} est enregistrée. Une réponse est attendue avant le {date}.",
     "accepted": "Votre proposition de {amount} est acceptée. Ce prix reste payable jusqu’au {date}.",
     "rejected": "Votre proposition de {amount} n’a pas été retenue.",
+    "countered": "Votre proposition de {amount} n’a pas été retenue telle quelle. La boutique vous propose {counter}. À accepter ou à décliner depuis votre espace compte avant le {date}.",
     "noHold": "Une offre ne met pas la pièce de côté : elle reste en vente au prix affiché tant que personne ne l’a payée.",
     "signature": "À bientôt, {shop}"
   },

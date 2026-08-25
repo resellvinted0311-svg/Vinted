@@ -405,6 +405,20 @@
       "expired": "No reply",
       "void": "No longer applies",
       "used": "Used"
+    },
+    "acceptCounter": "Accept this price",
+    "declineCounter": "Decline",
+    "counterAccepted": "Price accepted. It stays payable until {date}. The piece is not set aside for you.",
+    "counterDeclined": "Proposal declined. You can make an offer on this piece again.",
+    "counterErrors": {
+      "signInRequired": "Sign in to answer this proposal.",
+      "invalidRequest": "Invalid request. Reload the page.",
+      "rateLimited": "Too many actions in a short time. Try again in a moment.",
+      "not-found": "This proposal cannot be found.",
+      "not-a-counter": "This line is not a proposal from the shop.",
+      "not-pending": "This proposal has already been answered.",
+      "expired": "The reply window has closed.",
+      "article-unavailable": "The piece was sold in the meantime."
     }
   },
   "invoice": {
@@ -546,8 +560,14 @@
         "offerAlreadyAnswered": "This offer has already been answered, or has just expired.",
         "articleSold": "The piece was sold in the meantime.",
         "floorConfirmationRequired": "Tick the confirmation to accept below the floor price.",
-        "unknown": "The reply could not be recorded."
-      }
+        "unknown": "The reply could not be recorded.",
+        "invalidCounter": "Invalid amount: it must be above the offer received and below the listed price.",
+        "counterNeedsAccount": "This offer was made without an account: there is no screen to answer on. Accept or decline it."
+      },
+      "counter": "Counter-offer",
+      "counterLabel": "Counter-offer",
+      "counterHint": "Between the offer received and the listed price. The buyer accepts or declines it from their account.",
+      "countered": "Counter-offer sent. The buyer is notified by email and can accept or decline it."
     },
     "orders": "Orders to ship",
     "ordersIntro": "Paid orders, oldest first. A shipped order no longer waits on you.",
@@ -605,12 +625,14 @@
     "subject": {
       "pending": "Your offer for {reference}",
       "accepted": "Offer accepted — {reference}",
-      "rejected": "Your offer for {reference}"
+      "rejected": "Your offer for {reference}",
+      "countered": "A counter-offer for {reference}"
     },
     "greeting": "Hello,",
     "pending": "Your offer of {amount} has been recorded. An answer is due by {date}.",
     "accepted": "Your offer of {amount} has been accepted. That price stays payable until {date}.",
     "rejected": "Your offer of {amount} was not accepted.",
+    "countered": "Your offer of {amount} was not accepted as it stands. The shop proposes {counter} instead. Accept or decline it from your account area before {date}.",
     "noHold": "An offer does not put the piece aside: it stays on sale at the asking price until someone pays for it.",
     "signature": "See you soon, {shop}"
   },

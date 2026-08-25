@@ -405,6 +405,20 @@
       "expired": "Bez odpowiedzi",
       "void": "Bezprzedmiotowa",
       "used": "Wykorzystana"
+    },
+    "acceptCounter": "Przyjmij tę cenę",
+    "declineCounter": "Odrzuć",
+    "counterAccepted": "Cena przyjęta. Pozostaje do zapłaty do {date}. Rzecz nie zostaje przez to zarezerwowana.",
+    "counterDeclined": "Propozycja odrzucona. Możesz ponownie złożyć ofertę na tę rzecz.",
+    "counterErrors": {
+      "signInRequired": "Zaloguj się, aby odpowiedzieć na tę propozycję.",
+      "invalidRequest": "Nieprawidłowe żądanie. Odśwież stronę.",
+      "rateLimited": "Zbyt wiele działań w krótkim czasie. Spróbuj za chwilę.",
+      "not-found": "Nie znaleziono tej propozycji.",
+      "not-a-counter": "Ta pozycja nie jest propozycją sklepu.",
+      "not-pending": "Ta propozycja już otrzymała odpowiedź.",
+      "expired": "Termin odpowiedzi minął.",
+      "article-unavailable": "Rzecz została w międzyczasie sprzedana."
     }
   },
   "invoice": {
@@ -546,8 +560,14 @@
         "offerAlreadyAnswered": "Ta oferta ma już odpowiedź lub właśnie wygasła.",
         "articleSold": "Przedmiot został w międzyczasie sprzedany.",
         "floorConfirmationRequired": "Zaznacz potwierdzenie, aby przyjąć poniżej ceny minimalnej.",
-        "unknown": "Nie udało się zapisać odpowiedzi."
-      }
+        "unknown": "Nie udało się zapisać odpowiedzi.",
+        "invalidCounter": "Nieprawidłowa kwota: musi być wyższa od otrzymanej oferty i niższa od ceny wystawienia.",
+        "counterNeedsAccount": "Ta oferta została złożona bez konta: nie ma ekranu, na którym można odpowiedzieć. Przyjmij ją lub odrzuć."
+      },
+      "counter": "Kontrpropozycja",
+      "counterLabel": "Kontrpropozycja",
+      "counterHint": "Między otrzymaną ofertą a ceną wystawienia. Osoba przyjmie ją lub odrzuci na swoim koncie.",
+      "countered": "Kontrpropozycja wysłana. Osoba dostaje e-mail i może ją przyjąć lub odrzucić."
     },
     "orders": "Zamówienia do wysyłki",
     "ordersIntro": "Opłacone zamówienia, najstarsze pierwsze. Wysłane zamówienie już na Ciebie nie czeka.",
@@ -605,12 +625,14 @@
     "subject": {
       "pending": "Twoja oferta na {reference}",
       "accepted": "Oferta przyjęta — {reference}",
-      "rejected": "Twoja oferta na {reference}"
+      "rejected": "Twoja oferta na {reference}",
+      "countered": "Kontrpropozycja dla {reference}"
     },
     "greeting": "Dzień dobry,",
     "pending": "Twoja oferta {amount} została zapisana. Odpowiedź oczekiwana do {date}.",
     "accepted": "Twoja oferta {amount} została przyjęta. Ta cena obowiązuje do {date}.",
     "rejected": "Twoja oferta {amount} nie została przyjęta.",
+    "countered": "Twoja propozycja {amount} nie została przyjęta w tej formie. Sklep proponuje {counter}. Przyjmij ją lub odrzuć na swoim koncie do {date}.",
     "noHold": "Oferta nie rezerwuje przedmiotu: pozostaje on w sprzedaży w cenie wywoławczej, dopóki ktoś za niego nie zapłaci.",
     "signature": "Do zobaczenia, {shop}"
   },

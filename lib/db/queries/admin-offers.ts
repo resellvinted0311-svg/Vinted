@@ -80,6 +80,19 @@ export interface AdminOfferEntry {
    * contact — jamais transmise ailleurs.
    */
   from: string
+  /**
+   * L'offre est-elle portée par un COMPTE ?
+   *
+   * Décide de l'affichage de la contre-proposition. `respondToOffer` la refuse
+   * sur une offre déposée sans compte : le registre des offres vit sous
+   * `/compte`, donc une invitée n'aurait aucun écran où l'accepter ni la
+   * décliner — et resterait bloquée sur cette pièce jusqu'à l'échéance, pour
+   * avoir négocié.
+   *
+   * Proposer un bouton que le serveur refusera serait le pire des deux mondes :
+   * le vendeur croirait avoir répondu.
+   */
+  hasAccount: boolean
   article: {
     slug: string
     sku: string
@@ -119,6 +132,7 @@ function toEntry(row: PendingOfferRow, locale: string, now: Date): AdminOfferEnt
     expiresAt: row.expiresAt,
     lapsed: row.expiresAt <= now,
     from: row.user?.email ?? row.guestEmail ?? '—',
+    hasAccount: row.user !== null,
     article: {
       slug: row.article.slug,
       sku: row.article.sku,

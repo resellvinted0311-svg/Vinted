@@ -6,6 +6,8 @@ import { useTranslations } from 'next-intl'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Field, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 import { Notice } from '@/components/ui/notice'
 import {
   respondToOfferAction,
@@ -49,14 +51,26 @@ const INITIAL: AdminOfferActionState = { status: 'idle' }
 export function OfferResponseForm({
   offerId,
   belowFloor,
+  hasAccount,
 }: {
   offerId: string
   /** Décidé côté serveur : le composant ne connaît pas le plancher. */
   belowFloor: boolean
+  /**
+   * L'offre est-elle portée par un compte ?
+   *
+   * La contre-proposition n'est proposée que dans ce cas. `respondToOffer` la
+   * refuse sur une offre déposée sans compte — le registre des offres vit sous
+   * `/compte`, donc une invitée n'aurait aucun écran où y répondre et resterait
+   * bloquée sur cette pièce jusqu'à l'échéance. Afficher un bouton que le
+   * serveur refusera ferait croire au vendeur qu'il a répondu.
+   */
+  hasAccount: boolean
 }) {
   const t = useTranslations('admin.respond')
   const [state, formAction] = useActionState(respondToOfferAction, INITIAL)
   const [confirmed, setConfirmed] = useState(false)
+  const [counter, setCounter] = useState('')
 
   if (state.status === 'done') {
     return (
@@ -88,6 +102,30 @@ export function OfferResponseForm({
         />
       ) : null}
 
+      {/*
+        Le champ de contre-proposition n'apparaît que là où le geste est
+        possible. Le serveur borne le montant — strictement au-dessus de
+        l'offre reçue, strictement sous le prix affiché — et relit le plancher
+        lui-même : rien de tout cela ne traverse le navigateur.
+      */}
+      {hasAccount ? (
+        <Field hint={t('counterHint')}>
+          <FieldLabel optional>{t('counterLabel')}</FieldLabel>
+          <Input
+            name="counterAmountEuros"
+            value={counter}
+            onChange={(event) => {
+              setCounter(event.target.value)
+            }}
+            // `inputMode` et non `type="number"` : les compteurs n'ont aucun
+            // sens sur un prix, et Safari refuse la virgule décimale que tape
+            // une personne francophone. La conversion se fait serveur.
+            inputMode="decimal"
+            autoComplete="off"
+          />
+        </Field>
+      ) : null}
+
       <div className="flex flex-wrap gap-3">
         <SubmitButton
           action="accept"
@@ -97,6 +135,15 @@ export function OfferResponseForm({
           // mais laisser cliquer pour se voir refuser n'apprend rien.
           blocked={belowFloor && !confirmed}
         />
+        {hasAccount ? (
+          <SubmitButton
+            action="counter"
+            label={t('counter')}
+            variant="outline"
+            // Un montant vide n'est pas une contre-proposition.
+            blocked={counter.trim() === ''}
+          />
+        ) : null}
         <SubmitButton action="reject" label={t('reject')} variant="outline" />
       </div>
     </form>
@@ -114,7 +161,7 @@ function SubmitButton({
   variant = 'primary',
   blocked = false,
 }: {
-  action: 'accept' | 'reject'
+  action: 'accept' | 'reject' | 'counter'
   label: string
   variant?: 'primary' | 'outline'
   blocked?: boolean

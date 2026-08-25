@@ -6,9 +6,10 @@ import { parseAmountToCents } from '@/lib/domain/money'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { pseudonymize } from '@/lib/security/pseudonymize'
-import { submitOfferSchema } from '@/lib/validation/offers'
+import { submitOfferSchema, answerCounterSchema } from '@/lib/validation/offers'
 import { ensureCartOwner } from '@/lib/shop/cart'
-import { submitOffer } from '@/lib/shop/offers'
+import { submitOffer, answerCounterOffer } from '@/lib/shop/offers'
+import { getCurrentUser } from '@/lib/auth/session'
 
 /**
  * Dépôt d'une offre — la seule écriture de négociation ouverte au navigateur.
@@ -206,4 +207,77 @@ function readOptional(value: FormDataEntryValue | null): string | undefined {
   if (typeof value !== 'string') return undefined
   const trimmed = value.trim()
   return trimmed === '' ? undefined : trimmed
+}
+
+// ---------------------------------------------------------------------------
+// Réponse à une contre-proposition
+// ---------------------------------------------------------------------------
+
+export type CounterActionState =
+  | { status: 'idle' }
+  | { status: 'error'; messageKey: string }
+  | { status: 'done'; accepted: boolean; priceValidUntil: string | null }
+
+/**
+ * L'acheteuse accepte ou décline la contre-proposition de la boutique.
+ *
+ * ---------------------------------------------------------------------------
+ * L'identité vient de la SESSION, jamais du formulaire
+ * ---------------------------------------------------------------------------
+ * Le navigateur n'envoie qu'un identifiant de ligne et un verbe. Le compte est
+ * relu ici, et la portée de l'écriture en découle. Sans cela, un identifiant
+ * d'offre suffirait à rendre payable — donc à s'accorder — le prix négocié par
+ * quelqu'un d'autre.
+ *
+ * Une contre-proposition n'existe que pour un compte : `respondToOffer` refuse
+ * d'en émettre une sur une offre déposée sans compte, faute d'écran où y
+ * répondre. Il n'y a donc pas de chemin « invitée » à traiter ici.
+ */
+export async function answerCounterAction(
+  _previous: CounterActionState,
+  formData: FormData,
+): Promise<CounterActionState> {
+  const user = await getCurrentUser()
+  if (!user) return { status: 'error', messageKey: 'signInRequired' }
+
+  const parsed = answerCounterSchema.safeParse({
+    counterOfferId: formData.get('counterOfferId'),
+    answer: formData.get('answer'),
+  })
+  if (!parsed.success) return { status: 'error', messageKey: 'invalidRequest' }
+
+  // Compteur sur le COMPTE, qui est prouvé, plutôt que sur l'empreinte
+  // d'appelant. Ce qu'il borne n'est pas un abus — la personne ne peut agir que
+  // sur ses propres lignes — mais le script qui boucle : chaque appel ouvre une
+  // transaction, et la production n'accorde qu'une connexion par instance.
+  const allowed = await checkRateLimit({
+    key: `offer-answer:${user.id}`,
+    limit: 60,
+    windowSeconds: 3600,
+    sensitive: true,
+  })
+  if (!allowed) return { status: 'error', messageKey: 'rateLimited' }
+
+  const result = await answerCounterOffer({
+    counterOfferId: parsed.data.counterOfferId,
+    userId: user.id,
+    answer: parsed.data.answer,
+  })
+
+  if (!result.ok) {
+    // « Introuvable » recouvre aussi « ne vous appartient pas » : distinguer
+    // les deux apprendrait à qui tâtonne quels identifiants existent.
+    return { status: 'error', messageKey: result.reason }
+  }
+
+  // Le registre et la fiche article portent tous deux l'état de la
+  // négociation : sans invalidation, la ligne resterait affichée « en attente »
+  // et le bouton cliquable sur une réponse déjà donnée.
+  revalidatePath('/', 'layout')
+
+  return {
+    status: 'done',
+    accepted: result.accepted,
+    priceValidUntil: result.priceValidUntil?.toISOString() ?? null,
+  }
 }
