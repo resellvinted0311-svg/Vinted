@@ -240,6 +240,25 @@ droit, et écrire un nombre au jugé donnerait à la déclaration publique un ai
 de rigueur qu'elle n'aurait pas. C'est exactement ce que `docs/rgpd.md`
 reproche aux politiques de confidentialité rédigées à la main.
 
+### La piste d'audit suit la durée de la commande qu'elle décrit
+
+Même famille de question que le numéro de suivi, et même réponse provisoire.
+
+`AuditLog` n'était purgée par rien. Elle l'est maintenant, à l'échéance
+comptable — dix ans — parce que son unique événement (« des lignes de cette
+commande payée n'ont pas pu être honorées, un remboursement est dû ») décrit une
+vente : il n'a pas à survivre à la commande, ni à mourir avant elle. C'est une
+durée **dérivée** de l'objet décrit, pas un chiffre choisi pour cette table.
+
+Ce n'est pas idéal : une note d'exploitation n'est pas une pièce comptable. Une
+durée propre, plus courte, se défendrait — la même question de droit que pour le
+suivi, et la même raison de ne pas y répondre au jugé.
+
+Le risque, lui, est fermé autrement : `lib/audit/trail.ts` est désormais le seul
+chemin autorisé vers cette table, il n'accepte que des scalaires filtrés, et un
+test refuse tout appel direct à `auditLog.create` ailleurs. Même si la durée
+reste longue, ce qui est conservé ne peut plus être une copie de ligne `User`.
+
 **Ce qu'il faut faire pour trancher :** demander la durée à un juriste, poser
 une constante `SHIPMENT_TRACKING_RETENTION_DAYS` dans `lib/config/privacy.ts`,
 la déclarer sur l'entrée `shipments` du registre, et appeler

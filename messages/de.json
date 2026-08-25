@@ -639,6 +639,7 @@
       "shipments": "Der Versand Ihrer Pakete",
       "abandoned-orders": "Eine begonnene und dann abgebrochene Bestellung",
       "payment-events": "Technische Spuren Ihrer Zahlungen",
+      "audit-trail": "Offene Entscheidungen zu Ihren Bestellungen",
       "technical-logs": "Die technischen Protokolle der Website",
       "favorites": "Ihre Favoriten",
       "cart": "Ihr Warenkorb",

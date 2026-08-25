@@ -10,6 +10,7 @@ import {
   ACCOUNTING_RETENTION_DAYS,
   INACTIVE_ACCOUNT_RETENTION_DAYS,
   WEBHOOK_EVENT_RETENTION_DAYS,
+  AUDIT_LOG_RETENTION_DAYS,
 } from '@/lib/config/privacy'
 
 /**
@@ -51,6 +52,14 @@ async function cleanup(): Promise<void> {
   })
   await prisma.order.deleteMany({
     where: { orderNumber: { startsWith: PREFIX } },
+  })
+
+  // Les traces d'audit ne sont rattachées à aucun compte : ni la cascade du
+  // schéma ni le nettoyage ci-dessus ne les emporte. Sans cette ligne, elles
+  // s'accumulaient d'une exécution à l'autre et faisaient échouer l'assertion
+  // de comptage de la purge — constaté.
+  await prisma.auditLog.deleteMany({
+    where: { entityId: { startsWith: PREFIX } },
   })
 
   await prisma.webhookEvent.deleteMany({
@@ -708,6 +717,41 @@ describe('traces techniques', () => {
     })
     expect(reste).toHaveLength(1)
     expect(reste[0]?.lastError).toBe('prestataire indisponible')
+  })
+
+  it('efface une trace d’audit dont la commande décrite est hors conservation', async () => {
+    // `AuditLog` n'était purgée par RIEN. Une table qui ne se vide jamais finit
+    // par tout garder, et celle-ci porte des identifiants de commandes et de
+    // pièces — des identifiants indirects au sens de l'article 4.1.
+    await prisma.auditLog.create({
+      data: {
+        action: 'order.unfulfillable_lines',
+        entity: 'Order',
+        entityId: `${PREFIX}-ancienne`,
+        after: { articleIds: ['art_1'] },
+        createdAt: daysAgo(AUDIT_LOG_RETENTION_DAYS + 1),
+      },
+    })
+    await prisma.auditLog.create({
+      data: {
+        action: 'order.unfulfillable_lines',
+        entity: 'Order',
+        entityId: `${PREFIX}-recente`,
+        after: { articleIds: ['art_2'] },
+      },
+    })
+
+    const report = await purgeExpiredPersonalData()
+    expect(report.auditEvents).toBeGreaterThanOrEqual(1)
+
+    const reste = await prisma.auditLog.findMany({
+      where: { entityId: { startsWith: PREFIX } },
+      select: { entityId: true },
+    })
+    // La récente survit : la trace existe pour qu'une personne agisse dessus,
+    // et l'effacer avant l'échéance de la commande la ferait disparaître au
+    // moment où elle sert.
+    expect(reste.map((row) => row.entityId)).toEqual([`${PREFIX}-recente`])
   })
 })
 

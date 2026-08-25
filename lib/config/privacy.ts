@@ -135,6 +135,29 @@ export const WEBHOOK_EVENT_RETENTION_DAYS = 30
  */
 export const INACTIVE_ACCOUNT_RETENTION_DAYS = 365 * 3
 
+/**
+ * Piste d'audit : la durée de la commande qu'elle décrit.
+ *
+ * ---------------------------------------------------------------------------
+ * Une durée DÉRIVÉE, pas une durée inventée
+ * ---------------------------------------------------------------------------
+ * `AuditLog` n'était purgée par rien. Une table qui ne se vide jamais finit par
+ * tout garder, et celle-ci porte des identifiants de commandes et de pièces.
+ *
+ * Le seul événement consigné aujourd'hui — « des lignes de cette commande
+ * payée n'ont pas pu être honorées, un remboursement est dû » — décrit une
+ * VENTE. Il n'a donc aucune raison de survivre à la commande qu'il décrit, ni
+ * de mourir avant elle : le jour où l'on relit une commande de 2029, on veut
+ * savoir ce qui s'y est passé.
+ *
+ * On l'aligne donc sur l'échéance comptable, qui est déjà celle de la commande
+ * (`anonymizeExpiredOrders`). Ce n'est pas un chiffre choisi pour cette table :
+ * c'est celui de l'objet dont elle parle. Une durée propre, plus courte, se
+ * défendrait — elle est inscrite comme décision ouverte dans DEPLOY.md, à
+ * côté de celle du numéro de suivi.
+ */
+export const AUDIT_LOG_RETENTION_DAYS = ACCOUNTING_RETENTION_DAYS
+
 export const PROCESSING_REGISTER: readonly Processing[] = [
   {
     key: 'account',
@@ -241,6 +264,32 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
      * exactement ce qui était arrivé aux traces de paiement, qui n'étaient
      * purgées par rien.
      */
+    /**
+     * La piste d'audit.
+     *
+     * ---------------------------------------------------------------------
+     * Déclarée parce qu'elle n'était purgée par rien
+     * ---------------------------------------------------------------------
+     * `docs/rgpd.md` l'inscrivait comme « table à surveiller » : son unique
+     * écriture ne porte que des identifiants d'articles et laisse l'acteur
+     * nul, mais rien n'empêchait la suivante d'y déverser une ligne `User`
+     * entière — les colonnes `before` et `after` sont des `Json` libres.
+     *
+     * Deux choses ont changé. Le contenu est désormais borné par construction :
+     * `lib/audit/trail.ts` est le seul chemin autorisé vers cette table, il
+     * n'accepte que des scalaires filtrés, et un test vérifie qu'on ne le
+     * contourne pas. Et la table est purgée, ce qui n'était pas le cas.
+     */
+    key: 'audit-trail',
+    tables: ['AuditLog'],
+    basis: 'legitimate-interest',
+    retentionDays: AUDIT_LOG_RETENTION_DAYS,
+    retentionReason:
+      'Trace des événements qui demandent une décision humaine sur une vente ' +
+      '— un remboursement dû, par exemple. Elle ne porte que des identifiants ' +
+      'internes, et suit la durée de la commande qu’elle décrit.',
+  },
+  {
     key: 'technical-logs',
     tables: ['(journaux du serveur, supervision des incidents)'],
     basis: 'legitimate-interest',

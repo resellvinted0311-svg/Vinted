@@ -639,6 +639,7 @@
       "shipments": "The shipping of your parcels",
       "abandoned-orders": "An order started and then abandoned",
       "payment-events": "Technical traces of your payments",
+      "audit-trail": "Decisions pending on your orders",
       "technical-logs": "The site’s technical logs",
       "favorites": "Your favourites",
       "cart": "Your basket",

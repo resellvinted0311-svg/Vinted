@@ -7,6 +7,7 @@ import {
   GUEST_DATA_RETENTION_DAYS,
   INACTIVE_ACCOUNT_RETENTION_DAYS,
   WEBHOOK_EVENT_RETENTION_DAYS,
+  AUDIT_LOG_RETENTION_DAYS,
 } from '@/lib/config/privacy'
 import { MAX_ATTEMPTS } from '@/lib/jobs/queue'
 import {
@@ -70,6 +71,8 @@ export interface PurgeReport {
   anonymizedAbandonedOrders: number
   /** Commandes payées dont les dix ans comptables sont écoulés. */
   anonymizedExpiredOrders: number
+  /** Événements d'audit dont la commande décrite est hors conservation. */
+  auditEvents: number
   anonymizedAccounts: number
 }
 
@@ -89,6 +92,7 @@ export async function purgeExpiredPersonalData(
   const abandonedOrderCutoff = daysAgo(ABANDONED_ORDER_RETENTION_DAYS, now)
   const webhookCutoff = daysAgo(WEBHOOK_EVENT_RETENTION_DAYS, now)
   const accountingCutoff = daysAgo(ACCOUNTING_RETENTION_DAYS, now)
+  const auditCutoff = daysAgo(AUDIT_LOG_RETENTION_DAYS, now)
   const inactiveCutoff = daysAgo(INACTIVE_ACCOUNT_RETENTION_DAYS, now)
 
   // Jetons et sessions périmés : ils n'ouvrent plus rien, les garder ne sert
@@ -210,6 +214,17 @@ export async function purgeExpiredPersonalData(
     },
   })
 
+  // Piste d'audit. Elle n'était purgée par RIEN : une table qui ne se vide
+  // jamais finit par tout garder, et celle-ci porte des identifiants de
+  // commandes et de pièces.
+  //
+  // Supprimée et non vidée, contrairement aux commandes : une ligne d'audit
+  // sans son contenu ne dit plus rien du tout, alors qu'une commande vidée
+  // garde ses montants et ses dates. Il n'y a rien à sauver ici.
+  const auditEvents = await prisma.auditLog.deleteMany({
+    where: { createdAt: { lt: auditCutoff } },
+  })
+
   // Tunnels de commande jamais payés. On vide, on ne supprime pas : un
   // paiement a pu aboutir sans que le webhook nous parvienne, et la ligne est
   // alors la seule trace d'un débit à retrouver.
@@ -234,6 +249,7 @@ export async function purgeExpiredPersonalData(
     webhookEvents: webhookEvents.count,
     finishedJobs: finishedJobs.count,
     anonymizedAbandonedOrders,
+    auditEvents: auditEvents.count,
     anonymizedExpiredOrders,
     anonymizedAccounts,
   }

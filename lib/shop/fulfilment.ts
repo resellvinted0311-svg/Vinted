@@ -11,6 +11,7 @@ import {
 import { hasLegalIdentity } from '@/lib/config/site'
 import { allocateInvoiceNumber } from '@/lib/shop/invoice'
 import { enqueue } from '@/lib/jobs/queue'
+import { recordAudit } from '@/lib/audit/trail'
 import { enqueueSyncEvents } from '@/lib/sync/outbound'
 import { settleOffersForOrder } from '@/lib/shop/offers'
 
@@ -257,13 +258,16 @@ export async function markOrderPaid(input: {
 
     if (unfulfillable.length > 0) {
       // Consigné, pas résolu. Une personne doit voir passer ceci.
-      await tx.auditLog.create({
-        data: {
-          action: 'order.unfulfillable_lines',
-          entity: 'Order',
-          entityId: order.id,
-          after: { articleIds: unfulfillable },
-        },
+      //
+      // Par `recordAudit` et non par `tx.auditLog.create` : ce module est le
+      // seul chemin autorisé vers cette table, et il en borne le contenu à des
+      // scalaires filtrés. Un test vérifie qu'aucun appelant ne le contourne —
+      // voir l'en-tête de `lib/audit/trail.ts` pour ce que cela empêche.
+      await recordAudit(tx, {
+        action: 'order.unfulfillable_lines',
+        entity: 'Order',
+        entityId: order.id,
+        after: { articleIds: unfulfillable },
       })
     }
 

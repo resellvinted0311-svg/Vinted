@@ -403,11 +403,34 @@ mais aucune des durées que le code connaît ne la fonde, et en inventer une
 pour avoir l'air rigoureux ferait exactement ce que ce document reproche aux
 politiques rédigées à la main.
 
-Et une table à surveiller, hors périmètre pour l'instant : `AuditLog` n'est
-purgée par rien. Son unique écriture ne porte aujourd'hui que des identifiants
-d'articles et laisse `actorId` nul. Le jour où elle enregistrera un acteur ou
-l'avant/après d'une ligne `User` ou `Order`, elle deviendra une copie de
-données personnelles à conservation illimitée — et il faudra la purger.
+`AuditLog` a quitté cette liste de surveillance, et pas seulement parce qu'elle
+est maintenant purgée.
+
+La note de vigilance disait : « le jour où elle enregistrera l'avant/après d'une
+ligne `User` ou `Order`, elle deviendra une copie de données personnelles à
+conservation illimitée ». C'était exact, et c'était insuffisant : personne ne
+relit une note de vigilance au moment d'ajouter une ligne de code, et
+`before`/`after` sont des colonnes `Json` libres — y déverser une ligne entière
+est le geste le plus naturel du monde.
+
+Trois choses ont changé :
+
+- **le contenu est borné par construction.** `lib/audit/trail.ts` est le seul
+  chemin autorisé vers cette table. Son type n'accepte que des scalaires et des
+  tableaux de scalaires — un objet imbriqué ne compile pas — et ce qui passe
+  subit le même filtre de forme que le journal ;
+- **le contournement est détecté.** `tests/security/audit-trail.test.ts`
+  parcourt `lib/`, `app/` et `components/` et refuse tout appel direct à
+  `auditLog.create` ailleurs que dans ce module. Il vérifie aussi l'inverse —
+  qu'un appelant existe — pour qu'une piste d'audit vide ne passe pas pour une
+  conformité ;
+- **la table est purgée**, et déclarée au registre sous `audit-trail`.
+
+La durée retenue est celle de la commande décrite : un événement d'audit qui dit
+« un remboursement est dû sur cette vente » n'a pas à survivre à la vente, ni à
+mourir avant elle. C'est une durée **dérivée**, pas inventée. Une durée propre,
+plus courte, se défendrait — elle est inscrite comme décision ouverte dans
+`DEPLOY.md`.
 
 ---
 

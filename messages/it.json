@@ -639,6 +639,7 @@
       "shipments": "La spedizione dei suoi pacchi",
       "abandoned-orders": "Un ordine iniziato e poi abbandonato",
       "payment-events": "Le tracce tecniche dei tuoi pagamenti",
+      "audit-trail": "Le decisioni in sospeso sui suoi ordini",
       "technical-logs": "I registri tecnici del sito",
       "favorites": "I suoi preferiti",
       "cart": "Il suo carrello",
