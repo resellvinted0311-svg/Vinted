@@ -1,11 +1,10 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-
 import { parseAmountToCents } from '@/lib/domain/money'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { pseudonymize } from '@/lib/security/pseudonymize'
+import { mailboxIdentity } from '@/lib/security/mail-identity'
 import { submitOfferSchema, answerCounterSchema } from '@/lib/validation/offers'
 import { ensureCartOwner } from '@/lib/shop/cart'
 import { submitOffer, answerCounterOffer } from '@/lib/shop/offers'
@@ -161,7 +160,7 @@ export async function submitOfferAction(
     const byAddress = await checkRateLimit({
       key: `offer-mail:${pseudonymize({
         purpose: 'rate-limit:offer-email',
-        value: parsed.data.email.toLowerCase(),
+        value: mailboxIdentity(parsed.data.email),
         rotateDaily: true,
       })}`,
       limit: 5,
@@ -192,7 +191,18 @@ export async function submitOfferAction(
 
   // La fiche article affiche l'état de la négociation : sans invalidation, la
   // personne reverrait le formulaire vide après avoir déposé son offre.
-  revalidatePath('/', 'layout')
+  // Aucune invalidation de cache ici, et c'est délibéré.
+  //
+  // `revalidatePath('/', 'layout')` purge TOUT ce que la mise en page racine
+  // enveloppe — les 171 pages prérendues. Il ne rafraîchissait rien : les pages
+  // qui portent l'état d'une négociation ou d'une commande sont toutes
+  // `force-dynamic`, donc jamais mises en cache, et la fiche article ne lit
+  // aucune donnée d'offre au rendu (le formulaire est un composant client).
+  //
+  // Purger un cache dont rien ne dépend est gratuit en apparence seulement :
+  // sur un chemin ouvert au public, c'est un levier de déni de service, et le
+  // catalogue cesse d'être servi depuis le cache. Voir
+  // `tests/security/cache-invalidation.test.ts`.
 
   return {
     status: 'done',
@@ -273,7 +283,7 @@ export async function answerCounterAction(
   // Le registre et la fiche article portent tous deux l'état de la
   // négociation : sans invalidation, la ligne resterait affichée « en attente »
   // et le bouton cliquable sur une réponse déjà donnée.
-  revalidatePath('/', 'layout')
+  // Voir la note plus haut : aucune invalidation globale.
 
   return {
     status: 'done',

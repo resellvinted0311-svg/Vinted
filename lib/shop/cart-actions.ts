@@ -1,6 +1,5 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import {
@@ -31,17 +30,39 @@ import {
  * et testable sans requête.
  */
 
-/**
- * Purge le cache de rendu des pages qui affichent le panier.
+/*
+ * ---------------------------------------------------------------------------
+ * Il y avait ici un `revalidatePath('/', 'layout')`. Il a été RETIRÉ.
+ * ---------------------------------------------------------------------------
+ * Sa justification écrite était : « l'en-tête porte le compteur sur chaque
+ * page, sans cette invalidation un ajout laisse un 0 affiché ». Elle était
+ * fausse, et le code le disait déjà :
  *
- * L'en-tête porte le compteur sur CHAQUE page : sans cette invalidation, un
- * ajout depuis une fiche article laisse un « 0 » affiché tant que la page n'est
- * pas rechargée à la main. `layout` invalide la mise en page elle-même, donc
- * toutes les routes qu'elle enveloppe.
+ *  - `CartCountBadge` est un composant CLIENT. Il lit `/api/session` après
+ *    hydratation et se met à jour sur l'événement `notifyCartChanged` — son
+ *    propre en-tête explique que lire le panier au rendu « rendrait toutes ces
+ *    pages dynamiques » ;
+ *  - la page panier est `force-dynamic` : rien n'y est mis en cache ;
+ *  - `CartRemoveButton` et `BlockedLinesNotice` appellent déjà
+ *    `router.refresh()` là où une relecture serveur compte.
+ *
+ * Ce que l'invalidation faisait, en revanche, était réel : `layout` purge TOUT
+ * ce que la mise en page racine enveloppe, soit les 171 pages prérendues. Et
+ * elle était déclenchable par n'importe qui, sans compte, sans cookie et sans
+ * panier — `removeBlockedLines([])` sort sur `parsed.data.length === 0` avec
+ * `{ ok: true }` AVANT le moindre accès à la base, et l'action invalidait sur
+ * `result.ok`.
+ *
+ * Le seul frein était le compteur ci-dessous, à soixante par minute et par
+ * empreinte, déclaré `sensitive: false` — donc ouvert en cas de panne du
+ * compteur, panne qu'un attaquant peut provoquer lui-même en épuisant le quota.
+ * Soixante purges complètes par minute et par adresse, contre un pool réglé à
+ * UNE connexion par instance : le catalogue n'était plus jamais servi depuis le
+ * cache.
+ *
+ * Leçon générale : n'invalider que ce qui dépend réellement de ce qu'on vient
+ * d'écrire, et jamais depuis un chemin qui n'a rien écrit.
  */
-function refreshCartViews(): void {
-  revalidatePath('/', 'layout')
-}
 
 /** Comptage commun aux trois écritures. */
 async function allowCartWrite(): Promise<boolean> {
@@ -64,9 +85,7 @@ export async function addToCartAction(
 ): Promise<CartMutationResult> {
   if (!(await allowCartWrite())) return RATE_LIMITED
 
-  const result = await addToCart(articleId)
-  if (result.ok) refreshCartViews()
-  return result
+  return addToCart(articleId)
 }
 
 export async function removeFromCartAction(
@@ -74,9 +93,7 @@ export async function removeFromCartAction(
 ): Promise<CartMutationResult> {
   if (!(await allowCartWrite())) return RATE_LIMITED
 
-  const result = await removeFromCart(articleId)
-  if (result.ok) refreshCartViews()
-  return result
+  return removeFromCart(articleId)
 }
 
 /**
@@ -91,7 +108,5 @@ export async function removeBlockedLinesAction(
 ): Promise<CartMutationResult> {
   if (!(await allowCartWrite())) return RATE_LIMITED
 
-  const result = await removeBlockedLines(articleIds)
-  if (result.ok) refreshCartViews()
-  return result
+  return removeBlockedLines(articleIds)
 }

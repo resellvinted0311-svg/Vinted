@@ -4,6 +4,7 @@ import { handlers } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { pseudonymize } from '@/lib/security/pseudonymize'
+import { mailboxIdentity } from '@/lib/security/mail-identity'
 import {
   clearConfirmation,
   hasConfirmation,
@@ -111,7 +112,7 @@ async function throttleSignIn(request: NextRequest): Promise<boolean> {
   return checkRateLimit({
     key: `magic-mail:${pseudonymize({
       purpose: 'rate-limit:magic-email',
-      value: email,
+      value: mailboxIdentity(email),
       rotateDaily: true,
     })}`,
     limit: 3,

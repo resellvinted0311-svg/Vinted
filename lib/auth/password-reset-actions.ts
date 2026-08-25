@@ -8,6 +8,7 @@ import {
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { pseudonymize } from '@/lib/security/pseudonymize'
+import { mailboxIdentity } from '@/lib/security/mail-identity'
 import { isAuthConfigured } from '@/lib/config/site'
 import { sendPasswordResetEmail } from '@/lib/providers/email/password-reset'
 import { captureException } from '@/lib/observability/sentry'
@@ -99,7 +100,7 @@ export async function requestPasswordResetAction(
   const byAddress = await checkRateLimit({
     key: `password-reset-mail:${pseudonymize({
       purpose: 'rate-limit:password-reset-email',
-      value: parsed.data.email,
+      value: mailboxIdentity(parsed.data.email),
       rotateDaily: true,
     })}`,
     limit: 3,

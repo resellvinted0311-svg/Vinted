@@ -5,9 +5,10 @@ import { signUpSchema, signInSchema, magicLinkSchema } from '@/lib/validation/au
 import { hashPassword, verifyPassword } from './password'
 import { createDatabaseSession, destroyCurrentSession } from './session'
 import { signIn as authSignIn } from './index'
-import { checkRateLimit } from '@/lib/security/rate-limit'
+import { checkRateLimit, clearRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { pseudonymize } from '@/lib/security/pseudonymize'
+import { mailboxIdentity } from '@/lib/security/mail-identity'
 import { adoptGuestSession } from '@/lib/shop/handover'
 import { isAuthConfigured } from '@/lib/config/site'
 
@@ -160,6 +161,52 @@ export async function signInAction(
   })
   if (!perOrigin) return { status: 'error', messageKey: 'rateLimited' }
 
+  // ---------------------------------------------------------------------------
+  // Le compteur qui manquait : les échecs sur CE COMPTE, toutes origines
+  // ---------------------------------------------------------------------------
+  // Les deux compteurs ci-dessus portent l'empreinte de l'appelant, qui dérive
+  // de l'adresse IP. Chaque IP ouvre donc deux seaux neufs, et rien ne comptait
+  // les essais dirigés contre un compte précis depuis mille origines. Un parc
+  // de sorties donnait 40 000 essais de mot de passe par heure sur une adresse
+  // ciblée, sans qu'aucun plafond ne soit jamais atteint.
+  //
+  // Le commentaire ci-dessus annonce fermer « la pulvérisation » — un mot de
+  // passe contre des milliers d'adresses. C'est l'attaque INVERSE qui restait
+  // ouverte, et c'est la plus courante contre un compte nommé.
+  //
+  // Le projet appliquait déjà la bonne règle ailleurs : `eraseMyAccountAction`
+  // compte par `user.id` sans empreinte, avec ce raisonnement écrit à côté. La
+  // porte d'entrée principale était la seule à ne pas l'avoir.
+  //
+  // Trois précautions, et chacune répond à un défaut que le remède pourrait
+  // créer :
+  //
+  //  - le refus rend `invalidCredentials`, le MÊME message qu'un mot de passe
+  //    faux. Répondre « trop de tentatives » ferait du compteur un oracle : on
+  //    saurait que ce compte existe, et on verrait le verrouillage opérer ;
+  //
+  //  - le plafond est généreux. Cinquante échecs par heure laissent passer
+  //    n'importe quel usage humain, y compris derrière le NAT d'une entreprise
+  //    où plusieurs personnes partagent une sortie ;
+  //
+  //  - il est REMIS À ZÉRO par une connexion réussie (voir plus bas). Sans
+  //    cela, il compterait les tentatives et non les échecs consécutifs, et
+  //    finirait par refuser quelqu'un qui n'a rien fait de mal.
+  //
+  // Ce qui reste possible, et qui est assumé : brûler cinquante échecs sur une
+  // adresse pour en fermer la connexion par mot de passe pendant une heure. La
+  // personne n'est pas pour autant dehors — le lien magique et la
+  // réinitialisation restent ouverts, et aucun des deux ne dépend de ce
+  // compteur.
+  const accountKey = `signin-account:${account}`
+  const accountAttempts = await checkRateLimit({
+    key: accountKey,
+    limit: 50,
+    windowSeconds: 3600,
+    sensitive: true,
+  })
+  if (!accountAttempts) return { status: 'error', messageKey: 'invalidCredentials' }
+
   const user = await prisma.user.findUnique({
     where: { email },
     select: { id: true, passwordHash: true, bannedAt: true },
@@ -170,6 +217,10 @@ export async function signInAction(
   if (!user || !valid) {
     return { status: 'error', messageKey: 'invalidCredentials' }
   }
+
+  // Le mot de passe est le bon : le compteur d'échecs repart de zéro. C'est ce
+  // qui l'empêche de se retourner contre la personne qu'il protège.
+  await clearRateLimit(accountKey)
   if (user.bannedAt) {
     return { status: 'error', messageKey: 'banned' }
   }
@@ -230,7 +281,7 @@ export async function magicLinkAction(
   const byAddress = await checkRateLimit({
     key: `magic-mail:${pseudonymize({
       purpose: 'rate-limit:magic-email',
-      value: parsed.data.email,
+      value: mailboxIdentity(parsed.data.email),
       rotateDaily: true,
     })}`,
     limit: 3,

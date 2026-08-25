@@ -126,6 +126,51 @@ async function checkUpstash(
   return count <= limit
 }
 
+/**
+ * Efface un compteur, sans attendre son échéance.
+ *
+ * ---------------------------------------------------------------------------
+ * À quoi cela sert, et pourquoi ce n'est pas un contournement
+ * ---------------------------------------------------------------------------
+ * Un compteur d'ÉCHECS doit repartir de zéro quand le geste réussit. Sans cela,
+ * il ne compte plus les échecs consécutifs mais les tentatives tout court, et
+ * finit par refuser quelqu'un qui n'a rien fait de mal — la connexion d'une
+ * personne qui se connecte souvent, par exemple.
+ *
+ * L'effacement n'est donc jamais offert à l'appelant : il n'a lieu qu'après une
+ * preuve. Sur la connexion, cette preuve est le mot de passe correct — ce que
+ * l'attaquant cherche précisément et n'a pas.
+ *
+ * ---------------------------------------------------------------------------
+ * Un échec d'effacement ne casse rien
+ * ---------------------------------------------------------------------------
+ * Si le prestataire est injoignable, le compteur reste en place et s'éteindra
+ * de lui-même à son échéance. Le pire des cas est donc une borne un peu plus
+ * stricte pendant une heure, jamais une porte ouverte : on ne lève pas, on
+ * journalise.
+ */
+export async function clearRateLimit(key: string): Promise<void> {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+
+  // Le compteur en mémoire porte la clé nue ; celui d'Upstash est préfixé.
+  // Se tromper de forme ici effacerait une clé qui n'existe pas, sans erreur —
+  // le pire des échecs, celui qui a l'air de marcher.
+  if (!url || !token) {
+    memoryCounters.delete(key)
+    return
+  }
+
+  try {
+    await fetch(`${url}/del/${encodeURIComponent(`rl:${key}`)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+  } catch (error) {
+    logger.failure('rate_limit.clear_failed', error)
+  }
+}
+
 /** Renvoie `true` si l'appel est autorisé, `false` s'il doit être refusé. */
 export async function checkRateLimit(input: RateLimitInput): Promise<boolean> {
   const url = process.env.UPSTASH_REDIS_REST_URL

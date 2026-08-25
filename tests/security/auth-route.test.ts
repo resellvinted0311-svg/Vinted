@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 /**
  * Les gardes de la route Auth.js — sur la ROUTE, pas sur le verbe.
@@ -252,5 +254,61 @@ describe('les autres routes ne sont pas gênées', () => {
     )
 
     expect(reached).toHaveLength(1)
+  })
+})
+
+/**
+ * Le compteur d'échecs par COMPTE, toutes origines confondues.
+ *
+ * Les deux compteurs historiques de la connexion portent l'empreinte de
+ * l'appelant, qui dérive de l'adresse IP : chaque IP ouvrait deux seaux neufs.
+ * Rien ne comptait les essais dirigés contre un compte précis depuis mille
+ * origines — un parc de sorties donnait 40 000 essais par heure sur une adresse
+ * ciblée.
+ */
+describe('connexion par mot de passe', () => {
+  it('les trois compteurs sont posés, dont un SANS empreinte', async () => {
+    const source = readFileSync(
+      join(process.cwd(), 'lib', 'auth', 'actions.ts'),
+      'utf8',
+    )
+
+    // Les deux historiques portent l'empreinte…
+    expect(source).toContain('`signin:${fingerprint}:${account}`')
+    expect(source).toContain('`signin-origin:${fingerprint}`')
+
+    // …et le troisième, non : c'est tout l'objet du correctif. S'il portait
+    // l'empreinte, il rouvrirait exactement la porte qu'il ferme.
+    expect(source).toContain('`signin-account:${account}`')
+    expect(source).not.toContain('signin-account:${fingerprint}')
+  })
+
+  it('le refus par ce compteur est INDISCERNABLE d’un mot de passe faux', async () => {
+    // Répondre « trop de tentatives » ferait du compteur un oracle : on
+    // saurait que ce compte existe, et on verrait le verrouillage opérer.
+    const source = readFileSync(
+      join(process.cwd(), 'lib', 'auth', 'actions.ts'),
+      'utf8',
+    )
+    const bloc = source.slice(
+      source.indexOf('const accountKey'),
+      source.indexOf('const user = await prisma.user.findUnique'),
+    )
+
+    expect(bloc).toContain("messageKey: 'invalidCredentials'")
+    expect(bloc).not.toContain("messageKey: 'rateLimited'")
+  })
+
+  it('une connexion réussie REMET le compteur à zéro', async () => {
+    // Sans cela, il compterait les tentatives et non les échecs consécutifs, et
+    // finirait par refuser quelqu'un qui n'a rien fait de mal.
+    const source = readFileSync(
+      join(process.cwd(), 'lib', 'auth', 'actions.ts'),
+      'utf8',
+    )
+    const apresVerification = source.slice(
+      source.indexOf("messageKey: 'invalidCredentials'"),
+    )
+    expect(apresVerification).toContain('clearRateLimit(accountKey)')
   })
 })

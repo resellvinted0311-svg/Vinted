@@ -1,7 +1,5 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-
 import { prisma } from '@/lib/db/client'
 import { requireAdmin } from '@/lib/auth/session'
 import { checkRateLimit } from '@/lib/security/rate-limit'
@@ -193,7 +191,18 @@ export async function respondToOfferAction(
 
   // La liste doit refléter la décision : sans invalidation, l'offre resterait
   // affichée « en attente » jusqu'au prochain rechargement complet.
-  revalidatePath('/', 'layout')
+  // Aucune invalidation de cache ici, et c'est délibéré.
+  //
+  // `revalidatePath('/', 'layout')` purge TOUT ce que la mise en page racine
+  // enveloppe — les 171 pages prérendues. Il ne rafraîchissait rien : les pages
+  // qui portent l'état d'une négociation ou d'une commande sont toutes
+  // `force-dynamic`, donc jamais mises en cache, et la fiche article ne lit
+  // aucune donnée d'offre au rendu (le formulaire est un composant client).
+  //
+  // Purger un cache dont rien ne dépend est gratuit en apparence seulement :
+  // sur un chemin ouvert au public, c'est un levier de déni de service, et le
+  // catalogue cesse d'être servi depuis le cache. Voir
+  // `tests/security/cache-invalidation.test.ts`.
 
   return {
     status: 'done',
