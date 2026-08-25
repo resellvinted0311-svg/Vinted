@@ -1,5 +1,7 @@
 'use server'
 
+import { after } from 'next/server'
+
 import { prisma } from '@/lib/db/client'
 import {
   requestPasswordResetSchema,
@@ -9,14 +11,11 @@ import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { pseudonymize } from '@/lib/security/pseudonymize'
 import { mailboxIdentity } from '@/lib/security/mail-identity'
+import { withTimeFloor } from '@/lib/security/timing'
 import { isAuthConfigured } from '@/lib/config/site'
-import { sendPasswordResetEmail } from '@/lib/providers/email/password-reset'
-import { captureException } from '@/lib/observability/sentry'
-import {
-  openPasswordReset,
-  consumePasswordReset,
-  logResetRequested,
-} from './password-reset'
+import { enqueue } from '@/lib/jobs/queue'
+import { runJobNow } from '@/lib/jobs/worker'
+import { consumePasswordReset, logResetRequested } from './password-reset'
 import { createDatabaseSession } from './session'
 import { adoptGuestSession } from '@/lib/shop/handover'
 
@@ -32,7 +31,7 @@ import { adoptGuestSession } from '@/lib/shop/handover'
  * `lib/auth/password-reset.ts` qui le fait, et il n'est pas une action.
  *
  * ---------------------------------------------------------------------------
- * La réponse est la MÊME que le compte existe ou non
+ * La réponse est la MÊME que le compte existe ou non — le DÉLAI aussi
  * ---------------------------------------------------------------------------
  * C'est la règle déjà tenue par la connexion et par le lien magique. La
  * respecter ici demande de la tenir jusqu'au bout, y compris dans les cas
@@ -52,6 +51,27 @@ import { adoptGuestSession } from '@/lib/shop/handover'
  * décision assumée, écrite dans DEPLOY.md. Ce n'est pas une raison d'ouvrir
  * une seconde porte : la première a un coût de conversion qui la justifie,
  * celle-ci n'en aurait aucun.
+ *
+ * Et la phrase uniforme ne suffit PAS. Elle était tenue, mot pour mot, pendant
+ * que le chronomètre disait le contraire : une adresse inconnue s'arrêtait
+ * après une lecture, une adresse connue ouvrait une transaction puis attendait
+ * un aller-retour vers le prestataire d'e-mail — deux à cinq cents
+ * millisecondes de plus, mesurables depuis n'importe quelle connexion. La
+ * boutique redevenait énumérable adresse par adresse, sans qu'aucun message ne
+ * l'avoue.
+ *
+ * Deux gestes ferment cela, et ils ne sont pas interchangeables :
+ *
+ *  1. l'envoi SORT du chemin de réponse — il est inscrit en file de travaux,
+ *     et l'action ne fait plus qu'écrire une ligne. C'est la protection de
+ *     fond : il n'y a plus d'appel réseau dont la lenteur pourrait dépasser
+ *     n'importe quel rembourrage ;
+ *  2. un plancher de temps commun couvre le résidu — la poignée
+ *     d'allers-retours de base qui distingue encore les deux branches.
+ *
+ * Le premier sans le second laisserait un écart de quelques millisecondes,
+ * mesurable en accumulant les essais — six, mesurées sur cette base. Le second
+ * sans le premier céderait le jour où le prestataire d'e-mail ralentit.
  */
 
 export type PasswordResetState =
@@ -62,10 +82,39 @@ export type PasswordResetState =
   | { status: 'done' }
 
 /**
+ * Plancher de temps de la réponse, en millisecondes.
+ *
+ * ---------------------------------------------------------------------------
+ * Comment cette valeur est choisie
+ * ---------------------------------------------------------------------------
+ * Elle doit dépasser confortablement le travail que l'action fait réellement —
+ * deux compteurs de débit, une lecture, une écriture de file : six
+ * millisecondes, mesurées — et rester imperceptible pour la personne qui vient
+ * de cliquer.
+ *
+ * Ce n'est PAS un chiffre à ajuster jusqu'à ce que les mesures se ressemblent :
+ * si le travail venait à dépasser ce plancher, l'écart réapparaîtrait, et
+ * l'augmenter ne ferait que repousser le problème. Ce qui garantit la
+ * propriété, c'est qu'aucun appel réseau ne subsiste dans le chemin de réponse.
+ * Le plancher n'absorbe que le résidu.
+ */
+const RESPONSE_FLOOR_MS = 500
+
+/**
  * Demande d'un lien de réinitialisation.
+ *
+ * Le corps est dans une fonction NON exportée : dans un fichier `'use server'`,
+ * un export est une adresse HTTP publique, et rien ne justifierait d'en ouvrir
+ * une seconde qui contournerait le plancher.
  */
 export async function requestPasswordResetAction(
   _prev: PasswordResetState,
+  formData: FormData,
+): Promise<PasswordResetState> {
+  return withTimeFloor(RESPONSE_FLOOR_MS, () => requestPasswordReset(formData))
+}
+
+async function requestPasswordReset(
   formData: FormData,
 ): Promise<PasswordResetState> {
   // Sans secret de signature, la session qui suivra la réinitialisation ne
@@ -118,27 +167,68 @@ export async function requestPasswordResetAction(
   // Inconnue, ou effacée : on s'arrête, et on répond comme si de rien n'était.
   if (!user || user.anonymizedAt) return { status: 'sent' }
 
-  const request = await openPasswordReset(user.id, parsed.data.locale)
+  // On INSCRIT l'envoi, on ne l'attend pas.
+  //
+  // Ce qui disparaît ici, ce n'est pas seulement du temps de réponse : c'est
+  // aussi un défaut de fiabilité. Auparavant, un prestataire d'e-mail
+  // indisponible trente secondes se soldait par « consultez votre boîte », un
+  // e-mail jamais parti, et une trace dans Sentry que personne ne lisait le
+  // soir même. La personne restait enfermée dehors sans qu'aucun mécanisme ne
+  // rattrape l'échec. La file, elle, reprend selon l'échelle annoncée — une
+  // minute, cinq, trente, deux heures, six heures — et signale l'abandon.
+  //
+  // Ni l'adresse ni le jeton ne voyagent dans la charge utile : le jeton est
+  // créé par le travail, et l'adresse relue à l'exécution.
+  const jobId = await enqueue(prisma, {
+    type: 'auth.password-reset',
+    payload: { userId: user.id, locale: parsed.data.locale },
+  })
+
   logResetRequested(user.id)
 
-  try {
-    await sendPasswordResetEmail({
-      to: parsed.data.email,
-      url: request.url,
-      expires: request.expiresAt,
-    })
-  } catch (error) {
-    // L'envoi a échoué. On le remonte — un lien de réinitialisation qui ne
-    // part jamais est une personne enfermée dehors — mais la réponse reste la
-    // même : dire « l'envoi a échoué » confirmerait qu'il y avait quelque
-    // chose à envoyer, donc qu'un compte existe.
-    await captureException(error, {
-      event: 'password_reset.email_failed',
-      fields: { userId: user.id },
-    })
-  }
+  runAfterResponse(jobId)
 
   return { status: 'sent' }
+}
+
+/**
+ * Pousse le travail juste inscrit, une fois la réponse partie.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi il ne suffit pas de laisser faire le cron
+ * ---------------------------------------------------------------------------
+ * Il passe toutes les cinq minutes. Pour une confirmation de commande, c'est
+ * sans importance. Pour un lien de réinitialisation, c'est une éternité : la
+ * personne attend devant son écran, ne voit rien arriver, et reclique. Or le
+ * compteur par adresse est à trois par heure — au troisième clic elle serait
+ * plafonnée en silence et n'aurait plus aucun e-mail. Fermer une fuite en
+ * enfermant les gens dehors n'est pas fermer une fuite.
+ *
+ * ---------------------------------------------------------------------------
+ * APRÈS la réponse, et c'est tout l'intérêt
+ * ---------------------------------------------------------------------------
+ * `after` exécute son rappel une fois la réponse écoulée, et la plateforme
+ * garde la fonction en vie pour cela. Ce qui s'y passe n'entre donc pas dans le
+ * temps observé par qui chronomètre — c'est ce qui permet de rendre l'e-mail
+ * immédiat sans rouvrir l'écart qu'on vient de fermer.
+ *
+ * C'est aussi pour cela qu'on n'a PAS simplement lancé la promesse sans
+ * l'attendre : sur une fonction serverless, le processus est gelé dès la
+ * réponse renvoyée, et l'e-mail ne serait jamais parti — sans que personne ne
+ * le sache. C'est le troisième piège décrit en tête de `lib/jobs/queue.ts`.
+ */
+function runAfterResponse(jobId: string): void {
+  try {
+    after(async () => {
+      // `runJobNow` ne lève pas : voir son en-tête. Une promesse rejetée ici
+      // n'aurait personne pour la recevoir.
+      await runJobNow(jobId)
+    })
+  } catch {
+    // `after` exige un contexte de requête. Hors de là — un test, un script de
+    // maintenance — il lève, et c'est sans conséquence : le travail est inscrit,
+    // le cron le prendra. On n'accélère pas, on ne perd rien.
+  }
 }
 
 /**

@@ -5,12 +5,16 @@ import { captureException } from '@/lib/observability/sentry'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import {
+  claimJob,
   claimJobs,
   completeJob,
   failJob,
   MAX_ATTEMPTS,
   type JobRecord,
 } from './queue'
+import { localeSchema } from '@/lib/validation/auth'
+import { openPasswordReset } from '@/lib/auth/password-reset'
+import { sendPasswordResetEmail } from '@/lib/providers/email/password-reset'
 import {
   sendOrderConfirmation,
   sendShipmentNotice,
@@ -50,6 +54,17 @@ import { runSyncNotify } from '@/lib/sync/webhook'
 
 const orderJobPayload = z.object({ orderId: z.string().min(1).max(64) })
 const offerJobPayload = z.object({ offerId: z.string().min(1).max(64) })
+
+/**
+ * La langue est validée contre la liste des langues du site, pas acceptée
+ * telle quelle : elle est interpolée dans le chemin de l'URL du lien
+ * (`/{locale}/connexion/mot-de-passe/{jeton}`). `Job.payload` est une colonne
+ * `Json` — un jour, quelqu'un y écrira à la main pour rejouer un travail.
+ */
+const passwordResetJobPayload = z.object({
+  userId: z.string().min(1).max(64),
+  locale: localeSchema,
+})
 
 /**
  * Combien de travaux pris à la fois.
@@ -139,6 +154,60 @@ export async function runJobs(
   return { claimed, done, failed }
 }
 
+/**
+ * Exécute TOUT DE SUITE un travail qu'on vient d'inscrire.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi ce chemin existe à côté du cron
+ * ---------------------------------------------------------------------------
+ * Le cron passe toutes les cinq minutes. Pour un lien de réinitialisation, c'est
+ * une éternité : la personne attend devant son écran, ne voit rien arriver, et
+ * reclique. Or le compteur par adresse est à trois par heure — au troisième
+ * clic elle serait plafonnée en silence et ne recevrait plus rien du tout. Une
+ * correction de sécurité qui enferme les gens dehors n'est pas une correction.
+ *
+ * À appeler APRÈS avoir répondu, jamais avant : c'est tout l'intérêt. Le travail
+ * reste inscrit en file et c'est elle qui fait foi — si cet appel n'a pas lieu,
+ * ou échoue, le cron reprendra le travail comme n'importe quel autre.
+ *
+ * ---------------------------------------------------------------------------
+ * Ne lève JAMAIS
+ * ---------------------------------------------------------------------------
+ * Elle est appelée une fois la réponse partie, où plus personne n'attend de
+ * valeur de retour ni ne recevrait une exception. Une promesse rejetée là
+ * termine en `unhandledRejection` — sur certaines plateformes, cela tue le
+ * processus, et avec lui les requêtes des autres visiteurs servies par la même
+ * instance.
+ *
+ * Le travail épuisé n'est pas remonté ici : c'est `runJobs` qui le fait, et il
+ * le fera, puisqu'un travail que ce chemin n'a pas su terminer retourne en file.
+ */
+export async function runJobNow(id: string): Promise<boolean> {
+  try {
+    const job = await claimJob(randomUUID(), id)
+
+    // Déjà pris — par le cron, ou par un second envoi du même formulaire. Ce
+    // n'est pas une anomalie : c'est l'UPDATE conditionnel qui a fait son
+    // travail, et l'e-mail ne partira qu'une fois.
+    if (!job) return false
+
+    try {
+      await runOne(job)
+      await completeJob(job.id)
+      return true
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'erreur inconnue'
+      await failJob(job.id, message, job.attempts)
+      return false
+    }
+  } catch {
+    // Base injoignable, verrou perdu : le travail reste ouvert en file, et le
+    // cron le reprendra. Il n'y a rien de mieux à faire ici, et surtout rien à
+    // laisser remonter.
+    return false
+  }
+}
+
 async function runOne(job: JobRecord): Promise<void> {
   switch (job.type) {
     case 'order.confirmation':
@@ -156,6 +225,8 @@ async function runOne(job: JobRecord): Promise<void> {
     // « acceptée » ou « refusée » sans rien avoir à lui apprendre.
     case 'offer.respond':
       return runOfferEmail(job, sendOfferAcknowledgement)
+    case 'auth.password-reset':
+      return runPasswordResetEmail(job)
     case 'sync.notify':
       // Une pièce effacée ou détachée de l'application renvoie `false` : le
       // travail est terminé, pas en échec. Tout le reste — application
@@ -202,6 +273,55 @@ async function runOfferEmail(
   if (!data) return
 
   await send(data)
+}
+
+/**
+ * Le lien de réinitialisation de mot de passe.
+ *
+ * ---------------------------------------------------------------------------
+ * Le jeton est créé ICI, pas au moment de la demande
+ * ---------------------------------------------------------------------------
+ * C'est ce qui permet à `Job.payload` de ne porter qu'un identifiant de compte.
+ * Créer le jeton à la demande aurait obligé à le faire voyager en clair dans la
+ * file — une colonne `Json` conservée un mois, alors que `UserToken` ne garde
+ * qu'une empreinte précisément pour qu'une sauvegarde égarée n'ouvre aucun
+ * compte.
+ *
+ * Effet de bord heureux : les trente minutes de validité courent à partir de
+ * l'ENVOI, pas de la demande. Le lien ne perd plus le temps passé en file.
+ *
+ * ---------------------------------------------------------------------------
+ * L'adresse est relue, jamais transportée
+ * ---------------------------------------------------------------------------
+ * Même patron que les e-mails de commande et de négociation : la charge utile
+ * ne porte qu'un identifiant, le contenu se relit à l'exécution. Ici cela a une
+ * seconde vertu — l'adresse e-mail ne s'écrit nulle part dans `Job`, qui est
+ * déclarée au registre comme ne portant que des identifiants internes.
+ */
+async function runPasswordResetEmail(job: JobRecord): Promise<void> {
+  const parsed = passwordResetJobPayload.safeParse(job.payload)
+  if (!parsed.success) {
+    throw new Error(`Charge utile invalide pour ${job.type}`)
+  }
+
+  const user = await prisma.user.findFirst({
+    where: { id: parsed.data.userId, anonymizedAt: null },
+    select: { id: true, email: true },
+  })
+
+  // Compte effacé entre la demande et l'envoi : rien à envoyer, et rien à
+  // réessayer. Poser un lien de réinitialisation sur une ligne anonymisée la
+  // ferait revivre — c'est exactement le défaut qu'un jeton de vérification
+  // survivant avait déjà produit une fois, et qui recréait un compte supprimé.
+  if (!user) return
+
+  const request = await openPasswordReset(user.id, parsed.data.locale)
+
+  await sendPasswordResetEmail({
+    to: user.email,
+    url: request.url,
+    expires: request.expiresAt,
+  })
 }
 
 async function runOrderEmail(

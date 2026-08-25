@@ -91,6 +91,35 @@ export type JobType =
    * qu'il lui était accordé.
    */
   | 'offer.respond'
+  /**
+   * Le lien de réinitialisation de mot de passe.
+   *
+   * -------------------------------------------------------------------------
+   * Différé pour une raison qui n'est PAS celle des autres travaux d'ici
+   * -------------------------------------------------------------------------
+   * Partout ailleurs dans cette liste, on diffère parce qu'un appel réseau ne
+   * doit pas pouvoir faire échouer une transaction déjà décidée. Ici, c'est
+   * l'ATTENTE ELLE-MÊME qui était le défaut.
+   *
+   * « Mot de passe oublié » répond la même phrase que le compte existe ou non.
+   * Mais tant que l'envoi était attendu dans le chemin de réponse, une adresse
+   * connue répondait deux à cinq cents millisecondes après une adresse
+   * inconnue — et le chronomètre disait ce que la phrase taisait. Sortir
+   * l'appel réseau du chemin de réponse supprime l'écart à sa source, au lieu
+   * de le masquer.
+   *
+   * -------------------------------------------------------------------------
+   * Le jeton est créé PAR le travail, pas avant lui
+   * -------------------------------------------------------------------------
+   * La charge utile ne porte qu'un identifiant de compte et une langue. Elle
+   * ne porte NI l'adresse, NI le jeton — et c'est une contrainte, pas une
+   * commodité : `Job.payload` est une colonne `Json` conservée un mois,
+   * lisible par n'importe quelle lecture de la base, alors que `UserToken` ne
+   * garde qu'une EMPREINTE du jeton, précisément pour qu'une sauvegarde égarée
+   * n'ouvre aucun compte. Faire voyager le jeton en clair dans la file aurait
+   * défait cette précaution un étage plus bas.
+   */
+  | 'auth.password-reset'
 
 export interface JobRecord {
   id: string
@@ -122,18 +151,85 @@ const LOCK_TIMEOUT_MINUTES = 15
  *
  * `runAt` permet de différer : une relance de panier abandonné se programme à
  * l'avance, elle ne se déclenche pas tout de suite.
+ *
+ * Renvoie l'identifiant du travail inscrit. La plupart des appelants n'en font
+ * rien — ils inscrivent et laissent le cron faire. Il sert à ceux qui veulent
+ * exécuter le travail TOUT DE SUITE, après avoir répondu : voir `claimJob`.
  */
 export async function enqueue(
   tx: Prisma.TransactionClient,
   input: { type: JobType; payload: Prisma.InputJsonValue; runAt?: Date },
-): Promise<void> {
-  await tx.job.create({
+): Promise<string> {
+  const job = await tx.job.create({
     data: {
       type: input.type,
       payload: input.payload,
       runAt: input.runAt ?? new Date(),
     },
+    select: { id: true },
   })
+
+  return job.id
+}
+
+/**
+ * Prend UN travail désigné, s'il est encore à prendre.
+ *
+ * ---------------------------------------------------------------------------
+ * À quoi cela sert, et pourquoi ce n'est pas un contournement du cron
+ * ---------------------------------------------------------------------------
+ * Le cron passe toutes les cinq minutes. C'est parfait pour une confirmation de
+ * commande, et inacceptable pour un lien de réinitialisation : la personne
+ * attend devant son écran. Elle recliquerait — et le compteur par adresse est à
+ * trois par heure, donc au troisième clic elle serait plafonnée en silence et ne
+ * recevrait plus rien du tout. Le remède serait pire que le mal.
+ *
+ * Le travail est donc inscrit — c'est lui qui fait foi, avec ses reprises — puis
+ * poussé immédiatement, APRÈS la réponse. La file reste la source de vérité :
+ * si la poussée n'a pas lieu, ou échoue, le cron reprend le travail comme
+ * n'importe quel autre. On accélère, on ne court-circuite pas.
+ *
+ * ---------------------------------------------------------------------------
+ * La prise reste un UPDATE CONDITIONNEL
+ * ---------------------------------------------------------------------------
+ * Même discipline que `claimJobs`, et pour la même raison : le cron peut
+ * tourner au même instant. C'est l'UPDATE qui départage — celui qui écrit gagne,
+ * l'autre ne voit plus rien à prendre. Sans cela, l'e-mail partirait deux fois,
+ * et comme chaque envoi crée un jeton qui invalide le précédent, la personne
+ * recevrait deux liens dont le premier serait déjà mort.
+ *
+ * ---------------------------------------------------------------------------
+ * `runAt` n'est délibérément PAS testé ici
+ * ---------------------------------------------------------------------------
+ * `enqueue` écrit `runAt` avec l'horloge de Node, cette requête comparerait avec
+ * l'horloge de PostgreSQL. Quelques millisecondes de décalage entre les deux
+ * suffiraient à faire échouer la prise immédiate — par intermittence, sur une
+ * machine et pas sur l'autre, et le symptôme serait « l'e-mail met parfois cinq
+ * minutes ». On ne teste donc que ce qui compte : le travail est-il encore
+ * ouvert, et personne ne le tient-il déjà. L'échelle de reprise reste appliquée
+ * par `claimJobs`, qui est le seul chemin par lequel un travail en échec revient.
+ */
+export async function claimJob(
+  workerId: string,
+  id: string,
+  now = new Date(),
+): Promise<JobRecord | null> {
+  const staleBefore = new Date(now.getTime() - LOCK_TIMEOUT_MINUTES * 60_000)
+
+  const rows = await prisma.$queryRaw<JobRecord[]>`
+    UPDATE "Job"
+    SET "lockedAt" = now(),
+        "lockedBy" = ${workerId},
+        "attempts" = "attempts" + 1,
+        "updatedAt" = now()
+    WHERE "id" = ${id}
+      AND "completedAt" IS NULL
+      AND "attempts" < ${MAX_ATTEMPTS}
+      AND ("lockedAt" IS NULL OR "lockedAt" < ${staleBefore})
+    RETURNING "id", "type", "payload", "attempts"
+  `
+
+  return rows[0] ?? null
 }
 
 /**

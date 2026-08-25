@@ -419,6 +419,47 @@ ce que la précédente avait laissé.
 Le fichier de tests de reprise était entièrement vert : il exerçait le
 **mécanisme**, pas la liste de ses appelants. Il porte maintenant les deux.
 
+### « Mot de passe oublié » disait le contraire de ce qu'il répondait
+
+L'action tenait la règle au mot près : la même phrase, que le compte existe ou
+non. Le **délai**, lui, ne la tenait pas.
+
+- Adresse inconnue, ou compte anonymisé : l'action s'arrêtait après un seul
+  `findUnique` et répondait en quelques millisecondes.
+- Adresse connue : elle ouvrait une transaction, puis attendait un aller-retour
+  vers `api.resend.com` avant de répondre — deux à cinq cents millisecondes de
+  plus.
+
+Un écart de cet ordre se chronomètre depuis n'importe quelle connexion, sans
+outil particulier. La liste des comptes de la boutique redevenait énumérable
+adresse par adresse, et le message uniforme n'était plus qu'un ornement. C'est
+une divulgation de données personnelles au sens de l'article 4.12 : savoir
+qu'une adresse a un compte ici, c'est savoir que cette personne est cliente.
+
+La correction tient en deux gestes qui ne se remplacent pas :
+
+1. **L'envoi sort du chemin de réponse.** Il est inscrit dans la file de
+   travaux, et poussé immédiatement *après* la réponse — la file reste la source
+   de vérité, la poussée n'est qu'une accélération. C'est la protection de fond :
+   il ne reste aucun appel réseau dont la lenteur pourrait dépasser un
+   rembourrage. Effet secondaire mesuré : le travail restant dans l'action tient
+   en **six millisecondes**.
+2. **Un plancher de temps commun** couvre ce résidu de six millisecondes, qui
+   resterait mesurable en accumulant les essais. Il est fixe, jamais aléatoire :
+   un délai tiré au hasard n'efface pas l'écart, il l'enfouit dans du bruit — et
+   le bruit se moyenne.
+
+Le déplacement corrige au passage un défaut de fiabilité qui n'avait rien à voir
+avec la vie privée : un prestataire d'e-mail indisponible trente secondes se
+soldait par « consultez votre boîte », aucun e-mail, et une trace Sentry que
+personne ne lisait le soir même. La file reprend selon l'échelle annoncée.
+
+Le jeton, lui, est désormais créé **par le travail** et non par la demande : il
+ne traverse jamais `Job.payload`, une colonne `Json` conservée un mois, alors que
+`UserToken` n'en garde qu'une empreinte précisément pour qu'une sauvegarde
+égarée n'ouvre aucun compte. La charge utile ne porte qu'un identifiant de compte
+et une langue, et un test l'exige.
+
 ---
 
 ## 6. Colonnes déclarées, jamais alimentées

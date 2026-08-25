@@ -251,8 +251,9 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
     basis: 'legitimate-interest',
     retentionDays: WEBHOOK_EVENT_RETENTION_DAYS,
     retentionReason:
-      'Traces techniques des encaissements et des envois différés, ' +
-      'caviardées de toute donnée personnelle et conservées un mois pour ' +
+      'Traces techniques des encaissements et des envois différés. Les ' +
+      'charges utiles ne portent que des identifiants internes — jamais ' +
+      'd’adresse, de nom ni de jeton — et sont conservées un mois pour ' +
       'comprendre un échec.',
   },
   {
