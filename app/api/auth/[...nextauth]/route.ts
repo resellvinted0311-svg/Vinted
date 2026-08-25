@@ -38,6 +38,33 @@ import {
  * Les deux contrôles vivent ici plutôt que dans un middleware : le middleware
  * tourne sur le moteur périphérique, sans accès aux compteurs ni au secret de
  * signature.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce que le premier correctif avait manqué, et qu'un audit a trouvé
+ * ---------------------------------------------------------------------------
+ * Les deux gardes ci-dessus étaient posées sur le VERBE, pas sur la route :
+ *
+ * 1. LA GARDE DE CONFIRMATION NE VIVAIT QUE DANS `GET`. Or `@auth/core`
+ *    traite `callback` en POST aussi, et n'y exige `validateCSRF` que pour les
+ *    fournisseurs de type `credentials` (`lib/index.js`, branche `else`). Le
+ *    lien magique est de type `email` : un POST vers
+ *    `/api/auth/callback/magic-link?token=…&email=…` — le jeton est lu dans la
+ *    CHAÎNE DE REQUÊTE (`lib/actions/callback/index.js`) — atteignait donc
+ *    `actions.callback` sans preuve de confirmation ET sans jeton anti-CSRF.
+ *
+ *    C'est la CSRF de connexion en entier, par la porte d'à côté : un
+ *    formulaire auto-soumis depuis un site tiers connecte la victime au compte
+ *    de l'attaquant, et tout ce qu'elle fait ensuite — adresse, commande,
+ *    négociation — atterrit dans un compte qu'il lit.
+ *
+ * 2. LE COMPTEUR PAR ADRESSE SE CONTOURNAIT AVEC UN CORPS JSON. `throttleSignIn`
+ *    lisait le corps avec `formData()`, qui LÈVE sur `application/json` — et le
+ *    `catch` laissait passer. Or `@auth/core` accepte le JSON
+ *    (`lib/utils/web.js`). Un envoi par minute devenait donc un envoi sans
+ *    limite, vers l'adresse de son choix.
+ *
+ * La leçon, écrite ici pour la prochaine fois : une garde posée dans `GET` ou
+ * dans `POST` protège un VERBE. Ce qu'on veut protéger est une ROUTE.
  */
 
 // Prisma et argon2 ne s'exécutent pas sur l'Edge.
@@ -66,20 +93,20 @@ async function throttleSignIn(request: NextRequest): Promise<boolean> {
   })
   if (!byOrigin) return false
 
-  // L'adresse voyage dans le corps du formulaire. On lit une COPIE : consommer
-  // le corps ici priverait Auth.js du sien.
-  let email: string | null = null
-  try {
-    const body = await request.clone().formData()
-    const value = body.get('email')
-    if (typeof value === 'string') email = value.trim().toLowerCase()
-  } catch {
-    // Corps illisible : rien à compter par adresse, le compteur par origine
-    // ci-dessus a déjà fait son office.
-    return true
-  }
+  const email = await emailFromBody(request)
 
-  if (!email) return true
+  // ---------------------------------------------------------------------------
+  // Adresse illisible : on REFUSE. C'était l'inverse, et c'était le trou.
+  // ---------------------------------------------------------------------------
+  // La version précédente lisait le corps avec `formData()` seul, qui LÈVE sur
+  // un corps `application/json` — et le `catch` laissait passer. Or `@auth/core`
+  // accepte le JSON : il suffisait de changer l'en-tête `Content-Type` pour que
+  // le compteur par adresse ne s'applique jamais.
+  //
+  // On lit donc les deux encodages ci-dessous, et ce qui reste illisible est
+  // refusé plutôt qu'accordé. Le refus ne coûte rien de légitime : sans adresse
+  // exploitable, Auth.js n'a de toute façon aucun message à envoyer.
+  if (!email) return false
 
   return checkRateLimit({
     key: `magic-mail:${pseudonymize({
@@ -93,11 +120,63 @@ async function throttleSignIn(request: NextRequest): Promise<boolean> {
   })
 }
 
+/**
+ * L'adresse portée par le corps, quel que soit son encodage.
+ *
+ * On lit une COPIE : consommer le corps ici priverait Auth.js du sien.
+ *
+ * Les deux encodages sont tentés parce qu'`@auth/core` les accepte tous les
+ * deux. N'en lire qu'un revient à offrir l'autre comme contournement — c'est
+ * exactement ce qui s'est produit.
+ */
+async function emailFromBody(request: NextRequest): Promise<string | null> {
+  const read = (value: unknown): string | null =>
+    typeof value === 'string' && value.trim() !== ''
+      ? value.trim().toLowerCase()
+      : null
+
+  try {
+    const form = await request.clone().formData()
+    const found = read(form.get('email'))
+    if (found) return found
+  } catch {
+    // Pas un corps de formulaire : on tente le JSON ci-dessous.
+  }
+
+  try {
+    const body = (await request.clone().json()) as { email?: unknown }
+    return read(body?.email)
+  } catch {
+    return null
+  }
+}
+
+/** La route demandée est-elle le rappel du lien magique ? */
+function isMagicCallback(nextauth: string[]): boolean {
+  return nextauth[0] === 'callback' && nextauth[1] === 'magic-link'
+}
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ nextauth: string[] }> },
 ): Promise<Response> {
   const { nextauth } = await context.params
+
+  // ---------------------------------------------------------------------------
+  // Le rappel du lien magique n'existe QU'EN GET
+  // ---------------------------------------------------------------------------
+  // Le parcours légitime est un clic sur un lien, puis un bouton sur la page de
+  // confirmation — deux GET. Aucun POST n'a de raison d'arriver ici, et celui
+  // qui arriverait contournerait la garde de confirmation, `@auth/core`
+  // n'exigeant de jeton anti-CSRF que pour les fournisseurs `credentials`.
+  //
+  // On refuse donc le VERBE plutôt que de recopier la garde : une garde
+  // recopiée finit par diverger, un verbe refusé ne peut pas.
+  if (isMagicCallback(nextauth)) {
+    return NextResponse.redirect(signInUrl(request, 'lien-non-confirme'), {
+      status: 303,
+    })
+  }
 
   if (nextauth[0] === 'signin') {
     const allowed = await throttleSignIn(request)
@@ -123,7 +202,7 @@ export async function GET(
 
   // Rappel du lien magique : il faut la preuve posée par la page de
   // confirmation. Un GET amené devant une victime ne l'a pas.
-  if (nextauth[0] === 'callback' && nextauth[1] === 'magic-link') {
+  if (isMagicCallback(nextauth)) {
     const token = tokenFromCallback(request.nextUrl)
 
     if (!token || !(await hasConfirmation(token))) {
