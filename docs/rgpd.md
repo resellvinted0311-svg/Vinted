@@ -389,8 +389,40 @@ d'écriture aujourd'hui.
 | `SizeAlert` | Critères de recherche, `maxPriceCents` | Effacée avec le compte. Reste à inscrire au registre le jour où elle notifie |
 | `PushSubscription` | `endpoint` (identifiant de navigateur) | Effacée avec le compte. Le consentement aux notifications devra être horodaté |
 
-Les trois derniers sont **déjà emportés par l'effacement du compte** : ce qui
-manque est leur entrée au registre, pas leur traitement.
+Les trois derniers sont **déjà emportés par l'effacement du compte**. Leur
+entrée au registre n'est en revanche PAS ajoutée d'avance, et c'est délibéré :
+le registre est lu par la page publique de confidentialité, et y annoncer un
+traitement d'avis clients alors qu'aucun avis ne peut être déposé ferait mentir
+la déclaration dans l'autre sens. C'est le raisonnement déjà tenu par
+`activeProcessors()`, qui déduit les sous-traitants de l'environnement plutôt
+que de les énumérer.
+
+**Ce qui a changé : la promesse ci-dessus est désormais tenue par un test.**
+`tests/security/personal-data-coverage.test.ts` porte la carte des modèles
+porteurs de données personnelles, et cherche dans `lib/`, `app/` et
+`components/` toute ÉCRITURE vers l'un de ceux qui n'ont pas de régime arrêté.
+Le jour où quelqu'un ajoute le premier `prisma.message.create()`, la suite tombe
+— avec, dans le message d'échec, la question exacte à trancher et la liste des
+quatre endroits à couvrir : registre, export de l'article 15, effacement,
+purge.
+
+Sans ce test, la phrase « il faudra trancher avant de brancher » n'aurait
+protégé personne : on ne relit pas un document au moment d'écrire une ligne de
+code. C'est ainsi que les traces de paiement et la piste d'audit avaient
+échappé au registre.
+
+### Une inexactitude trouvée par ce test : `Address`
+
+La table figurait au registre sous « orders », était lue par l'export et
+effacée avec le compte — et **écrite par rien**. Il n'existe pas de carnet
+d'adresses : le tunnel de commande fige l'adresse en JSON sur la commande, et
+c'est cette copie-là qui porte les données.
+
+Le registre annonçait donc un traitement qui n'a pas lieu. Ce n'est pas une
+faille, c'est une déclaration inexacte — exactement dans le sens que ce document
+reproche aux politiques rédigées à la main. `Address` a été retirée de l'entrée
+« orders » ; elle y reviendra le jour où le carnet existera, et le test tombera
+pour l'exiger.
 
 `Shipment` a quitté ce tableau : elle est écrite depuis que l'expédition
 existe. Son volet est complet — entrée `shipments` au registre, numéro de suivi

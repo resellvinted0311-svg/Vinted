@@ -169,7 +169,19 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
   },
   {
     key: 'orders',
-    tables: ['Order (payées)', 'OrderItem', 'Address'],
+    // `Address` a été RETIRÉE de cette liste, et c'est un correctif.
+    //
+    // Trouvé par `tests/security/personal-data-coverage.test.ts` : la table
+    // était déclarée ici, lue par l'export et effacée avec le compte — et
+    // écrite par RIEN. Il n'existe pas de carnet d'adresses ; le tunnel fige
+    // l'adresse en JSON sur la commande, et c'est cette copie-là qui porte les
+    // données.
+    //
+    // Le registre annonçait donc un traitement qui n'a pas lieu. Ce n'est pas
+    // une faille, c'est une déclaration inexacte — dans le sens que ce fichier
+    // existe précisément pour empêcher. Elle reviendra le jour où le carnet
+    // d'adresses sera construit, et le test tombera pour l'exiger.
+    tables: ['Order (payées)', 'OrderItem'],
     basis: 'legal-obligation',
     retentionDays: ACCOUNTING_RETENTION_DAYS,
     retentionReason:
