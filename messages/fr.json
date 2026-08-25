@@ -364,6 +364,10 @@
     "shippingTo": "Livraison",
     "carrier": "{carrier} — {service}",
     "servicePoint": "Point relais {id}",
+    "shippedOn": "Expédiée le {date}",
+    "trackingNumber": "Numéro de suivi : {number}",
+    "noTracking": "Cet envoi n’a pas de numéro de suivi.",
+    "trackOnCarrier": "Suivre chez le transporteur",
     "customerNote": "Votre mot",
     "status": {
       "PENDING_PAYMENT": "En attente de paiement",
@@ -529,6 +533,37 @@
         "floorConfirmationRequired": "Cochez la confirmation pour accepter sous le prix plancher.",
         "unknown": "La réponse n’a pas pu être enregistrée."
       }
+    },
+    "orders": "Commandes à expédier",
+    "ordersIntro": "Les commandes payées, la plus ancienne en premier. Une commande expédiée n’attend plus rien de vous.",
+    "noPendingOrders": "Aucune commande n’attend d’être expédiée.",
+    "noPendingOrdersHint": "Les commandes payées apparaissent ici.",
+    "ordersPendingCount": "{count, plural, one {# à expédier} other {# à expédier}}",
+    "prepare": "Mettre en préparation",
+    "ship": "Marquer expédiée",
+    "deliver": "Marquer livrée",
+    "trackingLabel": "Numéro de suivi",
+    "trackingHint": "Facultatif. Recopié du bordereau ; les espaces sont retirés.",
+    "trackingUrlLabel": "Lien de suivi",
+    "trackingUrlHint": "Facultatif. La page du transporteur, si vous l’avez.",
+    "shippedTo": "Vers {city}, {country}",
+    "paidOn": "Payée le {date}",
+    "pieces": "{count, plural, one {# pièce} other {# pièces}}",
+    "shippingLabel": "Adresse d’expédition",
+    "contents": "Contenu",
+    "customerNote": "Note de l’acheteuse",
+    "contentWeight": "{grams} g de contenu",
+    "advanced": {
+      "PREPARING": "Commande mise en préparation.",
+      "SHIPPED": "Commande marquée expédiée. La personne est prévenue par e-mail.",
+      "DELIVERED": "Commande marquée livrée."
+    },
+    "errors": {
+      "invalidRequest": "Demande invalide. Rechargez la page.",
+      "rateLimited": "Trop d’actions en peu de temps. Réessayez dans un moment.",
+      "orderNotFound": "Cette commande est introuvable.",
+      "invalidTransition": "Cette commande a déjà changé d’état. Rechargez la page.",
+      "unknown": "L’action n’a pas pu être enregistrée."
     }
   },
   "orderEmail": {
@@ -543,7 +578,13 @@
     "deliveryTo": "Livraison à",
     "invoice": "Facture n° {number}, jointe à votre espace personnel.",
     "withdrawal": "Vous disposez de 14 jours à compter de la réception pour changer d’avis. Le formulaire de rétractation est sur le site.",
-    "signature": "À bientôt, {shop}"
+    "signature": "À bientôt, {shop}",
+    "shipped": {
+      "subject": "Votre commande {orderNumber} est partie",
+      "intro": "Votre commande {orderNumber} a quitté l’atelier.",
+      "tracking": "Numéro de suivi : {number}",
+      "noTracking": "Cet envoi n’a pas de numéro de suivi. Comptez quelques jours ouvrés."
+    }
   },
   "offerEmail": {
     "subject": {
@@ -580,6 +621,7 @@
     "processing": {
       "account": "Votre compte",
       "orders": "Vos commandes payées et vos factures",
+      "shipments": "L’expédition de vos colis",
       "abandoned-orders": "Une commande commencée puis abandonnée",
       "payment-events": "Les traces techniques de vos paiements",
       "favorites": "Vos favoris",

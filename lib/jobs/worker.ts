@@ -12,6 +12,7 @@ import {
 } from './queue'
 import {
   sendOrderConfirmation,
+  sendShipmentNotice,
   sendShopNotification,
   type OrderEmailData,
 } from '@/lib/providers/email/order'
@@ -141,6 +142,8 @@ async function runOne(job: JobRecord): Promise<void> {
       return runOrderEmail(job, sendOrderConfirmation)
     case 'order.notify-shop':
       return runOrderEmail(job, sendShopNotification)
+    case 'order.shipped':
+      return runShipmentNotice(job)
     case 'offer.acknowledge':
       return runOfferEmail(job, sendOfferAcknowledgement)
     case 'offer.notify-shop':
@@ -216,6 +219,76 @@ async function runOrderEmail(
 }
 
 /** Relit la commande sous la forme qu'attendent les gabarits d'e-mail. */
+/**
+ * L'avis d'expédition, relu au moment de partir.
+ *
+ * Une fonction à part plutôt qu'un champ de plus sur `OrderEmailData` : cet
+ * e-mail ne porte NI montants, NI lignes de commande, NI numéro de facture.
+ * Il annonce un départ et donne un numéro à suivre. Réutiliser la charge de la
+ * confirmation ferait voyager tout le reste jusqu'au gabarit, où il suffirait
+ * d'une ligne distraite pour le faire réapparaître.
+ *
+ * Le suivi vient de la ligne `Shipment` la plus récente. Il n'y en a pas
+ * toujours — une expédition sans numéro exploitable n'en crée aucune — et le
+ * gabarit le dit alors franchement plutôt que de laisser un blanc.
+ */
+async function runShipmentNotice(job: JobRecord): Promise<void> {
+  const parsed = orderJobPayload.safeParse(job.payload)
+  if (!parsed.success) {
+    throw new Error(`Charge utile invalide pour ${job.type}`)
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: parsed.data.orderId },
+    select: {
+      orderNumber: true,
+      locale: true,
+      email: true,
+      shippingAddress: true,
+      shipments: {
+        select: { trackingNumber: true, trackingUrl: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+    },
+  })
+
+  // Commande disparue : rien à envoyer, et rien à réessayer.
+  if (!order) return
+
+  const shipment = order.shipments[0] ?? null
+
+  await sendShipmentNotice({
+    orderNumber: order.orderNumber,
+    locale: order.locale,
+    email: order.email,
+    trackingNumber: shipment?.trackingNumber ?? null,
+    trackingUrl: shipment?.trackingUrl ?? null,
+    shipping: readShippingAddress(order.shippingAddress),
+  })
+}
+
+/** L'adresse figée, lue défensivement : c'est une colonne `Json`. */
+function readShippingAddress(value: unknown): OrderEmailData['shipping'] {
+  const shipping =
+    value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+
+  const text = (key: string): string | undefined =>
+    typeof shipping[key] === 'string' && shipping[key] !== ''
+      ? (shipping[key] as string)
+      : undefined
+
+  return {
+    firstName: text('firstName'),
+    lastName: text('lastName'),
+    line1: text('line1'),
+    line2: text('line2'),
+    postalCode: text('postalCode'),
+    city: text('city'),
+    country: text('country'),
+  }
+}
+
 async function readOrderEmailData(
   orderId: string,
 ): Promise<OrderEmailData | null> {

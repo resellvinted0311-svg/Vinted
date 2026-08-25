@@ -41,6 +41,15 @@ export type JobType =
   | 'order.confirmation'
   | 'order.notify-shop'
   /**
+   * Avis d'expédition, à l'acheteuse.
+   *
+   * Il manquait — comme le manquait tout ce qui suit le paiement. Une commande
+   * payée restait « payée » jusqu'à la fin des temps : la personne recevait son
+   * colis sans que rien ne le lui ait annoncé, et sans numéro de suivi pour le
+   * chercher s'il tardait.
+   */
+  | 'order.shipped'
+  /**
    * Téléchargement et réhébergement des visuels d'une pièce importée.
    *
    * Différé pour une raison de temps, pas de confort : trois cents images dans

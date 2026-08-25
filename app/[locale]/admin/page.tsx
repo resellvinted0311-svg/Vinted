@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { requireAdmin } from '@/lib/auth/session'
 import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 import { countPendingOffers } from '@/lib/db/queries/admin-offers'
+import { countOrdersToFulfil } from '@/lib/db/queries/admin-orders'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,7 +49,14 @@ export default async function AdminHomePage({
   }
 
   const t = await getTranslations('admin')
-  const pending = await countPendingOffers()
+
+  // En parallèle : deux comptes indépendants, et la production n'accorde qu'une
+  // connexion par instance — les enchaîner doublerait l'attente sans rien
+  // gagner.
+  const [pendingOffers, pendingOrders] = await Promise.all([
+    countPendingOffers(),
+    countOrdersToFulfil(),
+  ])
 
   return (
     <div>
@@ -56,24 +64,61 @@ export default async function AdminHomePage({
       <p className="mt-3 max-w-prose text-sm text-muted">{t('intro')}</p>
 
       <ul className="mt-8 divide-y divide-sand border-y-[1.5px] border-rule">
-        <li className="flex items-center justify-between gap-4 py-4">
-          <Link
-            href="/admin/offres"
-            className="text-base text-ink underline-offset-4 hover:underline"
-          >
-            {t('offers')}
-          </Link>
-          {/*
-            Un compteur qui vaut zéro se dit « aucune », pas « 0 » dans une
-            pastille : une pastille vide attire l'œil pour rien.
-          */}
-          {pending > 0 ? (
-            <Badge tone="stamp">{t('pendingCount', { count: pending })}</Badge>
-          ) : (
-            <span className="text-xs text-muted">{t('nothingPending')}</span>
-          )}
-        </li>
+        {/*
+          Les commandes avant les offres : un colis qui ne part pas est une
+          personne qui a déjà payé et qui attend. Une offre sans réponse
+          s'éteint d'elle-même, sans que personne n'ait rien avancé.
+        */}
+        <QueueRow
+          href="/admin/commandes"
+          label={t('orders')}
+          count={pendingOrders}
+          badge={t('ordersPendingCount', { count: pendingOrders })}
+          idle={t('nothingPending')}
+        />
+        <QueueRow
+          href="/admin/offres"
+          label={t('offers')}
+          count={pendingOffers}
+          badge={t('pendingCount', { count: pendingOffers })}
+          idle={t('nothingPending')}
+        />
       </ul>
     </div>
+  )
+}
+
+/** Une file de travail : ce qu'elle est, et combien il en reste. */
+function QueueRow({
+  href,
+  label,
+  count,
+  badge,
+  idle,
+}: {
+  href: string
+  label: string
+  count: number
+  badge: string
+  idle: string
+}) {
+  return (
+    <li className="flex items-center justify-between gap-4 py-4">
+      <Link
+        href={href}
+        className="text-base text-ink underline-offset-4 hover:underline"
+      >
+        {label}
+      </Link>
+      {/*
+        Un compteur qui vaut zéro se dit « aucune », pas « 0 » dans une
+        pastille : une pastille vide attire l'œil pour rien.
+      */}
+      {count > 0 ? (
+        <Badge tone="stamp">{badge}</Badge>
+      ) : (
+        <span className="text-xs text-muted">{idle}</span>
+      )}
+    </li>
   )
 }

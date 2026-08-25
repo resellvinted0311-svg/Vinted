@@ -111,18 +111,22 @@ toujours par être publié avec le code.
 
 Phases 4 à 8 non réalisées. En conséquence, sur le déploiement :
 
-- **le back-office ne couvre que les offres** : accepter ou refuser une
-  proposition se fait depuis `/admin/offres`. Le reste — catalogue, commandes,
-  réglages — n'a pas d'écran ;
+- **le back-office couvre les offres et l'expédition** : accepter ou refuser
+  une proposition se fait depuis `/admin/offres`, préparer, expédier et
+  constater la livraison depuis `/admin/commandes`. Le reste — catalogue,
+  réglages, retours — n'a pas d'écran ;
 - **la contre-proposition n'est pas exposée**, et c'est délibéré : elle
   créerait une offre en attente au nom de l'acheteuse, qui ne pourrait ni
   l'accepter ni en déposer une autre — donc bloquée quarante-huit heures pour
   avoir négocié. Le raisonnement complet, et les deux points à traiter avec
   elle, sont en tête de `lib/admin/offer-actions.ts` ;
-- aucune expédition réelle : les grilles de port sont en base, aucun
-  transporteur n'est appelé. Le jour où l'un le sera, il recevra nom, adresse
-  et téléphone — donc il devra entrer dans la liste des sous-traitants, avec
-  son contrat (`docs/rgpd.md`) ;
+- **aucun transporteur n'est appelé** : les grilles de port sont en base, et le
+  numéro de suivi est recopié à la main depuis le bordereau — la ligne
+  `Shipment` est créée en `provider: 'manual'`. Aucune étiquette n'est achetée,
+  aucun suivi n'est relevé automatiquement, et `DELIVERED` se pose à la main
+  parce que rien ne peut le constater. Le jour où un transporteur sera branché,
+  il recevra nom, adresse et téléphone — donc il devra entrer dans la liste des
+  sous-traitants, avec son contrat (`docs/rgpd.md`) ;
 - aucune messagerie, aucun retour, aucun avis ;
 - les textes de CGV, confidentialité et cookies sont des gabarits vides ;
 - les mentions légales affichent un avertissement tant que les variables
@@ -131,8 +135,9 @@ Phases 4 à 8 non réalisées. En conséquence, sur le déploiement :
 Ce qui fonctionne : l'accueil, le catalogue avec filtres et recherche, les
 fiches articles avec mesures, les favoris, les 8 langues, la connexion, le
 panier, le paiement Stripe avec factures et e-mails, la négociation (dépôt,
-registre au compte, prix payable), la baisse automatique des prix, et la
-synchronisation avec l'application de gestion dans les deux sens.
+registre au compte, prix payable), la baisse automatique des prix, le suivi
+d'expédition de la commande payée jusqu'à la livraison, et la synchronisation
+avec l'application de gestion dans les deux sens.
 
 ## 7. Décisions laissées ouvertes, à trancher un jour
 
@@ -207,3 +212,30 @@ rencontre — et le coût de conversion d'une vérification obligatoire est rée
 Le sondage de masse reste borné par la limitation à cinq inscriptions par heure
 et par empreinte. À revoir si la boutique traite un jour des données plus
 sensibles.
+
+### Le numéro de suivi est conservé aussi longtemps que la commande
+
+Une commande payée est une pièce comptable : dix ans, article L123-22 du code
+de commerce. Le numéro de suivi qui l'accompagne, lui, n'en est **pas** une —
+aucune mention obligatoire de facture ne le réclame. Il est pourtant conservé
+aussi longtemps qu'elle, et effacé en même temps qu'elle
+(`stripShipmentTracking`, dans `lib/privacy/anonymize.ts`).
+
+Ce n'est pas idéal au regard de l'article 5.1.e : un numéro de suivi ouvre chez
+le transporteur une page qui porte la destination du colis, et rien ne justifie
+de garder cette clé pendant dix ans. Une durée propre, bien plus courte, serait
+plus juste.
+
+**Pourquoi elle n'a pas été fixée :** aucune des durées que le code connaît ne
+la fonde. La prescription applicable à un litige de livraison, la fenêtre
+pendant laquelle un transporteur accepte encore d'ouvrir une enquête, la durée
+de la garantie légale sur un vêtement d'occasion — ce sont trois questions de
+droit, et écrire un nombre au jugé donnerait à la déclaration publique un air
+de rigueur qu'elle n'aurait pas. C'est exactement ce que `docs/rgpd.md`
+reproche aux politiques de confidentialité rédigées à la main.
+
+**Ce qu'il faut faire pour trancher :** demander la durée à un juriste, poser
+une constante `SHIPMENT_TRACKING_RETENTION_DAYS` dans `lib/config/privacy.ts`,
+la déclarer sur l'entrée `shipments` du registre, et appeler
+`stripShipmentTracking` depuis la purge périodique avec sa propre échéance. Le
+mécanisme est déjà écrit et testé : il ne manque que le nombre.

@@ -48,7 +48,16 @@ test.describe('Information des personnes', () => {
       page.getByText('Vos commandes payées et vos factures'),
     ).toBeVisible()
     await expect(page.getByText('Obligation légale')).toBeVisible()
-    await expect(page.getByText('10 ans')).toBeVisible()
+    // `.first()` et non le libellé seul : plusieurs traitements affichent
+    // désormais dix ans — la commande payée, et l'expédition qui la suit. Une
+    // correspondance unique était une hypothèse sur le CONTENU du registre,
+    // pas sur ce que la page doit faire ; elle a cassé à la première entrée
+    // ajoutée, sans qu'aucune régression n'ait eu lieu.
+    await expect(page.getByText('10 ans').first()).toBeVisible()
+
+    // La nouvelle entrée : l'expédition était écrite en base sans figurer nulle
+    // part dans la déclaration publique.
+    await expect(page.getByText('L’expédition de vos colis')).toBeVisible()
 
     // Et surtout : ce n'est plus le texte d'attente de la phase 7.
     await expect(page.getByText('Contenu rédigé en Phase 7')).toHaveCount(0)

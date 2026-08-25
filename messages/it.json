@@ -364,6 +364,10 @@
     "shippingTo": "Consegna",
     "carrier": "{carrier} — {service}",
     "servicePoint": "Punto di ritiro {id}",
+    "shippedOn": "Spedito il {date}",
+    "trackingNumber": "Numero di tracciamento: {number}",
+    "noTracking": "Questa spedizione non ha un numero di tracciamento.",
+    "trackOnCarrier": "Segui presso il corriere",
     "customerNote": "Il tuo messaggio",
     "status": {
       "PENDING_PAYMENT": "In attesa di pagamento",
@@ -529,6 +533,37 @@
         "floorConfirmationRequired": "Spunta la conferma per accettare sotto il prezzo minimo.",
         "unknown": "Non è stato possibile registrare la risposta."
       }
+    },
+    "orders": "Ordini da spedire",
+    "ordersIntro": "Gli ordini pagati, prima il più vecchio. Un ordine spedito non aspetta più nulla da te.",
+    "noPendingOrders": "Nessun ordine attende la spedizione.",
+    "noPendingOrdersHint": "Gli ordini pagati compaiono qui.",
+    "ordersPendingCount": "{count, plural, one {# da spedire} other {# da spedire}}",
+    "prepare": "Mettere in preparazione",
+    "ship": "Segnare come spedito",
+    "deliver": "Segnare come consegnato",
+    "trackingLabel": "Numero di tracciamento",
+    "trackingHint": "Facoltativo. Ricopiato dalla bolla; gli spazi sono rimossi.",
+    "trackingUrlLabel": "Link di tracciamento",
+    "trackingUrlHint": "Facoltativo. La pagina del corriere, se ce l’hai.",
+    "shippedTo": "Verso {city}, {country}",
+    "paidOn": "Pagato il {date}",
+    "pieces": "{count, plural, one {# capo} other {# capi}}",
+    "shippingLabel": "Indirizzo di spedizione",
+    "contents": "Contenuto",
+    "customerNote": "Nota dell’acquirente",
+    "contentWeight": "{grams} g di contenuto",
+    "advanced": {
+      "PREPARING": "Ordine messo in preparazione.",
+      "SHIPPED": "Ordine segnato come spedito. La persona è avvisata per e-mail.",
+      "DELIVERED": "Ordine segnato come consegnato."
+    },
+    "errors": {
+      "invalidRequest": "Richiesta non valida. Ricarica la pagina.",
+      "rateLimited": "Troppe azioni in poco tempo. Riprova tra poco.",
+      "orderNotFound": "Questo ordine non si trova.",
+      "invalidTransition": "Questo ordine ha già cambiato stato. Ricarica la pagina.",
+      "unknown": "Non è stato possibile registrare l’azione."
     }
   },
   "orderEmail": {
@@ -543,7 +578,13 @@
     "deliveryTo": "Consegna a",
     "invoice": "Fattura n. {number}, disponibile nel suo account.",
     "withdrawal": "Ha 14 giorni dal ricevimento per cambiare idea. Il modulo di recesso è sul sito.",
-    "signature": "A presto, {shop}"
+    "signature": "A presto, {shop}",
+    "shipped": {
+      "subject": "Il tuo ordine {orderNumber} è in viaggio",
+      "intro": "Il tuo ordine {orderNumber} ha lasciato il laboratorio.",
+      "tracking": "Numero di tracciamento: {number}",
+      "noTracking": "Questa spedizione non ha numero di tracciamento. Calcola qualche giorno lavorativo."
+    }
   },
   "offerEmail": {
     "subject": {
@@ -580,6 +621,7 @@
     "processing": {
       "account": "Il suo account",
       "orders": "I tuoi ordini pagati e le tue fatture",
+      "shipments": "La spedizione dei suoi pacchi",
       "abandoned-orders": "Un ordine iniziato e poi abbandonato",
       "payment-events": "Le tracce tecniche dei tuoi pagamenti",
       "favorites": "I suoi preferiti",

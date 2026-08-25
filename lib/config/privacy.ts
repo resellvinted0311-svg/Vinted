@@ -138,6 +138,50 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
       'Pièce comptable : dix ans, article L123-22 du code de commerce.',
   },
   {
+    /**
+     * L'expédition, déclarée à part de la commande.
+     *
+     * ---------------------------------------------------------------------
+     * Pourquoi une entrée propre
+     * ---------------------------------------------------------------------
+     * `Shipment` était déclarée nulle part : le modèle existait sans que rien
+     * ne l'écrive, et une table vide ne se remarque pas. Elle est écrite
+     * depuis que l'expédition existe, et un traitement non déclaré est un
+     * traitement qu'on oublie de purger — c'est précisément ce qui était
+     * arrivé aux traces de paiement.
+     *
+     * ---------------------------------------------------------------------
+     * Le numéro de suivi EST une donnée personnelle
+     * ---------------------------------------------------------------------
+     * Pas par lui-même : c'est une suite de caractères. Mais il ouvre, chez le
+     * transporteur, une page qui porte la destination du colis et l'heure de
+     * chacun de ses passages. C'est un identifiant indirect au sens de
+     * l'article 4.1, et il se traite comme tel — il figure dans l'export, il
+     * part à l'effacement.
+     *
+     * ---------------------------------------------------------------------
+     * La durée est celle de la commande, et c'est une décision à revoir
+     * ---------------------------------------------------------------------
+     * Le suivi n'est pas une pièce comptable : la facture n'en porte pas la
+     * mention. Lui donner une durée PROPRE, plus courte, serait plus juste au
+     * regard de l'article 5.1.e — encore faudrait-il savoir laquelle, et rien
+     * de ce que le code connaît ne la fonde. Inventer un nombre pour avoir
+     * l'air rigoureux serait pire que de suivre la commande : la déclaration
+     * annoncerait une durée que personne n'aurait jamais justifiée.
+     *
+     * On suit donc la commande, on le dit, et la question est inscrite dans
+     * DEPLOY.md à côté des autres décisions laissées ouvertes.
+     */
+    key: 'shipments',
+    tables: ['Shipment'],
+    basis: 'contract',
+    retentionDays: ACCOUNTING_RETENTION_DAYS,
+    retentionReason:
+      'Accessoire de la commande livrée : le numéro de suivi s’efface quand ' +
+      'la commande est anonymisée, et immédiatement à la demande ' +
+      'd’effacement du compte. Une durée propre, plus courte, reste à fixer.',
+  },
+  {
     // Déclaré à part, parce que la justification n'est PAS la même. Confondre
     // les deux revenait à couvrir un abandon par une obligation comptable qui
     // ne le concerne pas — et à annoncer dix ans là où rien ne les fonde.

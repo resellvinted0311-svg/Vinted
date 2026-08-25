@@ -4,13 +4,19 @@ import { test, expect, type Page } from '@playwright/test'
  * La régie : ce qu'elle montre, et à qui.
  *
  * ---------------------------------------------------------------------------
- * Pourquoi une seule connexion dans tout ce fichier
+ * Pourquoi on compte les connexions dans ce fichier
  * ---------------------------------------------------------------------------
- * `signInAction` borne les tentatives à dix par compte et par quart d'heure.
- * `phase0.spec.ts` en consomme déjà une sur ce compte, par projet et par
- * exécution. Une connexion ici, réutilisée pour toutes les assertions, garde la
- * marge nécessaire à deux exécutions consécutives — et desserrer la protection
- * pour arranger des tests n'est pas une option.
+ * `signInAction` borne les tentatives à dix par quart d'heure, sur une clé qui
+ * mêle le compte et l'empreinte d'appelant — les deux projets Playwright
+ * portent des adresses distinctes, donc chacun a son propre compteur.
+ * `phase0.spec.ts` en consomme déjà une sur le compte d'administration, par
+ * projet et par exécution.
+ *
+ * Chaque test ouvre donc au plus UNE session, et chacun couvre tout ce que
+ * cette session permet de vérifier : le refus opposé à un compte client est
+ * mesuré sur les trois adresses d'administration d'un seul tenant, plutôt
+ * qu'une connexion par adresse. Desserrer la protection pour arranger des
+ * tests n'est pas une option.
  *
  * ---------------------------------------------------------------------------
  * Ce que ce fichier vérifie et qu'aucun test unitaire ne peut voir
@@ -51,8 +57,13 @@ test.describe('Accès à la régie', () => {
     await page.context().clearCookies()
     await signIn(page, CUSTOMER)
 
-    const response = await page.goto('/fr/admin/offres')
-    expect(response?.status()).toBe(404)
+    // Toute la surface d'administration, pas seulement la première page : une
+    // page ajoutée sans garde serait invisible à un test qui n'en vérifie
+    // qu'une. Une seule connexion les couvre toutes.
+    for (const route of ['/fr/admin', '/fr/admin/offres', '/fr/admin/commandes']) {
+      const response = await page.goto(route)
+      expect(response?.status(), route).toBe(404)
+    }
   })
 })
 
@@ -127,5 +138,63 @@ test.describe('La file des offres', () => {
     )
     expect(unsigned, 'des scripts en ligne sans nonce seraient refusés').toBe(0)
     expect(violations).toEqual([])
+  })
+})
+
+test.describe('La file des commandes à expédier', () => {
+  test('existe, s’atteint depuis la navigation, et ne montre pas la marge', async ({
+    page,
+  }) => {
+    await page.context().clearCookies()
+    await signIn(page, ACCOUNT)
+
+    await page.goto('/fr/admin')
+    await main(page).getByRole('link', { name: 'Commandes à expédier' }).first().click()
+    await expect(page).toHaveURL(/\/fr\/admin\/commandes/)
+
+    await expect(
+      main(page).getByRole('heading', { name: 'Commandes à expédier' }),
+    ).toBeVisible()
+
+    // ---------------------------------------------------------------------
+    // Ce que ce test NE peut pas atteindre, et où c'est couvert
+    // ---------------------------------------------------------------------
+    // Le paiement n'est pas configuré dans cet environnement — `phase2-achat`
+    // vérifie précisément que la boutique le DIT au lieu d'ouvrir un
+    // formulaire mort. Aucune commande ne peut donc y être payée, et cette
+    // file est vide par construction. Prétendre le contraire en écrivant une
+    // commande directement en base contournerait la règle du dossier : ces
+    // tests passent par l'interface, jamais par Prisma.
+    //
+    // Le rendu peuplé — ordre de la file, adresse en lignes postales, gestes
+    // proposés selon l'état — est donc vérifié par
+    // `tests/integration/order-fulfilment.test.ts`, qui exerce la requête
+    // contre une vraie base. Ici on vérifie ce que seul un navigateur voit :
+    // que la page existe, que la navigation y mène, et que l'état vide parle.
+    //
+    // Les deux assertions de fuite ci-dessous sont donc faibles TANT QUE la
+    // file est vide. Elles restent parce qu'elles ne coûtent rien et qu'elles
+    // mordent le jour où cette suite tourne contre une base qui, elle, a des
+    // commandes payées.
+    await expect(main(page).getByText('Prix plancher')).toHaveCount(0)
+    await expect(main(page).getByText('Écart au plancher')).toHaveCount(0)
+
+    const empty = main(page).getByText('Aucune commande n’attend d’être expédiée.')
+    if (await empty.isVisible()) {
+      // Jamais une page muette : l'état vide doit dire pourquoi il l'est.
+      await expect(
+        main(page).getByText('Les commandes payées apparaissent ici.'),
+      ).toBeVisible()
+      return
+    }
+
+    await expect(
+      main(page).getByRole('button', { name: 'Marquer expédiée' }).first(),
+    ).toBeVisible()
+    await expect(main(page).getByText('Adresse d’expédition').first()).toBeVisible()
+
+    // Le champ de suivi est FACULTATIF : le bouton ne l'attend pas. L'exiger
+    // obligerait à inventer un numéro sur un envoi qui n'en a pas.
+    await expect(main(page).getByLabel(/Numéro de suivi/).first()).toBeVisible()
   })
 })

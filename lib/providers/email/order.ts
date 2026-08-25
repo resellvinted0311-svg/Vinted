@@ -227,3 +227,73 @@ export async function sendShopNotification(data: OrderEmailData): Promise<void> 
   }
   await sendEmail(buildShopNotification(data))
 }
+
+// ---------------------------------------------------------------------------
+// Avis d'expédition
+// ---------------------------------------------------------------------------
+
+export interface ShipmentEmailData {
+  orderNumber: string
+  locale: string
+  email: string
+  /** Absent quand l'envoi n'a pas de suivi exploitable. */
+  trackingNumber: string | null
+  trackingUrl: string | null
+  /** Adresse de livraison, telle que figée sur la commande. */
+  shipping: OrderEmailData['shipping']
+}
+
+/**
+ * « Votre commande est partie. »
+ *
+ * ---------------------------------------------------------------------------
+ * Le message le plus attendu de toute la chaîne, et il n'existait pas
+ * ---------------------------------------------------------------------------
+ * Rien n'annonçait le départ d'un colis. La personne payait, recevait sa
+ * confirmation, puis plus rien — jusqu'à ce que le colis arrive, ou n'arrive
+ * pas. Dans le second cas, elle n'avait ni date d'expédition ni numéro à
+ * donner au transporteur.
+ *
+ * ---------------------------------------------------------------------------
+ * Sans numéro de suivi, on le DIT
+ * ---------------------------------------------------------------------------
+ * Toutes les expéditions n'en ont pas. Passer la ligne sous silence laisserait
+ * croire à un oubli et provoquerait la question ; l'écrire ferme le sujet.
+ */
+export async function buildShipmentNotice(
+  data: ShipmentEmailData,
+): Promise<EmailMessage> {
+  const t = await translatorFor(data.locale)
+  const address = addressLines(data.shipping)
+
+  const tracking = data.trackingNumber
+    ? [
+        t('shipped.tracking', { number: data.trackingNumber }),
+        ...(data.trackingUrl ? [data.trackingUrl] : []),
+      ]
+    : [t('shipped.noTracking')]
+
+  const text = [
+    t('greeting'),
+    '',
+    t('shipped.intro', { orderNumber: data.orderNumber }),
+    '',
+    ...tracking,
+    '',
+    `${t('deliveryTo')} :`,
+    ...address,
+    '',
+    t('signature'),
+  ].join('\n')
+
+  return {
+    to: data.email,
+    subject: t('shipped.subject', { orderNumber: data.orderNumber }),
+    text,
+    html: `<pre>${escapeHtml(text)}</pre>`,
+  }
+}
+
+export async function sendShipmentNotice(data: ShipmentEmailData): Promise<void> {
+  await sendEmail(await buildShipmentNotice(data))
+}

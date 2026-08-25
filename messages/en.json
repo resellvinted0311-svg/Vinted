@@ -364,6 +364,10 @@
     "shippingTo": "Delivery",
     "carrier": "{carrier} — {service}",
     "servicePoint": "Pickup point {id}",
+    "shippedOn": "Shipped on {date}",
+    "trackingNumber": "Tracking number: {number}",
+    "noTracking": "This parcel has no tracking number.",
+    "trackOnCarrier": "Track with the carrier",
     "customerNote": "Your note",
     "status": {
       "PENDING_PAYMENT": "Awaiting payment",
@@ -529,6 +533,37 @@
         "floorConfirmationRequired": "Tick the confirmation to accept below the floor price.",
         "unknown": "The reply could not be recorded."
       }
+    },
+    "orders": "Orders to ship",
+    "ordersIntro": "Paid orders, oldest first. A shipped order no longer waits on you.",
+    "noPendingOrders": "No order is waiting to be shipped.",
+    "noPendingOrdersHint": "Paid orders appear here.",
+    "ordersPendingCount": "{count, plural, one {# to ship} other {# to ship}}",
+    "prepare": "Mark as preparing",
+    "ship": "Mark as shipped",
+    "deliver": "Mark as delivered",
+    "trackingLabel": "Tracking number",
+    "trackingHint": "Optional. Copied from the label; spaces are stripped.",
+    "trackingUrlLabel": "Tracking link",
+    "trackingUrlHint": "Optional. The carrier page, if you have it.",
+    "shippedTo": "To {city}, {country}",
+    "paidOn": "Paid on {date}",
+    "pieces": "{count, plural, one {# piece} other {# pieces}}",
+    "shippingLabel": "Shipping address",
+    "contents": "Contents",
+    "customerNote": "Buyer’s note",
+    "contentWeight": "{grams} g of contents",
+    "advanced": {
+      "PREPARING": "Order marked as preparing.",
+      "SHIPPED": "Order marked as shipped. The person has been emailed.",
+      "DELIVERED": "Order marked as delivered."
+    },
+    "errors": {
+      "invalidRequest": "Invalid request. Reload the page.",
+      "rateLimited": "Too many actions in a short time. Try again shortly.",
+      "orderNotFound": "This order cannot be found.",
+      "invalidTransition": "This order has already changed state. Reload the page.",
+      "unknown": "The action could not be recorded."
     }
   },
   "orderEmail": {
@@ -543,7 +578,13 @@
     "deliveryTo": "Delivery to",
     "invoice": "Invoice no. {number}, available in your account.",
     "withdrawal": "You have 14 days from delivery to change your mind. The withdrawal form is on the site.",
-    "signature": "See you soon, {shop}"
+    "signature": "See you soon, {shop}",
+    "shipped": {
+      "subject": "Your order {orderNumber} is on its way",
+      "intro": "Your order {orderNumber} has left the workshop.",
+      "tracking": "Tracking number: {number}",
+      "noTracking": "This parcel has no tracking number. Allow a few working days."
+    }
   },
   "offerEmail": {
     "subject": {
@@ -580,6 +621,7 @@
     "processing": {
       "account": "Your account",
       "orders": "Your paid orders and invoices",
+      "shipments": "The shipping of your parcels",
       "abandoned-orders": "An order started and then abandoned",
       "payment-events": "Technical traces of your payments",
       "favorites": "Your favourites",

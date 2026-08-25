@@ -364,6 +364,10 @@
     "shippingTo": "Entrega",
     "carrier": "{carrier} — {service}",
     "servicePoint": "Ponto de recolha {id}",
+    "shippedOn": "Enviado a {date}",
+    "trackingNumber": "Número de seguimento: {number}",
+    "noTracking": "Este envio não tem número de seguimento.",
+    "trackOnCarrier": "Seguir na transportadora",
     "customerNote": "A sua mensagem",
     "status": {
       "PENDING_PAYMENT": "Aguarda pagamento",
@@ -529,6 +533,37 @@
         "floorConfirmationRequired": "Assinale a confirmação para aceitar abaixo do preço mínimo.",
         "unknown": "Não foi possível registar a resposta."
       }
+    },
+    "orders": "Encomendas a expedir",
+    "ordersIntro": "As encomendas pagas, a mais antiga primeiro. Uma encomenda expedida já não espera nada de si.",
+    "noPendingOrders": "Nenhuma encomenda aguarda expedição.",
+    "noPendingOrdersHint": "As encomendas pagas aparecem aqui.",
+    "ordersPendingCount": "{count, plural, one {# a expedir} other {# a expedir}}",
+    "prepare": "Pôr em preparação",
+    "ship": "Marcar como expedida",
+    "deliver": "Marcar como entregue",
+    "trackingLabel": "Número de seguimento",
+    "trackingHint": "Facultativo. Copiado da guia; os espaços são retirados.",
+    "trackingUrlLabel": "Ligação de seguimento",
+    "trackingUrlHint": "Facultativo. A página da transportadora, se a tiver.",
+    "shippedTo": "Para {city}, {country}",
+    "paidOn": "Paga a {date}",
+    "pieces": "{count, plural, one {# peça} other {# peças}}",
+    "shippingLabel": "Morada de envio",
+    "contents": "Conteúdo",
+    "customerNote": "Nota da compradora",
+    "contentWeight": "{grams} g de conteúdo",
+    "advanced": {
+      "PREPARING": "Encomenda posta em preparação.",
+      "SHIPPED": "Encomenda marcada como expedida. A pessoa foi avisada por e-mail.",
+      "DELIVERED": "Encomenda marcada como entregue."
+    },
+    "errors": {
+      "invalidRequest": "Pedido inválido. Recarregue a página.",
+      "rateLimited": "Demasiadas ações em pouco tempo. Tente daqui a pouco.",
+      "orderNotFound": "Esta encomenda não foi encontrada.",
+      "invalidTransition": "Esta encomenda já mudou de estado. Recarregue a página.",
+      "unknown": "Não foi possível registar a ação."
     }
   },
   "orderEmail": {
@@ -543,7 +578,13 @@
     "deliveryTo": "Entrega a",
     "invoice": "Fatura n.º {number}, disponível na sua conta.",
     "withdrawal": "Dispõe de 14 dias a contar da receção para mudar de ideias. O formulário de retratação está no site.",
-    "signature": "Até breve, {shop}"
+    "signature": "Até breve, {shop}",
+    "shipped": {
+      "subject": "A sua encomenda {orderNumber} está a caminho",
+      "intro": "A sua encomenda {orderNumber} saiu do atelier.",
+      "tracking": "Número de seguimento: {number}",
+      "noTracking": "Este envio não tem número de seguimento. Conte com alguns dias úteis."
+    }
   },
   "offerEmail": {
     "subject": {
@@ -580,6 +621,7 @@
     "processing": {
       "account": "A sua conta",
       "orders": "As suas encomendas pagas e faturas",
+      "shipments": "O envio das suas encomendas",
       "abandoned-orders": "Uma encomenda iniciada e depois abandonada",
       "payment-events": "Os vestígios técnicos dos seus pagamentos",
       "favorites": "Os seus favoritos",

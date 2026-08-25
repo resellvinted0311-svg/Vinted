@@ -364,6 +364,10 @@
     "shippingTo": "Dostawa",
     "carrier": "{carrier} — {service}",
     "servicePoint": "Punkt odbioru {id}",
+    "shippedOn": "Wysłano {date}",
+    "trackingNumber": "Numer przesyłki: {number}",
+    "noTracking": "Ta przesyłka nie ma numeru śledzenia.",
+    "trackOnCarrier": "Śledź u przewoźnika",
     "customerNote": "Twoja wiadomość",
     "status": {
       "PENDING_PAYMENT": "Oczekuje na płatność",
@@ -529,6 +533,37 @@
         "floorConfirmationRequired": "Zaznacz potwierdzenie, aby przyjąć poniżej ceny minimalnej.",
         "unknown": "Nie udało się zapisać odpowiedzi."
       }
+    },
+    "orders": "Zamówienia do wysyłki",
+    "ordersIntro": "Opłacone zamówienia, najstarsze pierwsze. Wysłane zamówienie już na Ciebie nie czeka.",
+    "noPendingOrders": "Żadne zamówienie nie czeka na wysyłkę.",
+    "noPendingOrdersHint": "Opłacone zamówienia pojawiają się tutaj.",
+    "ordersPendingCount": "{count, plural, one {# do wysyłki} few {# do wysyłki} many {# do wysyłki} other {# do wysyłki}}",
+    "prepare": "Ustaw w przygotowaniu",
+    "ship": "Oznacz jako wysłane",
+    "deliver": "Oznacz jako dostarczone",
+    "trackingLabel": "Numer przesyłki",
+    "trackingHint": "Opcjonalne. Przepisane z listu; spacje są usuwane.",
+    "trackingUrlLabel": "Link do śledzenia",
+    "trackingUrlHint": "Opcjonalne. Strona przewoźnika, jeśli ją masz.",
+    "shippedTo": "Do {city}, {country}",
+    "paidOn": "Opłacone {date}",
+    "pieces": "{count, plural, one {# sztuka} few {# sztuki} many {# sztuk} other {# sztuk}}",
+    "shippingLabel": "Adres wysyłki",
+    "contents": "Zawartość",
+    "customerNote": "Notatka kupującej",
+    "contentWeight": "{grams} g zawartości",
+    "advanced": {
+      "PREPARING": "Zamówienie ustawione w przygotowaniu.",
+      "SHIPPED": "Zamówienie oznaczone jako wysłane. Osoba została powiadomiona e-mailem.",
+      "DELIVERED": "Zamówienie oznaczone jako dostarczone."
+    },
+    "errors": {
+      "invalidRequest": "Nieprawidłowe żądanie. Odśwież stronę.",
+      "rateLimited": "Zbyt wiele działań w krótkim czasie. Spróbuj za chwilę.",
+      "orderNotFound": "Nie znaleziono tego zamówienia.",
+      "invalidTransition": "To zamówienie już zmieniło stan. Odśwież stronę.",
+      "unknown": "Nie udało się zapisać działania."
     }
   },
   "orderEmail": {
@@ -543,7 +578,13 @@
     "deliveryTo": "Dostawa do",
     "invoice": "Faktura nr {number}, dostępna na Twoim koncie.",
     "withdrawal": "Masz 14 dni od otrzymania na zmianę zdania. Formularz odstąpienia znajduje się na stronie.",
-    "signature": "Do zobaczenia, {shop}"
+    "signature": "Do zobaczenia, {shop}",
+    "shipped": {
+      "subject": "Twoje zamówienie {orderNumber} jest w drodze",
+      "intro": "Twoje zamówienie {orderNumber} opuściło pracownię.",
+      "tracking": "Numer przesyłki: {number}",
+      "noTracking": "Ta przesyłka nie ma numeru śledzenia. Licz się z kilkoma dniami roboczymi."
+    }
   },
   "offerEmail": {
     "subject": {
@@ -580,6 +621,7 @@
     "processing": {
       "account": "Twoje konto",
       "orders": "Twoje opłacone zamówienia i faktury",
+      "shipments": "Wysyłka Twoich paczek",
       "abandoned-orders": "Zamówienie rozpoczęte i porzucone",
       "payment-events": "Techniczne ślady Twoich płatności",
       "favorites": "Twoje ulubione",

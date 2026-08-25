@@ -328,13 +328,24 @@ d'écriture aujourd'hui.
 | --- | --- | --- |
 | `Conversation`, `Message` | `guestEmail`, `body` (texte libre), `attachments` | Durée de conservation d'une conversation, sort des pièces jointes, et ce qu'il advient des messages à l'effacement du compte |
 | `ReturnRequest` | `comment` (texte libre) | Suit-il la durée comptable de la commande, ou une durée propre au litige ? |
-| `Shipment`, `ShipmentEvent` | Numéro de suivi, `raw` (réponse brute du transporteur) | Le `raw` d'un transporteur contient nom et adresse : à caviarder à l'écriture, comme les événements de paiement |
+| `ShipmentEvent` | `raw` (réponse brute du transporteur) | Le `raw` d'un transporteur contient nom et adresse : à caviarder à l'écriture, comme les événements de paiement. Aucun transporteur n'est branché, donc rien ne l'écrit encore |
 | `Review` | `rating`, `body` (texte libre) | Un avis publié survit-il à l'effacement du compte, sous pseudonyme ? Aujourd'hui l'effacement l'emporte |
 | `SizeAlert` | Critères de recherche, `maxPriceCents` | Effacée avec le compte. Reste à inscrire au registre le jour où elle notifie |
 | `PushSubscription` | `endpoint` (identifiant de navigateur) | Effacée avec le compte. Le consentement aux notifications devra être horodaté |
 
 Les trois derniers sont **déjà emportés par l'effacement du compte** : ce qui
 manque est leur entrée au registre, pas leur traitement.
+
+`Shipment` a quitté ce tableau : elle est écrite depuis que l'expédition
+existe. Son volet est complet — entrée `shipments` au registre, numéro de suivi
+dans l'export de l'article 15, effacement à la demande et à l'échéance
+comptable (`stripShipmentTracking`). Une seule question reste ouverte, et elle
+est inscrite comme telle dans `DEPLOY.md` : le suivi n'est **pas** une pièce
+comptable, il suit pourtant aujourd'hui la durée de la commande. Lui donner une
+durée propre, plus courte, serait plus juste au regard de l'article 5.1.e —
+mais aucune des durées que le code connaît ne la fonde, et en inventer une
+pour avoir l'air rigoureux ferait exactement ce que ce document reproche aux
+politiques rédigées à la main.
 
 Et une table à surveiller, hors périmètre pour l'instant : `AuditLog` n'est
 purgée par rien. Son unique écriture ne porte aujourd'hui que des identifiants

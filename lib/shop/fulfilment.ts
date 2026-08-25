@@ -1,7 +1,13 @@
 import 'server-only'
 
-import type { Prisma } from '@prisma/client'
+import type { OrderStatus, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
+import { getShippingConfig } from '@/lib/config/settings'
+import {
+  planTransition,
+  normalizeTrackingNumber,
+  type FulfilmentAction,
+} from '@/lib/domain/fulfilment'
 import { hasLegalIdentity } from '@/lib/config/site'
 import { allocateInvoiceNumber } from '@/lib/shop/invoice'
 import { enqueue } from '@/lib/jobs/queue'
@@ -370,5 +376,132 @@ export async function expireOrder(orderId: string): Promise<boolean> {
     })
 
     return true
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Après le paiement : préparer, expédier, constater la livraison
+// ---------------------------------------------------------------------------
+
+export type AdvanceResult =
+  | { ok: false; reason: 'not-found' | 'invalid-transition' }
+  | { ok: true; status: OrderStatus }
+
+/**
+ * Fait avancer une commande payée sur son parcours.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce que ce chemin vient ouvrir
+ * ---------------------------------------------------------------------------
+ * Trois états de `OrderStatus` n'étaient jamais atteints — `PREPARING`,
+ * `SHIPPED`, `DELIVERED` — et rien n'écrivait `shippedAt` ni `deliveredAt`.
+ * Une commande payée le restait indéfiniment : l'acheteuse recevait son colis
+ * et son espace commande affichait toujours « payée ».
+ *
+ * ---------------------------------------------------------------------------
+ * La transition est CONDITIONNELLE, comme toutes celles de ce fichier
+ * ---------------------------------------------------------------------------
+ * `WHERE "status" = <l'état lu>`. Deux onglets ouverts sur la même commande, ou
+ * deux clics sur « Expédier », ne produisent qu'une transition — donc un seul
+ * e-mail d'expédition. Le second appel trouve zéro ligne et le dit.
+ *
+ * ---------------------------------------------------------------------------
+ * Le numéro de suivi est FACULTATIF, et c'est un choix
+ * ---------------------------------------------------------------------------
+ * Toutes les expéditions n'en ont pas : une petite pièce part parfois en lettre
+ * suivie sans numéro exploitable. L'exiger obligerait à en inventer un, ce qui
+ * est pire que son absence — l'acheteuse suivrait un colis qui n'existe pas.
+ *
+ * Quand il est fourni, une ligne `Shipment` est créée. C'est le premier
+ * remplissage de ce modèle, en `provider: 'manual'` : aucun transporteur n'est
+ * branché, le numéro est recopié à la main depuis le bordereau.
+ */
+export async function advanceOrder(input: {
+  orderId: string
+  action: FulfilmentAction
+  tracking?: { number: string; url?: string | null }
+  now?: Date
+}): Promise<AdvanceResult> {
+  const now = input.now ?? new Date()
+
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { id: input.orderId },
+      select: {
+        id: true,
+        status: true,
+        shippingCarrierCode: true,
+        shippingServiceCode: true,
+        items: { select: { article: { select: { weightGrams: true } } } },
+      },
+    })
+
+    if (!order) return { ok: false as const, reason: 'not-found' as const }
+
+    // Le domaine décide, ce module écrit. Les transitions interdites — reculer,
+    // rejouer un geste, agir sur une commande annulée — sont refusées ici, sans
+    // base, et exercées comme telles.
+    const plan = planTransition(order.status, input.action)
+    if (!plan.ok || !plan.to) {
+      return { ok: false as const, reason: 'invalid-transition' as const }
+    }
+
+    const shipping = plan.to === 'SHIPPED' ? now : null
+    const delivered = plan.to === 'DELIVERED' ? now : null
+
+    const moved = await tx.$executeRaw`
+      UPDATE "Order"
+      SET "status" = ${plan.to}::"OrderStatus",
+          "shippedAt" = COALESCE(${shipping}::timestamptz, "shippedAt"),
+          "deliveredAt" = COALESCE(${delivered}::timestamptz, "deliveredAt"),
+          "updatedAt" = now()
+      WHERE "id" = ${order.id}
+        AND "status" = ${order.status}::"OrderStatus"
+    `
+
+    // Zéro ligne : quelqu'un d'autre a fait la transition entre la lecture et
+    // l'écriture. Sans cette garde, un double clic enverrait deux e-mails
+    // d'expédition pour un seul colis.
+    if (moved === 0) {
+      return { ok: false as const, reason: 'invalid-transition' as const }
+    }
+
+    if (plan.to === 'SHIPPED') {
+      if (input.tracking) {
+        const packaging = await getShippingConfig(tx)
+        const contents = order.items.reduce(
+          (total, item) => total + item.article.weightGrams,
+          0,
+        )
+
+        await tx.shipment.create({
+          data: {
+            orderId: order.id,
+            // Aucun transporteur n'est branché : l'expédition est saisie à la
+            // main, et le dire évite qu'on cherche plus tard un appel d'API qui
+            // n'a jamais eu lieu.
+            provider: 'manual',
+            carrierCode: order.shippingCarrierCode,
+            serviceCode: order.shippingServiceCode,
+            trackingNumber: normalizeTrackingNumber(input.tracking.number),
+            trackingUrl: input.tracking.url ?? null,
+            // Le poids réel du colis, calculé comme le devis l'avait fait :
+            // contenu plus emballage. Le recopier d'un champ figé aurait été
+            // plus simple ; il n'en existe aucun.
+            weightGrams: contents + packaging.packagingWeightGrams,
+            status: 'shipped',
+          },
+        })
+      }
+
+      // L'avis d'expédition. INSCRIT dans la transaction : un e-mail parti ne
+      // se rembobine pas si l'écriture échoue ensuite.
+      await enqueue(tx, {
+        type: 'order.shipped',
+        payload: { orderId: order.id },
+      })
+    }
+
+    return { ok: true as const, status: plan.to }
   })
 }

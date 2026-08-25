@@ -88,6 +88,25 @@ const orderDetailSelect = {
   cgvVersion: true,
   cgvAcceptedAt: true,
   refundedCents: true,
+  /**
+   * L'expédition, quand elle existe.
+   *
+   * Trois colonnes seulement. `labelUrl` est l'étiquette d'affranchissement —
+   * un document de l'entreprise, qui porte parfois le tarif négocié — et
+   * `costCents` le coût transporteur réel : ni l'un ni l'autre n'a à sortir
+   * ici. `providerRef` sert à annuler une étiquette côté transporteur, ce qui
+   * n'est pas un geste d'acheteuse.
+   *
+   * `take: 1` sur la plus récente : rien ne découpe aujourd'hui une commande en
+   * plusieurs colis, mais le modèle l'autorise, et supposer l'unicité
+   * afficherait le premier suivi émis plutôt que le bon le jour où cela
+   * changera.
+   */
+  shipments: {
+    select: { trackingNumber: true, trackingUrl: true, createdAt: true },
+    orderBy: { createdAt: 'desc' },
+    take: 1,
+  },
   // Volontairement absents : shippingCostCents, costCentsSnapshot,
   // stripeSessionId, stripePaymentIntentId, lockOwnerId.
 } satisfies Prisma.OrderSelect

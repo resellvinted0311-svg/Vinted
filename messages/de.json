@@ -364,6 +364,10 @@
     "shippingTo": "Lieferung",
     "carrier": "{carrier} — {service}",
     "servicePoint": "Abholstelle {id}",
+    "shippedOn": "Versandt am {date}",
+    "trackingNumber": "Sendungsnummer: {number}",
+    "noTracking": "Diese Sendung hat keine Sendungsnummer.",
+    "trackOnCarrier": "Beim Versanddienstleister verfolgen",
     "customerNote": "Ihre Nachricht",
     "status": {
       "PENDING_PAYMENT": "Zahlung ausstehend",
@@ -529,6 +533,37 @@
         "floorConfirmationRequired": "Setzen Sie das Häkchen, um unter dem Mindestpreis anzunehmen.",
         "unknown": "Die Antwort konnte nicht erfasst werden."
       }
+    },
+    "orders": "Zu versendende Bestellungen",
+    "ordersIntro": "Bezahlte Bestellungen, die älteste zuerst. Eine versandte Bestellung wartet nicht mehr auf Sie.",
+    "noPendingOrders": "Keine Bestellung wartet auf den Versand.",
+    "noPendingOrdersHint": "Bezahlte Bestellungen erscheinen hier.",
+    "ordersPendingCount": "{count, plural, one {# zu versenden} other {# zu versenden}}",
+    "prepare": "In Vorbereitung setzen",
+    "ship": "Als versandt markieren",
+    "deliver": "Als zugestellt markieren",
+    "trackingLabel": "Sendungsnummer",
+    "trackingHint": "Optional. Vom Beleg abgeschrieben; Leerzeichen werden entfernt.",
+    "trackingUrlLabel": "Sendungsverfolgung",
+    "trackingUrlHint": "Optional. Die Seite des Transporteurs, falls vorhanden.",
+    "shippedTo": "Nach {city}, {country}",
+    "paidOn": "Bezahlt am {date}",
+    "pieces": "{count, plural, one {# Stück} other {# Stück}}",
+    "shippingLabel": "Lieferadresse",
+    "contents": "Inhalt",
+    "customerNote": "Notiz der Käuferin",
+    "contentWeight": "{grams} g Inhalt",
+    "advanced": {
+      "PREPARING": "Bestellung in Vorbereitung gesetzt.",
+      "SHIPPED": "Bestellung als versandt markiert. Die Person wurde per E-Mail benachrichtigt.",
+      "DELIVERED": "Bestellung als zugestellt markiert."
+    },
+    "errors": {
+      "invalidRequest": "Ungültige Anfrage. Laden Sie die Seite neu.",
+      "rateLimited": "Zu viele Aktionen in kurzer Zeit. Versuchen Sie es gleich erneut.",
+      "orderNotFound": "Diese Bestellung ist nicht auffindbar.",
+      "invalidTransition": "Diese Bestellung hat den Status bereits geändert. Laden Sie die Seite neu.",
+      "unknown": "Die Aktion konnte nicht erfasst werden."
     }
   },
   "orderEmail": {
@@ -543,7 +578,13 @@
     "deliveryTo": "Lieferung an",
     "invoice": "Rechnung Nr. {number}, in Ihrem Konto verfügbar.",
     "withdrawal": "Sie haben ab Erhalt 14 Tage Zeit, es sich anders zu überlegen. Das Widerrufsformular finden Sie auf der Website.",
-    "signature": "Bis bald, {shop}"
+    "signature": "Bis bald, {shop}",
+    "shipped": {
+      "subject": "Ihre Bestellung {orderNumber} ist unterwegs",
+      "intro": "Ihre Bestellung {orderNumber} hat die Werkstatt verlassen.",
+      "tracking": "Sendungsnummer: {number}",
+      "noTracking": "Diese Sendung hat keine Sendungsnummer. Rechnen Sie mit einigen Werktagen."
+    }
   },
   "offerEmail": {
     "subject": {
@@ -580,6 +621,7 @@
     "processing": {
       "account": "Ihr Konto",
       "orders": "Ihre bezahlten Bestellungen und Rechnungen",
+      "shipments": "Der Versand Ihrer Pakete",
       "abandoned-orders": "Eine begonnene und dann abgebrochene Bestellung",
       "payment-events": "Technische Spuren Ihrer Zahlungen",
       "favorites": "Ihre Favoriten",

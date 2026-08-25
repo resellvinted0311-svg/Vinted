@@ -68,6 +68,48 @@ function stripPhone(value: Prisma.JsonValue): Prisma.InputJsonValue | null {
  * Ligne par ligne, et c'est inévitable : chaque adresse est un objet distinct.
  * Le nombre de commandes d'une seule personne se compte en dizaines au plus.
  */
+/**
+ * Retire le numéro de suivi des expéditions d'un ensemble de commandes.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi un numéro de suivi ne peut pas rester
+ * ---------------------------------------------------------------------------
+ * Pris isolément, c'est une suite de caractères. Mais il ouvre, chez le
+ * transporteur, une page qui porte la destination du colis et l'heure de
+ * chacun de ses passages — c'est-à-dire l'adresse qu'on vient précisément
+ * d'effacer de la commande, et un peu plus.
+ *
+ * Sans cette fonction, l'effacement d'un compte laissait donc en base une clé
+ * vers ces informations, chez un tiers, indéfiniment. C'est exactement le
+ * défaut que `servicePointId` présentait avant d'être traité : une donnée jugée
+ * assez personnelle pour être effacée d'un côté, oubliée de l'autre.
+ *
+ * ---------------------------------------------------------------------------
+ * On vide, on ne supprime pas
+ * ---------------------------------------------------------------------------
+ * La ligne reste, avec le transporteur, le poids et les dates : rien de
+ * personnel une fois le numéro parti, et de quoi expliquer un coût de port
+ * porté sur une pièce comptable. Supprimer la ligne perdrait cela sans rien
+ * gagner.
+ */
+async function stripShipmentTracking(
+  tx: Prisma.TransactionClient,
+  where: Prisma.OrderWhereInput,
+): Promise<number> {
+  const result = await tx.shipment.updateMany({
+    where: {
+      order: where,
+      // Ne réécrit que ce qui porte encore quelque chose : sans ce prédicat,
+      // chaque passage de la purge remonterait un compte non nul et ferait
+      // croire à un travail qui n'a pas eu lieu.
+      OR: [{ trackingNumber: { not: null } }, { trackingUrl: { not: null } }],
+    },
+    data: { trackingNumber: null, trackingUrl: null, labelUrl: null },
+  })
+
+  return result.count
+}
+
 async function stripPhonesFromOrders(
   tx: Prisma.TransactionClient,
   where: Prisma.OrderWhereInput,
@@ -213,6 +255,11 @@ export async function anonymizeUser(
     })
 
     await stripPhonesFromOrders(tx, { userId })
+
+    // Le numéro de suivi ouvre chez le transporteur une page qui porte la
+    // destination du colis : le laisser reviendrait à effacer l'adresse d'un
+    // côté et à en garder la clé de l'autre.
+    await stripShipmentTracking(tx, { userId })
 
     await tx.user.update({
       where: { id: userId },
@@ -431,6 +478,16 @@ export async function anonymizeExpiredOrders(
         },
       })
     }
+
+    // Le suivi part avec l'adresse, et pour la même raison : il en est la clé
+    // chez le transporteur.
+    //
+    // Rien d'équivalent n'est nécessaire dans `anonymizeAbandonedOrders` : elle
+    // ne retient que les commandes sans `paidAt` ni numéro de facture, et
+    // `advanceOrder` refuse d'expédier depuis un autre état que PAYÉE ou EN
+    // PRÉPARATION. Un tunnel abandonné n'a donc jamais d'expédition — l'écrire
+    // quand même y serait du code que rien ne peut atteindre.
+    await stripShipmentTracking(tx, { id: { in: expired.map((o) => o.id) } })
   })
 
   return expired.length

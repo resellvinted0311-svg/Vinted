@@ -147,6 +147,30 @@ export async function exportPersonalData(
               unitPriceCents: true,
             },
           },
+          /**
+           * L'expédition, quand elle a eu lieu.
+           *
+           * Le numéro de suivi est une donnée personnelle indirecte : il ouvre,
+           * chez le transporteur, une page qui porte la destination du colis et
+           * l'historique de ses passages. La copie de l'article 15 doit donc le
+           * contenir — et cette page annonce « tout ce que ce site conserve à
+           * votre sujet ».
+           *
+           * `labelUrl`, `costCents` et `providerRef` restent dehors : étiquette
+           * d'affranchissement, coût transporteur réel et référence de compte
+           * professionnel sont des données de l'entreprise.
+           */
+          shipments: {
+            select: {
+              carrierCode: true,
+              serviceCode: true,
+              trackingNumber: true,
+              trackingUrl: true,
+              weightGrams: true,
+              status: true,
+              createdAt: true,
+            },
+          },
           // `shippingCostCents` et le coût d'achat des lignes restent dehors :
           // ce sont des données de l'entreprise, pas de la personne.
         },

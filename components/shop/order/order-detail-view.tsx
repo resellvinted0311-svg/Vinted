@@ -17,11 +17,16 @@ import { OrderStatusBadge } from './order-status-badge'
  * bancaire.
  *
  * ---------------------------------------------------------------------------
- * Aucun suivi n'est promis
+ * Le suivi ne s'affiche que s'il existe
  * ---------------------------------------------------------------------------
- * Les expéditions n'existent pas encore en base. Afficher un « suivi » vide,
- * ou un lien vers un transporteur sans numéro, promettrait une information
- * qu'on n'a pas. La ligne apparaîtra quand l'expédition existera.
+ * Toutes les expéditions n'ont pas de numéro : une petite pièce part parfois
+ * en lettre suivie sans numéro exploitable. Afficher un « suivi » vide, ou un
+ * lien vers un transporteur sans numéro, promettrait une information qu'on n'a
+ * pas — et enverrait chercher un colis sur une page qui répond « introuvable ».
+ *
+ * Le bloc dit donc trois choses distinctes : rien, si la commande n'est pas
+ * partie ; la date d'expédition seule, si elle est partie sans suivi ; la date
+ * et le numéro, quand il y en a un.
  */
 export function OrderDetailView({ order }: { order: OrderDetail }) {
   const t = useTranslations('order')
@@ -31,6 +36,8 @@ export function OrderDetailView({ order }: { order: OrderDetail }) {
   const addressLines = formatAddressLines(
     readPostalAddress(order.shippingAddress),
   )
+
+  const shipment = order.shipments[0] ?? null
 
   return (
     <div className="flex flex-col gap-8">
@@ -141,6 +148,47 @@ export function OrderDetailView({ order }: { order: OrderDetail }) {
           <p className="data mt-1 text-xs text-muted">
             {t('servicePoint', { id: order.servicePointId })}
           </p>
+        ) : null}
+
+        {/*
+          L'expédition, quand elle a eu lieu. `shippedAt` est écrit par le
+          geste du vendeur ; le numéro, lui, n'existe que si l'envoi en avait
+          un. Les deux sont donc testés séparément — lier l'un à l'autre
+          masquerait la date d'expédition d'un envoi non suivi, qui est
+          pourtant l'information la plus attendue à ce moment-là.
+        */}
+        {order.shippedAt ? (
+          <div className="mt-4 border-t border-sand pt-4">
+            <p className="text-sm text-ink">
+              {t('shippedOn', { date: formatDate(order.shippedAt, locale) })}
+            </p>
+
+            {shipment?.trackingNumber ? (
+              <p className="data mt-1 text-xs text-muted">
+                {t('trackingNumber', { number: shipment.trackingNumber })}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-muted">{t('noTracking')}</p>
+            )}
+
+            {/*
+              `rel="noreferrer"` : la page du transporteur n'a pas à recevoir
+              l'adresse d'où l'on vient, qui contient le numéro de commande.
+              Le protocole du lien est contrôlé à la saisie
+              (`lib/validation/admin.ts`) — un `href` recopié sans contrôle
+              accepterait `javascript:`.
+            */}
+            {shipment?.trackingUrl ? (
+              <a
+                href={shipment.trackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-xs text-ink underline underline-offset-4"
+              >
+                {t('trackOnCarrier')}
+              </a>
+            ) : null}
+          </div>
         ) : null}
 
         {order.customerNote ? (
