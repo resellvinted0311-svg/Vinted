@@ -494,6 +494,43 @@
     "addresses": "Indirizzi",
     "settings": "Impostazioni"
   },
+  "admin": {
+    "title": "Gestione",
+    "navLabel": "Navigazione della gestione",
+    "intro": "Ciò che attende una decisione. Nient’altro.",
+    "offers": "Offerte ricevute",
+    "offersIntro": "Le proposte in attesa, prima quella che scade per prima. Un’offerta senza risposta si spegne da sola.",
+    "pendingCount": "{count, plural, one {# in attesa} other {# in attesa}}",
+    "nothingPending": "Nulla in attesa",
+    "noPendingOffers": "Nessuna offerta attende una decisione.",
+    "noPendingOffersHint": "Le proposte compaiono qui appena vengono fatte.",
+    "sold": "Venduto",
+    "lapsed": "Termine scaduto",
+    "offered": "Offerto",
+    "listed": "Prezzo indicato",
+    "floor": "Prezzo minimo",
+    "marginToFloor": "Scarto dal minimo",
+    "receivedFrom": "Da {from}, il {date}",
+    "answerBy": "risposta attesa entro il {date}",
+    "belowFloorWarning": "Sotto il prezzo minimo: questa vendita sarebbe in perdita, spedizione e commissioni comprese.",
+    "respond": {
+      "accept": "Accettare",
+      "reject": "Rifiutare",
+      "accepted": "Offerta accettata. La persona è avvisata per e-mail, e il prezzo le resta pagabile.",
+      "rejected": "Offerta rifiutata. La persona è avvisata per e-mail.",
+      "confirmBelowFloor": "Accetto di vendere sotto il prezzo minimo",
+      "confirmBelowFloorHint": "La decisione è registrata come tale sull’offerta.",
+      "errors": {
+        "invalidRequest": "Richiesta non valida. Ricarica la pagina.",
+        "rateLimited": "Troppe risposte in poco tempo. Riprova tra poco.",
+        "offerNotFound": "Questa offerta non si trova.",
+        "offerAlreadyAnswered": "Questa offerta ha già ricevuto risposta, o è appena scaduta.",
+        "articleSold": "Il capo è stato venduto nel frattempo.",
+        "floorConfirmationRequired": "Spunta la conferma per accettare sotto il prezzo minimo.",
+        "unknown": "Non è stato possibile registrare la risposta."
+      }
+    }
+  },
   "orderEmail": {
     "subject": "Il suo ordine {orderNumber}",
     "greeting": "Buongiorno,",

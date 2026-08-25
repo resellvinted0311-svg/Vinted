@@ -494,6 +494,43 @@
     "addresses": "Addresses",
     "settings": "Settings"
   },
+  "admin": {
+    "title": "Back office",
+    "navLabel": "Back-office navigation",
+    "intro": "What is waiting for a decision. Nothing else.",
+    "offers": "Offers received",
+    "offersIntro": "Pending proposals, the one expiring soonest first. An offer left unanswered dies on its own.",
+    "pendingCount": "{count, plural, one {# waiting} other {# waiting}}",
+    "nothingPending": "Nothing waiting",
+    "noPendingOffers": "No offer is waiting for a decision.",
+    "noPendingOffersHint": "Proposals appear here as soon as they are made.",
+    "sold": "Sold",
+    "lapsed": "Time elapsed",
+    "offered": "Offered",
+    "listed": "Asking price",
+    "floor": "Floor price",
+    "marginToFloor": "Margin to floor",
+    "receivedFrom": "From {from}, on {date}",
+    "answerBy": "answer due by {date}",
+    "belowFloorWarning": "Below the floor price: this sale would lose money, shipping and fees included.",
+    "respond": {
+      "accept": "Accept",
+      "reject": "Decline",
+      "accepted": "Offer accepted. The person has been emailed, and the price stays payable for them.",
+      "rejected": "Offer declined. The person has been emailed.",
+      "confirmBelowFloor": "I accept selling below the floor price",
+      "confirmBelowFloorHint": "The decision is recorded as such on the offer.",
+      "errors": {
+        "invalidRequest": "Invalid request. Reload the page.",
+        "rateLimited": "Too many replies in a short time. Try again shortly.",
+        "offerNotFound": "This offer cannot be found.",
+        "offerAlreadyAnswered": "This offer has already been answered, or has just expired.",
+        "articleSold": "The piece was sold in the meantime.",
+        "floorConfirmationRequired": "Tick the confirmation to accept below the floor price.",
+        "unknown": "The reply could not be recorded."
+      }
+    }
+  },
   "orderEmail": {
     "subject": "Your order {orderNumber}",
     "greeting": "Hello,",

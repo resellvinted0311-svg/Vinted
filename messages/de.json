@@ -494,6 +494,43 @@
     "addresses": "Adressen",
     "settings": "Einstellungen"
   },
+  "admin": {
+    "title": "Verwaltung",
+    "navLabel": "Navigation der Verwaltung",
+    "intro": "Was eine Entscheidung erwartet. Sonst nichts.",
+    "offers": "Eingegangene Angebote",
+    "offersIntro": "Wartende Angebote, das zuerst ablaufende zuoberst. Ein unbeantwortetes Angebot erlischt von selbst.",
+    "pendingCount": "{count, plural, one {# wartend} other {# wartend}}",
+    "nothingPending": "Nichts wartend",
+    "noPendingOffers": "Kein Angebot wartet auf eine Entscheidung.",
+    "noPendingOffersHint": "Angebote erscheinen hier, sobald sie eingehen.",
+    "sold": "Verkauft",
+    "lapsed": "Frist abgelaufen",
+    "offered": "Geboten",
+    "listed": "Angezeigter Preis",
+    "floor": "Mindestpreis",
+    "marginToFloor": "Abstand zum Mindestpreis",
+    "receivedFrom": "Von {from}, am {date}",
+    "answerBy": "Antwort fällig bis {date}",
+    "belowFloorWarning": "Unter dem Mindestpreis: dieser Verkauf wäre defizitär, Versand und Abgaben eingerechnet.",
+    "respond": {
+      "accept": "Annehmen",
+      "reject": "Ablehnen",
+      "accepted": "Angebot angenommen. Die Person wurde per E-Mail benachrichtigt, der Preis bleibt für sie zahlbar.",
+      "rejected": "Angebot abgelehnt. Die Person wurde per E-Mail benachrichtigt.",
+      "confirmBelowFloor": "Ich verkaufe bewusst unter dem Mindestpreis",
+      "confirmBelowFloorHint": "Die Entscheidung wird als solche am Angebot festgehalten.",
+      "errors": {
+        "invalidRequest": "Ungültige Anfrage. Laden Sie die Seite neu.",
+        "rateLimited": "Zu viele Antworten in kurzer Zeit. Versuchen Sie es gleich erneut.",
+        "offerNotFound": "Dieses Angebot ist nicht auffindbar.",
+        "offerAlreadyAnswered": "Dieses Angebot wurde bereits beantwortet oder ist gerade abgelaufen.",
+        "articleSold": "Das Stück wurde zwischenzeitlich verkauft.",
+        "floorConfirmationRequired": "Setzen Sie das Häkchen, um unter dem Mindestpreis anzunehmen.",
+        "unknown": "Die Antwort konnte nicht erfasst werden."
+      }
+    }
+  },
   "orderEmail": {
     "subject": "Ihre Bestellung {orderNumber}",
     "greeting": "Guten Tag,",

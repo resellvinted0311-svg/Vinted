@@ -494,6 +494,43 @@
     "addresses": "Adresses",
     "settings": "Paramètres"
   },
+  "admin": {
+    "title": "Régie",
+    "navLabel": "Navigation de la régie",
+    "intro": "Ce qui attend une décision. Rien d’autre.",
+    "offers": "Offres reçues",
+    "offersIntro": "Les propositions en attente, celle qui expire le plus tôt en premier. Une offre sans réponse s’éteint d’elle-même.",
+    "pendingCount": "{count, plural, one {# en attente} other {# en attente}}",
+    "nothingPending": "Rien en attente",
+    "noPendingOffers": "Aucune offre n’attend de décision.",
+    "noPendingOffersHint": "Les propositions apparaissent ici dès leur dépôt.",
+    "sold": "Vendu",
+    "lapsed": "Délai écoulé",
+    "offered": "Proposé",
+    "listed": "Prix affiché",
+    "floor": "Prix plancher",
+    "marginToFloor": "Écart au plancher",
+    "receivedFrom": "De {from}, le {date}",
+    "answerBy": "réponse due avant le {date}",
+    "belowFloorWarning": "Sous le prix plancher : cette vente serait déficitaire, port et prélèvements compris.",
+    "respond": {
+      "accept": "Accepter",
+      "reject": "Refuser",
+      "accepted": "Offre acceptée. La personne est prévenue par e-mail, et le prix lui reste payable.",
+      "rejected": "Offre refusée. La personne est prévenue par e-mail.",
+      "confirmBelowFloor": "J’accepte de vendre sous le prix plancher",
+      "confirmBelowFloorHint": "La décision est enregistrée comme telle sur l’offre.",
+      "errors": {
+        "invalidRequest": "Demande invalide. Rechargez la page.",
+        "rateLimited": "Trop de réponses en peu de temps. Réessayez dans un moment.",
+        "offerNotFound": "Cette offre est introuvable.",
+        "offerAlreadyAnswered": "Cette offre a déjà reçu une réponse, ou vient d’expirer.",
+        "articleSold": "La pièce a été vendue entre-temps.",
+        "floorConfirmationRequired": "Cochez la confirmation pour accepter sous le prix plancher.",
+        "unknown": "La réponse n’a pas pu être enregistrée."
+      }
+    }
+  },
   "orderEmail": {
     "subject": "Votre commande {orderNumber}",
     "greeting": "Bonjour,",

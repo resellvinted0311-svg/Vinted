@@ -111,9 +111,14 @@ toujours par être publié avec le code.
 
 Phases 4 à 8 non réalisées. En conséquence, sur le déploiement :
 
-- **aucun back-office** : les offres reçues ne peuvent être ni acceptées, ni
-  refusées, ni contre-proposées depuis une interface. La logique existe et est
-  testée (`respondToOffer`), il lui manque un écran ;
+- **le back-office ne couvre que les offres** : accepter ou refuser une
+  proposition se fait depuis `/admin/offres`. Le reste — catalogue, commandes,
+  réglages — n'a pas d'écran ;
+- **la contre-proposition n'est pas exposée**, et c'est délibéré : elle
+  créerait une offre en attente au nom de l'acheteuse, qui ne pourrait ni
+  l'accepter ni en déposer une autre — donc bloquée quarante-huit heures pour
+  avoir négocié. Le raisonnement complet, et les deux points à traiter avec
+  elle, sont en tête de `lib/admin/offer-actions.ts` ;
 - aucune expédition réelle : les grilles de port sont en base, aucun
   transporteur n'est appelé. Le jour où l'un le sera, il recevra nom, adresse
   et téléphone — donc il devra entrer dans la liste des sous-traitants, avec

@@ -145,6 +145,11 @@ async function runOne(job: JobRecord): Promise<void> {
       return runOfferEmail(job, sendOfferAcknowledgement)
     case 'offer.notify-shop':
       return runOfferEmail(job, sendOfferShopNotice)
+    // La réponse du vendeur emprunte le MÊME gabarit que l'accusé de dépôt :
+    // il se compose déjà à partir du statut relu de l'offre, donc il dit
+    // « acceptée » ou « refusée » sans rien avoir à lui apprendre.
+    case 'offer.respond':
+      return runOfferEmail(job, sendOfferAcknowledgement)
     case 'sync.notify':
       // Une pièce effacée ou détachée de l'application renvoie `false` : le
       // travail est terminé, pas en échec. Tout le reste — application

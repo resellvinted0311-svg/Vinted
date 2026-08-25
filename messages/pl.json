@@ -494,6 +494,43 @@
     "addresses": "Adresy",
     "settings": "Ustawienia"
   },
+  "admin": {
+    "title": "Zaplecze",
+    "navLabel": "Nawigacja zaplecza",
+    "intro": "To, co czeka na decyzję. Nic więcej.",
+    "offers": "Otrzymane oferty",
+    "offersIntro": "Oczekujące propozycje, najpierw ta wygasająca najwcześniej. Oferta bez odpowiedzi gaśnie sama.",
+    "pendingCount": "{count, plural, one {# oczekuje} few {# oczekują} many {# oczekuje} other {# oczekuje}}",
+    "nothingPending": "Nic nie czeka",
+    "noPendingOffers": "Żadna oferta nie czeka na decyzję.",
+    "noPendingOffersHint": "Propozycje pojawiają się tutaj zaraz po złożeniu.",
+    "sold": "Sprzedane",
+    "lapsed": "Termin minął",
+    "offered": "Zaproponowano",
+    "listed": "Cena wywoławcza",
+    "floor": "Cena minimalna",
+    "marginToFloor": "Odstęp od minimum",
+    "receivedFrom": "Od {from}, dnia {date}",
+    "answerBy": "odpowiedź do {date}",
+    "belowFloorWarning": "Poniżej ceny minimalnej: ta sprzedaż przyniosłaby stratę, wraz z wysyłką i prowizjami.",
+    "respond": {
+      "accept": "Przyjmij",
+      "reject": "Odrzuć",
+      "accepted": "Oferta przyjęta. Osoba została powiadomiona e-mailem, a cena pozostaje dla niej obowiązująca.",
+      "rejected": "Oferta odrzucona. Osoba została powiadomiona e-mailem.",
+      "confirmBelowFloor": "Zgadzam się sprzedać poniżej ceny minimalnej",
+      "confirmBelowFloorHint": "Decyzja zostaje zapisana przy ofercie.",
+      "errors": {
+        "invalidRequest": "Nieprawidłowe żądanie. Odśwież stronę.",
+        "rateLimited": "Zbyt wiele odpowiedzi w krótkim czasie. Spróbuj za chwilę.",
+        "offerNotFound": "Nie znaleziono tej oferty.",
+        "offerAlreadyAnswered": "Ta oferta ma już odpowiedź lub właśnie wygasła.",
+        "articleSold": "Przedmiot został w międzyczasie sprzedany.",
+        "floorConfirmationRequired": "Zaznacz potwierdzenie, aby przyjąć poniżej ceny minimalnej.",
+        "unknown": "Nie udało się zapisać odpowiedzi."
+      }
+    }
+  },
   "orderEmail": {
     "subject": "Twoje zamówienie {orderNumber}",
     "greeting": "Dzień dobry,",

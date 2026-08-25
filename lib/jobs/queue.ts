@@ -72,6 +72,16 @@ export type JobType =
    * cet avis, la négociation ne serait qu'un formulaire décoratif.
    */
   | 'offer.notify-shop'
+  /**
+   * RÉPONSE du vendeur, à la personne qui avait proposé.
+   *
+   * Il manquait, et son absence rendait la négociation muette dans le sens qui
+   * compte : `respondToOffer` acceptait une offre, posait une échéance de
+   * validité du prix — et personne n'était prévenu. L'acheteuse aurait eu
+   * vingt-quatre heures pour payer un prix dont elle n'aurait jamais appris
+   * qu'il lui était accordé.
+   */
+  | 'offer.respond'
 
 export interface JobRecord {
   id: string

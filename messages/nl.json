@@ -494,6 +494,43 @@
     "addresses": "Adressen",
     "settings": "Instellingen"
   },
+  "admin": {
+    "title": "Beheer",
+    "navLabel": "Navigatie van het beheer",
+    "intro": "Wat op een beslissing wacht. Niets anders.",
+    "offers": "Ontvangen biedingen",
+    "offersIntro": "De wachtende voorstellen, het eerst verlopende bovenaan. Een bod zonder antwoord dooft vanzelf.",
+    "pendingCount": "{count, plural, one {# wachtend} other {# wachtend}}",
+    "nothingPending": "Niets wachtend",
+    "noPendingOffers": "Geen enkel bod wacht op een beslissing.",
+    "noPendingOffersHint": "Voorstellen verschijnen hier zodra ze binnenkomen.",
+    "sold": "Verkocht",
+    "lapsed": "Termijn verstreken",
+    "offered": "Geboden",
+    "listed": "Vraagprijs",
+    "floor": "Bodemprijs",
+    "marginToFloor": "Afstand tot bodem",
+    "receivedFrom": "Van {from}, op {date}",
+    "answerBy": "antwoord verwacht vóór {date}",
+    "belowFloorWarning": "Onder de bodemprijs: deze verkoop zou verlies opleveren, verzending en kosten inbegrepen.",
+    "respond": {
+      "accept": "Aanvaarden",
+      "reject": "Afwijzen",
+      "accepted": "Bod aanvaard. De persoon is per e-mail verwittigd, en de prijs blijft voor haar geldig.",
+      "rejected": "Bod afgewezen. De persoon is per e-mail verwittigd.",
+      "confirmBelowFloor": "Ik aanvaard te verkopen onder de bodemprijs",
+      "confirmBelowFloorHint": "De beslissing wordt als zodanig op het bod vastgelegd.",
+      "errors": {
+        "invalidRequest": "Ongeldig verzoek. Laad de pagina opnieuw.",
+        "rateLimited": "Te veel antwoorden in korte tijd. Probeer het zo opnieuw.",
+        "offerNotFound": "Dit bod is niet te vinden.",
+        "offerAlreadyAnswered": "Dit bod is al beantwoord, of is net verlopen.",
+        "articleSold": "Het stuk is intussen verkocht.",
+        "floorConfirmationRequired": "Vink de bevestiging aan om onder de bodemprijs te aanvaarden.",
+        "unknown": "Het antwoord kon niet worden vastgelegd."
+      }
+    }
+  },
   "orderEmail": {
     "subject": "Uw bestelling {orderNumber}",
     "greeting": "Hallo,",

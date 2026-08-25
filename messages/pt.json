@@ -494,6 +494,43 @@
     "addresses": "Moradas",
     "settings": "Definições"
   },
+  "admin": {
+    "title": "Gestão",
+    "navLabel": "Navegação da gestão",
+    "intro": "O que aguarda uma decisão. Nada mais.",
+    "offers": "Propostas recebidas",
+    "offersIntro": "As propostas pendentes, primeiro a que expira mais cedo. Uma proposta sem resposta apaga-se sozinha.",
+    "pendingCount": "{count, plural, one {# pendente} other {# pendentes}}",
+    "nothingPending": "Nada pendente",
+    "noPendingOffers": "Nenhuma proposta aguarda decisão.",
+    "noPendingOffersHint": "As propostas aparecem aqui assim que são feitas.",
+    "sold": "Vendido",
+    "lapsed": "Prazo esgotado",
+    "offered": "Proposto",
+    "listed": "Preço indicado",
+    "floor": "Preço mínimo",
+    "marginToFloor": "Margem ao mínimo",
+    "receivedFrom": "De {from}, a {date}",
+    "answerBy": "resposta até {date}",
+    "belowFloorWarning": "Abaixo do preço mínimo: esta venda daria prejuízo, portes e comissões incluídos.",
+    "respond": {
+      "accept": "Aceitar",
+      "reject": "Recusar",
+      "accepted": "Proposta aceite. A pessoa foi avisada por e-mail, e o preço mantém-se pagável para ela.",
+      "rejected": "Proposta recusada. A pessoa foi avisada por e-mail.",
+      "confirmBelowFloor": "Aceito vender abaixo do preço mínimo",
+      "confirmBelowFloorHint": "A decisão fica registada como tal na proposta.",
+      "errors": {
+        "invalidRequest": "Pedido inválido. Recarregue a página.",
+        "rateLimited": "Demasiadas respostas em pouco tempo. Tente daqui a pouco.",
+        "offerNotFound": "Esta proposta não foi encontrada.",
+        "offerAlreadyAnswered": "Esta proposta já teve resposta, ou acabou de expirar.",
+        "articleSold": "A peça foi vendida entretanto.",
+        "floorConfirmationRequired": "Assinale a confirmação para aceitar abaixo do preço mínimo.",
+        "unknown": "Não foi possível registar a resposta."
+      }
+    }
+  },
   "orderEmail": {
     "subject": "A sua encomenda {orderNumber}",
     "greeting": "Olá,",

@@ -465,6 +465,30 @@ export async function respondToOffer(input: {
       counterOfferId = counter.id
     }
 
+    // -------------------------------------------------------------------------
+    // Prévenir l'acheteuse — ce qui manquait, et rendait la réponse muette
+    // -------------------------------------------------------------------------
+    // Sans cette inscription, `respondToOffer` acceptait une offre, posait une
+    // échéance de validité du prix, et personne n'était prévenu. L'acheteuse
+    // avait vingt-quatre heures pour payer un prix dont elle n'apprenait jamais
+    // qu'il lui était accordé. Un refus était tout aussi silencieux : elle
+    // attendait une réponse déjà donnée, sans pouvoir reproposer puisque
+    // l'offre n'était plus en attente.
+    //
+    // INSCRIT dans la transaction, comme partout ailleurs : un e-mail parti ne
+    // se rembobine pas si l'écriture échoue ensuite, et un appel réseau tenu
+    // dans une transaction garderait des verrous en attendant un tiers.
+    //
+    // La contre-offre est écartée : son gabarit dirait « refusée », et le lot
+    // qui l'expose n'est pas celui-ci (voir l'en-tête de
+    // `lib/admin/offer-actions.ts`).
+    if (input.response.action !== 'counter') {
+      await enqueue(tx, {
+        type: 'offer.respond',
+        payload: { offerId: offer.id },
+      })
+    }
+
     return {
       ok: true as const,
       status,

@@ -494,6 +494,43 @@
     "addresses": "Direcciones",
     "settings": "Ajustes"
   },
+  "admin": {
+    "title": "Gestión",
+    "navLabel": "Navegación de gestión",
+    "intro": "Lo que espera una decisión. Nada más.",
+    "offers": "Ofertas recibidas",
+    "offersIntro": "Las propuestas pendientes, primero la que caduca antes. Una oferta sin respuesta se apaga sola.",
+    "pendingCount": "{count, plural, one {# pendiente} other {# pendientes}}",
+    "nothingPending": "Nada pendiente",
+    "noPendingOffers": "Ninguna oferta espera una decisión.",
+    "noPendingOffersHint": "Las propuestas aparecen aquí en cuanto se hacen.",
+    "sold": "Vendido",
+    "lapsed": "Plazo agotado",
+    "offered": "Ofrecido",
+    "listed": "Precio indicado",
+    "floor": "Precio mínimo",
+    "marginToFloor": "Margen al mínimo",
+    "receivedFrom": "De {from}, el {date}",
+    "answerBy": "respuesta antes del {date}",
+    "belowFloorWarning": "Por debajo del precio mínimo: esta venta daría pérdidas, envío y comisiones incluidos.",
+    "respond": {
+      "accept": "Aceptar",
+      "reject": "Rechazar",
+      "accepted": "Oferta aceptada. Se ha avisado por correo, y el precio le sigue vigente.",
+      "rejected": "Oferta rechazada. Se ha avisado por correo.",
+      "confirmBelowFloor": "Acepto vender por debajo del precio mínimo",
+      "confirmBelowFloorHint": "La decisión queda registrada como tal en la oferta.",
+      "errors": {
+        "invalidRequest": "Solicitud no válida. Recarga la página.",
+        "rateLimited": "Demasiadas respuestas en poco tiempo. Inténtalo enseguida.",
+        "offerNotFound": "No se encuentra esta oferta.",
+        "offerAlreadyAnswered": "Esta oferta ya tiene respuesta, o acaba de caducar.",
+        "articleSold": "La prenda se vendió mientras tanto.",
+        "floorConfirmationRequired": "Marca la confirmación para aceptar por debajo del precio mínimo.",
+        "unknown": "No se ha podido registrar la respuesta."
+      }
+    }
+  },
   "orderEmail": {
     "subject": "Su pedido {orderNumber}",
     "greeting": "Hola:",

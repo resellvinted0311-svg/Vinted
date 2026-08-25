@@ -65,7 +65,7 @@ const IMAGE_HOSTS = 'https://res.cloudinary.com'
  * Le préfixe de langue est laissé libre : `/fr/panier`, `/nl/panier`.
  */
 export const STRICT_CSP_PATH =
-  /^\/[a-z]{2}\/(panier|commande|compte|connexion|inscription|favoris)(\/|$)/
+  /^\/[a-z]{2}\/(admin|panier|commande|compte|connexion|inscription|favoris)(\/|$)/
 
 /**
  * La politique, avec ou sans nonce.
