@@ -45,8 +45,23 @@ export interface Processing {
   /** Tables concernées, pour relier la déclaration au schéma réel. */
   tables: readonly string[]
   basis: LegalBasis
-  /** Durée de conservation en jours. `null` = tant que le compte existe. */
-  retentionDays: number | null
+  /**
+   * Durée de conservation.
+   *
+   * Un nombre de jours, ou l'un des deux cas qui n'en sont pas un :
+   *
+   *  - `null` — tant que le compte existe. La durée n'est pas une échéance
+   *    mais une condition, et l'annoncer en jours serait faux ;
+   *
+   *  - `'external'` — fixée par le prestataire, pas par notre code. Il fallait
+   *    ce troisième état pour déclarer les journaux techniques sans mentir : la
+   *    rétention des journaux de l'hébergeur et de l'outil de supervision se
+   *    règle dans LEURS consoles. Écrire un nombre ici laisserait croire que la
+   *    purge du projet s'en occupe, alors qu'elle n'a aucune prise dessus —
+   *    exactement le genre de déclaration fausse que ce fichier existe pour
+   *    empêcher.
+   */
+  retentionDays: number | null | 'external'
   /**
    * Ce qui justifie la durée. Écrit en clair parce que c'est la question
    * qu'on se repose deux ans plus tard, jamais celle dont on se souvient.
@@ -204,6 +219,39 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
       'Traces techniques des encaissements et des envois différés, ' +
       'caviardées de toute donnée personnelle et conservées un mois pour ' +
       'comprendre un échec.',
+  },
+  {
+    /**
+     * Les journaux du serveur et la supervision.
+     *
+     * ---------------------------------------------------------------------
+     * Pourquoi ils entrent au registre alors qu'ils sont caviardés
+     * ---------------------------------------------------------------------
+     * Un journal ne porte plus, depuis `lib/observability/`, ni adresse, ni
+     * nom, ni jeton : le filtre s'applique au nom du champ ET à la forme de la
+     * valeur, et un test de sécurité l'exerce par mutation.
+     *
+     * Il porte en revanche des IDENTIFIANTS INTERNES — numéro de commande,
+     * identifiant d'article — et c'est délibéré : sans eux un journal ne relie
+     * plus un échec à ce qui a échoué, et devient inutile. Or un identifiant
+     * qui permet de retrouver une personne en croisant la base est une donnée
+     * personnelle au sens de l'article 4.1, même s'il ne dit rien tout seul.
+     *
+     * Un traitement non déclaré est un traitement qu'on oublie. C'est
+     * exactement ce qui était arrivé aux traces de paiement, qui n'étaient
+     * purgées par rien.
+     */
+    key: 'technical-logs',
+    tables: ['(journaux du serveur, supervision des incidents)'],
+    basis: 'legitimate-interest',
+    // Voir le commentaire de `retentionDays` : nous n'avons aucune prise sur
+    // cette durée depuis le code, et prétendre le contraire serait faux.
+    retentionDays: 'external',
+    retentionReason:
+      'Journaux d’exploitation, caviardés de toute donnée directement ' +
+      'identifiante à l’écriture. Ils ne portent que des identifiants ' +
+      'internes. Leur durée est celle réglée chez l’hébergeur et l’outil de ' +
+      'supervision, non depuis ce site.',
   },
   {
     key: 'favorites',

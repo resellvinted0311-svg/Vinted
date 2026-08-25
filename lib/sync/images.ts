@@ -1,4 +1,5 @@
 import 'server-only'
+import { logger } from '@/lib/observability/logger'
 
 import { lookup } from 'node:dns/promises'
 import { isIP } from 'node:net'
@@ -596,10 +597,10 @@ export async function fetchArticleImages(
       failed += 1
       // Bruyant, mais sans l'URL complète : elle peut porter un jeton d'accès
       // dans sa chaîne de requête, et ce journal n'a pas à le conserver.
-      console.error(
-        `[sync] Visuel ${index + 1} de ${article.sku} en échec :`,
-        error instanceof Error ? error.message : error,
-      )
+      logger.failure('sync.image_download_failed', error, {
+        sku: article.sku,
+        position: index + 1,
+      })
     }
   }
 

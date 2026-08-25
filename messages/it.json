@@ -624,6 +624,7 @@
       "shipments": "La spedizione dei suoi pacchi",
       "abandoned-orders": "Un ordine iniziato e poi abbandonato",
       "payment-events": "Le tracce tecniche dei tuoi pagamenti",
+      "technical-logs": "I registri tecnici del sito",
       "favorites": "I suoi preferiti",
       "cart": "Il suo carrello",
       "cart-guest": "Il tuo carrello, senza account",
@@ -633,6 +634,7 @@
       "security": "La protezione dagli attacchi"
     },
     "retentionWhileAccount": "Finché l’account esiste",
+    "retentionExternal": "Durata fissata dal fornitore",
     "retentionDays": "{days} giorni",
     "retentionYears": "{years} anni",
     "processors": "Chi altro vi ha accesso",

@@ -624,6 +624,7 @@
       "shipments": "O envio das suas encomendas",
       "abandoned-orders": "Uma encomenda iniciada e depois abandonada",
       "payment-events": "Os vestígios técnicos dos seus pagamentos",
+      "technical-logs": "Os registos técnicos do site",
       "favorites": "Os seus favoritos",
       "cart": "O seu cesto",
       "cart-guest": "O seu cesto, sem conta",
@@ -633,6 +634,7 @@
       "security": "Proteção contra ataques"
     },
     "retentionWhileAccount": "Enquanto a conta existir",
+    "retentionExternal": "Prazo definido pelo alojamento",
     "retentionDays": "{days} dias",
     "retentionYears": "{years} anos",
     "processors": "Quem mais tem acesso",

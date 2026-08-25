@@ -294,6 +294,62 @@ remet ; c'est un commerce à quelques rues de chez soi, et la page annonce
 
 ---
 
+## 5 ter. Les journaux, qui n'étaient déclarés nulle part
+
+Un journal de serveur est une **copie de données**, conservée ailleurs que la
+base, souvent plus longtemps qu'elle, et lue par des gens qui n'ont aucune
+raison d'accéder à l'identité des clientes. Le site en produisait depuis le
+premier jour sans que le registre en dise un mot.
+
+### Le défaut mesuré
+
+Plusieurs appels journalisaient l'objet `Error` **lui-même** :
+
+```ts
+console.error('[auth] Session illisible.', error)
+```
+
+Un `Error` venu de Prisma porte, dans son `message`, l'appel qui a échoué avec
+ses **arguments**. Une lecture ratée sur `prisma.user.findUnique({ where: {
+email } })` inscrivait donc l'adresse e-mail en clair dans les journaux du
+serveur. Personne ne l'avait voulu, et rien ne le signalait.
+
+### Ce qui est en place
+
+`lib/observability/` filtre à deux niveaux, et il faut les deux : par le **nom**
+du champ (`email`, `phone`, `token`, `address`…) et par la **forme** de la
+valeur (adresse e-mail, clé de prestataire, jeton porteur, adresse IP). Le
+filtre par le nom seul est aveugle dès que la donnée voyage sous un nom
+innocent — et `message` est le nom le plus innocent qui soit.
+
+Ce qui **reste** dans les journaux, délibérément : les identifiants internes.
+Sans eux, un journal ne relie plus un échec à ce qui a échoué, et un journal
+inutile finit par être remplacé par un journal bavard. C'est le choix déjà
+assumé par la file de travaux différés.
+
+Un test de sécurité (`tests/security/log-redaction.test.ts`) exerce les deux
+filtres, et quatre mutations vérifient qu'ils ne sont pas décoratifs.
+
+### Sentry sans le paquet Sentry
+
+Le paquet officiel capture tout seul l'URL de chaque requête, ses en-têtes et
+parfois son corps. Sur cette boutique, **l'URL suffit à identifier quelqu'un** :
+la page de retour de paiement porte l'identifiant de session Stripe.
+`sendDefaultPii: false` retire l'adresse IP et les cookies, pas la chaîne de
+requête.
+
+Le transport est donc écrit à la main : rien ne part qu'on n'ait mis soi-même,
+et l'enveloppe ne contient ni `user`, ni `request`, ni `contexts`, ni
+`breadcrumbs` — les quatre portes par lesquelles une donnée personnelle entre
+dans un outil de supervision sans que personne ne l'ait décidé. Ce qu'on y perd
+est écrit dans `lib/observability/sentry.ts`.
+
+Conséquence pour le registre : l'entrée `technical-logs` déclare enfin ce
+traitement, et `activeProcessors()` — qui annonçait déjà Sentry dès que
+`SENTRY_DSN` est posée — dit désormais quelque chose de vrai.
+
+---
+
 ## 6. Colonnes déclarées, jamais alimentées
 
 Le schéma décrit la boutique complète, phases 3 à 8 comprises. Des colonnes

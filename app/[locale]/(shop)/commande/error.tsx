@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import { redactText } from '@/lib/observability/redact'
 import { Button } from '@/components/ui/button'
 import { Notice } from '@/components/ui/notice'
 
@@ -38,10 +39,16 @@ export default function CheckoutError({
   const t = useTranslations('checkout')
 
   useEffect(() => {
-    // La console du serveur porte déjà la trace complète. Ici, l'empreinte
+    // Le journal du serveur porte déjà la trace complète. Ici, l'empreinte
     // suffit à rapprocher un signalement d'une ligne de journal — et elle ne
     // contient aucune donnée personnelle.
-    console.error('[commande]', error.digest ?? error.message)
+    //
+    // Le repli sur `message` en porte, lui, potentiellement : Next remplace le
+    // message par un texte générique en production, mais pas en développement,
+    // où il peut venir de Prisma avec ses arguments. Le même filtre que celui
+    // du journal serveur s'applique donc ici — il est pur, sans accès au
+    // système, et traverse donc la frontière client sans rien entraîner.
+    console.error('[commande]', redactText(error.digest ?? error.message))
   }, [error])
 
   return (

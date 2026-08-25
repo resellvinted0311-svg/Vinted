@@ -2,6 +2,8 @@ import { getRequestConfig } from 'next-intl/server'
 import { hasLocale } from 'next-intl'
 import { routing, localeTags, type Locale } from './routing'
 
+import { logger } from '@/lib/observability/logger'
+
 export default getRequestConfig(async ({ requestLocale }) => {
   const requested = await requestLocale
   const locale: Locale = hasLocale(routing.locales, requested)
@@ -43,7 +45,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
       // Une clé manquante ne doit jamais casser une page publique ; elle doit
       // en revanche être bruyante en développement.
       if (process.env.NODE_ENV === 'development') {
-        console.warn(`[i18n] ${error.message}`)
+        logger.warn('i18n.message_error', { message: error.message })
       }
     },
     getMessageFallback({ key, namespace }) {

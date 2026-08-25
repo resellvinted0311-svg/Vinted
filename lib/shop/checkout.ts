@@ -1,4 +1,5 @@
 import 'server-only'
+import { logger } from '@/lib/observability/logger'
 
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
@@ -609,10 +610,7 @@ async function expireSupersededSessions(
     try {
       await stripe().checkout.sessions.expire(sessionId)
     } catch (error) {
-      console.error(
-        `[checkout] Session ${sessionId} non fermée :`,
-        error instanceof Error ? error.message : 'erreur inconnue',
-      )
+      logger.failure('checkout.session_not_expired', error, { sessionId })
     }
   }
 }

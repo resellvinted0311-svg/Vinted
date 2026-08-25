@@ -50,6 +50,8 @@ qui ouvre le nom de la base ; dans ce cas, changez le mot de passe.
 | `UPSTASH_REDIS_REST_URL` | **oui en production** | sans elle, la limitation de débit est en mémoire : chaque instance a son propre compteur, remis à zéro à chaque démarrage à froid |
 | `UPSTASH_REDIS_REST_TOKEN` | **oui en production** | idem |
 | `CRON_SECRET` | **oui** | sans elle, la route `/api/cron` refuse tout et les réservations expirées ne sont jamais libérées |
+| `SENTRY_DSN` | non, **recommandée** | sans elle, les incidents sont journalisés mais personne n'en est prévenu. Le transport est écrit à la main, sans dépendance : rien ne part qu'on n'ait mis soi-même — ni URL, ni en-tête, ni utilisateur (`lib/observability/sentry.ts`) |
+| `LOG_LEVEL` | non | `info` par défaut. `debug` pour une enquête, à retirer ensuite : le volume est sans commune mesure |
 
 \* Sans `AUTH_SECRET`, la boutique est entièrement consultable — catalogue,
 recherche, favoris — mais **connexion et inscription sont refusées**, et les

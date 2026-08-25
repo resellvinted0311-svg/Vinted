@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { Notice } from '@/components/ui/notice'
+import { logger } from '@/lib/observability/logger'
 import { readCartOwner } from '@/lib/shop/cart'
 import { getOrder } from '@/lib/db/queries/orders'
 import { buildInvoice, LegalIdentityMissingError } from '@/lib/shop/invoice'
@@ -83,9 +84,9 @@ export default async function InvoicePage({
   } catch (error) {
     if (!(error instanceof LegalIdentityMissingError)) throw error
 
-    // La console du serveur porte le détail. L'écran, lui, dit seulement que
+    // Le journal du serveur porte le détail. L'écran, lui, dit seulement que
     // le document n'est pas disponible et comment l'obtenir autrement.
-    console.error('[facture]', error.message)
+    logger.error('invoice.legal_identity_missing', { orderNumber })
 
     return (
       <Shell orderNumber={orderNumber} title={t('title')}>

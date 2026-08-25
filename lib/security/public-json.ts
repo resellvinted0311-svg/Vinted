@@ -1,4 +1,5 @@
 import 'server-only'
+import { logger } from '@/lib/observability/logger'
 
 import { NextResponse } from 'next/server'
 import { findPrivateFieldLeaks } from '@/lib/db/selectors'
@@ -39,9 +40,7 @@ export function publicJson(body: unknown, init?: ResponseInit): NextResponse {
   if (leaks.length > 0) {
     // Bruyant, et sans valeur : on journalise le CHEMIN du champ, jamais son
     // contenu — le contenu est précisément ce qui ne doit aller nulle part.
-    console.error(
-      `[public-json] Champs privés dans une réponse publique : ${leaks.join(', ')}`,
-    )
+    logger.error('public_json.private_field_leak', { fields: leaks.join(',') })
 
     return NextResponse.json(
       { error: 'internal' },

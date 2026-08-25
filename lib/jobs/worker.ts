@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { randomUUID } from 'node:crypto'
+import { captureException } from '@/lib/observability/sentry'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import {
@@ -124,10 +125,12 @@ export async function runJobs(
         // prestataire d'e-mail indisponible trente secondes — n'ont pas à
         // remplir les journaux.
         if (job.attempts >= MAX_ATTEMPTS) {
-          console.error(
-            `[jobs] ${job.type} abandonné après ${job.attempts} tentatives :`,
-            message,
-          )
+          // Remonté, pas seulement journalisé : un travail épuisé est un
+          // e-mail qui ne partira jamais, et personne ne s'en apercevrait.
+          await captureException(error, {
+            event: 'jobs.exhausted',
+            fields: { jobType: job.type, jobId: job.id, attempts: job.attempts },
+          })
         }
       }
     }

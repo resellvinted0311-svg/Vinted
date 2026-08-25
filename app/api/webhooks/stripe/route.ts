@@ -5,6 +5,8 @@ import { prisma } from '@/lib/db/client'
 import { redactStripeEvent } from '@/lib/payments/webhook-payload'
 import { stripe, isStripeConfigured } from '@/lib/payments/stripe'
 import { markOrderPaid, expireOrder } from '@/lib/shop/fulfilment'
+import { logger } from '@/lib/observability/logger'
+import { captureException } from '@/lib/observability/sentry'
 
 /**
  * Webhook Stripe — la seule autorité sur « c'est payé ».
@@ -62,7 +64,7 @@ function paymentIntentIdOf(session: Stripe.Checkout.Session): string | null {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const secret = process.env.STRIPE_WEBHOOK_SECRET
   if (!isStripeConfigured() || !secret) {
-    console.error('[stripe-webhook] STRIPE_WEBHOOK_SECRET absent : refus.')
+    logger.error('stripe_webhook.secret_missing')
     // 500 et non 200 : Stripe doit réessayer une fois la variable posée,
     // plutôt que de considérer l'événement comme reçu et le perdre.
     return NextResponse.json({ error: 'not-configured' }, { status: 500 })
@@ -78,13 +80,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   let event: Stripe.Event
   try {
     event = stripe().webhooks.constructEvent(raw, signature, secret)
-  } catch (error) {
+  } catch {
     // Signature invalide : ce n'est pas Stripe. 400 sans détail — inutile
-    // d'expliquer à qui essaie ce qui n'a pas fonctionné.
-    console.error(
-      '[stripe-webhook] Signature invalide.',
-      error instanceof Error ? error.message : 'erreur inconnue',
-    )
+    // d'expliquer à qui essaie ce qui n'a pas fonctionné. Le message d'erreur
+    // n'est pas retenu non plus : il ne dirait rien de plus que « la signature
+    // ne correspond pas », ce que l'événement dit déjà.
+    //
+    // Journalisé, PAS remonté à Sentry : une signature invalide est le
+    // comportement attendu face à un appel qui n'est pas de Stripe, et
+    // n'importe qui peut en produire autant qu'il veut. En faire un incident
+    // reviendrait à offrir à un inconnu le remplissage de la boîte d'alertes.
+    logger.warn('stripe_webhook.invalid_signature')
     return NextResponse.json({ error: 'invalid-signature' }, { status: 400 })
   }
 
@@ -144,7 +150,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ received: true, ...outcome })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'erreur inconnue'
-    console.error(`[stripe-webhook] Échec sur ${event.type} :`, message)
+    // Remonté : un encaissement qui n'aboutit pas est de l'argent pris sans
+    // vente enregistrée. C'est le pire état possible, parce qu'il est
+    // invisible depuis la boutique.
+    await captureException(error, {
+      event: 'stripe_webhook.processing_failed',
+      fields: { stripeEventType: event.type },
+    })
     await markProcessed(event.id, message)
 
     // 500 : Stripe réessaiera. Le traitement est idempotent, donc une reprise
@@ -175,9 +187,10 @@ async function handle(event: Stripe.Event): Promise<Record<string, unknown>> {
   if (!orderId) {
     // Sans identifiant de commande, il n'y a rien à rapprocher. Ce n'est pas
     // une erreur à retenter : on le consigne et on passe.
-    console.error(
-      `[stripe-webhook] ${event.type} sans orderId (session ${session.id}).`,
-    )
+    logger.error('stripe_webhook.missing_order_reference', {
+      stripeEventType: event.type,
+      sessionId: session.id,
+    })
     return { skipped: 'no-order-reference' }
   }
 
@@ -193,10 +206,10 @@ async function handle(event: Stripe.Event): Promise<Record<string, unknown>> {
   // devrait pas arriver ; le vérifier coûte une ligne et empêche qu'activer un
   // autre moyen demain ne transforme une promesse de paiement en vente.
   if (session.payment_status !== 'paid') {
-    console.error(
-      `[stripe-webhook] Session ${session.id} complétée sans paiement ` +
-        `(payment_status=${session.payment_status}). Commande laissée en attente.`,
-    )
+    logger.error('stripe_webhook.completed_unpaid', {
+      sessionId: session.id,
+      paymentStatus: session.payment_status,
+    })
     return { skipped: 'not-paid' }
   }
 
@@ -213,10 +226,15 @@ async function handle(event: Stripe.Event): Promise<Record<string, unknown>> {
   if (result.unfulfillableArticleIds.length > 0) {
     // L'argent est pris et une pièce est partie ailleurs. Consigné bruyamment :
     // un remboursement est dû, et c'est une décision humaine.
-    console.error(
-      `[stripe-webhook] Commande ${orderId} : ` +
-        `${result.unfulfillableArticleIds.length} ligne(s) non honorables, ` +
-        'remboursement à traiter.',
+    // Remonté, et pas seulement journalisé : l'argent est pris et une pièce
+    // est partie ailleurs. Un remboursement est dû, c'est une décision
+    // humaine, et personne ne la prendra si personne n'est prévenu.
+    await captureException(
+      new Error('Lignes non honorables : remboursement à traiter'),
+      {
+        event: 'stripe_webhook.unfulfillable_lines',
+        fields: { orderId, lines: result.unfulfillableArticleIds.length },
+      },
     )
   }
 

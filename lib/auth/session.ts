@@ -1,4 +1,5 @@
 import 'server-only'
+import { logger } from '@/lib/observability/logger'
 
 import { cache } from 'react'
 import { randomBytes } from 'node:crypto'
@@ -120,7 +121,9 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
     // Une session illisible — secret changé, cookie corrompu — signifie
     // « pas connecté », pas « page en erreur ». Le catalogue doit rester
     // consultable quoi qu'il arrive.
-    console.error('[auth] Session illisible.', error)
+    // `logger.failure` et non l'objet : un `Error` venu de Prisma porte
+    // l'appel qui a échoué AVEC ses arguments — donc l'adresse e-mail.
+    logger.failure('auth.session_unreadable', error)
     return null
   }
 

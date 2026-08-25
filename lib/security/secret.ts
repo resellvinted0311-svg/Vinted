@@ -1,4 +1,5 @@
 import 'server-only'
+import { logger } from '@/lib/observability/logger'
 
 import { randomBytes } from 'node:crypto'
 
@@ -35,11 +36,7 @@ export function serverSecret(): string | Buffer {
 
     if (process.env.NODE_ENV === 'production' && !warned) {
       warned = true
-      console.error(
-        '[secret] AUTH_SECRET absent : clé éphémère par processus. ' +
-          'Les signatures et compteurs ne survivent ni à un redémarrage ni ' +
-          'au passage d’une instance à l’autre.',
-      )
+      logger.error('secret.ephemeral_key_in_production')
     }
   }
 

@@ -624,6 +624,7 @@
       "shipments": "The shipping of your parcels",
       "abandoned-orders": "An order started and then abandoned",
       "payment-events": "Technical traces of your payments",
+      "technical-logs": "The site’s technical logs",
       "favorites": "Your favourites",
       "cart": "Your basket",
       "cart-guest": "Your basket, without an account",
@@ -633,6 +634,7 @@
       "security": "Protection against attacks"
     },
     "retentionWhileAccount": "As long as the account exists",
+    "retentionExternal": "Set by the hosting provider",
     "retentionDays": "{days} days",
     "retentionYears": "{years} years",
     "processors": "Who else has access",

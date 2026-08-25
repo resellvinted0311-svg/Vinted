@@ -30,6 +30,9 @@ function retentionLabel(
   t: (key: string, values?: Record<string, string | number>) => string,
 ): string {
   if (processing.retentionDays === null) return t('retentionWhileAccount')
+  // Fixée chez le prestataire, pas ici. Le dire vaut mieux qu'annoncer un
+  // nombre de jours que la purge de ce site n'applique pas.
+  if (processing.retentionDays === 'external') return t('retentionExternal')
   if (processing.retentionDays < 365) {
     return t('retentionDays', { days: processing.retentionDays })
   }

@@ -99,4 +99,43 @@ describe('durées de conservation', () => {
     const keys = PROCESSING_REGISTER.map((p) => p.key)
     expect(new Set(keys).size).toBe(keys.length)
   })
+
+  it('n’invoque « durée fixée ailleurs » que là où c’est vrai', () => {
+    // ------------------------------------------------------------------
+    // Pourquoi ce garde-fou existe
+    // ------------------------------------------------------------------
+    // `'external'` est un aveu : « nous n'appliquons pas cette durée, le
+    // prestataire la règle ». C'est honnête pour des journaux, qui vivent
+    // réellement chez l'hébergeur. Ce serait une échappatoire commode pour
+    // n'importe quelle table de NOTRE base — il suffirait de l'écrire pour
+    // n'avoir plus rien à purger, et la page publique n'y verrait que du feu.
+    //
+    // On borne donc : seul un traitement qui ne désigne AUCUNE table du schéma
+    // peut s'en réclamer.
+    const external = PROCESSING_REGISTER.filter(
+      (processing) => processing.retentionDays === 'external',
+    )
+
+    expect(external.length, 'au moins une entrée, sinon ce test ne garde rien')
+      .toBeGreaterThan(0)
+
+    for (const processing of external) {
+      for (const table of processing.tables) {
+        expect(
+          table.startsWith('('),
+          `${processing.key} désigne « ${table} » : une table de notre base ne ` +
+            'peut pas avoir une durée fixée ailleurs, elle doit être purgée ici',
+        ).toBe(true)
+      }
+    }
+  })
+
+  it('n’annonce jamais une durée négative ou nulle', () => {
+    // Zéro jour se lirait « effacé immédiatement », ce qu'aucune de ces
+    // données n'est. Une valeur négative ne se lirait pas du tout.
+    for (const processing of PROCESSING_REGISTER) {
+      if (typeof processing.retentionDays !== 'number') continue
+      expect(processing.retentionDays, processing.key).toBeGreaterThan(0)
+    }
+  })
 })

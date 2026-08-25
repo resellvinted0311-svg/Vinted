@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { logger } from '@/lib/observability/logger'
+
 /**
  * Limitation de débit — fenêtre fixe.
  *
@@ -91,7 +93,7 @@ async function checkUpstash(
     // Le quota du plan épuisé renvoie 429 : c'est précisément l'état qu'un
     // attaquant peut provoquer en martelant un chemin bon marché. Ouvrir ici
     // reviendrait à lui offrir la désactivation de toute la protection.
-    console.error(`[rate-limit] Upstash indisponible (${response.status}).`)
+    logger.error('rate_limit.backend_unavailable', { status: response.status })
     throw new Error(`upstash-unavailable-${response.status}`)
   }
 
@@ -113,7 +115,7 @@ async function checkUpstash(
     ).catch(() => null)
 
     if (!expire?.ok) {
-      console.error('[rate-limit] Échéance non posée : la clé est effacée.')
+      logger.warn('rate_limit.expiry_not_set', { counter: namespaced })
       await fetch(`${url}/del/${encodeURIComponent(namespaced)}`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
@@ -133,7 +135,9 @@ export async function checkRateLimit(input: RateLimitInput): Promise<boolean> {
     try {
       return await checkUpstash(input, url, token)
     } catch (error) {
-      console.error('[rate-limit] Appel Upstash en échec.', error)
+      logger.failure('rate_limit.backend_failed', error, {
+        sensitive: input.sensitive ?? false,
+      })
       // Chemin sensible : on refuse. Chemin de confort : on laisse passer.
       return !input.sensitive
     }
@@ -141,10 +145,7 @@ export async function checkRateLimit(input: RateLimitInput): Promise<boolean> {
 
   if (process.env.NODE_ENV === 'production' && !warnedAboutMemoryFallback) {
     warnedAboutMemoryFallback = true
-    console.error(
-      '[rate-limit] UPSTASH_REDIS_REST_URL absent : la limitation de débit ' +
-        'est en mémoire et ne protège pas une instance multiple.',
-    )
+    logger.error('rate_limit.memory_fallback_in_production')
   }
 
   return checkInMemory(input)

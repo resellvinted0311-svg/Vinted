@@ -6,6 +6,7 @@ import { expireStaleOrders } from '@/lib/shop/fulfilment'
 import { expireStaleOffers } from '@/lib/shop/offers'
 import { applyDuePriceDrops } from '@/lib/shop/price-drop'
 import { runJobs } from '@/lib/jobs/worker'
+import { captureException } from '@/lib/observability/sentry'
 
 /**
  * Travaux périodiques.
@@ -110,24 +111,35 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     runJobs(),
   ])
 
-  if (locks.status === 'rejected') {
-    console.error('[cron] Libération des réservations en échec.', locks.reason)
-  }
-  if (purge.status === 'rejected') {
-    console.error('[cron] Purge des données personnelles en échec.', purge.reason)
-  }
-  if (orders.status === 'rejected') {
-    console.error('[cron] Balayage des commandes en attente en échec.', orders.reason)
-  }
-  if (offers.status === 'rejected') {
-    console.error('[cron] Expiration des offres en échec.', offers.reason)
-  }
-  if (drops.status === 'rejected') {
-    console.error('[cron] Baisse automatique des prix en échec.', drops.reason)
-  }
-  if (jobs.status === 'rejected') {
-    console.error('[cron] Exécution des travaux différés en échec.', jobs.reason)
-  }
+  // ---------------------------------------------------------------------------
+  // Chaque échec est REMONTÉ, pas seulement journalisé
+  // ---------------------------------------------------------------------------
+  // C'est ici que la supervision compte le plus. Ces six travaux tournent sans
+  // personne devant : une purge qui échoue tous les jours pendant un mois ne se
+  // voit nulle part — la boutique fonctionne, les pages s'affichent, et les
+  // données personnelles qu'on annonce effacer restent en base. C'est une
+  // déclaration publique qui devient fausse en silence.
+  //
+  // `await` et non un envoi laissé en suspens : sur une fonction serverless, le
+  // processus est gelé dès la réponse renvoyée, et une promesse non attendue ne
+  // part jamais. C'est le raisonnement qui a fait de la file de travaux une
+  // table plutôt qu'un `setTimeout`.
+  await Promise.all(
+    (
+      [
+        ['cron.release_locks_failed', locks],
+        ['cron.purge_failed', purge],
+        ['cron.expire_orders_failed', orders],
+        ['cron.expire_offers_failed', offers],
+        ['cron.price_drops_failed', drops],
+        ['cron.run_jobs_failed', jobs],
+      ] as const
+    )
+      .filter(([, task]) => task.status === 'rejected')
+      .map(([event, task]) =>
+        captureException((task as PromiseRejectedResult).reason, { event }),
+      ),
+  )
 
   return NextResponse.json({
     ok: [locks, purge, orders, offers, drops, jobs].every(

@@ -624,6 +624,7 @@
       "shipments": "De verzending van uw pakketten",
       "abandoned-orders": "Een gestarte en daarna afgebroken bestelling",
       "payment-events": "De technische sporen van je betalingen",
+      "technical-logs": "De technische logboeken van de site",
       "favorites": "Uw favorieten",
       "cart": "Uw winkelmandje",
       "cart-guest": "Je winkelmand, zonder account",
@@ -633,6 +634,7 @@
       "security": "Bescherming tegen aanvallen"
     },
     "retentionWhileAccount": "Zolang het account bestaat",
+    "retentionExternal": "Bepaald door de hostingprovider",
     "retentionDays": "{days} dagen",
     "retentionYears": "{years} jaar",
     "processors": "Wie er verder toegang heeft",

@@ -624,6 +624,7 @@
       "shipments": "L’expédition de vos colis",
       "abandoned-orders": "Une commande commencée puis abandonnée",
       "payment-events": "Les traces techniques de vos paiements",
+      "technical-logs": "Les journaux techniques du site",
       "favorites": "Vos favoris",
       "cart": "Votre panier",
       "cart-guest": "Votre panier, sans compte",
@@ -633,6 +634,7 @@
       "security": "La protection contre les attaques"
     },
     "retentionWhileAccount": "Tant que le compte existe",
+    "retentionExternal": "Durée fixée par l’hébergeur",
     "retentionDays": "{days} jours",
     "retentionYears": "{years} ans",
     "processors": "Qui d’autre y a accès",

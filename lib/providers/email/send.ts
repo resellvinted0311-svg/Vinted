@@ -84,6 +84,12 @@ export async function sendEmail(message: EmailMessage): Promise<void> {
     // console qu'on sait chargée.
     const showBody = process.env.EMAIL_DEV_SHOW_BODY === '1'
 
+    // Volontairement `console.info` et non le journal structuré : cet
+    // encadré n'est lu que par un humain, dans un terminal, en
+    // développement. Une ligne JSON serait illisible là où c'est
+    // précisément la lisibilité qu'on cherche — et rien ici ne part vers
+    // un collecteur, puisque le chemin est fermé hors développement.
+
     console.info(
       [
         '',

@@ -624,6 +624,7 @@
       "shipments": "Der Versand Ihrer Pakete",
       "abandoned-orders": "Eine begonnene und dann abgebrochene Bestellung",
       "payment-events": "Technische Spuren Ihrer Zahlungen",
+      "technical-logs": "Die technischen Protokolle der Website",
       "favorites": "Ihre Favoriten",
       "cart": "Ihr Warenkorb",
       "cart-guest": "Ihr Warenkorb, ohne Konto",
@@ -633,6 +634,7 @@
       "security": "Schutz vor Angriffen"
     },
     "retentionWhileAccount": "Solange das Konto besteht",
+    "retentionExternal": "Vom Hosting-Anbieter festgelegt",
     "retentionDays": "{days} Tage",
     "retentionYears": "{years} Jahre",
     "processors": "Wer sonst Zugriff hat",
