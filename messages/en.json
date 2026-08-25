@@ -475,7 +475,8 @@
       "banned": "This account is suspended.",
       "rateLimited": "Too many attempts. Try again in a few minutes.",
       "generic": "The operation did not complete. Try again.",
-      "notConfigured": "Sign-in is not enabled on this deployment yet. The catalogue and favourites work normally."
+      "notConfigured": "Sign-in is not enabled on this deployment yet. The catalogue and favourites work normally.",
+      "invalidLink": "This link is no longer valid. It may have expired, or already been used."
     },
     "magicConfirm": {
       "title": "Confirm sign-in",
@@ -484,6 +485,20 @@
       "hint": "This confirmation exists so that a link opened without your knowledge cannot sign you in to an account that is not yours.",
       "invalid": "This link is not valid. It may have expired, or already been used.",
       "backToSignIn": "Back to sign-in"
+    },
+    "reset": {
+      "requestTitle": "Forgotten password",
+      "requestIntro": "Enter your account’s address. If an account exists, you will receive a link to choose a new password.",
+      "requestHint": "The link is valid for thirty minutes and works only once.",
+      "submitRequest": "Send the link",
+      "sent": "If an account exists for this address, a link has just been sent. Do check your spam folder.",
+      "setTitle": "Choose a new password",
+      "setIntro": "This link opens your account once. All your other sessions will be closed.",
+      "newPassword": "New password",
+      "submitSet": "Save the password",
+      "done": "Password saved. You are signed in, and every other session has been closed.",
+      "requestAgain": "Request a new link",
+      "backToSignIn": "Back to sign in"
     }
   },
   "account": {

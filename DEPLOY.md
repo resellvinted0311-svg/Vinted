@@ -130,6 +130,10 @@ Phases 4 à 8 non réalisées. En conséquence, sur le déploiement :
   il recevra nom, adresse et téléphone — donc il devra entrer dans la liste des
   sous-traitants, avec son contrat (`docs/rgpd.md`) ;
 - aucune messagerie, aucun retour, aucun avis ;
+- la newsletter n'est pas branchée : `User.marketingConsent` est un simple
+  booléen, et `NewsletterSubscriber` — qui porte la preuve du consentement et
+  le jeton de désinscription **obligatoire** de l'article L34-5 du CPCE —
+  attend une décision commerciale sur le double opt-in (`docs/rgpd.md`, §7.6) ;
 - les textes de CGV, confidentialité et cookies sont des gabarits vides ;
 - les mentions légales affichent un avertissement tant que les variables
   `LEGAL_*` ne sont pas renseignées — aucune valeur n'est inventée.

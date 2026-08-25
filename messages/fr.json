@@ -475,7 +475,8 @@
       "banned": "Ce compte est suspendu.",
       "rateLimited": "Trop de tentatives. Réessayez dans quelques minutes.",
       "generic": "L’opération n’a pas abouti. Réessayez.",
-      "notConfigured": "La connexion n’est pas encore activée sur ce déploiement. Le catalogue et les favoris fonctionnent normalement."
+      "notConfigured": "La connexion n’est pas encore activée sur ce déploiement. Le catalogue et les favoris fonctionnent normalement.",
+      "invalidLink": "Ce lien n’est plus valide. Il a peut-être expiré, ou déjà servi."
     },
     "magicConfirm": {
       "title": "Confirmer la connexion",
@@ -483,6 +484,20 @@
       "hint": "Cette confirmation existe pour qu’un lien ouvert à votre insu ne puisse pas vous connecter à un compte qui n’est pas le vôtre.",
       "confirm": "Me connecter",
       "invalid": "Ce lien n’est pas valide. Il a peut-être expiré, ou déjà servi.",
+      "backToSignIn": "Retour à la connexion"
+    },
+    "reset": {
+      "requestTitle": "Mot de passe oublié",
+      "requestIntro": "Indiquez l’adresse de votre compte. Si un compte existe, vous recevrez un lien pour choisir un nouveau mot de passe.",
+      "requestHint": "Le lien reçu est valable trente minutes et ne sert qu’une fois.",
+      "submitRequest": "Recevoir le lien",
+      "sent": "Si un compte existe pour cette adresse, un lien vient d’être envoyé. Pensez à regarder dans les indésirables.",
+      "setTitle": "Choisir un nouveau mot de passe",
+      "setIntro": "Ce lien ouvre votre compte une seule fois. Toutes vos autres sessions seront fermées.",
+      "newPassword": "Nouveau mot de passe",
+      "submitSet": "Enregistrer le mot de passe",
+      "done": "Mot de passe enregistré. Vous êtes connectée, et toutes les autres sessions ont été fermées.",
+      "requestAgain": "Demander un nouveau lien",
       "backToSignIn": "Retour à la connexion"
     }
   },

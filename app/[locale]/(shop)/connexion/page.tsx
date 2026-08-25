@@ -58,7 +58,23 @@ export default async function SignInPage({
         </Suspense>
       </div>
 
+      {/*
+        Le libellé « Mot de passe oublié » existait dans les huit fichiers de
+        traduction depuis la Phase 0, sans qu'aucun lien ne l'utilise — parce
+        que la page n'existait pas. C'était le symptôme visible d'un mécanisme
+        entier manquant : `UserToken` était déclarée, purgée, effacée avec le
+        compte, et écrite par rien.
+      */}
       <p className="mt-8 text-xs text-muted">
+        <Link
+          href="/connexion/mot-de-passe"
+          className="text-ink underline underline-offset-4"
+        >
+          {t('forgotPassword')}
+        </Link>
+      </p>
+
+      <p className="mt-2 text-xs text-muted">
         {t('noAccount')}{' '}
         <Link
           href="/inscription"

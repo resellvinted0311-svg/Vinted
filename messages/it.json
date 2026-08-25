@@ -475,7 +475,8 @@
       "banned": "Questo account è sospeso.",
       "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
       "generic": "L’operazione non è andata a buon fine. Riprova.",
-      "notConfigured": "L’accesso non è ancora attivo su questo deploy. Il catalogo e i preferiti funzionano normalmente."
+      "notConfigured": "L’accesso non è ancora attivo su questo deploy. Il catalogo e i preferiti funzionano normalmente.",
+      "invalidLink": "Questo collegamento non è più valido. Potrebbe essere scaduto o già stato usato."
     },
     "magicConfirm": {
       "title": "Confermare l’accesso",
@@ -483,6 +484,20 @@
       "hint": "Questa conferma serve a evitare che un link aperto a tua insaputa ti colleghi a un account che non è il tuo.",
       "confirm": "Accedi",
       "invalid": "Questo link non è valido. Potrebbe essere scaduto o già stato usato.",
+      "backToSignIn": "Torna all’accesso"
+    },
+    "reset": {
+      "requestTitle": "Password dimenticata",
+      "requestIntro": "Indichi l’indirizzo del suo account. Se un account esiste, riceverà un collegamento per scegliere una nuova password.",
+      "requestHint": "Il collegamento è valido trenta minuti e serve una sola volta.",
+      "submitRequest": "Ricevere il collegamento",
+      "sent": "Se esiste un account per questo indirizzo, un collegamento è appena stato inviato. Controlli anche la posta indesiderata.",
+      "setTitle": "Scegliere una nuova password",
+      "setIntro": "Questo collegamento apre il suo account una sola volta. Tutte le altre sessioni verranno chiuse.",
+      "newPassword": "Nuova password",
+      "submitSet": "Salvare la password",
+      "done": "Password salvata. Ha effettuato l’accesso e tutte le altre sessioni sono state chiuse.",
+      "requestAgain": "Chiedere un nuovo collegamento",
       "backToSignIn": "Torna all’accesso"
     }
   },

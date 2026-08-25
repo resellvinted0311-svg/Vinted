@@ -475,7 +475,8 @@
       "banned": "Dit account is geschorst.",
       "rateLimited": "Te veel pogingen. Probeer het over enkele minuten opnieuw.",
       "generic": "De handeling is niet voltooid. Probeer het opnieuw.",
-      "notConfigured": "Inloggen is nog niet ingeschakeld op deze deployment. De catalogus en favorieten werken gewoon."
+      "notConfigured": "Inloggen is nog niet ingeschakeld op deze deployment. De catalogus en favorieten werken gewoon.",
+      "invalidLink": "Deze link is niet meer geldig. Hij is mogelijk verlopen of al gebruikt."
     },
     "magicConfirm": {
       "title": "Aanmelding bevestigen",
@@ -484,6 +485,20 @@
       "confirm": "Aanmelden",
       "invalid": "Deze link is niet geldig. Hij is mogelijk verlopen of al gebruikt.",
       "backToSignIn": "Terug naar aanmelden"
+    },
+    "reset": {
+      "requestTitle": "Wachtwoord vergeten",
+      "requestIntro": "Vul het adres van uw account in. Als er een account bestaat, ontvangt u een link om een nieuw wachtwoord te kiezen.",
+      "requestHint": "De link is dertig minuten geldig en werkt maar één keer.",
+      "submitRequest": "Link ontvangen",
+      "sent": "Als er een account voor dit adres bestaat, is er zojuist een link verstuurd. Kijk ook in uw ongewenste post.",
+      "setTitle": "Een nieuw wachtwoord kiezen",
+      "setIntro": "Deze link opent uw account één keer. Al uw andere sessies worden gesloten.",
+      "newPassword": "Nieuw wachtwoord",
+      "submitSet": "Wachtwoord opslaan",
+      "done": "Wachtwoord opgeslagen. U bent ingelogd en alle andere sessies zijn gesloten.",
+      "requestAgain": "Een nieuwe link aanvragen",
+      "backToSignIn": "Terug naar inloggen"
     }
   },
   "account": {

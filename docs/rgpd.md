@@ -369,7 +369,7 @@ présente comme exhaustive est pire qu'une liste absente.
 | --- | --- | --- |
 | `Account` (jetons OAuth) | Jamais écrite : le seul fournisseur est le lien magique | Les jetons y seraient stockés **en clair**. Décidé dès maintenant : ils seront chiffrés applicativement avant le premier fournisseur OAuth, pas après |
 | `User.image` | Aucun chemin ne l'alimente | Conservée : `@auth/prisma-adapter` l'attend sur le modèle `User`. La retirer casserait l'adaptateur pour gagner une colonne vide |
-| `UserToken` | Déclarée, non branchée | Sera utilisée par la réinitialisation de mot de passe. La purge l'efface déjà à échéance, et l'effacement de compte la vide explicitement |
+| `UserToken` | **Branchée** depuis la réinitialisation de mot de passe | Jeton haché au repos (SHA-256), usage unique, trente minutes. La purge l'efface à échéance, l'effacement de compte la vide, et `tests/integration/password-reset.test.ts` vérifie les deux chemins |
 | `NewsletterSubscriber.consentIp` | Jamais écrite | Ne stockera **jamais** une IP brute : jeton HMAC tronqué, comme les compteurs de débit |
 
 Ces lignes n'ont pas vocation à rassurer : elles existent pour qu'on n'ait

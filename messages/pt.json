@@ -475,7 +475,8 @@
       "banned": "Esta conta está suspensa.",
       "rateLimited": "Demasiadas tentativas. Tente novamente dentro de alguns minutos.",
       "generic": "A operação não foi concluída. Tente novamente.",
-      "notConfigured": "O início de sessão ainda não está ativado nesta implementação. O catálogo e os favoritos funcionam normalmente."
+      "notConfigured": "O início de sessão ainda não está ativado nesta implementação. O catálogo e os favoritos funcionam normalmente.",
+      "invalidLink": "Esta ligação já não é válida. Pode ter expirado ou já ter sido usada."
     },
     "magicConfirm": {
       "title": "Confirmar o início de sessão",
@@ -484,6 +485,20 @@
       "confirm": "Iniciar sessão",
       "invalid": "Este link não é válido. Pode ter expirado ou já ter sido usado.",
       "backToSignIn": "Voltar ao início de sessão"
+    },
+    "reset": {
+      "requestTitle": "Palavra-passe esquecida",
+      "requestIntro": "Indique o endereço da sua conta. Se existir uma conta, receberá uma ligação para escolher uma nova palavra-passe.",
+      "requestHint": "A ligação é válida trinta minutos e serve apenas uma vez.",
+      "submitRequest": "Receber a ligação",
+      "sent": "Se existir uma conta para este endereço, foi enviada uma ligação. Verifique também o correio não solicitado.",
+      "setTitle": "Escolher uma nova palavra-passe",
+      "setIntro": "Esta ligação abre a sua conta uma única vez. Todas as outras sessões serão fechadas.",
+      "newPassword": "Nova palavra-passe",
+      "submitSet": "Guardar a palavra-passe",
+      "done": "Palavra-passe guardada. Está autenticada e todas as outras sessões foram fechadas.",
+      "requestAgain": "Pedir uma nova ligação",
+      "backToSignIn": "Voltar à autenticação"
     }
   },
   "account": {

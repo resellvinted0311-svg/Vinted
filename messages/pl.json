@@ -475,7 +475,8 @@
       "banned": "To konto jest zawieszone.",
       "rateLimited": "Zbyt wiele prób. Spróbuj ponownie za kilka minut.",
       "generic": "Operacja nie została ukończona. Spróbuj ponownie.",
-      "notConfigured": "Logowanie nie jest jeszcze włączone w tym wdrożeniu. Katalog i ulubione działają normalnie."
+      "notConfigured": "Logowanie nie jest jeszcze włączone w tym wdrożeniu. Katalog i ulubione działają normalnie.",
+      "invalidLink": "Ten link nie jest już ważny. Mógł wygasnąć albo został już użyty."
     },
     "magicConfirm": {
       "title": "Potwierdź logowanie",
@@ -484,6 +485,20 @@
       "confirm": "Zaloguj mnie",
       "invalid": "Ten link jest nieprawidłowy. Mógł wygasnąć lub zostać już użyty.",
       "backToSignIn": "Wróć do logowania"
+    },
+    "reset": {
+      "requestTitle": "Nie pamiętam hasła",
+      "requestIntro": "Podaj adres swojego konta. Jeśli konto istnieje, otrzymasz link umożliwiający wybranie nowego hasła.",
+      "requestHint": "Link jest ważny trzydzieści minut i działa tylko raz.",
+      "submitRequest": "Wyślij link",
+      "sent": "Jeśli konto dla tego adresu istnieje, link został właśnie wysłany. Sprawdź także folder ze spamem.",
+      "setTitle": "Wybierz nowe hasło",
+      "setIntro": "Ten link otwiera konto jeden raz. Wszystkie pozostałe sesje zostaną zamknięte.",
+      "newPassword": "Nowe hasło",
+      "submitSet": "Zapisz hasło",
+      "done": "Hasło zapisane. Jesteś zalogowana, a wszystkie pozostałe sesje zostały zamknięte.",
+      "requestAgain": "Poproś o nowy link",
+      "backToSignIn": "Powrót do logowania"
     }
   },
   "account": {

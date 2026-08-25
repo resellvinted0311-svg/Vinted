@@ -475,7 +475,8 @@
       "banned": "Dieses Konto ist gesperrt.",
       "rateLimited": "Zu viele Versuche. Versuchen Sie es in einigen Minuten erneut.",
       "generic": "Der Vorgang wurde nicht abgeschlossen. Versuchen Sie es erneut.",
-      "notConfigured": "Die Anmeldung ist auf diesem Deployment noch nicht aktiviert. Katalog und Favoriten funktionieren normal."
+      "notConfigured": "Die Anmeldung ist auf diesem Deployment noch nicht aktiviert. Katalog und Favoriten funktionieren normal.",
+      "invalidLink": "Dieser Link ist nicht mehr gültig. Er ist möglicherweise abgelaufen oder wurde bereits verwendet."
     },
     "magicConfirm": {
       "title": "Anmeldung bestätigen",
@@ -483,6 +484,20 @@
       "hint": "Diese Bestätigung sorgt dafür, dass ein ohne Ihr Wissen geöffneter Link Sie nicht bei einem fremden Konto anmeldet.",
       "confirm": "Anmelden",
       "invalid": "Dieser Link ist ungültig. Er ist möglicherweise abgelaufen oder bereits verwendet worden.",
+      "backToSignIn": "Zurück zur Anmeldung"
+    },
+    "reset": {
+      "requestTitle": "Passwort vergessen",
+      "requestIntro": "Geben Sie die Adresse Ihres Kontos an. Falls ein Konto besteht, erhalten Sie einen Link, um ein neues Passwort zu wählen.",
+      "requestHint": "Der Link gilt dreißig Minuten und funktioniert nur einmal.",
+      "submitRequest": "Link erhalten",
+      "sent": "Falls ein Konto für diese Adresse besteht, wurde soeben ein Link gesendet. Sehen Sie auch im Spam-Ordner nach.",
+      "setTitle": "Neues Passwort wählen",
+      "setIntro": "Dieser Link öffnet Ihr Konto ein einziges Mal. Alle anderen Sitzungen werden beendet.",
+      "newPassword": "Neues Passwort",
+      "submitSet": "Passwort speichern",
+      "done": "Passwort gespeichert. Sie sind angemeldet, und alle anderen Sitzungen wurden beendet.",
+      "requestAgain": "Neuen Link anfordern",
       "backToSignIn": "Zurück zur Anmeldung"
     }
   },

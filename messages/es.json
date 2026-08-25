@@ -475,7 +475,8 @@
       "banned": "Esta cuenta está suspendida.",
       "rateLimited": "Demasiados intentos. Inténtalo de nuevo en unos minutos.",
       "generic": "La operación no se ha completado. Inténtalo de nuevo.",
-      "notConfigured": "El inicio de sesión aún no está activado en este despliegue. El catálogo y los favoritos funcionan con normalidad."
+      "notConfigured": "El inicio de sesión aún no está activado en este despliegue. El catálogo y los favoritos funcionan con normalidad.",
+      "invalidLink": "Este enlace ya no es válido. Puede haber caducado o haberse usado ya."
     },
     "magicConfirm": {
       "title": "Confirmar el inicio de sesión",
@@ -483,6 +484,20 @@
       "hint": "Esta confirmación existe para que un enlace abierto sin que lo sepas no pueda conectarte a una cuenta que no es la tuya.",
       "confirm": "Iniciar sesión",
       "invalid": "Este enlace no es válido. Puede que haya caducado o que ya se haya usado.",
+      "backToSignIn": "Volver al inicio de sesión"
+    },
+    "reset": {
+      "requestTitle": "Contraseña olvidada",
+      "requestIntro": "Indique la dirección de su cuenta. Si existe una cuenta, recibirá un enlace para elegir una nueva contraseña.",
+      "requestHint": "El enlace es válido treinta minutos y solo sirve una vez.",
+      "submitRequest": "Recibir el enlace",
+      "sent": "Si existe una cuenta para esta dirección, se acaba de enviar un enlace. Revise también el correo no deseado.",
+      "setTitle": "Elegir una nueva contraseña",
+      "setIntro": "Este enlace abre su cuenta una sola vez. Se cerrarán todas sus demás sesiones.",
+      "newPassword": "Nueva contraseña",
+      "submitSet": "Guardar la contraseña",
+      "done": "Contraseña guardada. Ha iniciado sesión y se han cerrado todas las demás.",
+      "requestAgain": "Pedir un nuevo enlace",
       "backToSignIn": "Volver al inicio de sesión"
     }
   },
