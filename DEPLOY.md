@@ -109,13 +109,96 @@ toujours par être publié avec le code.
 
 ## 6. Ce qui n'est pas encore branché
 
-Phases 2 à 8 non réalisées. En conséquence, sur le déploiement :
+Phases 4 à 8 non réalisées. En conséquence, sur le déploiement :
 
-- « Ajouter au panier » et « Faire une offre » sont affichés mais **inactifs** ;
-- aucun paiement, aucune expédition, aucune messagerie ;
+- **aucun back-office** : les offres reçues ne peuvent être ni acceptées, ni
+  refusées, ni contre-proposées depuis une interface. La logique existe et est
+  testée (`respondToOffer`), il lui manque un écran ;
+- aucune expédition réelle : les grilles de port sont en base, aucun
+  transporteur n'est appelé. Le jour où l'un le sera, il recevra nom, adresse
+  et téléphone — donc il devra entrer dans la liste des sous-traitants, avec
+  son contrat (`docs/rgpd.md`) ;
+- aucune messagerie, aucun retour, aucun avis ;
 - les textes de CGV, confidentialité et cookies sont des gabarits vides ;
 - les mentions légales affichent un avertissement tant que les variables
   `LEGAL_*` ne sont pas renseignées — aucune valeur n'est inventée.
 
 Ce qui fonctionne : l'accueil, le catalogue avec filtres et recherche, les
-fiches articles avec mesures, les favoris, les 8 langues, la connexion.
+fiches articles avec mesures, les favoris, les 8 langues, la connexion, le
+panier, le paiement Stripe avec factures et e-mails, la négociation (dépôt,
+registre au compte, prix payable), la baisse automatique des prix, et la
+synchronisation avec l'application de gestion dans les deux sens.
+
+## 7. Décisions laissées ouvertes, à trancher un jour
+
+Elles ne bloquent pas la mise en service. Elles sont écrites ici pour ne pas
+avoir à les redécouvrir.
+
+### Le dépôt est PUBLIC, et c'est un choix
+
+Ce n'est pas un problème de sécurité : aucun secret n'est dans le dépôt —
+vérifié sur tout l'historique — et rien de ce qui protège la boutique ne
+repose sur le fait que le code soit caché.
+
+Le seul vrai inconvénient est **commercial** : `prisma/seed.ts` publie le
+barème de baisse automatique (−10 % à 30 jours, −20 % à 60), l'offre minimale,
+le plafond de tentatives et la carence. Un client qui les lit sait qu'il lui
+suffit d'attendre, et jusqu'où descendre.
+
+Deux façons de le régler, au choix :
+
+1. passer le dépôt en privé — *Settings → Danger Zone → Change repository
+   visibility*. Vercel, l'application GitHub et le déploiement continuent sans
+   changement ; il n'y a aucun workflow Actions à refacturer ;
+2. **ou** garder le dépôt ouvert et déplacer les vraies valeurs en base. Ces
+   réglages vivent déjà dans la table `Setting` — le code ne fait que les lire,
+   et le seed ne s'exécute en production que sur demande explicite
+   (`SEED_ON_BUILD=1`). Changer le barème en base suffit à ce que le dépôt ne
+   révèle plus rien de réel. C'est le geste naturel le jour où le back-office
+   permettra de l'ajuster.
+
+La seconde est préférable si le dépôt a une valeur de vitrine. La première est
+plus simple. Ne rien faire est tenable tant que la boutique est confidentielle,
+et cesse de l'être le jour où elle ne l'est plus.
+
+### La CSP reste permissive sur le catalogue
+
+La politique de sécurité de contenu est à deux niveaux :
+
+| Pages | `script-src` | Ce que ça change |
+| --- | --- | --- |
+| Panier, tunnel, commandes, compte, connexion, inscription, favoris | nonce, **sans** `unsafe-inline` | Aucun script en ligne injecté ne s'exécute |
+| Accueil, catalogue, fiches, pages statiques | `unsafe-inline` | Le second rideau manque |
+
+Ce n'est pas un demi-travail, c'est une limite technique mesurée : un nonce
+change à chaque requête, le HTML d'une page prérendue est figé au build. Les
+deux sont incompatibles. Mesuré sur ce projet — `/fr` porte 39 scripts en ligne
+dont 0 pourrait porter un nonce ; `/fr/panier` en porte 21, tous noncés.
+
+Fermer le catalogue supposerait de le rendre dynamique, donc de perdre le
+prérendu de 171 pages — la vitesse et le référencement — pour une défense en
+second rideau. Le partage retenu donne la protection forte là où une injection
+coûterait le plus, sans rien payer.
+
+À rouvrir le jour où Next saura porter un nonce dans une page prérendue.
+`tests/e2e/csp.spec.ts` vérifie les deux niveaux contre un vrai navigateur, y
+compris qu'aucune page prérendue n'a basculé par erreur du côté strict — ce qui
+la rendrait blanche.
+
+### L'existence d'un compte est révélée à l'inscription
+
+`signUpAction` répond « cette adresse est déjà prise » — donc dit si une
+adresse a un compte. Les deux autres portes le ferment explicitement : la
+connexion rend un message unique, le lien magique une réponse identique dans
+tous les cas.
+
+C'est **assumé, pas oublié**. Le fermer vraiment supposerait de rendre la
+réponse identique dans les deux cas, donc de ne plus connecter la personne
+immédiatement après l'inscription et d'attendre qu'elle relève un e-mail de
+vérification. Sur une boutique de vêtements, l'information divulguée est de
+faible sensibilité — sans commune mesure avec un service de santé ou de
+rencontre — et le coût de conversion d'une vérification obligatoire est réel.
+
+Le sondage de masse reste borné par la limitation à cinq inscriptions par heure
+et par empreinte. À revoir si la boutique traite un jour des données plus
+sensibles.

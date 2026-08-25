@@ -2,8 +2,11 @@ import createIntlMiddleware from 'next-intl/middleware'
 import { NextResponse, type NextRequest } from 'next/server'
 import { routing, locales } from '@/lib/i18n/routing'
 import { stripLocalePrefix } from '@/lib/security/safe-path'
+import { buildCsp, STRICT_CSP_PATH } from '@/lib/security/csp'
 
 const intlMiddleware = createIntlMiddleware(routing)
+
+const isDev = process.env.NODE_ENV === 'development'
 
 /**
  * Nom du cookie de session, dupliqué ici volontairement.
@@ -39,6 +42,31 @@ export default function middleware(request: NextRequest): NextResponse {
   const response = intlMiddleware(request)
 
   const { pathname } = request.nextUrl
+
+  // ---------------------------------------------------------------------------
+  // Politique de sécurité de contenu STRICTE sur les pages rendues à la requête
+  // ---------------------------------------------------------------------------
+  // `next.config.ts` pose une politique permissive sur toutes les réponses.
+  // Elle est remplacée ici, pour les seules pages capables de porter un nonce,
+  // par une politique qui n'autorise plus aucun script en ligne non signé.
+  //
+  // Ce sont exactement les pages qui manipulent de l'argent, une session et des
+  // données personnelles. Le catalogue, prérendu, ne peut pas en bénéficier :
+  // son HTML est figé au build alors que le nonce change à chaque requête. Le
+  // raisonnement complet et les mesures qui le fondent sont dans
+  // `lib/security/csp.ts`.
+  //
+  // Le nonce est tiré par `crypto.randomUUID()` — présent sur l'Edge, et
+  // imprévisible, ce qui est la seule propriété qui compte ici : un nonce
+  // devinable ne vaut pas mieux qu'`unsafe-inline`.
+  if (!isDev && STRICT_CSP_PATH.test(pathname)) {
+    const nonce = btoa(crypto.randomUUID())
+    response.headers.set(
+      'Content-Security-Policy',
+      buildCsp({ nonce, isDev: false }),
+    )
+  }
+
   const needsAuth = ADMIN_PATH.test(pathname) || PRIVATE_PATH.test(pathname)
 
   if (needsAuth) {

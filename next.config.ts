@@ -1,79 +1,37 @@
 import createNextIntlPlugin from 'next-intl/plugin'
 import type { NextConfig } from 'next'
+import { buildCsp } from './lib/security/csp'
 
 const withNextIntl = createNextIntlPlugin('./lib/i18n/request.ts')
 
 const isDev = process.env.NODE_ENV === 'development'
 
 /**
- * CSP sans nonce, et ce que cela veut dire exactement.
+ * En-têtes de sécurité, et la CSP de BASE.
  *
  * ---------------------------------------------------------------------------
- * Ce que cette politique NE fait PAS
+ * Celle-ci est la politique permissive — la stricte vit dans le middleware
  * ---------------------------------------------------------------------------
- * `script-src` porte `'unsafe-inline'`. Elle n'arrête donc AUCUN script en
- * ligne, y compris injecté. Le commentaire qui figurait ici prétendait
- * l'inverse — « la politique reste stricte sur script-src » — ce qui est pire
- * qu'un aveu : cela donnait à chaque relecture une assurance imméritée, et
- * dispensait de regarder la ligne juste en dessous.
+ * Elle s'applique à toutes les réponses, et le middleware la REMPLACE par une
+ * politique à nonce sur les pages rendues à la requête. Le raisonnement
+ * complet, avec les mesures qui le fondent, est dans `lib/security/csp.ts`.
  *
- * Ce n'est le premier rempart contre rien. Le premier rempart est
- * l'échappement, et il est en place : voir `lib/utils/json-ld.ts`, qui a
- * corrigé la seule injection réellement trouvée. La CSP serait le SECOND
- * filet, et il manque.
+ * En deux lignes : un nonce ne peut pas atteindre une page prérendue, dont le
+ * HTML est figé au build. Le catalogue garde donc `unsafe-inline`, et les
+ * pages qui manipulent argent, session et données personnelles ne l'ont plus.
  *
- * ---------------------------------------------------------------------------
- * Ce qu'elle fait quand même
- * ---------------------------------------------------------------------------
- * `connect-src` est restrictive : un script injecté ne pourrait pas renvoyer
- * ce qu'il vole vers un serveur tiers. `object-src 'none'`,
- * `frame-ancestors 'none'` et `base-uri 'self'` ferment trois autres portes.
+ * Ce que cette politique-ci ne fait pas, il faut le dire sans détour : sur les
+ * pages qu'elle couvre, elle n'arrête AUCUN script en ligne, y compris injecté.
+ * Le premier rempart y reste l'échappement — voir `lib/utils/json-ld.ts`, qui a
+ * corrigé la seule injection réellement trouvée. Un commentaire prétendait
+ * autrefois l'inverse ici ; c'était pire qu'un aveu, cela donnait à chaque
+ * relecture une assurance imméritée.
  *
- * ---------------------------------------------------------------------------
- * Pourquoi pas de nonce aujourd'hui
- * ---------------------------------------------------------------------------
- * Un nonce impose le rendu dynamique de chaque page qui en porte un, ce qui
- * retirerait le catalogue et les fiches article du rendu statique — donc les
- * cibles Core Web Vitals du brief (LCP < 2,5 s), qui portent le référencement.
- *
- * C'est un ARBITRAGE, pas un oubli, et il se tranchera en phase 8 avec
- * `'strict-dynamic'` : mesurer d'abord ce que coûte le passage en dynamique
- * des pages concernées, puis décider. Ce qui n'était pas acceptable, c'était
- * de le masquer derrière un commentaire faux.
- *
- * `style-src` tolère l'inline parce que Next injecte les styles critiques
- * ainsi ; l'enjeu y est bien moindre.
+ * Ce qu'elle fait quand même, partout : `connect-src` n'autorise que Stripe,
+ * `object-src 'none'`, `frame-ancestors 'none'` et `base-uri 'self'` ferment
+ * trois autres portes.
  */
-const csp = [
-  "default-src 'self'",
-  // `unsafe-eval` uniquement en dev : react-refresh en a besoin.
-  isDev
-    ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
-    : "script-src 'self' 'unsafe-inline' https://js.stripe.com",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' blob: data: https://res.cloudinary.com",
-  "font-src 'self' data:",
-  // Aucun script tiers avant consentement : la liste reste minimale et explicite.
-  // `*.supabase.co` a été RETIRÉ. Aucun code navigateur n'utilise Supabase —
-  // pas de dépendance `@supabase/*`, pas de clé publique, et les seules
-  // occurrences du nom sont des chaînes de connexion PostgreSQL côté serveur.
-  //
-  // Le joker autorisait donc, pour une capacité inutilisée, l'envoi de données
-  // vers n'importe quel projet d'un service que chacun ouvre gratuitement en
-  // deux minutes : un canal d'exfiltration prêt à l'emploi, à côté d'un
-  // `script-src` qui n'arrête pas les scripts en ligne. Il rendait fausse la
-  // phrase de l'en-tête de ce fichier — « un script injecté ne pourrait pas
-  // renvoyer ce qu'il vole vers un serveur tiers ».
-  isDev
-    ? "connect-src 'self' ws: wss:"
-    : "connect-src 'self' https://api.stripe.com",
-  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "object-src 'none'",
-  'upgrade-insecure-requests',
-].join('; ')
+const csp = buildCsp({ isDev })
 
 const securityHeaders = [
   { key: 'Content-Security-Policy', value: csp },
