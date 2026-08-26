@@ -64,6 +64,25 @@ const UNKNOWN = 'chrono-inconnue@nina-diego.test'
  */
 const TOLERANCE_MS = 200
 
+/**
+ * Marge sous le plancher demandé, pour les assertions de durée.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi elle ne peut pas valoir une milliseconde
+ * ---------------------------------------------------------------------------
+ * Elle les valait, et le test est tombé une fois sur cinq passages. `setTimeout`
+ * ne garantit PAS de dormir au moins la durée demandée telle que la mesure une
+ * AUTRE horloge : libuv a sa propre base de temps et la granularité de sa roue
+ * de minuterie lui fait parfois rendre la main un cheveu trop tôt. Sous charge,
+ * ce cheveu dépasse la milliseconde.
+ *
+ * Dix millisecondes ne relâchent rien de la propriété vérifiée. Les mutations
+ * l'ont mesuré : sans plancher, `withTimeFloor` rend la main en 0,08 ms et
+ * l'action en 5,9 ms. Ce qu'on distingue ici, c'est un ordre de grandeur, pas
+ * une milliseconde.
+ */
+const CLOCK_SLACK_MS = 10
+
 async function cleanup(): Promise<void> {
   const users = await prisma.user.findMany({
     where: { email: { contains: 'chrono-' } },
@@ -130,9 +149,7 @@ describe('withTimeFloor', () => {
     const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6
 
     expect(value).toBe('fait')
-    // Marge d'une milliseconde : `setTimeout` peut rendre la main un cheveu
-    // avant l'échéance demandée.
-    expect(elapsedMs).toBeGreaterThanOrEqual(299)
+    expect(elapsedMs).toBeGreaterThanOrEqual(300 - CLOCK_SLACK_MS)
   })
 
   it('ne tronque pas un travail plus long que le plancher', async () => {
@@ -142,7 +159,7 @@ describe('withTimeFloor', () => {
     })
     const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6
 
-    expect(elapsedMs).toBeGreaterThanOrEqual(249)
+    expect(elapsedMs).toBeGreaterThanOrEqual(250 - CLOCK_SLACK_MS)
   })
 
   it('rembourre AUSSI le chemin d’exception', async () => {
@@ -156,7 +173,7 @@ describe('withTimeFloor', () => {
     ).rejects.toThrow('refusé')
     const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6
 
-    expect(elapsedMs).toBeGreaterThanOrEqual(299)
+    expect(elapsedMs).toBeGreaterThanOrEqual(300 - CLOCK_SLACK_MS)
   })
 })
 

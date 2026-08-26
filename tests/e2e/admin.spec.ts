@@ -1,3 +1,6 @@
+import { readdirSync, statSync } from 'node:fs'
+import { join } from 'node:path'
+
 import { test, expect, type Page } from '@playwright/test'
 
 /**
@@ -34,6 +37,50 @@ function main(page: Page) {
   return page.locator('#contenu')
 }
 
+/**
+ * Toutes les adresses d'administration, DÉRIVÉES du système de fichiers.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi la liste n'est pas écrite à la main
+ * ---------------------------------------------------------------------------
+ * Elle l'était, et le commentaire du test qui la consomme avertissait déjà :
+ * « une page ajoutée sans garde serait invisible à un test qui n'en vérifie
+ * qu'une ». C'est exactement ce qui est arrivé — l'écran des réglages a été
+ * ajouté, la liste ne l'a pas suivi, et le test a continué de passer en
+ * couvrant trois adresses sur quatre.
+ *
+ * Une liste tenue à la main ne protège que du défaut qu'on avait en tête en
+ * l'écrivant. Celle-ci se met à jour toute seule : la prochaine page
+ * d'administration sera vérifiée le jour où elle est créée, sans que personne
+ * n'ait à y penser.
+ */
+function adminRoutes(locale = 'fr'): string[] {
+  const root = join('app', '[locale]', 'admin')
+  const routes: string[] = []
+
+  const walk = (dir: string, segments: string[]): void => {
+    for (const entry of readdirSync(dir)) {
+      const path = join(dir, entry)
+
+      if (statSync(path).isDirectory()) {
+        // Les groupes de routes `(nom)` ne produisent pas de segment d'URL ;
+        // les segments dynamiques `[id]` demanderaient une valeur qu'on n'a pas
+        // ici, et ils ont leurs propres tests.
+        if (entry.startsWith('[')) continue
+        walk(path, entry.startsWith('(') ? segments : [...segments, entry])
+        continue
+      }
+
+      if (/^page\.tsx?$/.test(entry)) {
+        routes.push(`/${locale}/admin${segments.map((s) => `/${s}`).join('')}`)
+      }
+    }
+  }
+
+  walk(root, [])
+  return routes.sort()
+}
+
 async function signIn(page: Page, email: string): Promise<void> {
   await page.goto('/fr/connexion')
   await page.getByLabel('Adresse e-mail').filter({ visible: true }).first().fill(email)
@@ -60,7 +107,14 @@ test.describe('Accès à la régie', () => {
     // Toute la surface d'administration, pas seulement la première page : une
     // page ajoutée sans garde serait invisible à un test qui n'en vérifie
     // qu'une. Une seule connexion les couvre toutes.
-    for (const route of ['/fr/admin', '/fr/admin/offres', '/fr/admin/commandes']) {
+    const routes = adminRoutes()
+
+    // Le balayage doit RAMENER quelque chose : un chemin de départ erroné
+    // rendrait la liste vide, la boucle ne tournerait pas, et le test passerait
+    // en ne vérifiant rien du tout.
+    expect(routes.length).toBeGreaterThanOrEqual(4)
+
+    for (const route of routes) {
       const response = await page.goto(route)
       expect(response?.status(), route).toBe(404)
     }
@@ -138,6 +192,70 @@ test.describe('La file des offres', () => {
     )
     expect(unsigned, 'des scripts en ligne sans nonce seraient refusés').toBe(0)
     expect(violations).toEqual([])
+  })
+})
+
+test.describe('Les réglages métier', () => {
+  test('s’atteignent depuis la navigation, et disent que la boutique tourne sur la démonstration', async ({
+    page,
+  }) => {
+    await page.context().clearCookies()
+    await signIn(page, ACCOUNT)
+
+    await page.goto('/fr/admin')
+    await main(page).getByRole('link', { name: 'Réglages' }).first().click()
+    await expect(page).toHaveURL(/\/fr\/admin\/reglages/)
+
+    // Les nombres qui décident des prix vivaient dans `prisma/seed.ts`, donc
+    // dans un dépôt public. Cet écran est le seul chemin par lequel les vrais
+    // entrent désormais — s'il ne s'affiche pas, ils n'entrent nulle part.
+    await expect(
+      main(page).getByRole('heading', { name: 'Réglages' }),
+    ).toBeVisible()
+
+    // Un champ de chaque groupe : leur absence dirait que la liste fermée n'a
+    // pas été parcourue, ou qu'une traduction manque — auquel cas next-intl
+    // afficherait la clé brute à la place du libellé.
+    await expect(main(page).getByLabel('Marge minimale (centimes)')).toBeVisible()
+    await expect(main(page).getByLabel('Majoration du port (%)')).toBeVisible()
+    await expect(main(page).getByLabel('Barème de baisse automatique')).toBeVisible()
+    await expect(main(page).getByLabel('Offre minimale (centimes)')).toBeVisible()
+
+    // Et l'avertissement, qui n'a pas de raison de disparaître tant que
+    // personne n'a enregistré de vraies valeurs. C'est lui qui explique
+    // pourquoi la boutique refuserait de calculer un prix en production.
+    await expect(
+      main(page).getByText('valeurs du jeu de démonstration', { exact: false }),
+    ).toBeVisible()
+  })
+
+  test('n’exposent AUCUN réglage juridique à la modification', async ({ page }) => {
+    await page.context().clearCookies()
+    await signIn(page, ACCOUNT)
+    await page.goto('/fr/admin/reglages')
+
+    // Le délai de rétractation, la prise en charge des retours et la version
+    // des CGV engagent juridiquement la boutique. Ils se changent avec un
+    // juriste ou en publiant de nouvelles CGV, pas dans un formulaire entre
+    // deux commandes — et le formulaire ne doit pas même les proposer.
+    const names = await page.evaluate(() =>
+      [...document.querySelectorAll('#contenu [name]')].map((el) =>
+        el.getAttribute('name'),
+      ),
+    )
+
+    expect(names).not.toContain('withdrawalPeriodDays')
+    expect(names).not.toContain('returnShippingPaidByCustomer')
+    expect(names).not.toContain('refundOutboundShippingOnWithdrawal')
+    expect(names).not.toContain('cgvVersion')
+
+    // Le marqueur de profil non plus : il est une conséquence de
+    // l'enregistrement, jamais une case à cocher.
+    expect(names).not.toContain('settingsProfile')
+
+    // Contrôle du contrôle : si le balayage ne trouvait aucun champ, les cinq
+    // assertions ci-dessus passeraient sans rien vérifier.
+    expect(names).toContain('minMarginCents')
   })
 })
 

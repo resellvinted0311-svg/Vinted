@@ -5,7 +5,7 @@ import { useFormStatus } from 'react-dom'
 import { useTranslations } from 'next-intl'
 
 import { Button } from '@/components/ui/button'
-import { Field, FieldLabel } from '@/components/ui/field'
+import { Field, FieldLabel, useFieldControlProps } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Notice } from '@/components/ui/notice'
 import {
@@ -121,12 +121,7 @@ function SettingField({
     return (
       <Field hint={hint}>
         <FieldLabel>{label}</FieldLabel>
-        <input
-          type="checkbox"
-          name={field.key}
-          defaultChecked={value === 'true'}
-          className="size-5 accent-[var(--color-ink)]"
-        />
+        <Checkbox name={field.key} checked={value === 'true'} />
       </Field>
     )
   }
@@ -135,13 +130,7 @@ function SettingField({
     return (
       <Field hint={hint} className="sm:col-span-2">
         <FieldLabel>{label}</FieldLabel>
-        <textarea
-          name={field.key}
-          defaultValue={value}
-          rows={4}
-          spellCheck={false}
-          className="w-full rounded border border-[var(--color-rule)] bg-transparent p-2 font-mono text-sm"
-        />
+        <ScheduleTextarea name={field.key} value={value} />
       </Field>
     )
   }
@@ -162,6 +151,51 @@ function SettingField({
         spellCheck={false}
       />
     </Field>
+  )
+}
+
+/**
+ * Les deux contrôles que `Input` ne couvre pas.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi ils sont des composants et non des balises écrites sur place
+ * ---------------------------------------------------------------------------
+ * `useFieldControlProps()` pose l'`id` que le `<label>` vise, plus les liens
+ * ARIA vers l'aide et l'erreur. Le hook ne peut être appelé que DANS un
+ * `<Field>`, donc depuis un composant enfant.
+ *
+ * Écrits en balises brutes — ce qu'ils étaient d'abord — ni la case à cocher ni
+ * la zone de texte ne portaient d'`id` : leur étiquette ne visait rien. À
+ * l'écran on ne voit aucune différence ; au lecteur d'écran, le champ est
+ * annoncé sans nom, et cliquer sur le libellé ne donne pas le focus. C'est un
+ * test Playwright qui cherchait le champ PAR SON ÉTIQUETTE qui l'a révélé.
+ */
+function ScheduleTextarea({ name, value }: { name: string; value: string }) {
+  const control = useFieldControlProps()
+
+  return (
+    <textarea
+      {...control}
+      name={name}
+      defaultValue={value}
+      rows={4}
+      spellCheck={false}
+      className="w-full rounded border border-[var(--color-rule)] bg-transparent p-2 font-mono text-sm"
+    />
+  )
+}
+
+function Checkbox({ name, checked }: { name: string; checked: boolean }) {
+  const control = useFieldControlProps()
+
+  return (
+    <input
+      {...control}
+      type="checkbox"
+      name={name}
+      defaultChecked={checked}
+      className="size-5 accent-[var(--color-ink)]"
+    />
   )
 }
 
