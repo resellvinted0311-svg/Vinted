@@ -599,6 +599,92 @@
       "orderNotFound": "Diese Bestellung ist nicht auffindbar.",
       "invalidTransition": "Diese Bestellung hat den Status bereits geändert. Laden Sie die Seite neu.",
       "unknown": "Die Aktion konnte nicht erfasst werden."
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "intro": "Diese Zahlen bestimmen die Preise: was Sie je Stück verdienen, was Sie auf jedes Paket aufschlagen, wie weit Sie nachgeben und nach welcher Zeit. Sie stehen nur in dieser Datenbank — nie im Code, nie im Repository.",
+      "save": "Speichern",
+      "saved": "{count, plural, =0 {Nichts zu speichern.} one {Eine Einstellung gespeichert.} other {# Einstellungen gespeichert.}}",
+      "demoProfile": "Der Shop läuft noch mit den Werten des Demonstrationsdatensatzes, die frei erfunden sind. Tragen Sie hier Ihre echten Zahlen ein: bis dahin wird in der Produktion kein Preis berechnet.",
+      "errorOnField": "Der Wert für „{field}“ wurde nicht angenommen.",
+      "groups": {
+        "economy": "Wirtschaftlichkeit",
+        "shipping": "Versand",
+        "drop": "Automatische Reduzierung",
+        "offers": "Verhandlung",
+        "checkout": "Kasse"
+      },
+      "errors": {
+        "rateLimited": "Zu viele Speichervorgänge hintereinander. Bitte gleich noch einmal versuchen.",
+        "invalidRequest": "Das Formular ist unvollständig. Laden Sie die Seite neu.",
+        "invalidValue": "Ein Wert wurde nicht angenommen."
+      },
+      "fields": {
+        "minMarginCents": {
+          "label": "Mindestmarge (Cent)",
+          "hint": "Was nach Abgaben, Zahlungsgebühr, Einkaufspreis und Versand übrig bleiben soll. Diese Zahl legt den Mindestpreis einer Verhandlung fest."
+        },
+        "contributionRateBps": {
+          "label": "Abgaben (Basispunkte)",
+          "hint": "1230 entspricht 12,30 %."
+        },
+        "stripePercentBps": {
+          "label": "Stripe-Gebühr, variabel (Basispunkte)",
+          "hint": "150 entspricht 1,50 %. Der genaue Wert steht in Ihrem Stripe-Vertrag."
+        },
+        "stripeFixedCents": {
+          "label": "Stripe-Gebühr, fest (Cent)",
+          "hint": "Wird bei jeder Zahlung einbehalten, unabhängig vom Betrag."
+        },
+        "shippingMarkupPercent": {
+          "label": "Versandaufschlag (%)",
+          "hint": "Kommt zu den Versandkosten hinzu und ergibt den berechneten Versand."
+        },
+        "packagingWeightGrams": {
+          "label": "Verpackungsgewicht (Gramm)",
+          "hint": "Wird zum Gewicht des Stücks addiert, um die Gewichtsstufe zu bestimmen."
+        },
+        "autoDropSchedule": {
+          "label": "Staffel der automatischen Reduzierung",
+          "hint": "Eine Stufe je Zeile, als Tage:Prozent. Der Prozentsatz gilt für den Ursprungspreis, nie für den bereits gesenkten. Leer lassen schaltet die Reduzierung ab."
+        },
+        "offersOpenAfterDays": {
+          "label": "Angebote ab (Tage)",
+          "hint": "Wie lange nach der Veröffentlichung ein Stück verhandelbar wird. Bei null verkauft es sich nie zum angezeigten Preis."
+        },
+        "offerResponseHours": {
+          "label": "Antwortfrist (Stunden)",
+          "hint": "Wie lange Sie Zeit haben, bevor ein Angebot verfällt."
+        },
+        "acceptedOfferValidityHours": {
+          "label": "Gültigkeit eines angenommenen Preises (Stunden)",
+          "hint": "Wie lange die Käuferin Zeit hat, zum ausgehandelten Preis zu zahlen."
+        },
+        "minOfferAmountCents": {
+          "label": "Mindestangebot (Cent)",
+          "hint": "Absolute Untergrenze für alle Stücke."
+        },
+        "maxOffersPerArticlePerUser": {
+          "label": "Angebote je Stück und Person",
+          "hint": "Wie oft dieselbe Person auf dasselbe Stück bieten darf."
+        },
+        "offerCooldownAfterRejectionHours": {
+          "label": "Sperrfrist nach Ablehnung (Stunden)",
+          "hint": "Ohne sie wird eine Ablehnung umgangen, indem dasselbe Angebot einen Cent höher erneut gesendet wird."
+        },
+        "autoAcceptOffersEnabled": {
+          "label": "Automatische Annahme",
+          "hint": "Nicht empfohlen. Sobald Käufer merken, dass ein niedriges Angebot von selbst durchgeht, wird der angezeigte Preis zur Dekoration."
+        },
+        "autoAcceptThresholdPercent": {
+          "label": "Schwelle der automatischen Annahme (%)",
+          "hint": "Anteil des angezeigten Preises, ab dem ein Angebot von selbst durchgeht. Leer lassen für keine Schwelle."
+        },
+        "reservationTtlMinutes": {
+          "label": "Reservierung im Warenkorb (Minuten)",
+          "hint": "Wie lange ein Stück während der Zahlung blockiert bleibt."
+        }
+      }
     }
   },
   "orderEmail": {

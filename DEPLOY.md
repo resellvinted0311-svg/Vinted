@@ -151,32 +151,53 @@ avec l'application de gestion dans les deux sens.
 Elles ne bloquent pas la mise en service. Elles sont écrites ici pour ne pas
 avoir à les redécouvrir.
 
-### Le dépôt est PUBLIC, et c'est un choix
+### Le dépôt est PUBLIC — et il ne dit plus rien de votre économie
 
 Ce n'est pas un problème de sécurité : aucun secret n'est dans le dépôt —
-vérifié sur tout l'historique — et rien de ce qui protège la boutique ne
-repose sur le fait que le code soit caché.
+vérifié sur tout l'historique — et rien de ce qui protège la boutique ne repose
+sur le fait que le code soit caché.
 
-Le seul vrai inconvénient est **commercial** : `prisma/seed.ts` publie le
-barème de baisse automatique (−10 % à 30 jours, −20 % à 60), l'offre minimale,
-le plafond de tentatives et la carence. Un client qui les lit sait qu'il lui
-suffit d'attendre, et jusqu'où descendre.
+C'était en revanche un problème **commercial**. `prisma/seed.ts` publiait la
+marge minimale visée, la majoration appliquée au port, le barème de baisse dans
+le temps, la grille de coûts transporteur et jusqu'aux lieux d'approvisionnement
+des pièces de démonstration. Un audit du dépôt a recensé **208 valeurs
+numériques, dont 25 révélatrices** au sens strict : elles disaient ce que la
+boutique gagne, ce qu'elle achète, ou jusqu'où elle cède.
 
-Deux façons de le régler, au choix :
+**Ce n'est plus le cas**, et par construction :
 
-1. passer le dépôt en privé — *Settings → Danger Zone → Change repository
-   visibility*. Vercel, l'application GitHub et le déploiement continuent sans
-   changement ; il n'y a aucun workflow Actions à refacturer ;
-2. **ou** garder le dépôt ouvert et déplacer les vraies valeurs en base. Ces
-   réglages vivent déjà dans la table `Setting` — le code ne fait que les lire,
-   et le seed ne s'exécute en production que sur demande explicite
-   (`SEED_ON_BUILD=1`). Changer le barème en base suffit à ce que le dépôt ne
-   révèle plus rien de réel. C'est le geste naturel le jour où le back-office
-   permettra de l'ajuster.
+- tout ce qui pourrait ressembler à un chiffre d'affaires vit dans
+  `prisma/seed-data/fixtures.ts`, sous un en-tête qui dit que ces nombres sont
+  **faux**. La grille transporteur de `seed-data/shipping.ts` porte le même
+  avertissement ;
+- `lib/domain/pricing.ts` n'a **plus de configuration par défaut**. Un appelant
+  qui n'en fournit pas ne compile plus, au lieu de calculer avec des chiffres
+  que personne n'a choisis ;
+- les vraies valeurs se saisissent dans **Admin → Réglages**, n'existent que
+  dans la base de production, et se changent sans redéployer ;
+- enregistrer cet écran fait passer `settingsProfile` à `production`. Tant qu'il
+  vaut `development`, `getPricingConfig()` **refuse de calculer un prix** en
+  production : impossible d'ouvrir la boutique sur les nombres de démonstration
+  et de vendre à perte sans s'en apercevoir.
 
-La seconde est préférable si le dépôt a une valeur de vitrine. La première est
-plus simple. Ne rien faire est tenable tant que la boutique est confidentielle,
-et cesse de l'être le jour où elle ne l'est plus.
+Deux points à garder en tête, malgré tout.
+
+**L'historique.** Les valeurs d'origine sont dans le dépôt depuis le premier
+commit ; les retirer aujourd'hui ne les retire pas des commits passés, et le
+dépôt était public. Elles ont toujours été des repères, jamais des chiffres
+réels — c'est ce qui rend l'affaire sans conséquence. La règle qui en découle
+vaut pour la suite : **un nombre publié ne redevient pas secret, il ne peut que
+cesser d'être vrai.** Ne posez donc vos vraies valeurs que dans l'écran de
+réglages.
+
+**Le passage en privé reste possible** — *Settings → Danger Zone → Change
+repository visibility*. Vercel, l'application GitHub et le déploiement
+continuent sans changement, et il n'y a aucun workflow Actions à refacturer. À
+peser : sur un dépôt public, GitHub cherche gratuitement les identifiants qui
+fuient et vous alerte ; sur un dépôt privé, c'est une option payante. Et les
+forks éventuels **restent publics** — GitHub les détache dans un réseau séparé
+au lieu de les supprimer. Vérifiez *Insights → Forks* avant de considérer
+l'affaire close.
 
 ### La CSP reste permissive sur le catalogue
 

@@ -599,6 +599,92 @@
       "orderNotFound": "No se encuentra este pedido.",
       "invalidTransition": "Este pedido ya ha cambiado de estado. Recarga la página.",
       "unknown": "No se ha podido registrar la acción."
+    },
+    "settings": {
+      "title": "Ajustes",
+      "intro": "Estas cifras deciden los precios: lo que gana por pieza, lo que cobra en cada paquete, hasta dónde cede y al cabo de cuánto tiempo. Solo existen en esta base de datos, nunca en el código ni en el repositorio.",
+      "save": "Guardar",
+      "saved": "{count, plural, =0 {Nada que guardar.} one {Un ajuste guardado.} other {# ajustes guardados.}}",
+      "demoProfile": "La tienda sigue funcionando con los valores de demostración, que son ficticios. Introduzca aquí sus cifras reales: hasta entonces no se calculará ningún precio en producción.",
+      "errorOnField": "El valor de «{field}» no se ha aceptado.",
+      "groups": {
+        "economy": "Economía",
+        "shipping": "Envío",
+        "drop": "Rebaja automática",
+        "offers": "Negociación",
+        "checkout": "Pago"
+      },
+      "errors": {
+        "rateLimited": "Demasiados guardados seguidos. Inténtelo dentro de un momento.",
+        "invalidRequest": "El formulario está incompleto. Recargue la página.",
+        "invalidValue": "Un valor no se ha aceptado."
+      },
+      "fields": {
+        "minMarginCents": {
+          "label": "Margen mínimo (céntimos)",
+          "hint": "Lo que quiere ganar neto en una venta, una vez descontados cotizaciones, comisión, precio de compra y envío. Esta cifra fija el precio mínimo de una negociación."
+        },
+        "contributionRateBps": {
+          "label": "Cotizaciones (puntos básicos)",
+          "hint": "1230 equivale al 12,30 %."
+        },
+        "stripePercentBps": {
+          "label": "Comisión variable de Stripe (puntos básicos)",
+          "hint": "150 equivale al 1,50 %. La cifra exacta está en su contrato."
+        },
+        "stripeFixedCents": {
+          "label": "Comisión fija de Stripe (céntimos)",
+          "hint": "Se retiene en cada cobro, sea cual sea el importe."
+        },
+        "shippingMarkupPercent": {
+          "label": "Recargo de envío (%)",
+          "hint": "Se suma al coste del transportista para obtener el envío facturado."
+        },
+        "packagingWeightGrams": {
+          "label": "Peso del embalaje (gramos)",
+          "hint": "Se añade al peso de la pieza para elegir el tramo tarifario."
+        },
+        "autoDropSchedule": {
+          "label": "Escala de rebaja automática",
+          "hint": "Un tramo por línea, en formato días:porcentaje. El porcentaje se aplica al precio de origen, nunca al ya rebajado. Dejar vacío desactiva la rebaja."
+        },
+        "offersOpenAfterDays": {
+          "label": "Apertura de ofertas (días)",
+          "hint": "Plazo tras la publicación antes de que una pieza sea negociable. En cero nunca se vende al precio indicado."
+        },
+        "offerResponseHours": {
+          "label": "Plazo de respuesta (horas)",
+          "hint": "Tiempo del que dispone para responder antes de que una oferta caduque."
+        },
+        "acceptedOfferValidityHours": {
+          "label": "Validez de un precio aceptado (horas)",
+          "hint": "Tiempo del que dispone la compradora para pagar al precio negociado."
+        },
+        "minOfferAmountCents": {
+          "label": "Oferta mínima (céntimos)",
+          "hint": "Límite absoluto para todas las piezas."
+        },
+        "maxOffersPerArticlePerUser": {
+          "label": "Ofertas por pieza y persona",
+          "hint": "Cuántas veces la misma persona puede ofertar por la misma pieza."
+        },
+        "offerCooldownAfterRejectionHours": {
+          "label": "Espera tras un rechazo (horas)",
+          "hint": "Sin ella, un rechazo se sortea reenviando la misma oferta un céntimo más alta."
+        },
+        "autoAcceptOffersEnabled": {
+          "label": "Aceptación automática",
+          "hint": "No recomendada. Si los compradores descubren que una oferta baja pasa sola, el precio indicado se vuelve decorativo."
+        },
+        "autoAcceptThresholdPercent": {
+          "label": "Umbral de aceptación automática (%)",
+          "hint": "Porcentaje del precio indicado a partir del cual una oferta pasa sola. Dejar vacío para no tener ninguno."
+        },
+        "reservationTtlMinutes": {
+          "label": "Reserva en el carrito (minutos)",
+          "hint": "Tiempo que una pieza queda bloqueada durante el pago."
+        }
+      }
     }
   },
   "orderEmail": {

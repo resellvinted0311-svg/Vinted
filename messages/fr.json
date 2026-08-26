@@ -599,6 +599,92 @@
       "orderNotFound": "Cette commande est introuvable.",
       "invalidTransition": "Cette commande a déjà changé d’état. Rechargez la page.",
       "unknown": "L’action n’a pas pu être enregistrée."
+    },
+    "settings": {
+      "title": "Réglages",
+      "intro": "Ces nombres décident des prix : ce que vous gagnez par pièce, ce que vous prenez sur chaque colis, jusqu’où vous cédez et au bout de combien de temps. Ils n’existent que dans cette base — jamais dans le code, jamais dans le dépôt.",
+      "save": "Enregistrer",
+      "saved": "{count, plural, =0 {Aucun changement à enregistrer.} one {Un réglage enregistré.} other {# réglages enregistrés.}}",
+      "demoProfile": "La boutique tourne encore sur les valeurs du jeu de démonstration, qui sont fictives. Renseignez vos vrais chiffres ici : tant que ce n’est pas fait, aucun prix ne sera calculé en production.",
+      "errorOnField": "La valeur de « {field} » n’est pas acceptée.",
+      "groups": {
+        "economy": "Économie",
+        "shipping": "Expédition",
+        "drop": "Baisse automatique",
+        "offers": "Négociation",
+        "checkout": "Caisse"
+      },
+      "errors": {
+        "rateLimited": "Trop d’enregistrements coup sur coup. Réessayez dans un moment.",
+        "invalidRequest": "Le formulaire est incomplet. Rechargez la page et recommencez.",
+        "invalidValue": "Une valeur n’est pas acceptée."
+      },
+      "fields": {
+        "minMarginCents": {
+          "label": "Marge minimale (centimes)",
+          "hint": "Ce que vous voulez gagner net sur une vente, une fois cotisations, commission, prix d’achat et port déduits. C’est ce nombre qui fixe le prix plancher d’une négociation."
+        },
+        "contributionRateBps": {
+          "label": "Cotisations (points de base)",
+          "hint": "1230 vaut 12,30 %. Taux micro-entreprise pour la vente de marchandises."
+        },
+        "stripePercentBps": {
+          "label": "Commission Stripe variable (points de base)",
+          "hint": "150 vaut 1,50 %. La valeur exacte figure à votre contrat Stripe."
+        },
+        "stripeFixedCents": {
+          "label": "Commission Stripe fixe (centimes)",
+          "hint": "Part prélevée à chaque encaissement, quel que soit le montant."
+        },
+        "shippingMarkupPercent": {
+          "label": "Majoration du port (%)",
+          "hint": "Ce qui s’ajoute au coût transporteur pour obtenir le port facturé à l’acheteuse."
+        },
+        "packagingWeightGrams": {
+          "label": "Poids de l’emballage (grammes)",
+          "hint": "Ajouté au poids de la pièce pour choisir la tranche tarifaire du transporteur."
+        },
+        "autoDropSchedule": {
+          "label": "Barème de baisse automatique",
+          "hint": "Un palier par ligne, sous la forme jours:pourcentage. Le pourcentage s’applique au prix d’origine, jamais au prix déjà baissé. Laisser vide désactive la baisse."
+        },
+        "offersOpenAfterDays": {
+          "label": "Ouverture des offres (jours)",
+          "hint": "Délai après la publication avant qu’une pièce devienne négociable. À zéro, elle ne se vend jamais au prix affiché : il suffit d’attendre."
+        },
+        "offerResponseHours": {
+          "label": "Délai de réponse (heures)",
+          "hint": "Temps dont vous disposez pour répondre avant qu’une offre expire."
+        },
+        "acceptedOfferValidityHours": {
+          "label": "Validité d’un prix accepté (heures)",
+          "hint": "Temps dont dispose l’acheteuse pour payer au prix négocié."
+        },
+        "minOfferAmountCents": {
+          "label": "Offre minimale (centimes)",
+          "hint": "Plancher absolu, toutes pièces confondues. Sert à écarter les propositions de nuisance."
+        },
+        "maxOffersPerArticlePerUser": {
+          "label": "Offres par pièce et par personne",
+          "hint": "Combien de fois une même personne peut proposer sur la même pièce."
+        },
+        "offerCooldownAfterRejectionHours": {
+          "label": "Carence après refus (heures)",
+          "hint": "Sans elle, un refus se contourne en renvoyant la même offre à un centime près."
+        },
+        "autoAcceptOffersEnabled": {
+          "label": "Acceptation automatique",
+          "hint": "Déconseillée. Si les acheteurs découvrent qu’une offre basse passe seule, le prix affiché devient décoratif."
+        },
+        "autoAcceptThresholdPercent": {
+          "label": "Seuil d’acceptation automatique (%)",
+          "hint": "Pourcentage du prix affiché à partir duquel une offre passe seule. Laisser vide pour n’en avoir aucun. Le prix plancher reste infranchissable de toute façon."
+        },
+        "reservationTtlMinutes": {
+          "label": "Réservation au panier (minutes)",
+          "hint": "Durée pendant laquelle une pièce reste bloquée le temps du paiement."
+        }
+      }
     }
   },
   "orderEmail": {

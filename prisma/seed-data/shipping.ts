@@ -7,6 +7,23 @@
  * `priceCents` est le TARIF TRANSPORTEUR (le coût). Le prix facturé à
  * l'acheteur en est dérivé par Setting.shippingMarkupPercent — voir
  * computeChargedShippingCents(). Ne jamais confondre les deux.
+ *
+ * ---------------------------------------------------------------------------
+ * LES MONTANTS DE `RATES` SONT FICTIFS
+ * ---------------------------------------------------------------------------
+ * Ils ont l'air de vrais tarifs, et c'est exactement le problème : rien ne le
+ * disait jusqu'ici. Ce sont des repères, choisis pour que le jeu de
+ * démonstration produise des prix plancher cohérents.
+ *
+ * Ils ne doivent JAMAIS être remplacés par les tarifs réellement négociés. Un
+ * coût transporteur est une donnée de coût : croisé avec la majoration réglée —
+ * un seul nombre — il donne au centime près ce que la boutique encaisse sur
+ * chaque colis. Les vrais tarifs vivent dans la table `ShippingRate` de la base
+ * de production, et le jour où un transporteur sera réellement branché, dans sa
+ * grille à lui.
+ *
+ * Les DÉLAIS de livraison, en revanche, sont publics — ils s'affichent au
+ * tunnel de commande — et les ZONES ne sont pas un secret non plus.
  */
 
 export interface ZoneSeed {

@@ -599,6 +599,92 @@
       "orderNotFound": "Deze bestelling is niet te vinden.",
       "invalidTransition": "Deze bestelling is al van status veranderd. Laad de pagina opnieuw.",
       "unknown": "De handeling kon niet worden vastgelegd."
+    },
+    "settings": {
+      "title": "Instellingen",
+      "intro": "Deze getallen bepalen de prijzen: wat u per stuk verdient, wat u op elk pakket neemt, hoe ver u zakt en na hoeveel tijd. Ze bestaan alleen in deze database — nooit in de code, nooit in de repository.",
+      "save": "Opslaan",
+      "saved": "{count, plural, =0 {Niets op te slaan.} one {Eén instelling opgeslagen.} other {# instellingen opgeslagen.}}",
+      "demoProfile": "De winkel draait nog op de demonstratiewaarden, die verzonnen zijn. Vul hier uw echte cijfers in: tot dan wordt er in productie geen prijs berekend.",
+      "errorOnField": "De waarde van “{field}” is niet aanvaard.",
+      "groups": {
+        "economy": "Economie",
+        "shipping": "Verzending",
+        "drop": "Automatische afprijzing",
+        "offers": "Onderhandeling",
+        "checkout": "Afrekenen"
+      },
+      "errors": {
+        "rateLimited": "Te vaak achter elkaar opgeslagen. Probeer het zo opnieuw.",
+        "invalidRequest": "Het formulier is onvolledig. Herlaad de pagina.",
+        "invalidValue": "Een waarde is niet aanvaard."
+      },
+      "fields": {
+        "minMarginCents": {
+          "label": "Minimummarge (cent)",
+          "hint": "Wat u netto wilt overhouden aan een verkoop, na bijdragen, commissie, inkoopprijs en verzending. Dit getal bepaalt de bodemprijs van een onderhandeling."
+        },
+        "contributionRateBps": {
+          "label": "Bijdragen (basispunten)",
+          "hint": "1230 staat voor 12,30 %."
+        },
+        "stripePercentBps": {
+          "label": "Variabele Stripe-commissie (basispunten)",
+          "hint": "150 staat voor 1,50 %. Het exacte cijfer staat in uw contract."
+        },
+        "stripeFixedCents": {
+          "label": "Vaste Stripe-commissie (cent)",
+          "hint": "Wordt bij elke betaling ingehouden, ongeacht het bedrag."
+        },
+        "shippingMarkupPercent": {
+          "label": "Opslag op verzending (%)",
+          "hint": "Komt bovenop de vervoerderskosten en geeft de gefactureerde verzending."
+        },
+        "packagingWeightGrams": {
+          "label": "Gewicht van de verpakking (gram)",
+          "hint": "Wordt bij het gewicht van het stuk opgeteld om de gewichtsklasse te kiezen."
+        },
+        "autoDropSchedule": {
+          "label": "Schema van automatische afprijzing",
+          "hint": "Eén trap per regel, als dagen:percentage. Het percentage geldt voor de oorspronkelijke prijs, nooit voor de al verlaagde. Leeg laten schakelt de afprijzing uit."
+        },
+        "offersOpenAfterDays": {
+          "label": "Biedingen open na (dagen)",
+          "hint": "Hoe lang na publicatie een stuk onderhandelbaar wordt. Op nul verkoopt het nooit tegen de vraagprijs."
+        },
+        "offerResponseHours": {
+          "label": "Antwoordtermijn (uren)",
+          "hint": "Hoeveel tijd u hebt om te antwoorden voordat een bod vervalt."
+        },
+        "acceptedOfferValidityHours": {
+          "label": "Geldigheid van een aanvaarde prijs (uren)",
+          "hint": "Hoeveel tijd de koper heeft om tegen de afgesproken prijs te betalen."
+        },
+        "minOfferAmountCents": {
+          "label": "Minimumbod (cent)",
+          "hint": "Absolute ondergrens voor alle stukken."
+        },
+        "maxOffersPerArticlePerUser": {
+          "label": "Biedingen per stuk en per persoon",
+          "hint": "Hoe vaak dezelfde persoon op hetzelfde stuk mag bieden."
+        },
+        "offerCooldownAfterRejectionHours": {
+          "label": "Wachttijd na afwijzing (uren)",
+          "hint": "Zonder deze wordt een afwijzing omzeild door hetzelfde bod een cent hoger opnieuw te sturen."
+        },
+        "autoAcceptOffersEnabled": {
+          "label": "Automatisch aanvaarden",
+          "hint": "Afgeraden. Zodra kopers merken dat een laag bod vanzelf doorgaat, wordt de vraagprijs decoratief."
+        },
+        "autoAcceptThresholdPercent": {
+          "label": "Drempel voor automatisch aanvaarden (%)",
+          "hint": "Aandeel van de vraagprijs waarboven een bod vanzelf doorgaat. Leeg laten voor geen enkele."
+        },
+        "reservationTtlMinutes": {
+          "label": "Reservering in het winkelmandje (minuten)",
+          "hint": "Hoe lang een stuk vastgehouden blijft tijdens de betaling."
+        }
+      }
     }
   },
   "orderEmail": {

@@ -7,8 +7,28 @@ import {
   roundUpToTenCents,
   stripeFeeCents,
   contributionCents,
-  DEFAULT_PRICING_CONFIG,
+  type PricingConfig,
 } from '@/lib/domain/pricing'
+
+/**
+ * La configuration sous laquelle ces attentes sont vraies.
+ *
+ * Elle est ÉCRITE ICI, et non importée d'une constante partagée. C'est
+ * délibéré : « 20,00 € donne 55 centimes de commission » n'a de sens qu'en
+ * regard d'un taux, et un test qui importe son taux d'ailleurs se met à passer
+ * ou à tomber quand ce taux change — sans que le test ait rien à dire sur le
+ * changement.
+ *
+ * Depuis que `lib/domain/pricing.ts` n'a plus de configuration par défaut, ce
+ * fichier est aussi le seul endroit du dépôt où ces nombres figurent à côté de
+ * leurs résultats attendus. Ils ne décrivent aucune boutique réelle.
+ */
+const CONFIG: PricingConfig = {
+  contributionRateBps: 1230,
+  stripePercentBps: 150,
+  stripeFixedCents: 25,
+  minMarginCents: 300,
+}
 
 describe('roundUpToTenCents', () => {
   it('arrondit vers le haut à la dizaine de centimes', () => {
@@ -23,18 +43,18 @@ describe('roundUpToTenCents', () => {
 describe('stripeFeeCents', () => {
   it('applique la part variable et la part fixe', () => {
     // 20,00 € → 1,50 % = 30 centimes, + 25 centimes fixes.
-    expect(stripeFeeCents(2000)).toBe(55)
+    expect(stripeFeeCents(2000, CONFIG)).toBe(55)
   })
 
   it('arrondit la part variable au centime supérieur', () => {
     // 1,00 € → 1,5 centime, arrondi à 2, + 25.
-    expect(stripeFeeCents(100)).toBe(27)
+    expect(stripeFeeCents(100, CONFIG)).toBe(27)
   })
 })
 
 describe('contributionCents', () => {
   it('applique le taux de cotisations au chiffre d’affaires', () => {
-    expect(contributionCents(10_000)).toBe(1230)
+    expect(contributionCents(10_000, CONFIG)).toBe(1230)
   })
 })
 
@@ -43,17 +63,17 @@ describe('computeFloorPriceCents', () => {
     const floor = computeFloorPriceCents({
       costCents: 500,
       estimatedShippingCostCents: 420,
-    })
+    }, CONFIG)
 
     // Le plancher doit dégager au moins la marge minimale visée.
     const margin = computeNetMarginCents({
       salePriceCents: floor,
       costCents: 500,
       shippingCostCents: 420,
-    })
+    }, CONFIG)
 
     expect(margin).toBeGreaterThanOrEqual(
-      DEFAULT_PRICING_CONFIG.minMarginCents,
+      CONFIG.minMarginCents,
     )
   })
 
@@ -63,17 +83,17 @@ describe('computeFloorPriceCents', () => {
         const floor = computeFloorPriceCents({
           costCents: cost,
           estimatedShippingCostCents: shipping,
-        })
+        }, CONFIG)
         const margin = computeNetMarginCents({
           salePriceCents: floor,
           costCents: cost,
           shippingCostCents: shipping,
-        })
+        }, CONFIG)
 
         expect(
           margin,
           `coût=${cost} port=${shipping} plancher=${floor}`,
-        ).toBeGreaterThanOrEqual(DEFAULT_PRICING_CONFIG.minMarginCents)
+        ).toBeGreaterThanOrEqual(CONFIG.minMarginCents)
       }
     }
   })
@@ -82,11 +102,11 @@ describe('computeFloorPriceCents', () => {
     const cheap = computeFloorPriceCents({
       costCents: 200,
       estimatedShippingCostCents: 420,
-    })
+    }, CONFIG)
     const expensive = computeFloorPriceCents({
       costCents: 2000,
       estimatedShippingCostCents: 420,
-    })
+    }, CONFIG)
     expect(expensive).toBeGreaterThan(cheap)
   })
 
@@ -112,13 +132,13 @@ describe('computeNetMarginCents', () => {
       shippingChargedCents: 0,
       costCents: 500,
       shippingCostCents: 0,
-    })
+    }, CONFIG)
     const avecPort = computeNetMarginCents({
       salePriceCents: 2000,
       shippingChargedCents: 500,
       costCents: 500,
       shippingCostCents: 500,
-    })
+    }, CONFIG)
 
     // Facturer le port à son coût exact fait PERDRE de l'argent : c'est
     // précisément la raison d'être de shippingMarkupPercent.
@@ -130,7 +150,7 @@ describe('computeNetMarginCents', () => {
       salePriceCents: 500,
       costCents: 900,
       shippingCostCents: 420,
-    })
+    }, CONFIG)
     expect(margin).toBeLessThan(0)
   })
 })

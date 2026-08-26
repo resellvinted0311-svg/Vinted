@@ -599,6 +599,92 @@
       "orderNotFound": "Nie znaleziono tego zamówienia.",
       "invalidTransition": "To zamówienie już zmieniło stan. Odśwież stronę.",
       "unknown": "Nie udało się zapisać działania."
+    },
+    "settings": {
+      "title": "Ustawienia",
+      "intro": "Te liczby decydują o cenach: ile zarabiasz na sztuce, ile dokładasz do każdej paczki, jak daleko schodzisz i po jakim czasie. Istnieją wyłącznie w tej bazie — nigdy w kodzie ani w repozytorium.",
+      "save": "Zapisz",
+      "saved": "{count, plural, =0 {Nie ma czego zapisywać.} one {Zapisano jedno ustawienie.} few {Zapisano # ustawienia.} many {Zapisano # ustawień.} other {Zapisano # ustawień.}}",
+      "demoProfile": "Sklep nadal działa na wartościach demonstracyjnych, które są fikcyjne. Wprowadź tutaj swoje prawdziwe liczby: do tego czasu żadna cena nie zostanie obliczona na produkcji.",
+      "errorOnField": "Wartość „{field}” nie została przyjęta.",
+      "groups": {
+        "economy": "Ekonomia",
+        "shipping": "Wysyłka",
+        "drop": "Automatyczna obniżka",
+        "offers": "Negocjacje",
+        "checkout": "Kasa"
+      },
+      "errors": {
+        "rateLimited": "Zbyt wiele zapisów pod rząd. Spróbuj za chwilę.",
+        "invalidRequest": "Formularz jest niekompletny. Odśwież stronę.",
+        "invalidValue": "Jedna z wartości nie została przyjęta."
+      },
+      "fields": {
+        "minMarginCents": {
+          "label": "Marża minimalna (grosze)",
+          "hint": "Ile chcesz zarobić na czysto na sprzedaży, po odjęciu składek, prowizji, ceny zakupu i wysyłki. Ta liczba wyznacza cenę minimalną w negocjacjach."
+        },
+        "contributionRateBps": {
+          "label": "Składki (punkty bazowe)",
+          "hint": "1230 oznacza 12,30 %."
+        },
+        "stripePercentBps": {
+          "label": "Prowizja zmienna Stripe (punkty bazowe)",
+          "hint": "150 oznacza 1,50 %. Dokładna wartość jest w umowie."
+        },
+        "stripeFixedCents": {
+          "label": "Prowizja stała Stripe (grosze)",
+          "hint": "Pobierana przy każdej płatności, niezależnie od kwoty."
+        },
+        "shippingMarkupPercent": {
+          "label": "Narzut na wysyłkę (%)",
+          "hint": "Doliczany do kosztu przewoźnika, daje wysyłkę naliczaną kupującemu."
+        },
+        "packagingWeightGrams": {
+          "label": "Waga opakowania (gramy)",
+          "hint": "Doliczana do wagi sztuki, aby wybrać próg cenowy przewoźnika."
+        },
+        "autoDropSchedule": {
+          "label": "Harmonogram automatycznej obniżki",
+          "hint": "Jeden próg w wierszu, w postaci dni:procent. Procent stosuje się do ceny pierwotnej, nigdy do już obniżonej. Puste pole wyłącza obniżki."
+        },
+        "offersOpenAfterDays": {
+          "label": "Otwarcie ofert po (dniach)",
+          "hint": "Ile czasu po publikacji sztuka staje się negocjowalna. Przy zerze nigdy nie sprzeda się w cenie wywoławczej."
+        },
+        "offerResponseHours": {
+          "label": "Czas na odpowiedź (godziny)",
+          "hint": "Ile masz czasu na odpowiedź, zanim oferta wygaśnie."
+        },
+        "acceptedOfferValidityHours": {
+          "label": "Ważność przyjętej ceny (godziny)",
+          "hint": "Ile czasu ma kupujący na zapłatę w wynegocjowanej cenie."
+        },
+        "minOfferAmountCents": {
+          "label": "Oferta minimalna (grosze)",
+          "hint": "Bezwzględny próg dla wszystkich sztuk."
+        },
+        "maxOffersPerArticlePerUser": {
+          "label": "Oferty na sztukę i osobę",
+          "hint": "Ile razy ta sama osoba może złożyć ofertę na tę samą sztukę."
+        },
+        "offerCooldownAfterRejectionHours": {
+          "label": "Karencja po odmowie (godziny)",
+          "hint": "Bez niej odmowę obchodzi się, wysyłając tę samą ofertę o grosz wyższą."
+        },
+        "autoAcceptOffersEnabled": {
+          "label": "Automatyczna akceptacja",
+          "hint": "Niezalecana. Gdy kupujący odkryją, że niska oferta przechodzi sama, cena wywoławcza staje się ozdobą."
+        },
+        "autoAcceptThresholdPercent": {
+          "label": "Próg automatycznej akceptacji (%)",
+          "hint": "Odsetek ceny wywoławczej, powyżej którego oferta przechodzi sama. Puste pole oznacza brak progu."
+        },
+        "reservationTtlMinutes": {
+          "label": "Rezerwacja w koszyku (minuty)",
+          "hint": "Jak długo sztuka pozostaje zablokowana na czas płatności."
+        }
+      }
     }
   },
   "orderEmail": {

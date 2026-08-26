@@ -164,15 +164,21 @@ paiement encaissé, pas d'une déclaration.
       "sku": "ART-000051",
       "slug": "chemise-ralph-lauren-l-51",
       "url": "https://<boutique>/fr/a/chemise-ralph-lauren-l-51",
-      "floorPriceCents": 2340,
+      "floorPriceCents": 0,
       "belowFloor": false,
-      "estimatedMarginCents": 820,
+      "estimatedMarginCents": 0,
       "imagesPending": true,
       "published": false
     }
   ]
 }
 ```
+
+Les montants de cet exemple sont à **zéro** volontairement. Un plancher et une
+marge donnés ensemble se soustraient : ils livrent le prix d’achat et le coût
+transporteur de la pièce, c’est-à-dire la structure de coût de la boutique. Un
+exemple de documentation n’a pas à la publier — il montre la FORME de la
+réponse, et les vraies valeurs arrivent à l’exécution.
 
 `action` vaut `created` ou `updated`.
 
@@ -321,7 +327,7 @@ Trois exigences côté application, et elles ne sont pas décoratives :
   "shipping": {
     "parcelWeightGrams": 400,
     "tierMaxGrams": 500,
-    "carrierCostCents": 480,
+    "carrierCostCents": 0,
     "chargedCents": 0
   }
 }
@@ -570,10 +576,14 @@ Pour corriger au fil du temps, l'événement de vente portera de quoi réconcili
 "shipping": {
   "parcelWeightGrams": 780,
   "tierMaxGrams": 1000,
-  "carrierCostCents": 480,
+  "carrierCostCents": 0,
   "chargedCents": 0
 }
 ```
+
+Ici encore, `carrierCostCents` est à zéro dans l’exemple : un coût transporteur
+est une donnée de coût, et croisé avec la majoration réglée il donne au centime
+ce que la boutique encaisse sur chaque colis.
 
 `parcelWeightGrams` inclut l'emballage. Comparé à `tierMaxGrams`, il dit si la
 pièce frôle une borne de palier — c'est là qu'une sous-estimation coûte cher.

@@ -25,6 +25,14 @@ const PREFIX = 'DROP-'
 const DAY = 24 * 60 * 60 * 1000
 const NOW = new Date('2020-06-01T12:00:00.000Z')
 
+/**
+ * Le barème sous lequel les attentes de ce fichier sont vraies.
+ *
+ * Un jeu d'essai, pas une politique commerciale : le vrai barème vit dans
+ * `Setting.autoDropSchedule`, se règle en back-office, et n'apparaît nulle
+ * part dans le dépôt. Ces deux paliers sont ici pour que « 20,00 € à 35 jours
+ * donne 18,00 € » veuille dire quelque chose.
+ */
 const SCHEDULE = [
   { days: 30, percent: 10 },
   { days: 60, percent: 20 },
@@ -204,8 +212,19 @@ describe('application du barème', () => {
   })
 
   it('lit le barème dans la table Setting quand on ne lui en donne pas', async () => {
-    // Le seed pose [{30 j, 10 %}, {60 j, 20 %}] : c'est le chemin de
-    // production, celui que le cron emprunte.
+    // C'est le chemin de PRODUCTION : le cron n'a pas de barème à passer, il
+    // lit celui qui est réglé en base.
+    //
+    // Le barème est posé ICI, pas hérité du seed. Ce test dépendait autrefois
+    // des valeurs semées, et il est tombé le jour où elles ont changé — ce qui
+    // était le bon signal pour une mauvaise raison : il n'avait rien à dire sur
+    // ce changement. Depuis que les nombres du seed sont explicitement fictifs
+    // et destinés à bouger, s'y adosser n'a plus de sens du tout.
+    await prisma.setting.update({
+      where: { key: 'autoDropSchedule' },
+      data: { value: [{ days: 30, percent: 10 }] },
+    })
+
     const id = await makeArticle('p7', { daysOld: 35, priceCents: 2000 })
 
     const dropped = await applyDuePriceDrops(NOW)

@@ -171,6 +171,27 @@ const SCHEMAS = {
   withdrawalPeriodDays: positiveInt,
   returnShippingPaidByCustomer: z.boolean(),
   refundOutboundShippingOnWithdrawal: z.boolean(),
+  /**
+   * D'où viennent les valeurs présentes en base.
+   *
+   * -------------------------------------------------------------------------
+   * Le défaut que ce marqueur empêche
+   * -------------------------------------------------------------------------
+   * Le seed doit poser des nombres pour que la boutique tourne en
+   * développement. Ces nombres sont FICTIFS et le disent — mais rien ne les
+   * empêchait d'arriver en production : `npx prisma db seed` sur la mauvaise
+   * base, une restauration, un premier déploiement où personne n'a rien saisi.
+   *
+   * La boutique se serait alors ouverte avec une marge cible et des coûts
+   * transporteur inventés. Elle n'aurait rien affiché d'anormal : elle aurait
+   * simplement vendu à perte, pièce après pièce, jusqu'à ce que quelqu'un fasse
+   * les comptes.
+   *
+   * Le seed écrit donc `development`, le back-office écrit `production`, et le
+   * calcul de prix REFUSE de servir en production tant que le marqueur n'a pas
+   * changé. Voir `getPricingConfig`.
+   */
+  settingsProfile: z.enum(['development', 'production']),
 } as const
 
 export type SettingKey = keyof typeof SCHEMAS
@@ -208,6 +229,229 @@ export async function getSettings<K extends SettingKey>(
   }
 
   return result
+}
+
+// ---------------------------------------------------------------------------
+// Écriture
+// ---------------------------------------------------------------------------
+
+/**
+ * Comment un réglage se saisit à l'écran.
+ *
+ * Le type de champ est une propriété du RÉGLAGE, pas du formulaire — au même
+ * titre que sa forme Zod. Le mettre ici évite qu'un écran affiche en euros ce
+ * que la base stocke en centimes, ou l'inverse : l'erreur ne se verrait pas,
+ * elle multiplierait les prix par cent.
+ */
+export type SettingFieldKind =
+  | 'integer'
+  | 'cents'
+  | 'percent'
+  | 'basisPoints'
+  | 'boolean'
+  | 'nullablePercent'
+  | 'dropSchedule'
+
+export interface EditableSetting {
+  key: SettingKey
+  kind: SettingFieldKind
+  group: 'economy' | 'shipping' | 'drop' | 'offers' | 'checkout'
+}
+
+/**
+ * Les réglages que le back-office peut changer.
+ *
+ * ---------------------------------------------------------------------------
+ * Une liste FERMÉE, et c'est le point
+ * ---------------------------------------------------------------------------
+ * Le formulaire n'écrit que ce qui figure ici. Sans cette liste, une action
+ * serveur qui accepterait « une clé et une valeur » laisserait n'importe quel
+ * administrateur — ou n'importe qui ayant volé sa session — réécrire
+ * `cgvVersion` ou `withdrawalPeriodDays`, c'est-à-dire modifier ce que la
+ * boutique affirme juridiquement à ses clientes.
+ *
+ * Sont donc EXCLUS, délibérément :
+ *
+ *  - `withdrawalPeriodDays`, `returnShippingPaidByCustomer`,
+ *    `refundOutboundShippingOnWithdrawal` : conditions légales. Elles se
+ *    changent avec un juriste, pas dans un formulaire entre deux commandes ;
+ *  - `cgvVersion` : une version de CGV se change en publiant de nouvelles CGV ;
+ *  - `floorShippingZoneCode` : référence un code de zone qui doit exister en
+ *    base. Un champ libre y écrirait une zone inexistante, et le calcul du
+ *    plancher tomberait sur toutes les pièces à la fois ;
+ *  - `impactCoefficients` : tant qu'aucune source vérifiée ne les fournit, le
+ *    bloc reste masqué. Un formulaire inviterait à les inventer ;
+ *  - `settingsProfile` : il n'est pas un réglage mais une conséquence — il
+ *    passe à `production` du seul fait qu'on a enregistré ce formulaire.
+ */
+export const EDITABLE_SETTINGS: readonly EditableSetting[] = [
+  // Ce que la boutique gagne. Le groupe le plus sensible : c'est lui qui a
+  // motivé la sortie de ces nombres du dépôt.
+  { key: 'minMarginCents', kind: 'cents', group: 'economy' },
+  { key: 'contributionRateBps', kind: 'basisPoints', group: 'economy' },
+  { key: 'stripePercentBps', kind: 'basisPoints', group: 'economy' },
+  { key: 'stripeFixedCents', kind: 'cents', group: 'economy' },
+
+  { key: 'shippingMarkupPercent', kind: 'percent', group: 'shipping' },
+  { key: 'packagingWeightGrams', kind: 'integer', group: 'shipping' },
+
+  { key: 'autoDropSchedule', kind: 'dropSchedule', group: 'drop' },
+
+  { key: 'offersOpenAfterDays', kind: 'integer', group: 'offers' },
+  { key: 'offerResponseHours', kind: 'integer', group: 'offers' },
+  { key: 'acceptedOfferValidityHours', kind: 'integer', group: 'offers' },
+  { key: 'minOfferAmountCents', kind: 'cents', group: 'offers' },
+  { key: 'maxOffersPerArticlePerUser', kind: 'integer', group: 'offers' },
+  { key: 'offerCooldownAfterRejectionHours', kind: 'integer', group: 'offers' },
+  { key: 'autoAcceptOffersEnabled', kind: 'boolean', group: 'offers' },
+  { key: 'autoAcceptThresholdPercent', kind: 'nullablePercent', group: 'offers' },
+
+  { key: 'reservationTtlMinutes', kind: 'integer', group: 'checkout' },
+] as const
+
+const EDITABLE_BY_KEY = new Map(
+  EDITABLE_SETTINGS.map((setting) => [setting.key, setting] as const),
+)
+
+export function isEditableSetting(key: string): key is SettingKey {
+  return EDITABLE_BY_KEY.has(key as SettingKey)
+}
+
+export type SettingParse =
+  | { ok: true; value: unknown }
+  | { ok: false; reason: 'not-editable' | 'malformed' }
+
+/**
+ * Transforme la saisie d'un formulaire en valeur stockable.
+ *
+ * ---------------------------------------------------------------------------
+ * Cette fonction ne VALIDE pas, elle CONVERTIT
+ * ---------------------------------------------------------------------------
+ * Un formulaire HTML ne transporte que des chaînes. « 20 » doit devenir le
+ * nombre 20, « oui » le booléen vrai, et deux lignes « 30:10 » un tableau
+ * d'objets. La validation, elle, reste celle de `SCHEMAS` — appliquée ensuite
+ * par `writeSettings`, et la même que celle de la lecture.
+ *
+ * Séparer les deux évite le défaut classique : un formulaire qui valide « à sa
+ * façon » et laisse passer une valeur que la lecture refusera. Le réglage serait
+ * alors écrit, et la boutique tomberait au prochain calcul de prix — sans que
+ * l'écran qui l'a écrit ait rien signalé.
+ */
+export function parseSettingInput(key: string, raw: string): SettingParse {
+  const setting = EDITABLE_BY_KEY.get(key as SettingKey)
+  if (!setting) return { ok: false, reason: 'not-editable' }
+
+  const trimmed = raw.trim()
+
+  switch (setting.kind) {
+    case 'boolean':
+      // Une case décochée n'est PAS envoyée par le navigateur : l'absence vaut
+      // faux. C'est le formulaire qui garantit la présence de la clé, par un
+      // champ caché ; ici on interprète ce qui arrive.
+      return { ok: true, value: trimmed === 'on' || trimmed === 'true' }
+
+    case 'nullablePercent': {
+      // Vide = « aucun seuil », ce qui rend l'acceptation automatique inerte.
+      // C'est une valeur, pas une omission : voir le commentaire du réglage.
+      if (trimmed === '') return { ok: true, value: null }
+      const parsed = Number(trimmed)
+      if (!Number.isInteger(parsed)) return { ok: false, reason: 'malformed' }
+      return { ok: true, value: parsed }
+    }
+
+    case 'dropSchedule': {
+      // Un palier par ligne, « jours:pourcentage ». Une grille éditable en
+      // texte plutôt qu'en champs répétés : le barème compte deux ou trois
+      // paliers, et une zone de texte se corrige d'un coup.
+      if (trimmed === '') return { ok: true, value: [] }
+
+      const stages: { days: number; percent: number }[] = []
+      for (const line of trimmed.split('\n')) {
+        const clean = line.trim()
+        if (clean === '') continue
+
+        const [left, right, ...rest] = clean.split(':')
+        if (rest.length > 0 || left === undefined || right === undefined) {
+          return { ok: false, reason: 'malformed' }
+        }
+
+        const days = Number(left.trim())
+        const percent = Number(right.trim())
+        if (!Number.isInteger(days) || !Number.isInteger(percent)) {
+          return { ok: false, reason: 'malformed' }
+        }
+
+        stages.push({ days, percent })
+      }
+
+      // Trié à l'écriture : `SCHEMAS.autoDropSchedule` exige des remises
+      // croissantes avec l'ancienneté, mais dans l'ordre où elles arrivent.
+      // Trier ici évite de refuser un barème correct saisi à l'envers.
+      stages.sort((a, b) => a.days - b.days)
+      return { ok: true, value: stages }
+    }
+
+    default: {
+      if (trimmed === '') return { ok: false, reason: 'malformed' }
+      const parsed = Number(trimmed)
+      if (!Number.isInteger(parsed)) return { ok: false, reason: 'malformed' }
+      return { ok: true, value: parsed }
+    }
+  }
+}
+
+export type WriteSettingsResult =
+  | { ok: true; changed: SettingKey[] }
+  | { ok: false; key: string; reason: 'not-editable' | 'invalid' }
+
+/**
+ * L'unique chemin d'écriture des réglages.
+ *
+ * ---------------------------------------------------------------------------
+ * Validé avec le MÊME schéma que la lecture
+ * ---------------------------------------------------------------------------
+ * `getSettings` refuse une valeur mal formée en levant. Si l'écriture validait
+ * autrement — ou pas du tout — on pourrait enregistrer un réglage que plus
+ * personne ne sait relire : la boutique s'ouvrirait, puis tomberait au premier
+ * calcul de prix, avec une erreur pointant la lecture alors que la faute est à
+ * l'écriture.
+ *
+ * ---------------------------------------------------------------------------
+ * Tout ou rien
+ * ---------------------------------------------------------------------------
+ * Le formulaire envoie une dizaine de réglages d'un coup. En écrire six puis
+ * buter sur le septième laisserait une configuration MIXTE — une marge
+ * minimale neuve avec une majoration de port ancienne — que personne n'a
+ * choisie et que rien ne signalerait. On valide tout avant d'écrire quoi que
+ * ce soit.
+ */
+export async function writeSettings(
+  entries: ReadonlyArray<{ key: string; value: unknown }>,
+  client: Reader = prisma,
+): Promise<WriteSettingsResult> {
+  const validated: { key: SettingKey; value: unknown }[] = []
+
+  for (const entry of entries) {
+    if (!isEditableSetting(entry.key)) {
+      return { ok: false, key: entry.key, reason: 'not-editable' }
+    }
+
+    const parsed = SCHEMAS[entry.key].safeParse(entry.value)
+    if (!parsed.success) {
+      return { ok: false, key: entry.key, reason: 'invalid' }
+    }
+
+    validated.push({ key: entry.key, value: parsed.data })
+  }
+
+  for (const entry of validated) {
+    await client.setting.update({
+      where: { key: entry.key },
+      data: { value: entry.value as never },
+    })
+  }
+
+  return { ok: true, changed: validated.map((entry) => entry.key) }
 }
 
 /** Lit un réglage isolé. Préférer `getSettings` dès qu'il y en a deux. */
@@ -262,18 +506,65 @@ export async function getOfferPolicy(
   )
 }
 
+/**
+ * Erreur de mise en service : la boutique tourne encore sur les nombres du seed.
+ *
+ * Séparée de `MissingSettingError` parce que le geste correctif n'est pas le
+ * même : là, un réglage manque ; ici, ils sont tous présents — et tous faux.
+ */
+export class DemoSettingsInProductionError extends Error {
+  constructor() {
+    super(
+      'Les réglages de prix sont encore ceux du jeu de démonstration. ' +
+        'Renseignez-les dans Réglages avant d’ouvrir la boutique : les valeurs ' +
+        'du seed sont fictives et vendraient à perte.',
+    )
+    this.name = 'DemoSettingsInProductionError'
+  }
+}
+
 export async function getPricingConfig(
   client: Reader = prisma,
 ): Promise<PricingConfig> {
-  return getSettings(
+  const values = await getSettings(
     [
       'minMarginCents',
       'contributionRateBps',
       'stripePercentBps',
       'stripeFixedCents',
+      'settingsProfile',
     ],
     client,
   )
+
+  // ---------------------------------------------------------------------------
+  // Le garde-fou, et pourquoi il est ICI
+  // ---------------------------------------------------------------------------
+  // C'est le passage obligé de tout ce qui fabrique un prix : plancher de
+  // négociation, import d'une pièce, baisse automatique. Le poser plus haut —
+  // au démarrage, dans un script — laisserait passer le cas qui compte
+  // vraiment : une base restaurée ou re-semée APRÈS la mise en service, sur
+  // laquelle plus personne ne relance de vérification.
+  //
+  // On refuse plutôt que d'avertir. Un journal d'avertissement sur une boutique
+  // qui vend est un journal que personne ne lit avant le prochain bilan.
+  //
+  // `VERCEL_ENV` plutôt que `NODE_ENV` : ce dernier vaut « production » dans les
+  // déploiements de prévisualisation, où le jeu de démonstration est justement
+  // ce qu'on veut.
+  if (
+    values.settingsProfile === 'development' &&
+    process.env.VERCEL_ENV === 'production'
+  ) {
+    throw new DemoSettingsInProductionError()
+  }
+
+  return {
+    minMarginCents: values.minMarginCents,
+    contributionRateBps: values.contributionRateBps,
+    stripePercentBps: values.stripePercentBps,
+    stripeFixedCents: values.stripeFixedCents,
+  }
 }
 
 /**

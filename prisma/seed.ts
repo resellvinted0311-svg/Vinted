@@ -1,8 +1,17 @@
 import { PrismaClient, type ArticleCondition, type ArticleStatus } from '@prisma/client'
 import { hash } from '@node-rs/argon2'
 import { locales, type Locale } from '../lib/i18n/routing'
-import { computeFloorPriceCents, DEFAULT_PRICING_CONFIG } from '../lib/domain/pricing'
+import { computeFloorPriceCents } from '../lib/domain/pricing'
 import { ZONES, RATES, cheapestFrenchCarrierCostCents } from './seed-data/shipping'
+import {
+  DEMO_PRICING,
+  DEMO_SHIPPING_MARKUP_PERCENT,
+  DEMO_PACKAGING_WEIGHT_GRAMS,
+  DEMO_MIN_OFFER_RATIO,
+  DEMO_AUTO_DROP_SCHEDULE,
+  DEMO_COST_RANGE,
+  DEMO_SOURCING_PLACES,
+} from './seed-data/fixtures'
 import {
   CATEGORIES,
   BRANDS,
@@ -59,8 +68,8 @@ function daysFromNow(days: number): Date {
 
 async function seedSettings(): Promise<void> {
   const settings: { key: string; value: unknown }[] = [
-    { key: 'packagingWeightGrams', value: 80 },
-    { key: 'shippingMarkupPercent', value: 20 },
+    { key: 'packagingWeightGrams', value: DEMO_PACKAGING_WEIGHT_GRAMS },
+    { key: 'shippingMarkupPercent', value: DEMO_SHIPPING_MARKUP_PERCENT },
     { key: 'reservationTtlMinutes', value: 15 },
     { key: 'offersOpenAfterDays', value: 7 },
     { key: 'offerResponseHours', value: 48 },
@@ -68,11 +77,17 @@ async function seedSettings(): Promise<void> {
     { key: 'minOfferAmountCents', value: 800 },
     { key: 'maxOffersPerArticlePerUser', value: 3 },
     { key: 'offerCooldownAfterRejectionHours', value: 48 },
-    { key: 'minMarginCents', value: DEFAULT_PRICING_CONFIG.minMarginCents },
-    { key: 'contributionRateBps', value: DEFAULT_PRICING_CONFIG.contributionRateBps },
-    { key: 'stripePercentBps', value: DEFAULT_PRICING_CONFIG.stripePercentBps },
-    { key: 'stripeFixedCents', value: DEFAULT_PRICING_CONFIG.stripeFixedCents },
-    { key: 'autoDropSchedule', value: [{ days: 30, percent: 10 }, { days: 60, percent: 20 }] },
+    { key: 'minMarginCents', value: DEMO_PRICING.minMarginCents },
+    { key: 'contributionRateBps', value: DEMO_PRICING.contributionRateBps },
+    { key: 'stripePercentBps', value: DEMO_PRICING.stripePercentBps },
+    { key: 'stripeFixedCents', value: DEMO_PRICING.stripeFixedCents },
+    { key: 'autoDropSchedule', value: DEMO_AUTO_DROP_SCHEDULE },
+
+    // Le marqueur qui empêche d'ouvrir la boutique avec ces nombres-là.
+    // `getPricingConfig()` refuse de calculer un prix en production tant
+    // qu'il vaut `development` ; l'écran « Réglages » le fait passer à
+    // `production` du seul fait qu'on y enregistre de vraies valeurs.
+    { key: 'settingsProfile', value: 'development' },
 
     // Zone de référence du prix plancher : celle où la boutique vend le plus.
     // Le plancher intègre le port, et le port dépend de la zone — sans ce
@@ -381,11 +396,19 @@ async function seedArticles(
 
     // Économie de l'article. Le prix de vente doit rester au-dessus du
     // plancher : un article de test déficitaire fausserait les garde-fous.
-    const costCents = randInt(150, 1200)
-    const floorPriceCents = computeFloorPriceCents({
-      costCents,
-      estimatedShippingCostCents: cheapestFrenchCarrierCostCents(weightGrams + 80),
-    })
+    const costCents = randInt(DEMO_COST_RANGE.minCents, DEMO_COST_RANGE.maxCents)
+    const floorPriceCents = computeFloorPriceCents(
+      {
+        costCents,
+        estimatedShippingCostCents: cheapestFrenchCarrierCostCents(
+          weightGrams + DEMO_PACKAGING_WEIGHT_GRAMS,
+        ),
+      },
+      // Passée explicitement : `computeFloorPriceCents` n'a plus de
+      // configuration par défaut, précisément pour qu'aucun appelant ne
+      // calcule avec des chiffres que personne n'a choisis.
+      DEMO_PRICING,
+    )
     const priceCents = Math.max(
       floorPriceCents + randInt(200, 2600),
       floorPriceCents,
@@ -408,10 +431,7 @@ async function seedArticles(
     const soldAt = planned.status === 'SOLD' ? daysAgo(randInt(1, 15)) : null
     const viewCount = randInt(0, 340)
     const sourcedAt = daysAgo(randInt(30, 200))
-    const sourcedFrom = pick([
-      'réderie Albert', 'brocante Amiens', 'dépôt-vente Lille',
-      'vide-grenier Roubaix', 'friperie Bruxelles',
-    ])
+    const sourcedFrom = pick([...DEMO_SOURCING_PLACES])
 
     const articleData = {
       slug: `${categorySlug}-${brand.slug}-${sizeLabel.toLowerCase()}-${sequence}`,
@@ -438,7 +458,11 @@ async function seedArticles(
       allowOffers: true,
       // Refus automatique très bas, proche du prix de revient : c'est le
       // seul automatisme actif du système d'offres.
-      minOfferCents: Math.round(floorPriceCents * 0.9),
+      //
+      // Le coefficient vit dans le fichier de valeurs fictives : où se place
+      // ce seuil par rapport au plancher dit si la boutique accepte d'examiner
+      // une offre légèrement déficitaire, ce qui est une politique commerciale.
+      minOfferCents: Math.round(floorPriceCents * DEMO_MIN_OFFER_RATIO),
       viewCount,
       sourcedAt,
       sourcedFrom,

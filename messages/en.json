@@ -599,6 +599,92 @@
       "orderNotFound": "This order cannot be found.",
       "invalidTransition": "This order has already changed state. Reload the page.",
       "unknown": "The action could not be recorded."
+    },
+    "settings": {
+      "title": "Settings",
+      "intro": "These numbers decide your prices: what you earn per piece, what you take on each parcel, how far you go down and after how long. They exist only in this database — never in the code, never in the repository.",
+      "save": "Save",
+      "saved": "{count, plural, =0 {Nothing to save.} one {One setting saved.} other {# settings saved.}}",
+      "demoProfile": "The shop is still running on the demonstration values, which are fictional. Enter your real figures here: until you do, no price will be computed in production.",
+      "errorOnField": "The value for “{field}” was not accepted.",
+      "groups": {
+        "economy": "Economics",
+        "shipping": "Shipping",
+        "drop": "Automatic markdown",
+        "offers": "Negotiation",
+        "checkout": "Checkout"
+      },
+      "errors": {
+        "rateLimited": "Too many saves in a row. Try again in a moment.",
+        "invalidRequest": "The form is incomplete. Reload the page and start again.",
+        "invalidValue": "One value was not accepted."
+      },
+      "fields": {
+        "minMarginCents": {
+          "label": "Minimum margin (cents)",
+          "hint": "What you want to clear on a sale once contributions, payment fees, purchase price and shipping are deducted. This number sets the floor price of a negotiation."
+        },
+        "contributionRateBps": {
+          "label": "Contributions (basis points)",
+          "hint": "1230 means 12.30 %. French micro-enterprise rate for resale of goods."
+        },
+        "stripePercentBps": {
+          "label": "Stripe variable fee (basis points)",
+          "hint": "150 means 1.50 %. The exact figure is in your Stripe contract."
+        },
+        "stripeFixedCents": {
+          "label": "Stripe fixed fee (cents)",
+          "hint": "Taken on every payment, whatever the amount."
+        },
+        "shippingMarkupPercent": {
+          "label": "Shipping markup (%)",
+          "hint": "Added to the carrier cost to get the shipping charged to the buyer."
+        },
+        "packagingWeightGrams": {
+          "label": "Packaging weight (grams)",
+          "hint": "Added to the weight of the piece to pick the carrier’s weight bracket."
+        },
+        "autoDropSchedule": {
+          "label": "Automatic markdown schedule",
+          "hint": "One stage per line, written days:percent. The percentage applies to the original price, never to the already reduced one. Leave empty to disable markdowns."
+        },
+        "offersOpenAfterDays": {
+          "label": "Offers open after (days)",
+          "hint": "How long after publication a piece becomes negotiable. At zero it never sells at the listed price: buyers just wait."
+        },
+        "offerResponseHours": {
+          "label": "Response window (hours)",
+          "hint": "How long you have to answer before an offer expires."
+        },
+        "acceptedOfferValidityHours": {
+          "label": "Accepted price validity (hours)",
+          "hint": "How long the buyer has to pay at the negotiated price."
+        },
+        "minOfferAmountCents": {
+          "label": "Minimum offer (cents)",
+          "hint": "Absolute floor across all pieces. Keeps nuisance offers out."
+        },
+        "maxOffersPerArticlePerUser": {
+          "label": "Offers per piece, per person",
+          "hint": "How many times the same person may bid on the same piece."
+        },
+        "offerCooldownAfterRejectionHours": {
+          "label": "Cooldown after refusal (hours)",
+          "hint": "Without it, a refusal is worked around by resending the same offer one cent higher."
+        },
+        "autoAcceptOffersEnabled": {
+          "label": "Automatic acceptance",
+          "hint": "Not recommended. Once buyers find out a low offer goes through by itself, the listed price becomes decorative."
+        },
+        "autoAcceptThresholdPercent": {
+          "label": "Automatic acceptance threshold (%)",
+          "hint": "Share of the listed price above which an offer passes on its own. Leave empty for none. The floor price stays unbreakable either way."
+        },
+        "reservationTtlMinutes": {
+          "label": "Cart reservation (minutes)",
+          "hint": "How long a piece stays held while payment goes through."
+        }
+      }
     }
   },
   "orderEmail": {

@@ -68,6 +68,9 @@ export default async function AdminLayout({
         <Link href="/admin/offres" className="label-reg text-muted hover:text-ink">
           {t('offers')}
         </Link>
+        <Link href="/admin/reglages" className="label-reg text-muted hover:text-ink">
+          {t('settings.title')}
+        </Link>
       </nav>
 
       {children}

@@ -599,6 +599,92 @@
       "orderNotFound": "Questo ordine non si trova.",
       "invalidTransition": "Questo ordine ha già cambiato stato. Ricarica la pagina.",
       "unknown": "Non è stato possibile registrare l’azione."
+    },
+    "settings": {
+      "title": "Impostazioni",
+      "intro": "Questi numeri decidono i prezzi: quanto guadagna per capo, quanto trattiene su ogni pacco, fin dove cede e dopo quanto tempo. Esistono solo in questo database, mai nel codice né nel repository.",
+      "save": "Salva",
+      "saved": "{count, plural, =0 {Niente da salvare.} one {Una impostazione salvata.} other {# impostazioni salvate.}}",
+      "demoProfile": "Il negozio funziona ancora con i valori dimostrativi, che sono fittizi. Inserisca qui le sue cifre reali: fino ad allora nessun prezzo verrà calcolato in produzione.",
+      "errorOnField": "Il valore di «{field}» non è stato accettato.",
+      "groups": {
+        "economy": "Economia",
+        "shipping": "Spedizione",
+        "drop": "Ribasso automatico",
+        "offers": "Trattativa",
+        "checkout": "Cassa"
+      },
+      "errors": {
+        "rateLimited": "Troppi salvataggi di seguito. Riprovi tra poco.",
+        "invalidRequest": "Il modulo è incompleto. Ricarichi la pagina.",
+        "invalidValue": "Un valore non è stato accettato."
+      },
+      "fields": {
+        "minMarginCents": {
+          "label": "Margine minimo (centesimi)",
+          "hint": "Quanto vuole guadagnare netto su una vendita, dedotti contributi, commissione, prezzo di acquisto e spedizione. È questo numero a fissare il prezzo minimo di una trattativa."
+        },
+        "contributionRateBps": {
+          "label": "Contributi (punti base)",
+          "hint": "1230 vale 12,30 %."
+        },
+        "stripePercentBps": {
+          "label": "Commissione variabile Stripe (punti base)",
+          "hint": "150 vale 1,50 %. La cifra esatta è nel suo contratto."
+        },
+        "stripeFixedCents": {
+          "label": "Commissione fissa Stripe (centesimi)",
+          "hint": "Trattenuta a ogni incasso, qualunque sia l’importo."
+        },
+        "shippingMarkupPercent": {
+          "label": "Ricarico sulla spedizione (%)",
+          "hint": "Si aggiunge al costo del corriere per ottenere la spedizione fatturata."
+        },
+        "packagingWeightGrams": {
+          "label": "Peso dell’imballaggio (grammi)",
+          "hint": "Si somma al peso del capo per scegliere la fascia tariffaria."
+        },
+        "autoDropSchedule": {
+          "label": "Scala del ribasso automatico",
+          "hint": "Uno scaglione per riga, nella forma giorni:percentuale. La percentuale si applica al prezzo di origine, mai a quello già ribassato. Lasciare vuoto disattiva il ribasso."
+        },
+        "offersOpenAfterDays": {
+          "label": "Apertura delle proposte (giorni)",
+          "hint": "Quanto tempo dopo la pubblicazione un capo diventa trattabile. A zero non si vende mai al prezzo esposto."
+        },
+        "offerResponseHours": {
+          "label": "Tempo di risposta (ore)",
+          "hint": "Il tempo di cui dispone per rispondere prima che una proposta scada."
+        },
+        "acceptedOfferValidityHours": {
+          "label": "Validità di un prezzo accettato (ore)",
+          "hint": "Il tempo di cui dispone l’acquirente per pagare al prezzo concordato."
+        },
+        "minOfferAmountCents": {
+          "label": "Proposta minima (centesimi)",
+          "hint": "Soglia assoluta, per tutti i capi."
+        },
+        "maxOffersPerArticlePerUser": {
+          "label": "Proposte per capo e per persona",
+          "hint": "Quante volte la stessa persona può proporre sullo stesso capo."
+        },
+        "offerCooldownAfterRejectionHours": {
+          "label": "Attesa dopo un rifiuto (ore)",
+          "hint": "Senza di essa un rifiuto si aggira rinviando la stessa proposta un centesimo più alta."
+        },
+        "autoAcceptOffersEnabled": {
+          "label": "Accettazione automatica",
+          "hint": "Sconsigliata. Se gli acquirenti scoprono che una proposta bassa passa da sola, il prezzo esposto diventa decorativo."
+        },
+        "autoAcceptThresholdPercent": {
+          "label": "Soglia di accettazione automatica (%)",
+          "hint": "Percentuale del prezzo esposto oltre la quale una proposta passa da sola. Lasciare vuoto per non averne alcuna."
+        },
+        "reservationTtlMinutes": {
+          "label": "Prenotazione nel carrello (minuti)",
+          "hint": "Per quanto tempo un capo resta bloccato durante il pagamento."
+        }
+      }
     }
   },
   "orderEmail": {

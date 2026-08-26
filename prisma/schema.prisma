@@ -352,7 +352,7 @@ model Article {
   /// à jour au lieu de créer un doublon.
   ///
   /// Nul pour les pièces nées ici — jeu de démonstration, back-office.
-  externalId      String?   @unique
+  externalId       String?   @unique
   /// Dernière synchronisation réussie depuis l'application de gestion.
   externalSyncedAt DateTime?
 
@@ -377,17 +377,20 @@ model Article {
 
   viewCount Int @default(0)
 
-  allowOffers    Boolean   @default(true)
+  allowOffers   Boolean   @default(true)
   /// Offres bloquées jusqu'à cette date (publishedAt + 7 jours par défaut).
-  offersOpenAt   DateTime?
+  offersOpenAt  DateTime?
   /// Refus automatique en dessous de ce montant.
-  minOfferCents  Int?
+  minOfferCents Int?
 
-  autoDropEnabled  Boolean   @default(true)
-  lastPriceDropAt  DateTime?
+  autoDropEnabled Boolean   @default(true)
+  lastPriceDropAt DateTime?
 
   sourcedAt     DateTime?
-  /// PRIVÉ — provenance interne, ex. "réderie Albert 12/04".
+  /// PRIVÉ — provenance interne, ex. "brocante du Vieux Marché 12/04".
+  /// Dire OÙ la boutique s'approvisionne vaut, pour un concurrent, plus
+  /// cher encore que de savoir ce qu'elle gagne : l'exemple ci-dessus ne
+  /// désigne aucun lieu existant, et ne doit jamais en désigner un.
   sourcedFrom   String?
   /// PRIVÉ
   internalNotes String?
@@ -564,11 +567,11 @@ model SizeAlert {
 // ---------------------------------------------------------------------------
 
 model Offer {
-  id        String  @id @default(cuid())
-  articleId String
-  userId    String?
+  id                String  @id @default(cuid())
+  articleId         String
+  userId            String?
   /// Offre déposée sans compte : l'adresse e-mail est la voie de réponse.
-  guestEmail String?
+  guestEmail        String?
   /// Offre déposée sans compte : le jeton de session boutique est l'IDENTITÉ.
   ///
   /// Les deux colonnes ne font pas double emploi. L'adresse dit OÙ répondre ;
@@ -605,10 +608,10 @@ model Offer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  article     Article    @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  parentOffer Offer?     @relation("OfferChain", fields: [parentOfferId], references: [id], onDelete: SetNull)
-  counters    Offer[]    @relation("OfferChain")
+  article     Article     @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  parentOffer Offer?      @relation("OfferChain", fields: [parentOfferId], references: [id], onDelete: SetNull)
+  counters    Offer[]     @relation("OfferChain")
   cartItems   CartItem[]
   orderItems  OrderItem[]
 
@@ -634,11 +637,11 @@ model Cart {
   userId       String?
   /// Cookie httpOnly — le panier n'existe jamais en localStorage.
   /// Même borne que GuestFavorite : clé indexée et unique.
-  sessionToken String @unique @db.VarChar(64)
+  sessionToken String  @unique @db.VarChar(64)
   locale       String  @default("fr")
 
   /// Relance panier abandonné.
-  remindedAt      DateTime?
+  remindedAt       DateTime?
   secondRemindedAt DateTime?
 
   createdAt DateTime @default(now())
@@ -740,8 +743,8 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  promoCode PromoCode?  @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  promoCode PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
 
   items         OrderItem[]
   shipments     Shipment[]
@@ -759,14 +762,14 @@ model Order {
 }
 
 model OrderItem {
-  id      String @id @default(cuid())
-  orderId String
+  id        String @id @default(cuid())
+  orderId   String
   articleId String
 
   titleSnapshot String
   imageSnapshot String
 
-  unitPriceCents Int
+  unitPriceCents    Int
   /// PRIVÉ — permet le calcul de marge a posteriori.
   costCentsSnapshot Int
 
@@ -853,11 +856,11 @@ model ReturnRequest {
   labelUrl       String?
   trackingNumber String?
 
-  refundCents Int?
+  refundCents         Int?
   /// Part du remboursement correspondant au port aller (obligation légale).
-  refundShippingCents Int @default(0)
+  refundShippingCents Int  @default(0)
   /// Frais de retour retenus au client, si les CGV le prévoient.
-  returnFeeCents      Int @default(0)
+  returnFeeCents      Int  @default(0)
 
   stripeRefundId String? @unique
 
@@ -969,9 +972,9 @@ model Review {
 // ---------------------------------------------------------------------------
 
 model PromoCode {
-  id   String    @id @default(cuid())
-  code String    @unique
-  type PromoType
+  id    String    @id @default(cuid())
+  code  String    @unique
+  type  PromoType
   /// Pourcentage (0-100) pour PERCENT, centimes pour FIXED, ignoré pour FREE_SHIPPING.
   value Int
 
@@ -998,10 +1001,10 @@ model PromoCode {
 // ---------------------------------------------------------------------------
 
 model ShippingZone {
-  id   String @id @default(cuid())
+  id        String   @id @default(cuid())
   /// FR, EU1, EU2, EUROPE_NON_EU, FR_CORSE, FR_DOM
-  code String @unique
-  name String
+  code      String   @unique
+  name      String
   /// Codes ISO 3166-1 alpha-2. La Corse et les DOM sont discriminés par code
   /// postal (voir lib/domain/shipping.ts), jamais par une distance.
   countries String[]
@@ -1061,7 +1064,7 @@ model NewsletterSubscriber {
   email  String @unique
   locale String
 
-  consentAt DateTime
+  consentAt     DateTime
   /// signup_checkbox | footer_form | checkout
   consentSource String
   /// Preuve de consentement (RGPD).

@@ -20,15 +20,28 @@ export interface PricingConfig {
   minMarginCents: number
 }
 
-export const DEFAULT_PRICING_CONFIG: PricingConfig = {
-  // Ces valeurs sont des paramètres, pas des vérités : elles vivent dans la
-  // table Setting et se règlent en back-office sans redéploiement.
-  contributionRateBps: 1230,
-  stripePercentBps: 150,
-  stripeFixedCents: 25,
-  minMarginCents: 300,
-}
-
+/**
+ * ---------------------------------------------------------------------------
+ * Aucune configuration par défaut, et c'est le point de ce fichier
+ * ---------------------------------------------------------------------------
+ * Une constante `DEFAULT_PRICING_CONFIG` a longtemps vécu ici, servie comme
+ * valeur par défaut aux quatre fonctions ci-dessous. Elle a produit exactement
+ * le défaut qu'on pouvait en attendre : tant que personne ne lisait la table
+ * `Setting`, chaque calcul retombait dessus, et les réglages de marge et de
+ * cotisations étaient purement décoratifs. Le bug était invisible — les prix
+ * sortaient, plausibles, simplement pas ceux qu'on avait réglés.
+ *
+ * Elle portait en plus des nombres qui n'ont rien à faire dans un dépôt : une
+ * marge minimale visée dit ce que la boutique gagne, et c'est le seul terme
+ * privé de l'inéquation du plancher — le taux URSSAF et la commission Stripe,
+ * eux, sont des tarifs publics.
+ *
+ * La configuration est donc un paramètre OBLIGATOIRE. Un appelant qui n'en a
+ * pas ne compile pas, au lieu de calculer avec des chiffres que personne n'a
+ * choisis. Elle vient de `getPricingConfig()` dans l'application, et de valeurs
+ * explicites dans les tests — où elles sont visibles à côté du résultat attendu,
+ * ce qui rend le test plus lisible, pas moins.
+ */
 const BPS = 10_000
 
 /** Arrondi vers le haut à la dizaine de centimes. */
@@ -42,7 +55,7 @@ export function roundUpToTenCents(cents: number): number {
  */
 export function stripeFeeCents(
   grossCents: number,
-  config: PricingConfig = DEFAULT_PRICING_CONFIG,
+  config: PricingConfig,
 ): number {
   return (
     Math.ceil((grossCents * config.stripePercentBps) / BPS) +
@@ -53,7 +66,7 @@ export function stripeFeeCents(
 /** Cotisations dues sur un encaissement donné. */
 export function contributionCents(
   grossCents: number,
-  config: PricingConfig = DEFAULT_PRICING_CONFIG,
+  config: PricingConfig,
 ): number {
   return Math.ceil((grossCents * config.contributionRateBps) / BPS)
 }
@@ -82,7 +95,7 @@ export interface FloorPriceInput {
  */
 export function computeFloorPriceCents(
   input: FloorPriceInput,
-  config: PricingConfig = DEFAULT_PRICING_CONFIG,
+  config: PricingConfig,
 ): number {
   const variableRateBps =
     config.contributionRateBps + config.stripePercentBps
@@ -152,7 +165,7 @@ export function computeNetMarginCents(
     costCents: number
     shippingCostCents: number
   },
-  config: PricingConfig = DEFAULT_PRICING_CONFIG,
+  config: PricingConfig,
 ): number {
   // Le port facturé entre dans le chiffre d'affaires : il supporte donc lui
   // aussi les cotisations et la commission.
@@ -176,18 +189,19 @@ export function computeNetMarginCents(
 // 10 % donnait 1,20 € ici contre 1,10 € là-bas, parce que 1 × 1.1 vaut
 // 1.1000000000000001 en virgule flottante.
 //
-// Aucune conséquence tant qu'elle n'avait pas d'appelant et que la majoration
-// réglée valait 20 %, l'une des valeurs où les deux coïncident. C'était un
-// piège dormant, qui se serait réveillé le jour d'un réglage à 10 % depuis le
-// back-office.
+// Aucune conséquence tant qu'elle n'avait pas d'appelant, et tant que la
+// majoration réglée tombait sur l'une des valeurs où les deux coïncident.
+// C'était un piège dormant, qui se serait réveillé au premier réglage tombant
+// ailleurs.
 
 /**
  * Un palier du barème de baisse automatique.
  *
- * Le pourcentage s'applique au prix d'ORIGINE, jamais au prix déjà baissé :
- * un barème « 30 j → −10 %, 60 j → −20 % » promet −20 % au bout de deux mois,
- * pas −10 % puis −10 % du reste (−28 %). Composer les remises ferait dire au
- * barème autre chose que ce que le back-office a réglé.
+ * Le pourcentage s'applique au prix d'ORIGINE, jamais au prix déjà baissé.
+ * Un barème à deux paliers, disons « −a % » puis « −b % », promet bien −b % au
+ * second : pas −a % puis −b % du reste, ce qui donnerait une remise plus forte
+ * que celle annoncée. Composer les remises ferait dire au barème autre chose
+ * que ce que le back-office a réglé.
  */
 export interface AutoDropStage {
   /** Ancienneté, en jours depuis la publication, à partir de laquelle il vaut. */

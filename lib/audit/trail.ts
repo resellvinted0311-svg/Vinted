@@ -46,6 +46,20 @@ export type AuditAction =
    * remboursement est dû, et c'est une décision humaine.
    */
   | 'order.unfulfillable_lines'
+  /**
+   * Un réglage métier modifié depuis le back-office.
+   *
+   * Consigné parce que ces réglages décident des PRIX : marge minimale visée,
+   * majoration de port, barème de baisse, seuils de négociation. Quand une
+   * commande paraîtra anormale six mois plus tard, la seule façon de savoir si
+   * le tarif appliqué était celui en vigueur ce jour-là sera de relire cette
+   * piste.
+   *
+   * Une entrée PAR réglage modifié, `entityId` portant le nom du réglage. Et
+   * jamais sa valeur : recopier les montants ici dupliquerait dans une table
+   * conservée dix ans exactement ce qu'on a pris soin de sortir du dépôt.
+   */
+  | 'settings.updated'
 
 /** Ce qu'une charge utile d'audit a le droit de contenir. */
 export type AuditValue = string | number | boolean | null
