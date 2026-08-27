@@ -822,19 +822,26 @@ export async function settleOffersForOrder(
  * son objet. Les confondre ferait compter une malchance comme un refus, donc
  * ouvrirait un délai de carence à quelqu'un qui n'a rien fait de mal.
  */
+export type OfferVoidReason = 'ARTICLE_SOLD' | 'ARTICLE_WITHDRAWN'
+
 export async function voidOffersForArticles(
   tx: Prisma.TransactionClient,
   articleIds: readonly string[],
   now = new Date(),
+  reason: OfferVoidReason = 'ARTICLE_SOLD',
 ): Promise<number> {
   const ids = [...new Set(articleIds)]
   if (ids.length === 0) return 0
 
+  // Le motif est un PARAMÈTRE LIÉ, jamais interpolé dans la chaîne SQL. Il
+  // vient aujourd'hui d'une union fermée de deux valeurs, donc rien ne
+  // pourrait s'y glisser — mais une union fermée se desserre au premier besoin
+  // nouveau, et c'est le jour où l'interpolation cesserait d'être inoffensive.
   return tx.$executeRaw`
     UPDATE "Offer"
     SET "status" = 'VOIDED',
         "respondedAt" = ${now},
-        "rejectionReason" = 'ARTICLE_SOLD',
+        "rejectionReason" = ${reason},
         "updatedAt" = now()
     WHERE "articleId" = ANY(${ids}::text[])
       AND "status" IN ('PENDING', 'ACCEPTED')

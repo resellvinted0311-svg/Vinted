@@ -599,7 +599,7 @@ model Offer {
   priceValidUntil DateTime?
   respondedAt     DateTime?
 
-  /// AUTO_BELOW_MIN | MANUAL | ARTICLE_SOLD
+  /// AUTO_BELOW_MIN | MANUAL | ARTICLE_SOLD | ARTICLE_WITHDRAWN
   rejectionReason String?
 
   /// Trace : l'admin a franchi le plancher en connaissance de cause.
