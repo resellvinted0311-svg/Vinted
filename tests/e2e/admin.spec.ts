@@ -29,6 +29,16 @@ import { test, expect, type Page } from '@playwright/test'
  * NULLE PART ailleurs, sortent bien ici et seulement ici.
  */
 
+/**
+ * Le préfixe des pièces créées par ce fichier.
+ *
+ * Elles sont nettoyées avant chaque exécution : sans cela, chaque passage
+ * laisserait une pièce de plus dans la base de développement, indéfiniment.
+ * Elles naissent en brouillon, donc invisibles du public — mais un tas qui
+ * grossit sans fin finit par fausser autre chose.
+ */
+const TEST_PIECE = 'Pièce de régie'
+
 const ACCOUNT = 'admin@nina-diego.test'
 const CUSTOMER = 'client@nina-diego.test'
 const SEED_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? ''
@@ -195,6 +205,80 @@ test.describe('La file des offres', () => {
   })
 })
 
+test.describe('Le catalogue depuis la régie', () => {
+  test('crée une pièce, qui naît en brouillon et refuse d’être publiée sans photo', async ({
+    page,
+  }) => {
+    await removeTestPieces()
+    await page.context().clearCookies()
+    await signIn(page, ACCOUNT)
+
+    await page.goto('/fr/admin/pieces')
+    await main(page).getByRole('link', { name: 'Nouvelle pièce' }).click()
+    await expect(page).toHaveURL(/\/fr\/admin\/pieces\/nouvelle/)
+
+    // Une catégorie de dernier niveau, prise dans la liste réellement servie :
+    // la figer en dur ferait tomber le test au premier changement de taxonomie.
+    const category = main(page).getByLabel('Catégorie')
+    const firstOption = await category.locator('option:not([value=""])').first().getAttribute('value')
+    await category.selectOption(firstOption ?? '')
+
+    const marker = `Pièce de régie ${Date.now()}`
+    await main(page).getByLabel('Titre').fill(marker)
+    // Par son NOM et non par son libellé : en français, « Taille » désigne à
+    // la fois la taille du vêtement et le tour de taille, qui est une mesure.
+    // Deux champs portent donc la même étiquette, et c'est correct.
+    await main(page).locator('[name="sizeLabel"]').fill('M')
+    await main(page).getByLabel('Prix d’achat (€)').fill('12,00')
+    await main(page).getByLabel('Prix de vente (€)').fill('89,00')
+    await main(page).getByLabel('Poids (g)').fill('400')
+
+    await main(page).getByRole('button', { name: 'Créer la pièce' }).click()
+
+    // Si le serveur refuse, il le DIT dans une alerte. L'assertion est ici
+    // plutôt qu'à la fin : un refus se lit, un « introuvable dans la liste »
+    // trois étapes plus loin ne dit rien de la cause.
+    // La création EMMÈNE sur la fiche : c'est là que se fait la suite du
+    // travail. Attendre cette URL, plutôt que de naviguer soi-même, évite aussi
+    // de lire la liste avant que l'action serveur ait rendu la main.
+    await expect(page).toHaveURL(/\/fr\/admin\/pieces\/[a-z0-9]+$/)
+    await expect(page.getByRole('heading', { name: marker })).toBeVisible()
+
+    // Et elle figure bien à l'inventaire.
+    await page.goto('/fr/admin/pieces')
+    await expect(main(page).getByText(marker).first()).toBeVisible()
+    await page.goBack()
+    await expect(main(page).getByText('brouillon').first()).toBeVisible()
+
+    // Et la mise en vente est refusée : une fiche sans visuel produirait une
+    // vignette vide au catalogue, et le domaine le refuse.
+    await expect(
+      main(page).getByText('aucune photo', { exact: false }).first(),
+    ).toBeVisible()
+    await expect(
+      main(page).getByRole('button', { name: 'Mettre en vente' }),
+    ).toHaveCount(0)
+  })
+
+  test('n’expose ni coût d’achat ni notes internes sur la fiche PUBLIQUE', async ({
+    page,
+  }) => {
+    // L'écran de régie porte délibérément le coût et le plancher — ce sont les
+    // données de l'entreprise, rendues à l'entreprise. La garantie qui compte
+    // est qu'ils n'apparaissent nulle part ailleurs, et c'est elle qu'on
+    // vérifie ici, sur le HTML réellement servi au public.
+    await page.context().clearCookies()
+
+    const response = await page.goto('/fr/catalogue')
+    expect(response?.status()).toBe(200)
+
+    const html = await page.content()
+    for (const field of ['costCents', 'floorPriceCents', 'internalNotes', 'sourcedFrom']) {
+      expect(html, field).not.toContain(field)
+    }
+  })
+})
+
 test.describe('Les réglages métier', () => {
   test('s’atteignent depuis la navigation, et disent que la boutique tourne sur la démonstration', async ({
     page,
@@ -316,3 +400,28 @@ test.describe('La file des commandes à expédier', () => {
     await expect(main(page).getByLabel(/Numéro de suivi/).first()).toBeVisible()
   })
 })
+
+/**
+ * Retire les pièces laissées par ce fichier.
+ *
+ * Prisma plutôt que l'interface : il n'existe pas de geste « supprimer une
+ * pièce » en régie, et c'est délibéré — une pièce vendue porte une facture, et
+ * on ne supprime pas ce qui a une valeur comptable. Le nettoyage d'un jeu
+ * d'essai n'est pas une raison d'ouvrir cette porte dans le produit.
+ */
+async function removeTestPieces(): Promise<void> {
+  const { PrismaClient } = await import('@prisma/client')
+  const prisma = new PrismaClient()
+  try {
+    const rows = await prisma.articleTranslation.findMany({
+      where: { title: { startsWith: TEST_PIECE } },
+      select: { articleId: true },
+    })
+    const ids = [...new Set(rows.map((row) => row.articleId))]
+    if (ids.length > 0) {
+      await prisma.article.deleteMany({ where: { id: { in: ids } } })
+    }
+  } finally {
+    await prisma.$disconnect()
+  }
+}

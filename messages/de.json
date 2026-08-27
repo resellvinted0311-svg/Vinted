@@ -685,6 +685,158 @@
           "hint": "Wie lange ein Stück während der Zahlung blockiert bleibt."
         }
       }
+    },
+    "articles": {
+      "title": "Stücke",
+      "intro": "Pieces created here. Those imported from the app are not listed: the next import would overwrite any correction.",
+      "new": "Neues Stück",
+      "newIntro": "Describe the piece, then add its photos on its page. Listing it is a second step: a page with no picture shows up nowhere.",
+      "empty": "Noch keine Stücke.",
+      "emptyHint": "Start by creating one.",
+      "noPhoto": "no photo",
+      "noPhotoYet": "This piece has no photo. Listing is refused until there is at least one.",
+      "noPhotoYetShort": "no photo",
+      "photos": "Fotos",
+      "photoCount": "{count} of {max}",
+      "photoAlt": "Photo {position}",
+      "thumbnail": "Thumbnail",
+      "addPhoto": "Add a photo",
+      "photosFull": "Maximum number of photos reached.",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "removePhoto": "Remove",
+      "listing": "Verkauf",
+      "details": "Beschreibung",
+      "backToList": "Back to the list",
+      "viewPublic": "View the public page",
+      "notEditable": "This piece can no longer be edited: it is sold, or a payment is under way. Changing its price now would rewrite what an invoice states.",
+      "saved": "Gespeichert.",
+      "create": "Stück anlegen",
+      "save": "Speichern",
+      "floorPrice": "Current floor price: {amount}. The sale price cannot go below it.",
+      "costAndFloor": "cost {cost} · floor {floor}",
+      "measurementsHint": "In centimetres. Measurements left empty are not shown.",
+      "privateHint": "Neither of these two fields appears on any public page.",
+      "none": "—",
+      "publish": "Zum Verkauf stellen",
+      "withdraw": "Aus dem Verkauf nehmen",
+      "voidedOffers": "{count, plural, one {One open offer was cancelled.} other {# open offers were cancelled.}}",
+      "listed": {
+        "AVAILABLE": "The piece is listed for sale.",
+        "ARCHIVED": "The piece is withdrawn from sale."
+      },
+      "statuses": {
+        "DRAFT": "Entwurf",
+        "SCHEDULED": "geplant",
+        "AVAILABLE": "im Verkauf",
+        "RESERVED": "reserviert",
+        "SOLD": "verkauft",
+        "ARCHIVED": "zurückgezogen"
+      },
+      "sections": {
+        "identity": "Das Stück",
+        "economy": "Preis und Gewicht",
+        "measurements": "Maße",
+        "private": "Intern"
+      },
+      "fields": {
+        "categoryId": {
+          "label": "Category",
+          "hint": "A piece belongs in a bottom-level category.",
+          "placeholder": "Choose…"
+        },
+        "brandName": {
+          "label": "Brand",
+          "hint": "Free text. Case does not matter: “ralph lauren” joins “Ralph Lauren”."
+        },
+        "title": {
+          "label": "Title",
+          "hint": "What the customer reads first. It appears in all eight languages."
+        },
+        "sizeLabel": {
+          "label": "Size",
+          "hint": "As printed on the label."
+        },
+        "condition": {
+          "label": "Condition",
+          "hint": "Describing a better condition than the real one ends in a return."
+        },
+        "color": {
+          "label": "Colour",
+          "hint": "Used by the catalogue filter."
+        },
+        "material": {
+          "label": "Material",
+          "hint": "Used by the catalogue filter."
+        },
+        "fit": {
+          "label": "Fit",
+          "hint": "Used by the catalogue filter."
+        },
+        "description": {
+          "label": "Description",
+          "hint": "Optional. Without it, a factual record is composed in each language from the category, brand, size, condition and measurements — and the page says so."
+        },
+        "costEuros": {
+          "label": "Purchase price (€)",
+          "hint": "What you paid for the piece. It sets the floor price, and appears on no public page."
+        },
+        "priceEuros": {
+          "label": "Sale price (€)",
+          "hint": "It cannot go below the floor price."
+        },
+        "weightGrams": {
+          "label": "Weight (g)",
+          "hint": "The piece alone; packaging is added by the shop to pick the carrier bracket."
+        },
+        "allowOffers": {
+          "label": "Negotiation open",
+          "hint": "Customers may propose a price."
+        },
+        "autoDropEnabled": {
+          "label": "Automatic markdown",
+          "hint": "The piece will follow the markdown schedule set in Settings."
+        },
+        "sourcedFrom": {
+          "label": "Sourced from",
+          "hint": "Where the piece was found. Never shown publicly."
+        },
+        "internalNotes": {
+          "label": "Internal notes",
+          "hint": "For you only. Never shown publicly."
+        }
+      },
+      "errors": {
+        "invalidRequest": "The form is incomplete. Reload the page and start again.",
+        "rateLimited": "Too many saves in a row. Try again in a moment.",
+        "invalidPrice": "The sale price is not a valid amount.",
+        "invalidCost": "The purchase price is not a valid amount.",
+        "invalidMeasurement": "One measurement is not a valid number.",
+        "unknown-category": "This category does not exist.",
+        "category-not-leaf": "Choose a bottom-level category: a piece filed in an intermediate aisle would appear in none of its sub-categories.",
+        "weight-not-covered": "No carrier rate covers this weight, packaging included.",
+        "price-below-floor": "This price is below the floor: the sale would lose money.",
+        "not-found": "This piece cannot be found.",
+        "not-editable": "This piece can no longer be edited.",
+        "modified-meanwhile": "The piece changed while you were filling the form. Reload the page to start from its current state.",
+        "sold": "This piece is sold.",
+        "reserved": "A cart is holding this piece right now.",
+        "awaiting-payment": "An order is awaiting payment on this piece. Withdrawing it would lose the sale.",
+        "no-image": "Add at least one photo before listing.",
+        "already-listed": "This piece is already listed.",
+        "already-withdrawn": "This piece is already withdrawn.",
+        "no-move": "This photo is already in that place."
+      },
+      "uploadErrors": {
+        "rateLimited": "Too many uploads in a row. Try again in a moment.",
+        "tooLarge": "This file is too heavy.",
+        "invalidRequest": "No file received.",
+        "not-found": "This piece cannot be found.",
+        "too-many": "Maximum number of photos reached.",
+        "rejected": "This file is not an accepted image: JPEG, PNG, WebP or AVIF.",
+        "storage-unavailable": "The image host is unavailable. Try again in a moment.",
+        "unknown": "The upload failed."
+      }
     }
   },
   "orderEmail": {

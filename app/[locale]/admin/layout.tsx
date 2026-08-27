@@ -1,4 +1,5 @@
-import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { NextIntlClientProvider } from 'next-intl'
+import { getTranslations, getMessages, setRequestLocale } from 'next-intl/server'
 
 import { Link } from '@/lib/i18n/navigation'
 import { requireAdmin } from '@/lib/auth/session'
@@ -56,11 +57,28 @@ export default async function AdminLayout({
 
   const t = await getTranslations('admin')
 
+  // ---------------------------------------------------------------------------
+  // La régie remet l'espace `admin` que la mise en page publique a retiré
+  // ---------------------------------------------------------------------------
+  // Le fournisseur de la racine ne sert plus les libellés d'administration : ils
+  // n'ont rien à faire dans la charge de chaque page publique. Les composants
+  // clients d'ici en ont besoin — formulaires de pièces, de réglages, de
+  // réponse aux offres — d'où ce second fournisseur, qui sert le jeu complet.
+  //
+  // Sans lui, les écrans afficheraient leurs clés brutes à la place des
+  // libellés, et seulement une fois hydratés : le rendu serveur, lui, serait
+  // correct. C'est le genre de défaut qu'on ne voit pas en relisant le code.
+  const messages = await getMessages()
+
   return (
+    <NextIntlClientProvider messages={messages}>
     <div className="mx-auto w-full max-w-[60rem] px-4 pb-24 pt-12 sm:px-6">
       <nav aria-label={t('navLabel')} className="mb-10 flex flex-wrap gap-x-6 gap-y-2">
         <Link href="/admin" className="label-reg text-muted hover:text-ink">
           {t('title')}
+        </Link>
+        <Link href="/admin/pieces" className="label-reg text-muted hover:text-ink">
+          {t('articles.title')}
         </Link>
         <Link href="/admin/commandes" className="label-reg text-muted hover:text-ink">
           {t('orders')}
@@ -75,5 +93,6 @@ export default async function AdminLayout({
 
       {children}
     </div>
+    </NextIntlClientProvider>
   )
 }

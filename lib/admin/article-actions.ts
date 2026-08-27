@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 import { requireAdmin } from '@/lib/auth/session'
 import { checkRateLimit } from '@/lib/security/rate-limit'
@@ -220,9 +221,18 @@ export async function createArticleAction(
   const result = await createShopArticle(input)
   if (!result.ok) return ERROR(result.reason)
 
-  // Pas d'invalidation ici : une pièce naît en BROUILLON, donc invisible du
-  // public. Rien de ce qui est en cache ne la montre encore.
-  return { status: 'created', articleId: result.articleId }
+  // Pas d'invalidation : une pièce naît en BROUILLON, donc invisible du public.
+  // Rien de ce qui est en cache ne la montre encore.
+
+  // On emmène sur la fiche plutôt que de rendre un état de succès. C'est là que
+  // se fait la suite du travail — ajouter les photos, puis mettre en vente — et
+  // rester sur un formulaire vidé laisserait croire que rien ne s'est passé.
+  //
+  // `redirect` lève une exception que Next intercepte : rien ne doit suivre.
+  const locale = formData.get('locale')
+  redirect(
+    `/${typeof locale === 'string' && locale !== '' ? locale : 'fr'}/admin/pieces/${result.articleId}`,
+  )
 }
 
 export async function updateArticleAction(

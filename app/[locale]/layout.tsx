@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
-import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { getTranslations, getMessages, setRequestLocale } from 'next-intl/server'
 import { Archivo, Inter_Tight, IBM_Plex_Mono } from 'next/font/google'
 
 import { routing, locales, localeTags, type Locale } from '@/lib/i18n/routing'
@@ -104,6 +104,22 @@ export default async function LocaleLayout({
 
   const t = await getTranslations('nav')
 
+  // ---------------------------------------------------------------------------
+  // L'espace de noms `admin` ne part PAS chez le public
+  // ---------------------------------------------------------------------------
+  // `NextIntlClientProvider` sans prop `messages` sérialise le fichier de
+  // traduction ENTIER dans la charge de chaque page — y compris les libellés de
+  // la régie, que personne d'autre que la boutiquière ne verra jamais.
+  //
+  // Ce n'est pas une fuite de données : ce sont des libellés, pas des valeurs.
+  // C'est en revanche du poids inutile sur chaque page publique, et cela expose
+  // le vocabulaire interne de la boutique à qui lit la source. Un test
+  // d'étanchéité l'a d'ailleurs signalé le jour où l'écran des pièces a ajouté
+  // un champ « notes internes ».
+  //
+  // La régie remet le bloc complet dans son propre fournisseur.
+  const { admin: _admin, ...publicMessages } = await getMessages()
+
   return (
     <html
       lang={locale}
@@ -112,7 +128,7 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-dvh flex-col">
-        <NextIntlClientProvider>
+        <NextIntlClientProvider messages={publicMessages}>
           <ToastProvider>
             <FavoritesProvider>
               <a

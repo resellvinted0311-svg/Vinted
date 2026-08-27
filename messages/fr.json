@@ -685,6 +685,158 @@
           "hint": "Durée pendant laquelle une pièce reste bloquée le temps du paiement."
         }
       }
+    },
+    "articles": {
+      "title": "Pièces",
+      "intro": "Les pièces créées ici. Celles importées depuis l’application n’y figurent pas : le prochain import écraserait toute correction.",
+      "new": "Nouvelle pièce",
+      "newIntro": "Décrivez la pièce, puis ajoutez ses photos sur la fiche. La mise en vente est un second geste : une fiche sans visuel ne s’affiche nulle part.",
+      "empty": "Aucune pièce pour l’instant.",
+      "emptyHint": "Commencez par en créer une.",
+      "noPhoto": "sans photo",
+      "noPhotoYet": "Cette pièce n’a aucune photo. La mise en vente est refusée tant qu’il n’y en a pas au moins une.",
+      "noPhotoYetShort": "sans photo",
+      "photos": "Photos",
+      "photoCount": "{count} sur {max}",
+      "photoAlt": "Photo {position}",
+      "thumbnail": "Vignette",
+      "addPhoto": "Ajouter une photo",
+      "photosFull": "Nombre maximal de photos atteint.",
+      "moveUp": "Monter",
+      "moveDown": "Descendre",
+      "removePhoto": "Retirer",
+      "listing": "Mise en vente",
+      "details": "Fiche",
+      "backToList": "Retour à la liste",
+      "viewPublic": "Voir la fiche publique",
+      "notEditable": "Cette pièce n’est plus modifiable : elle est vendue, ou un paiement est en cours. Corriger son prix maintenant réécrirait ce qu’une facture affirme.",
+      "saved": "Enregistré.",
+      "create": "Créer la pièce",
+      "save": "Enregistrer",
+      "floorPrice": "Prix plancher actuel : {amount}. Le prix de vente ne peut pas descendre en dessous.",
+      "costAndFloor": "achat {cost} · plancher {floor}",
+      "measurementsHint": "En centimètres. Les mesures laissées vides ne sont pas affichées.",
+      "privateHint": "Ces deux champs ne sortent dans aucune page publique.",
+      "none": "—",
+      "publish": "Mettre en vente",
+      "withdraw": "Retirer de la vente",
+      "voidedOffers": "{count, plural, one {Une offre en cours a été annulée.} other {# offres en cours ont été annulées.}}",
+      "listed": {
+        "AVAILABLE": "La pièce est en vente.",
+        "ARCHIVED": "La pièce est retirée de la vente."
+      },
+      "statuses": {
+        "DRAFT": "brouillon",
+        "SCHEDULED": "programmée",
+        "AVAILABLE": "en vente",
+        "RESERVED": "réservée",
+        "SOLD": "vendue",
+        "ARCHIVED": "retirée"
+      },
+      "sections": {
+        "identity": "La pièce",
+        "economy": "Prix et poids",
+        "measurements": "Mesures",
+        "private": "Interne"
+      },
+      "fields": {
+        "categoryId": {
+          "label": "Catégorie",
+          "hint": "Une pièce se range dans une catégorie de dernier niveau.",
+          "placeholder": "Choisir…"
+        },
+        "brandName": {
+          "label": "Marque",
+          "hint": "Saisie libre. La casse n’a pas d’importance : « ralph lauren » rejoint « Ralph Lauren »."
+        },
+        "title": {
+          "label": "Titre",
+          "hint": "Ce que la cliente lit en premier. Il apparaît dans les huit langues."
+        },
+        "sizeLabel": {
+          "label": "Taille",
+          "hint": "Telle qu’elle est inscrite sur l’étiquette."
+        },
+        "condition": {
+          "label": "État",
+          "hint": "Décrire un état plus flatteur qu’il n’est finit en retour."
+        },
+        "color": {
+          "label": "Couleur",
+          "hint": "Sert au filtre du catalogue."
+        },
+        "material": {
+          "label": "Matière",
+          "hint": "Sert au filtre du catalogue."
+        },
+        "fit": {
+          "label": "Coupe",
+          "hint": "Sert au filtre du catalogue."
+        },
+        "description": {
+          "label": "Description",
+          "hint": "Facultative. Sans elle, un relevé factuel est composé dans chaque langue à partir de la catégorie, de la marque, de la taille, de l’état et des mesures — et la fiche le dit."
+        },
+        "costEuros": {
+          "label": "Prix d’achat (€)",
+          "hint": "Ce que vous avez payé la pièce. Il fixe le prix plancher, et ne sort dans aucune page publique."
+        },
+        "priceEuros": {
+          "label": "Prix de vente (€)",
+          "hint": "Il ne peut pas descendre sous le plancher."
+        },
+        "weightGrams": {
+          "label": "Poids (g)",
+          "hint": "La pièce seule ; l’emballage est ajouté par la boutique pour choisir le palier transporteur."
+        },
+        "allowOffers": {
+          "label": "Négociation ouverte",
+          "hint": "Les clientes peuvent proposer un prix."
+        },
+        "autoDropEnabled": {
+          "label": "Baisse automatique",
+          "hint": "La pièce suivra le barème de baisse réglé dans Réglages."
+        },
+        "sourcedFrom": {
+          "label": "Provenance",
+          "hint": "Où la pièce a été trouvée. Jamais affiché publiquement."
+        },
+        "internalNotes": {
+          "label": "Notes internes",
+          "hint": "Pour vous seule. Jamais affiché publiquement."
+        }
+      },
+      "errors": {
+        "invalidRequest": "Le formulaire est incomplet. Rechargez la page et recommencez.",
+        "rateLimited": "Trop d’enregistrements coup sur coup. Réessayez dans un moment.",
+        "invalidPrice": "Le prix de vente n’est pas un montant valable.",
+        "invalidCost": "Le prix d’achat n’est pas un montant valable.",
+        "invalidMeasurement": "Une mesure n’est pas un nombre valable.",
+        "unknown-category": "Cette catégorie n’existe pas.",
+        "category-not-leaf": "Choisissez une catégorie de dernier niveau : une pièce rangée dans un rayon intermédiaire n’apparaîtrait dans aucune sous-catégorie.",
+        "weight-not-covered": "Aucun tarif transporteur ne couvre ce poids, emballage compris.",
+        "price-below-floor": "Ce prix est sous le plancher : la vente serait à perte.",
+        "not-found": "Cette pièce est introuvable.",
+        "not-editable": "Cette pièce n’est plus modifiable.",
+        "modified-meanwhile": "La pièce a été modifiée pendant que vous la remplissiez. Rechargez la page pour repartir de son état actuel.",
+        "sold": "Cette pièce est vendue.",
+        "reserved": "Un panier tient cette pièce en ce moment.",
+        "awaiting-payment": "Une commande attend son paiement sur cette pièce. La retirer ferait perdre la vente.",
+        "no-image": "Ajoutez au moins une photo avant de mettre en vente.",
+        "already-listed": "Cette pièce est déjà en vente.",
+        "already-withdrawn": "Cette pièce est déjà retirée.",
+        "no-move": "Cette photo est déjà à cette place."
+      },
+      "uploadErrors": {
+        "rateLimited": "Trop d’envois coup sur coup. Réessayez dans un moment.",
+        "tooLarge": "Ce fichier est trop lourd.",
+        "invalidRequest": "Aucun fichier reçu.",
+        "not-found": "Cette pièce est introuvable.",
+        "too-many": "Nombre maximal de photos atteint.",
+        "rejected": "Ce fichier n’est pas une image acceptée : JPEG, PNG, WebP ou AVIF.",
+        "storage-unavailable": "L’hébergeur d’images est indisponible. Réessayez dans un moment.",
+        "unknown": "L’envoi a échoué."
+      }
     }
   },
   "orderEmail": {
