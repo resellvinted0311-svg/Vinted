@@ -10,7 +10,6 @@ import {
   computeNetMarginCents,
   type PricingConfig,
 } from '@/lib/domain/pricing'
-import { MEASUREMENT_KEYS, type MeasurementKey } from '@/lib/domain/vocabulary'
 import { routing } from '@/lib/i18n/routing'
 import { enqueue } from '@/lib/jobs/queue'
 import {
@@ -20,8 +19,12 @@ import {
   type SyncArticleInput,
   type SyncRejectionReason,
 } from '@/lib/validation/sync'
-import { composeDescription } from './description'
-import { allocateInventoryNumber, buildArticleSlug, slugify } from './identifiers'
+import { allocateInventoryNumber, buildArticleSlug } from './identifiers'
+import {
+  resolveBrandId,
+  writeTranslations,
+  writeMeasurements,
+} from '@/lib/articles/write'
 
 /**
  * Import d'inventaire — le cœur de `POST /api/sync/articles`.
@@ -430,171 +433,6 @@ function attributeFields(input: SyncArticleInput, categoryId: string) {
   }
 }
 
-/**
- * Retrouve ou crée la marque.
- *
- * La comparaison est insensible à la casse : « ralph lauren » et « Ralph
- * Lauren » sont la même maison, et deux fiches marque pour un même nom
- * couperaient le catalogue en deux.
- */
-async function resolveBrandId(
-  tx: Prisma.TransactionClient,
-  brandName: string | undefined,
-): Promise<string | null> {
-  if (!brandName) return null
-
-  const found = await tx.brand.findFirst({
-    where: { name: { equals: brandName, mode: 'insensitive' } },
-    select: { id: true },
-  })
-  if (found) return found.id
-
-  const slug = slugify(brandName)
-  if (!slug) return null
-
-  try {
-    const created = await tx.brand.create({
-      data: { slug, name: brandName },
-      select: { id: true },
-    })
-    return created.id
-  } catch (error) {
-    // Deux lots concurrents peuvent créer la même marque : le second rattrape
-    // la violation d'unicité et relit, plutôt que de faire échouer une pièce
-    // pour une raison qui n'a rien à voir avec elle.
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
-      const existing = await tx.brand.findUnique({
-        where: { slug },
-        select: { id: true },
-      })
-      return existing?.id ?? null
-    }
-    throw error
-  }
-}
-
-/**
- * Écrit les huit traductions.
- *
- * ---------------------------------------------------------------------------
- * Pourquoi HUIT lignes et non une
- * ---------------------------------------------------------------------------
- * Le listing du catalogue joint `ArticleTranslation` en INNER JOIN sur la
- * locale demandée. Une pièce qui n'aurait qu'une ligne `fr` serait invisible
- * dans les sept autres catalogues — pas mal traduite : ABSENTE.
- *
- * Les sept autres portent donc le français, et `isFallback` le dit à la fiche,
- * qui l'affiche. Le jour où la traduction automatique sera branchée, elle
- * écrasera ces lignes et baissera le drapeau.
- *
- * ---------------------------------------------------------------------------
- * La description, elle, est composée dans CHAQUE langue
- * ---------------------------------------------------------------------------
- * Quand l'application n'en fournit pas, le relevé est assemblé à partir de
- * libellés déjà traduits huit fois. Une cliente néerlandaise lit donc un titre
- * français et un relevé néerlandais — et le vecteur de recherche néerlandais
- * contient de vrais mots néerlandais.
- */
-async function writeTranslations(
-  tx: Prisma.TransactionClient,
-  articleId: string,
-  input: SyncArticleInput,
-  category: CategoryEntry,
-  brandName: string | null,
-): Promise<void> {
-  const measurements = measurementList(input)
-
-  for (const locale of routing.locales) {
-    const description =
-      input.description ??
-      (await composeDescription(
-        {
-          categoryName:
-            category.nameByLocale.get(locale) ??
-            category.nameByLocale.get(routing.defaultLocale) ??
-            category.slug,
-          brandName,
-          sizeLabel: input.sizeLabel,
-          condition: input.condition,
-          color: input.color ?? null,
-          material: input.material ?? null,
-          fit: input.fit ?? null,
-          measurements,
-        },
-        locale,
-      ))
-
-    const isSourceLocale = locale === routing.defaultLocale
-
-    const data = {
-      title: input.title,
-      description,
-      // Rien n'a été traduit par machine : c'est du français d'origine, ou un
-      // relevé assemblé à partir de libellés traduits à la main. Annoncer une
-      // traduction automatique serait faux.
-      isMachineTranslated: false,
-      isFallback: !isSourceLocale,
-    }
-
-    await tx.articleTranslation.upsert({
-      where: { articleId_locale: { articleId, locale } },
-      create: { articleId, locale, ...data },
-      update: data,
-    })
-  }
-}
-
-/**
- * Les mesures reçues, dans l'ordre CANONIQUE.
- *
- * L'ordre des clés d'un objet JSON est celui de son émetteur. Sans ce
- * réordonnancement, deux pièces identiques afficheraient leurs mesures dans
- * deux ordres différents selon la façon dont l'application a sérialisé — et le
- * relevé composé lirait « longueur, poitrine » sur l'une, « poitrine, longueur »
- * sur l'autre.
- */
-function measurementList(
-  input: SyncArticleInput,
-): { key: MeasurementKey; valueCm: number }[] {
-  const provided = input.measurements ?? {}
-
-  return MEASUREMENT_KEYS.flatMap((key) => {
-    const valueCm = provided[key]
-    return typeof valueCm === 'number' ? [{ key, valueCm }] : []
-  })
-}
-
-/**
- * Remplace les mesures par celles reçues.
- *
- * Les clés absentes sont SUPPRIMÉES, elles ne sont pas laissées en place : une
- * mesure corrigée en amont doit pouvoir être retirée, et une fiche qui garde
- * une valeur que l'application ne reconnaît plus ment sur la pièce.
- */
-async function writeMeasurements(
-  tx: Prisma.TransactionClient,
-  articleId: string,
-  input: SyncArticleInput,
-): Promise<void> {
-  const wanted = measurementList(input)
-  const keys = wanted.map((m) => m.key)
-
-  await tx.articleMeasurement.deleteMany({
-    where: { articleId, key: { notIn: keys } },
-  })
-
-  for (const measurement of wanted) {
-    await tx.articleMeasurement.upsert({
-      where: { articleId_key: { articleId, key: measurement.key } },
-      create: { articleId, key: measurement.key, valueCm: measurement.valueCm },
-      update: { valueCm: measurement.valueCm },
-    })
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Création
 // ---------------------------------------------------------------------------
@@ -644,7 +482,7 @@ async function createArticle(
     })
 
     await writeTranslations(tx, article.id, input, category, brand?.name ?? null)
-    await writeMeasurements(tx, article.id, input)
+    await writeMeasurements(tx, article.id, input.measurements)
 
     await enqueue(tx, {
       type: 'article.images',
@@ -746,7 +584,7 @@ async function updateArticle(
     })
 
     await writeTranslations(tx, existing.id, input, category, brand?.name ?? null)
-    await writeMeasurements(tx, existing.id, input)
+    await writeMeasurements(tx, existing.id, input.measurements)
 
     if (needsImages) {
       // Les anciens visuels restent en place jusqu'à ce que les nouveaux
