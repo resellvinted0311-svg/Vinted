@@ -53,6 +53,14 @@ export const SYNC_REJECTION_REASONS = [
   'unknown-material',
   'unknown-fit',
   'weight-not-covered',
+  /**
+   * Aucun poids envoyé, et la catégorie visée n'en a pas par défaut.
+   *
+   * Distinct de `weight-not-covered`, qui dit l'inverse : un poids connu que
+   * la grille transporteur ne couvre pas. Les confondre enverrait chercher un
+   * palier manquant alors qu'il manque une donnée, ou l'inverse.
+   */
+  'missing-weight',
   'invalid-price',
   'compare-price-not-higher',
   'payload-too-large',
@@ -72,8 +80,19 @@ export type SyncRejectionReason = (typeof SYNC_REJECTION_REASONS)[number]
 /** Au-delà, un lot ne tient plus dans le temps imparti à une fonction. */
 export const MAX_BATCH_SIZE = 100
 
-/** Nombre d'images par pièce, tel que le contrat l'annonce. */
-export const MIN_IMAGES = 1
+/**
+ * Nombre d'images par pièce.
+ *
+ * Le plancher est ZÉRO, et ce n'est pas un relâchement de confort. L'inventaire
+ * qui alimente la boutique ne stocke aucune photo — pas une colonne, pas un
+ * seau de stockage. Exiger un visuel revenait donc à refuser la totalité du
+ * stock : le contrat décrivait un import que personne ne pouvait satisfaire.
+ *
+ * Ce que la boutique y perd est réel et assumé : une fiche sans visuel se vend
+ * mal. Ce qu'elle y gagne, c'est d'exister. Et la perte est contenue ailleurs —
+ * une fiche sans photo n'est pas indexée (voir la fiche article), donc elle ne
+ * tire pas le référencement du site vers le bas en attendant son cliché.
+ */
 export const MAX_IMAGES = 10
 
 /**
@@ -166,8 +185,22 @@ export const syncArticleSchema = z
     sizeLabel: z.string().trim().min(1).max(32),
     priceCents: amountCents.positive(),
     costCents: amountCents.nonnegative(),
-    weightGrams: z.number().int().positive().max(MAX_WEIGHT_GRAMS),
-    images: z.array(imageUrl).min(MIN_IMAGES).max(MAX_IMAGES),
+    /**
+     * Le poids est FACULTATIF, et son absence n'est pas une valeur par défaut
+     * cachée : elle renvoie à `Category.defaultWeightGrams`, la grille semée
+     * avec le catalogue. Si la catégorie visée n'en a pas, la pièce est refusée
+     * — jamais devinée. Un poids inventé se paierait en frais de port réels, à
+     * chaque colis, et le prix plancher entier reposerait dessus.
+     */
+    weightGrams: z.number().int().positive().max(MAX_WEIGHT_GRAMS).optional(),
+
+    /**
+     * `.default([])` et non `.optional()` : la suite du code compte les images
+     * et les recopie. Un tableau toujours présent supprime une dizaine de
+     * `?? []` disséminés, et surtout la question « absent ou vide ? » — qui
+     * n'a ici aucune réponse différente.
+     */
+    images: z.array(imageUrl).max(MAX_IMAGES).default([]),
 
     description: z.string().trim().min(1).max(5000).optional(),
     brandName: z.string().trim().min(1).max(80).optional(),

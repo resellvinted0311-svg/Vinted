@@ -66,7 +66,17 @@ export async function generateMetadata({
       images: cover ? [cover.url] : [],
     },
     // Un article vendu reste indexable : c'est du référencement acquis.
-    robots: { index: true, follow: true },
+    //
+    // Une fiche SANS VISUEL, non — et c'est la contrepartie assumée d'avoir
+    // ouvert la publication sans photo. Le stock arrive de l'inventaire par
+    // centaines, titre, taille et prix seulement : autant de pages minces
+    // livrées d'un coup, exactement ce que les moteurs comptent contre le
+    // domaine ENTIER, y compris contre les fiches soignées qui l'entourent.
+    //
+    // `follow` reste vrai : les liens de la fiche continuent d'irriguer le
+    // catalogue. Et l'exclusion se lève d'elle-même — la première photo ajoutée
+    // rend la page indexable au rendu suivant, sans rien à se rappeler.
+    robots: { index: cover !== undefined, follow: true },
   }
 }
 
@@ -135,7 +145,13 @@ export default async function ArticlePage({ params }: { params: Params }) {
     ...(article.color ? { color: tCat(`colors.${article.color}`) } : {}),
     ...(article.material ? { material: tCat(`materials.${article.material}`) } : {}),
     size: article.sizeLabel,
-    image: article.images.map((image) => `${SITE.url}${image.url}`),
+    // La clé est OMISE quand il n'y a aucun visuel, jamais laissée à `[]`.
+    // `image` est requis pour un résultat enrichi Product : un tableau vide
+    // n'est pas « pas de photo », c'est une donnée structurée invalide, et
+    // l'outil de test la signale comme une erreur sur la fiche entière.
+    ...(article.images.length > 0
+      ? { image: article.images.map((image) => `${SITE.url}${image.url}`) }
+      : {}),
     itemCondition:
       article.condition === 'NEW_WITH_TAGS' ||
       article.condition === 'NEW_WITHOUT_TAGS'

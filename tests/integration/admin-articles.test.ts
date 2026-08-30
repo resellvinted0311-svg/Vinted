@@ -128,8 +128,11 @@ describe('créer une pièce', () => {
       },
     })
 
-    // Brouillon TOUJOURS : à cet instant la pièce n'a aucune photo, et publier
-    // sans visuel produirait une vignette vide au catalogue.
+    // Brouillon TOUJOURS. Non parce que la publication sans photo serait
+    // interdite — elle ne l'est plus — mais parce que la CRÉATION ne publie
+    // jamais : on décrit une pièce, on la met en vente ensuite, et ce sont deux
+    // gestes. Créer et publier d'un coup ferait apparaître au catalogue une
+    // fiche à demi remplie, au premier enregistrement.
     expect(article.status).toBe('DRAFT')
     expect(article.publishedAt).toBeNull()
 
@@ -295,12 +298,31 @@ describe('modifier une pièce', () => {
 })
 
 describe('mettre en vente', () => {
-  it('REFUSE sans photo', async () => {
+  it('publie sans photo, et pose quand même la date de mise en ligne', async () => {
+    // La régie refusait autrefois de publier une pièce sans visuel. La règle est
+    // tombée avec le contrat de synchronisation : l'inventaire n'a pas de photos
+    // à envoyer, et interdire à la main ce que l'import fait par centaines
+    // n'avait plus de sens.
+    //
+    // Ce qui compte ici est la conséquence FONCTIONNELLE, pas le booléen : sans
+    // `publishedAt`, une pièce AVAILABLE est introuvable au catalogue, en 404
+    // sur sa fiche et impossible à mettre au panier. Le premier écrit de cette
+    // levée serait donc un stock « en vente » que personne ne peut voir.
     const { id } = await createTestArticle()
+
     expect(await applyListing(id, 'publish')).toEqual({
-      ok: false,
-      reason: 'no-image',
+      ok: true,
+      status: 'AVAILABLE',
+      voidedOffers: 0,
     })
+
+    const published = await prisma.article.findUniqueOrThrow({
+      where: { id },
+      select: { status: true, publishedAt: true, images: { select: { id: true } } },
+    })
+    expect(published.status).toBe('AVAILABLE')
+    expect(published.publishedAt).not.toBeNull()
+    expect(published.images).toHaveLength(0)
   })
 
   it('publie, pose la date de mise en ligne et efface le réservataire', async () => {

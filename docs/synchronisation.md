@@ -79,8 +79,27 @@ d'au plus 100. C'est ce qui rend l'import initial praticable.
 | `sizeLabel` | chaîne | libre — `M`, `W32 L34`, `42` |
 | `priceCents` | entier | > 0. **En centimes**, jamais en euros décimaux |
 | `costCents` | entier | ≥ 0. Prix d'achat, en centimes. Nécessaire au calcul du prix plancher |
-| `weightGrams` | entier | > 0. Poids de la pièce SEULE, l'emballage est ajouté par la boutique |
-| `images` | tableau d'URL | 1 à 10, en `https://`, sur un nom de domaine, accessibles publiquement |
+| `weightGrams` | entier | **facultatif.** > 0. Poids de la pièce SEULE, l'emballage est ajouté par la boutique. Absent, la boutique prend le poids par défaut de la catégorie |
+| `images` | tableau d'URL | **facultatif.** 0 à 10, en `https://`, sur un nom de domaine, accessibles publiquement |
+
+**Sur le poids absent.** Chaque catégorie feuille porte un poids par défaut,
+réglé avec le catalogue. Envoyer `weightGrams` reste préférable — c'est une
+pesée, le défaut n'est qu'une moyenne de famille — mais son absence n'empêche
+plus l'import. Si la catégorie visée n'a pas de défaut non plus, la pièce est
+refusée avec `missing-weight` : la boutique ne devine jamais un poids, parce
+qu'il choisit le palier transporteur et fonde le prix plancher.
+
+**Sur l'absence de visuel.** Une pièce peut arriver sans aucune image. Elle est
+alors publiée **immédiatement** — elle n'attend pas un travail de téléchargement
+qui n'existe pas — avec un substitut à la place de la photo, et sa fiche n'est
+**pas indexée** par les moteurs tant qu'aucun cliché n'est ajouté. Ajouter une
+photo depuis le back-office la rend indexable au rendu suivant.
+
+Corollaire important : un tableau `images` **vide ne demande pas la suppression**
+des visuels existants. Il dit « je n'ai rien à déclarer sur les visuels ». Sans
+cette règle, une application qui ne stocke pas de photos effacerait à chaque
+passage les clichés ajoutés à la main. Le retrait d'une photo se fait depuis le
+back-office.
 
 **Sur le poids.** La borne n'est pas un nombre écrit dans le code : c'est le
 palier le plus lourd RÉELLEMENT tarifé, **emballage compris**. Aujourd'hui,
@@ -208,9 +227,14 @@ motif :
 ```
 
 Motifs par article : `unknown-category`, `unknown-color`, `unknown-material`,
-`unknown-fit`, `weight-not-covered`, `invalid-price`,
+`unknown-fit`, `weight-not-covered`, `missing-weight`, `invalid-price`,
 `compare-price-not-higher`, `locked-by-checkout`, `already-sold`,
 `invalid-field`.
+
+`weight-not-covered` et `missing-weight` disent l'inverse l'un de l'autre :
+le premier, un poids connu qu'aucun palier ne couvre ; le second, aucun poids
+ni sur la pièce ni sur sa catégorie. Les confondre enverrait chercher un palier
+manquant alors qu'il manque une donnée.
 
 Deux ajouts par rapport à la première version de ce document, et ils sont
 délibérés :
@@ -250,9 +274,14 @@ grand côté**. Formats : JPEG, PNG, WebP, AVIF.
 
 **Le téléchargement est asynchrone** — voir §6, décision 2.5. Trois cents
 images dans un seul appel dépasseraient le temps imparti à une fonction
-serverless. L'article est donc créé immédiatement en brouillon, la réponse porte
-`imagesPending: true`, et la fiche se publie seule dès que les images sont
-stockées. Une fiche n'est jamais publiée sans visuel.
+serverless. Une pièce qui ANNONCE des visuels est donc créée en brouillon, la
+réponse porte `imagesPending: true`, et la fiche se publie seule dès que les
+images sont stockées : elle ne s'affiche jamais vide pendant le téléchargement.
+
+Une pièce qui n'annonce **aucun** visuel est publiée tout de suite, avec
+`imagesPending: false` et `published: true`. Déléguer sa publication au travail
+d'images la laisserait en brouillon indéfiniment — un lot accepté, répondant
+« créé », et invisible pour toujours.
 
 ### 2.8 Langues
 
@@ -756,17 +785,22 @@ lecteur de la version initiale se tromperait.
 
 ### 8.3 Ce qu’il faut savoir côté exploitation
 
-- **Les images arrivent par le cron.** Une pièce créée est publiée au passage
-  suivant de la tâche planifiée, pas dans la seconde. En cas d'échec, cinq
-  reprises espacées, puis abandon — et la fiche reste en brouillon.
+- **Les images arrivent par le cron.** Une pièce qui EN ANNONCE est publiée au
+  passage suivant de la tâche planifiée, pas dans la seconde. En cas d'échec,
+  cinq reprises espacées, puis abandon — et la fiche reste en brouillon.
+
+- **Une pièce sans image est publiée tout de suite**, et ne dépend donc ni du
+  cron ni de l'hébergement d'images. C'est le cas de tout un inventaire qui ne
+  stocke pas de photos.
 
 - **`SYNC_API_KEY` absente ferme la route entièrement.** Aucun mode dégradé,
   aucune ouverture par défaut.
 
-- **Sans hébergement d'images configuré, rien n'est publié.** Le travail échoue
-  bruyamment plutôt que d'écrire vos URL d'origine dans la fiche : une fiche
-  dont les visuels dépendent d'un tiers deviendrait vide sans que personne
-  l'apprenne, ce qui est exactement ce que le réhébergement existe pour éviter.
+- **Sans hébergement d'images configuré, rien de ce qui ANNONCE des visuels
+  n'est publié.** Le travail échoue bruyamment plutôt que d'écrire vos URL
+  d'origine dans la fiche : une fiche dont les visuels dépendent d'un tiers
+  deviendrait vide sans que personne l'apprenne, ce qui est exactement ce que le
+  réhébergement existe pour éviter. Les pièces sans visuel, elles, passent.
 
 - **Renvoyer deux fois le même lot ne coûte presque rien.** Les visuels ne sont
   retéléchargés que si la liste d'URL a changé — la boutique conserve l'URL

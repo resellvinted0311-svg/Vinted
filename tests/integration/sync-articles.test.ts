@@ -13,8 +13,9 @@ import {
  *
  * Ce qui compte ici n'est pas que le schéma valide — `tests/domain` s'en
  * charge — mais que l'écriture fasse ce qu'elle promet : un second envoi met à
- * jour au lieu de dupliquer, l'adresse publique ne bouge plus, rien n'est
- * publié sans visuel, et une pièce en cours de paiement ne se laisse pas
+ * jour au lieu de dupliquer, l'adresse publique ne bouge plus, une pièce qui
+ * ATTEND des visuels n'est pas publiée avant eux, et une pièce en cours de
+ * paiement ne se laisse pas
  * archiver sous les doigts de son acheteuse.
  */
 
@@ -54,10 +55,29 @@ async function cleanup(): Promise<void> {
 
   await prisma.job.deleteMany({ where: { type: 'article.images' } })
   await prisma.brand.deleteMany({ where: { name: BRAND } })
+  await prisma.category.deleteMany({ where: { slug: CATEGORY_SANS_POIDS } })
 }
+
+/**
+ * Une feuille SANS poids par défaut, créée pour ce fichier seulement.
+ *
+ * Toutes les catégories semées en ont un ; il n'existe donc aucun moyen
+ * d'exercer le refus `missing-weight` sur le catalogue réel. L'alternative
+ * aurait été de mettre à `null` le poids d'une catégorie existante le temps
+ * d'un test — et un test qui oublie de restaurer empoisonne tous les autres
+ * fichiers, ce qui est déjà arrivé ici.
+ */
+const CATEGORY_SANS_POIDS = 'sync-test-sans-poids'
 
 beforeEach(async () => {
   await cleanup()
+
+  await prisma.category.create({
+    data: { slug: CATEGORY_SANS_POIDS, position: 999 },
+  })
+
+  // Après la création : le contexte fige l'arbre des catégories une fois pour
+  // tout le lot, et une catégorie créée ensuite lui serait invisible.
   context = await loadSyncContext()
 })
 
@@ -116,8 +136,9 @@ describe('création', () => {
       select: { status: true, publishedAt: true, sku: true, slug: true },
     })
 
-    // Aucune fiche publiée sans visuel : c'est la règle du contrat, et elle
-    // s'applique à la création sans exception.
+    // Elle ANNONCE deux visuels : elle attend donc son travail d'images, et
+    // c'est lui qui prononcera la publication. Une pièce qui n'en annonce aucun
+    // se publie tout de suite — voir « pièces sans visuel » plus bas.
     expect(article?.status).toBe('DRAFT')
     expect(article?.publishedAt).toBeNull()
     expect(result.published).toBe(false)
@@ -673,5 +694,157 @@ describe('publication', () => {
     // Le travail d'images tourne après coup : il ne doit pas remettre en vente
     // ce que l'application vient de retirer.
     expect(published).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Pièces sans visuel
+// ---------------------------------------------------------------------------
+
+/**
+ * L'inventaire qui alimente la boutique ne stocke AUCUNE photo.
+ *
+ * Ce bloc couvre ce que cela impose. Le défaut qu'il ferme est silencieux et
+ * total : la publication était prononcée par le travail d'images, donc un lot
+ * sans photos était accepté, répondait « créé », et n'apparaissait jamais au
+ * catalogue. Rien n'échouait — le stock entier restait simplement invisible.
+ */
+describe('pièces sans visuel', () => {
+  it('crée ET publie tout de suite, sans inscrire de travail d’images', async () => {
+    const result = await sync({ images: [] })
+
+    expect(result.action).toBe('created')
+    expect(result.published).toBe(true)
+    expect(result.imagesPending).toBe(false)
+
+    const article = await prisma.article.findUniqueOrThrow({
+      where: { externalId: BASE.externalId },
+      select: { status: true, publishedAt: true, offersOpenAt: true },
+    })
+
+    expect(article.status).toBe('AVAILABLE')
+
+    // `publishedAt` porte TOUTE la visibilité : sans elle, la pièce serait
+    // « en vente » et pourtant introuvable au catalogue, en 404 sur sa fiche,
+    // et impossible à mettre au panier.
+    expect(article.publishedAt).not.toBeNull()
+    expect(article.offersOpenAt).not.toBeNull()
+
+    // Aucun travail vide : le worker tournerait pour rien, et sa trace ferait
+    // croire que des visuels sont en route.
+    expect(await prisma.job.count({ where: { type: 'article.images' } })).toBe(0)
+  })
+
+  it('retombe sur le poids par défaut de la catégorie', async () => {
+    const categorie = await prisma.category.findUniqueOrThrow({
+      where: { slug: BASE.categorySlug },
+      select: { defaultWeightGrams: true },
+    })
+
+    // Lu en base, jamais recopié : écrire « 250 » ici ferait passer ce test
+    // pour la mauvaise raison le jour où la grille change.
+    expect(categorie.defaultWeightGrams).not.toBeNull()
+
+    const result = await sync({ images: [], weightGrams: undefined })
+    expect(result.action).toBe('created')
+
+    const article = await prisma.article.findUniqueOrThrow({
+      where: { externalId: BASE.externalId },
+      select: { weightGrams: true },
+    })
+    expect(article.weightGrams).toBe(categorie.defaultWeightGrams)
+  })
+
+  it('le poids ENVOYÉ l’emporte sur celui de la catégorie', async () => {
+    // La grille est une moyenne de famille, le poids envoyé est une pesée.
+    await sync({ images: [], weightGrams: 412 })
+
+    const article = await prisma.article.findUniqueOrThrow({
+      where: { externalId: BASE.externalId },
+      select: { weightGrams: true },
+    })
+    expect(article.weightGrams).toBe(412)
+  })
+
+  it('REFUSE quand ni la pièce ni la catégorie n’ont de poids', async () => {
+    // Le refus est le comportement voulu. Un poids moyen « tous vêtements »
+    // n'existe pas, et il servirait à choisir le palier transporteur : une
+    // écharpe partirait au tarif d'un manteau, à chaque colis, en silence.
+    const result = await sync({
+      images: [],
+      weightGrams: undefined,
+      categorySlug: CATEGORY_SANS_POIDS,
+    })
+
+    expect(result.action).toBe('rejected')
+    expect(result.reason).toBe('missing-weight')
+
+    expect(
+      await prisma.article.count({
+        where: { externalId: { startsWith: PREFIX } },
+      }),
+    ).toBe(0)
+  })
+
+  it('un envoi sans visuel N’EFFACE PAS les photos ajoutées depuis la régie', async () => {
+    // Le défaut le plus coûteux de ce lot, s'il avait été manqué : l'inventaire
+    // envoie TOUJOURS un tableau vide. Traité comme une consigne de
+    // remplacement, chaque passage de synchronisation reviderait le catalogue
+    // des clichés pris à la main — toutes les nuits, sans erreur nulle part.
+    await sync()
+    await storeImages([...BASE.images])
+    await prisma.job.deleteMany({ where: { type: 'article.images' } })
+
+    const result = await sync({ images: [] })
+    expect(result.action).toBe('updated')
+
+    const article = await prisma.article.findUniqueOrThrow({
+      where: { externalId: BASE.externalId },
+      select: { status: true, images: { select: { id: true } } },
+    })
+
+    expect(article.images).toHaveLength(BASE.images.length)
+    expect(article.status).toBe('AVAILABLE')
+    expect(await prisma.job.count({ where: { type: 'article.images' } })).toBe(0)
+  })
+
+  it('l’essai à blanc annonce la publication immédiate, sans mentir', async () => {
+    // Une simulation qui répondrait « published: false » ferait renoncer à un
+    // import de plusieurs centaines de pièces sur un chiffre faux.
+    const result = await sync({ images: [] }, true)
+
+    expect(result.action).toBe('would-create')
+    expect(result.published).toBe(true)
+    expect(result.imagesPending).toBe(false)
+
+    expect(
+      await prisma.article.count({
+        where: { externalId: { startsWith: PREFIX } },
+      }),
+    ).toBe(0)
+  })
+
+  it('se retire du catalogue quand l’application l’archive', async () => {
+    // C'est le chemin « vendue ailleurs » : l'inventaire ne peut pas prononcer
+    // VENDUE — cet état appartient à l'encaissement — mais il peut retirer la
+    // pièce de la vente, et c'est ce que demande une vente conclue sur une
+    // autre place de marché.
+    await sync({ images: [] })
+
+    const result = await sync({ images: [], status: 'ARCHIVED' })
+    expect(result.action).toBe('updated')
+    expect(result.published).toBe(false)
+
+    const article = await prisma.article.findUniqueOrThrow({
+      where: { externalId: BASE.externalId },
+      select: { status: true, publishedAt: true },
+    })
+
+    expect(article.status).toBe('ARCHIVED')
+
+    // La date de mise en ligne SURVIT au retrait : elle date la première
+    // parution, elle ne dit pas que la pièce est en vente aujourd'hui. L'effacer
+    // ferait remonter la pièce en tête des nouveautés si elle repassait en vente.
+    expect(article.publishedAt).not.toBeNull()
   })
 })

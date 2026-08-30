@@ -40,10 +40,10 @@ function toEuroText(cents: number): string {
  * ---------------------------------------------------------------------------
  * Trois blocs, et l'ordre compte
  * ---------------------------------------------------------------------------
- * Les photos d'abord, parce que sans elles la mise en vente est refusée et
- * qu'une pièce sans visuel est le cas le plus fréquent d'une fiche qu'on vient
- * de créer. La mise en vente ensuite. La fiche descriptive en dernier : c'est
- * ce qu'on revient corriger, pas ce qu'on cherche en arrivant.
+ * Les photos d'abord, parce qu'une pièce sans visuel est le cas le plus fréquent
+ * d'une fiche qu'on vient de créer, et que la photo est ce qui la fera vendre.
+ * La mise en vente ensuite. La fiche descriptive en dernier : c'est ce qu'on
+ * revient corriger, pas ce qu'on cherche en arrivant.
  *
  * ---------------------------------------------------------------------------
  * Le formulaire disparaît quand la pièce n'est plus modifiable
@@ -77,7 +77,6 @@ export default async function AdminArticlePage({
 
   const subject = {
     status: article.status,
-    hasImage: article.imageCount > 0,
     lockLive: article.lockLive,
     awaitingPayment: article.awaitingPayment,
   }

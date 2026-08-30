@@ -25,10 +25,14 @@ export async function generateMetadata({
  * Elle naît en BROUILLON, toujours
  * ---------------------------------------------------------------------------
  * À cet instant, elle n'a aucune photo — on vient de la décrire. Publier
- * d'emblée produirait une vignette vide au catalogue, et la mise en vente est
- * d'ailleurs refusée sans visuel. Le formulaire enregistre donc, puis renvoie
- * vers la fiche, où l'on ajoute les photos et où le bouton « Publier »
- * apparaît.
+ * d'emblée mettrait au catalogue une vignette sans visuel, ce qui est permis
+ * mais rarement voulu quand on est en train de saisir. Le formulaire enregistre
+ * donc, puis renvoie vers la fiche, où l'on ajoute les photos et où le bouton
+ * « Mettre en vente » attend.
+ *
+ * La mise en vente sans photo n'est plus REFUSÉE — l'inventaire qui alimente la
+ * boutique n'en a pas à envoyer, et la régie ne peut pas interdire ce que
+ * l'import fait par centaines. Elle reste un second geste, délibéré.
  */
 export default async function NewArticlePage({
   params,

@@ -380,7 +380,6 @@ export async function applyListing(
       publishedAt: true,
       reservedUntil: true,
       updatedAt: true,
-      _count: { select: { images: true } },
     },
   })
 
@@ -398,7 +397,6 @@ export async function applyListing(
 
   const plan = planListing(action, {
     status: article.status,
-    hasImage: article._count.images > 0,
     lockLive: article.reservedUntil !== null && article.reservedUntil > now,
     awaitingPayment,
   })

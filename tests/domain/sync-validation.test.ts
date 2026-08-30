@@ -129,11 +129,40 @@ describe('article synchronisé — ce qui est refusé', () => {
     expect(parse({ images: ['pas une url'] }).success).toBe(false)
   })
 
-  it('exige au moins une image et en accepte dix au plus', () => {
+  it('accepte zéro image, et dix au plus', () => {
     const url = 'https://images.exemple.fr/x.jpg'
-    expect(parse({ images: [] }).success).toBe(false)
+
+    // Zéro est permis DEPUIS que l'inventaire alimente la boutique : il ne
+    // stocke aucune photo, et exiger un visuel revenait à refuser tout le stock.
+    expect(parse({ images: [] }).success).toBe(true)
+
+    // Absent vaut vide — `.default([])`. La suite du code compte les images sans
+    // jamais avoir à distinguer les deux, qui n'ont ici aucune conséquence
+    // différente.
+    //
+    // La clé est RETIRÉE, pas mise à `undefined` : `parse` part de `VALID`, qui
+    // en contient une. Passer par `parse({})` testait le cas inverse de celui
+    // qu'on croyait — c'est d'ailleurs comme ça que ce test a échoué d'abord.
+    const { images: _images, ...sansImages } = VALID
+    const absent = syncArticleSchema.safeParse(sansImages)
+    expect(absent.success).toBe(true)
+    if (absent.success) expect(absent.data.images).toEqual([])
+
     expect(parse({ images: Array(10).fill(url) }).success).toBe(true)
     expect(parse({ images: Array(11).fill(url) }).success).toBe(false)
+  })
+
+  it('accepte un poids absent — la catégorie en fournira un', () => {
+    // Le repli est `Category.defaultWeightGrams`, résolu dans `lib/sync/articles`
+    // et refusé (`missing-weight`) si la catégorie n'en a pas. Ce qui se joue
+    // ici est seulement que le contrat laisse passer l'absence.
+    const parsed = parse({ weightGrams: undefined })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) expect(parsed.data.weightGrams).toBeUndefined()
+
+    // Un poids PRÉSENT reste borné : zéro ou négatif n'est pas une absence.
+    expect(parse({ weightGrams: 0 }).success).toBe(false)
+    expect(parse({ weightGrams: -1 }).success).toBe(false)
   })
 
   it('refuse une mesure hors bornes physiques ou de clé inconnue', () => {

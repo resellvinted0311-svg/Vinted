@@ -231,10 +231,32 @@ describe('facettes', () => {
 
 describe('fiche article', () => {
   it('renvoie mesures, images et traductions', async () => {
-    const page = await listArticles({
-      filters: EMPTY_FILTERS, sort: 'nouveautes', cursor: null, ...fr, limit: 1,
+    /**
+     * Une pièce qui a RÉELLEMENT des visuels, choisie comme telle.
+     *
+     * Ce test prenait la plus récente du catalogue. C'était juste tant qu'une
+     * fiche ne pouvait pas être publiée sans photo ; depuis que la boutique
+     * l'accepte — l'inventaire qui l'alimente n'en a aucune — « la plus
+     * récente a des visuels » n'est plus une propriété du domaine, seulement
+     * une propriété du jeu de données du moment.
+     *
+     * Il a échoué exactement là-dessus, sur une pièce laissée par un test de
+     * bout en bout. Le test de bout en bout range désormais derrière lui, mais
+     * la fragilité était ici : ce qu'on veut vérifier, c'est que la REQUÊTE
+     * rend les visuels d'une fiche qui en a, pas que la dernière pièce entrée
+     * en ait.
+     */
+    const avecVisuel = await prisma.article.findFirst({
+      where: {
+        status: 'AVAILABLE',
+        publishedAt: { not: null },
+        images: { some: {} },
+      },
+      select: { slug: true },
     })
-    const article = await getArticleBySlug(page.items[0]!.slug, 'fr')
+    expect(avecVisuel, 'le jeu de données doit contenir une fiche avec visuel').not.toBeNull()
+
+    const article = await getArticleBySlug(avecVisuel!.slug, 'fr')
 
     expect(article).not.toBeNull()
     expect(article!.images.length).toBeGreaterThan(0)

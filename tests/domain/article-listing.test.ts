@@ -26,7 +26,6 @@ import {
 
 const BASE: ListingSubject = {
   status: 'DRAFT',
-  hasImage: true,
   lockLive: false,
   awaitingPayment: false,
 }
@@ -37,7 +36,7 @@ const subject = (over: Partial<ListingSubject>): ListingSubject => ({
 })
 
 describe('publier', () => {
-  it('met en vente un brouillon qui a au moins une photo', () => {
+  it('met en vente un brouillon', () => {
     expect(planListing('publish', subject({ status: 'DRAFT' }))).toEqual({
       ok: true,
       to: 'AVAILABLE',
@@ -51,13 +50,18 @@ describe('publier', () => {
     expect(planListing('publish', subject({ status: 'ARCHIVED' })).ok).toBe(true)
   })
 
-  it('REFUSE une pièce sans photo', () => {
-    // Une fiche sans visuel est une fiche que personne n'ouvre — et la vignette
-    // du catalogue serait vide.
-    expect(planListing('publish', subject({ hasImage: false }))).toEqual({
-      ok: false,
-      reason: 'no-image',
-    })
+  it('ACCEPTE une pièce sans photo — la règle a été levée, délibérément', () => {
+    // Le domaine refusait autrefois de publier sans visuel. La règle est tombée
+    // avec le contrat de synchronisation : l'inventaire qui alimente la boutique
+    // ne stocke aucune photo, et la maintenir revenait à refuser tout le stock.
+    //
+    // Ce test existe pour que la levée soit un CHOIX visible et non un oubli :
+    // le jour où quelqu'un remet le refus, c'est ici qu'il devra s'expliquer.
+    //
+    // La fiche sans visuel reste un mauvais produit — ce n'est simplement plus
+    // ici qu'on l'empêche. Elle s'affiche avec un substitut et n'est pas indexée
+    // tant qu'aucun cliché n'existe.
+    expect(planListing('publish', subject({ status: 'DRAFT' })).ok).toBe(true)
   })
 
   it('REFUSE une pièce déjà en vente', () => {
@@ -164,20 +168,17 @@ describe('aucun geste ne fabrique un état impossible', () => {
     // date de parution et un balayage qui la surveille — sans eux, l'état
     // serait sans issue.
     for (const status of STATUSES) {
-      for (const hasImage of [true, false]) {
-        for (const lockLive of [true, false]) {
-          for (const awaitingPayment of [true, false]) {
-            for (const action of ['publish', 'withdraw'] as const) {
-              const plan = planListing(action, {
-                status,
-                hasImage,
-                lockLive,
-                awaitingPayment,
-              })
-              if (plan.ok) {
-                expect(plan.to).not.toBe('SOLD')
-                expect(plan.to).not.toBe('SCHEDULED')
-              }
+      for (const lockLive of [true, false]) {
+        for (const awaitingPayment of [true, false]) {
+          for (const action of ['publish', 'withdraw'] as const) {
+            const plan = planListing(action, {
+              status,
+              lockLive,
+              awaitingPayment,
+            })
+            if (plan.ok) {
+              expect(plan.to).not.toBe('SOLD')
+              expect(plan.to).not.toBe('SCHEDULED')
             }
           }
         }
@@ -185,29 +186,34 @@ describe('aucun geste ne fabrique un état impossible', () => {
     }
   })
 
-  it('ne met JAMAIS en vente sans photo, quelle que soit la combinaison', () => {
-    // C'est la garantie que la vignette du catalogue n'est jamais vide.
-    for (const status of STATUSES) {
-      for (const lockLive of [true, false]) {
-        for (const awaitingPayment of [true, false]) {
-          const plan = planListing('publish', {
-            status,
-            hasImage: false,
-            lockLive,
-            awaitingPayment,
-          })
-          expect(plan.ok, `${status} verrou=${lockLive}`).toBe(false)
-        }
+  it('ne met JAMAIS en vente une pièce vendue ou verrouillée', () => {
+    // Ce qui reste après la levée du refus « sans photo » : les deux seuls
+    // motifs qui protègent de l'argent déjà engagé. Une pièce vendue porte un
+    // prix qui figure sur une facture ; une pièce verrouillée est en train
+    // d'être payée.
+    for (const lockLive of [true, false]) {
+      for (const awaitingPayment of [true, false]) {
+        expect(
+          planListing('publish', { status: 'SOLD', lockLive, awaitingPayment }).ok,
+          `SOLD verrou=${lockLive}`,
+        ).toBe(false)
       }
+    }
+
+    for (const status of STATUSES) {
+      const plan = planListing('publish', {
+        status,
+        lockLive: true,
+        awaitingPayment: false,
+      })
+      expect(plan.ok, `${status} verrou vivant`).toBe(false)
     }
   })
 
   it('ne touche JAMAIS une pièce vendue', () => {
     for (const action of ['publish', 'withdraw'] as const) {
-      for (const hasImage of [true, false]) {
-        const plan = planListing(action, subject({ status: 'SOLD', hasImage }))
-        expect(plan).toEqual({ ok: false, reason: 'sold' })
-      }
+      const plan = planListing(action, subject({ status: 'SOLD' }))
+      expect(plan).toEqual({ ok: false, reason: 'sold' })
     }
   })
 })

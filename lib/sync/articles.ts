@@ -61,9 +61,15 @@ import {
  * ---------------------------------------------------------------------------
  * Il ne télécharge aucune image. Trois cents téléchargements dépasseraient le
  * temps imparti à une fonction serverless, et l'application attendrait une
- * réponse qui n'arriverait jamais. La pièce est créée en brouillon, un travail
- * est inscrit, et la fiche se publie seule quand ses visuels sont stockés.
- * Aucune fiche n'est publiée sans visuel.
+ * réponse qui n'arriverait jamais. Une pièce qui ANNONCE des visuels est donc
+ * créée en brouillon, un travail est inscrit, et la fiche se publie seule quand
+ * ils sont stockés.
+ *
+ * Une pièce qui n'en annonce AUCUN est publiée tout de suite. Ce n'était pas le
+ * cas jusqu'ici : la publication étant déléguée au travail d'images, un lot sans
+ * photos était accepté, répondait « créé », et restait invisible pour toujours.
+ * L'inventaire qui alimente la boutique n'ayant pas de photos à envoyer, c'est
+ * la totalité du stock qui tombait dans ce trou.
  */
 
 // ---------------------------------------------------------------------------
@@ -112,6 +118,18 @@ interface CategoryEntry {
   slug: string
   /** Une catégorie parente n'accueille aucune pièce. */
   isLeaf: boolean
+  /**
+   * Poids de repli quand l'inventaire n'en envoie pas, en grammes.
+   *
+   * La colonne est semée avec le catalogue depuis le début — un t-shirt à 200 g,
+   * un manteau à 1 500 g — et n'était lue nulle part : son commentaire de schéma
+   * promettait de « pré-remplir Article.weightGrams » sans que rien ne le fasse.
+   * C'est elle qui rend le poids facultatif dans le contrat.
+   *
+   * `null` sur une catégorie parente, et sur toute feuille dont personne n'a
+   * renseigné la grille. Dans ce cas la pièce est refusée, jamais devinée.
+   */
+  defaultWeightGrams: number | null
   /** Nom par langue, pour composer une description à défaut d'en recevoir. */
   nameByLocale: Map<string, string>
 }
@@ -151,6 +169,7 @@ export async function loadSyncContext(): Promise<SyncContext> {
       select: {
         id: true,
         slug: true,
+        defaultWeightGrams: true,
         _count: { select: { children: true } },
         translations: { select: { locale: true, name: true } },
       },
@@ -163,6 +182,7 @@ export async function loadSyncContext(): Promise<SyncContext> {
       id: row.id,
       slug: row.slug,
       isLeaf: row._count.children === 0,
+      defaultWeightGrams: row.defaultWeightGrams,
       nameByLocale: new Map(row.translations.map((t) => [t.locale, t.name])),
     })
   }
@@ -251,11 +271,28 @@ export async function syncArticle(
 
   // ---- Poids et coût transporteur ----------------------------------------
   //
+  // Le poids envoyé l'emporte toujours : c'est une pesée, la grille n'est qu'une
+  // moyenne de famille. À défaut, on retombe sur `Category.defaultWeightGrams`.
+  //
+  // Et si la catégorie n'en a pas non plus, on REFUSE. La tentation serait de
+  // prendre un poids moyen tous vêtements confondus — un chiffre qui n'existe
+  // pas. Il servirait à choisir le palier transporteur, donc le port facturé et
+  // le prix plancher : une écharpe payée au tarif d'un manteau, ou l'inverse, à
+  // chaque colis, sans que rien ne le signale.
+  const weightGrams = input.weightGrams ?? category.defaultWeightGrams
+  if (weightGrams === null) {
+    return rejected(
+      input.externalId,
+      'missing-weight',
+      `aucun poids envoyé et la catégorie « ${category.slug} » n’a pas de poids par défaut`,
+    )
+  }
+
   // Le palier s'applique au COLIS, emballage compris. Vérifier le poids de la
   // pièce seule laisserait passer une pièce de 4 980 g qui, une fois emballée,
   // ne trouverait aucun tarif — et le refus tomberait à l'étape du paiement,
   // devant l'acheteuse, au lieu de tomber ici.
-  const parcelWeightGrams = input.weightGrams + context.packagingWeightGrams
+  const parcelWeightGrams = weightGrams + context.packagingWeightGrams
   const carrierCostCents = cheapestCoveringRate(
     context.floorRates,
     parcelWeightGrams,
@@ -345,7 +382,14 @@ export async function syncArticle(
   }
 
   // ---- Essai à blanc -----------------------------------------------------
+  //
+  // La simulation doit annoncer ce que l'écriture ferait VRAIMENT, sinon elle
+  // ne sert à rien : c'est sur son rapport qu'on décide de lancer un import de
+  // plusieurs centaines de pièces. Elle rejoue donc `nextStatus`, la même
+  // fonction que l'écriture, plutôt que de recopier une approximation.
   if (options.dryRun) {
+    const awaitsImages = input.images.length > 0
+
     return existing
       ? {
           externalId: input.externalId,
@@ -355,9 +399,14 @@ export async function syncArticle(
           url: publicUrlFor(existing.slug),
           ...economics,
           imagesPending:
-            imagesChanged(existing.images, input.images) ||
-            existing.images.length === 0,
-          published: existing.status === 'AVAILABLE',
+            awaitsImages && imagesChanged(existing.images, input.images),
+          published:
+            nextStatus({
+              current: existing.status,
+              wantsArchived,
+              hasStoredImages: existing.images.length > 0,
+              awaitsImages,
+            }) === 'AVAILABLE',
         }
       : {
           externalId: input.externalId,
@@ -366,15 +415,15 @@ export async function syncArticle(
           // consomme pas. En inventer un ici serait pire qu'une absence — il
           // ne serait pas celui attribué à l'écriture réelle.
           ...economics,
-          imagesPending: true,
-          published: false,
+          imagesPending: awaitsImages,
+          published: !wantsArchived && !awaitsImages,
         }
   }
 
   // ---- Écriture ----------------------------------------------------------
   return existing
-    ? updateArticle(input, existing, category, economics, context)
-    : createArticle(input, category, economics)
+    ? updateArticle(input, existing, category, economics, weightGrams, context)
+    : createArticle(input, category, economics, weightGrams, context)
 }
 
 interface Economics {
@@ -414,7 +463,19 @@ function imagesChanged(
 // Champs communs à la création et à la mise à jour
 // ---------------------------------------------------------------------------
 
-function attributeFields(input: SyncArticleInput, categoryId: string) {
+/**
+ * `weightGrams` est passé À PART, jamais relu depuis `input`.
+ *
+ * C'est le seul champ du contrat dont la valeur écrite peut ne pas être celle
+ * reçue : elle vient de la catégorie quand l'inventaire n'en envoie pas. Le lire
+ * ici depuis `input` réécrirait `null` en base sur une pièce dont le poids avait
+ * bien été résolu — et le port cesserait d'être calculable.
+ */
+function attributeFields(
+  input: SyncArticleInput,
+  categoryId: string,
+  weightGrams: number,
+) {
   return {
     categoryId,
     condition: input.condition,
@@ -428,7 +489,7 @@ function attributeFields(input: SyncArticleInput, categoryId: string) {
     priceCents: input.priceCents,
     comparePriceCents: input.comparePriceCents ?? null,
     costCents: input.costCents,
-    weightGrams: input.weightGrams,
+    weightGrams,
     externalSyncedAt: new Date(),
   }
 }
@@ -441,7 +502,25 @@ async function createArticle(
   input: SyncArticleInput,
   category: CategoryEntry,
   economics: Economics,
+  weightGrams: number,
+  context: SyncContext,
 ): Promise<SyncResult> {
+  // Attend-elle des visuels ? C'est la question qui décide de tout ici.
+  //
+  // Quand elle en attend, la publication est prononcée par le travail d'images,
+  // dans la transaction qui les écrit : la fiche ne s'expose jamais vide.
+  //
+  // Quand elle n'en attend AUCUN, ce travail ne s'inscrit pas — et déléguer la
+  // publication à un travail inexistant laissait la pièce en brouillon pour
+  // toujours. C'est exactement ce qui se passait : un lot sans photos était
+  // accepté, répondait « créé », et rien n'apparaissait jamais au catalogue.
+  const awaitsImages = input.images.length > 0
+
+  const status =
+    input.status === 'ARCHIVED' ? 'ARCHIVED' : awaitsImages ? 'DRAFT' : 'AVAILABLE'
+  const publishesNow = status === 'AVAILABLE'
+  const now = new Date()
+
   return prisma.$transaction(async (tx) => {
     const brandId = await resolveBrandId(tx, input.brandName)
     const brand = brandId
@@ -466,17 +545,24 @@ async function createArticle(
         slug,
         externalId: input.externalId,
         brandId,
-        ...attributeFields(input, category.id),
+        ...attributeFields(input, category.id, weightGrams),
         floorPriceCents: economics.floorPriceCents,
         descriptionIsGenerated: input.description === undefined,
-        // Brouillon, sans exception. La publication est prononcée par le
-        // travail d'images, et seulement s'il en stocke au moins une : une
-        // fiche de vêtement sans photo ne se vend pas, elle décrédibilise le
-        // reste du catalogue.
-        //
-        // Une pièce envoyée déjà archivée naît archivée : le travail d'images
-        // ne publiera pas ce qui n'est pas en brouillon.
-        status: input.status === 'ARCHIVED' ? 'ARCHIVED' : 'DRAFT',
+        // Une pièce envoyée déjà archivée naît archivée, quoi qu'il arrive : le
+        // travail d'images ne publie que ce qui est en brouillon.
+        status,
+        // `publishedAt` conditionne TOUTE la visibilité — `lib/db/visibility.ts`
+        // l'exige non nulle, et le verrou de stock aussi. Une pièce AVAILABLE
+        // sans cette date serait « en vente » et pourtant introuvable au
+        // catalogue, en 404 sur sa fiche, et impossible à mettre au panier.
+        ...(publishesNow
+          ? {
+              publishedAt: now,
+              offersOpenAt: new Date(
+                now.getTime() + context.offersOpenAfterDays * 24 * 60 * 60_000,
+              ),
+            }
+          : {}),
       },
       select: { id: true },
     })
@@ -484,10 +570,15 @@ async function createArticle(
     await writeTranslations(tx, article.id, input, category, brand?.name ?? null)
     await writeMeasurements(tx, article.id, input.measurements)
 
-    await enqueue(tx, {
-      type: 'article.images',
-      payload: { articleId: article.id, urls: [...input.images] },
-    })
+    // Pas de travail vide : inscrire un téléchargement sans aucune URL ferait
+    // tourner le worker pour rien, et sa trace laisserait croire que des
+    // visuels sont en route.
+    if (awaitsImages) {
+      await enqueue(tx, {
+        type: 'article.images',
+        payload: { articleId: article.id, urls: [...input.images] },
+      })
+    }
 
     return {
       externalId: input.externalId,
@@ -496,8 +587,8 @@ async function createArticle(
       slug,
       url: publicUrlFor(slug),
       ...economics,
-      imagesPending: true,
-      published: false,
+      imagesPending: awaitsImages,
+      published: publishesNow,
     }
   })
 }
@@ -520,6 +611,7 @@ async function updateArticle(
   existing: ExistingArticle,
   category: CategoryEntry,
   economics: Economics,
+  weightGrams: number,
   context: SyncContext,
 ): Promise<SyncResult> {
   return prisma.$transaction(async (tx) => {
@@ -531,13 +623,28 @@ async function updateArticle(
         })
       : null
 
-    const needsImages = imagesChanged(existing.images, input.images)
+    /**
+     * Un tableau d'images VIDE ne veut pas dire « supprime-les ».
+     *
+     * Il veut dire « je n'ai rien à dire des visuels ». La distinction est
+     * vitale ici : l'inventaire qui alimente la boutique ne stocke aucune photo
+     * et enverra donc TOUJOURS un tableau vide. Traité comme une consigne de
+     * remplacement, chaque passage de synchronisation effacerait les clichés
+     * que la boutiquière vient d'ajouter depuis la régie — et le catalogue se
+     * reviderait tout seul, toutes les nuits, sans erreur nulle part.
+     *
+     * Retirer une photo reste possible : depuis la régie, qui est le seul
+     * endroit d'où l'on en met.
+     */
+    const awaitsImages = input.images.length > 0
+    const needsImages = awaitsImages && imagesChanged(existing.images, input.images)
     const hasStoredImages = existing.images.length > 0
 
     const status = nextStatus({
       current: existing.status,
       wantsArchived: input.status === 'ARCHIVED',
       hasStoredImages,
+      awaitsImages,
     })
 
     /**
@@ -562,7 +669,7 @@ async function updateArticle(
       where: { id: existing.id },
       data: {
         brandId,
-        ...attributeFields(input, category.id),
+        ...attributeFields(input, category.id, weightGrams),
         floorPriceCents: economics.floorPriceCents,
         descriptionIsGenerated: input.description === undefined,
         status,
@@ -619,22 +726,28 @@ async function updateArticle(
  *  2. une pièce RÉSERVÉE ne bouge pas : son statut appartient à la caisse, et
  *     le rendre disponible pendant un paiement ferait vendre la pièce deux
  *     fois ;
- *  3. sans visuel stocké, on ne publie pas — même si l'application demande
- *     `AVAILABLE`. La fiche attend son travail d'images.
+ *  3. on ne publie pas une fiche qui ATTEND des visuels et ne les a pas encore
+ *     — elle s'afficherait vide le temps du téléchargement. Une fiche qui n'en
+ *     attend aucun, elle, se publie : c'est le cas de tout l'inventaire, qui
+ *     n'a pas de photos à envoyer.
  */
 function nextStatus({
   current,
   wantsArchived,
   hasStoredImages,
+  awaitsImages,
 }: {
   current: string
   wantsArchived: boolean
   hasStoredImages: boolean
+  awaitsImages: boolean
 }): 'DRAFT' | 'AVAILABLE' | 'ARCHIVED' | 'RESERVED' | 'SCHEDULED' {
   if (wantsArchived) return 'ARCHIVED'
   if (current === 'RESERVED') return 'RESERVED'
   if (current === 'SCHEDULED') return 'SCHEDULED'
-  return hasStoredImages ? 'AVAILABLE' : 'DRAFT'
+
+  // Le brouillon ne subsiste que pendant l'attente d'un visuel demandé.
+  return hasStoredImages || !awaitsImages ? 'AVAILABLE' : 'DRAFT'
 }
 
 // ---------------------------------------------------------------------------

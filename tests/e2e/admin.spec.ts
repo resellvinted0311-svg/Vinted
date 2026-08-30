@@ -206,7 +206,26 @@ test.describe('La file des offres', () => {
 })
 
 test.describe('Le catalogue depuis la régie', () => {
-  test('crée une pièce, qui naît en brouillon et refuse d’être publiée sans photo', async ({
+  /**
+   * Nettoyer APRÈS, et pas seulement avant.
+   *
+   * Nettoyer seulement avant suffisait tant que la pièce d'essai restait en
+   * brouillon : invisible du public, elle ne gênait personne entre deux
+   * exécutions. Depuis qu'elle est PUBLIÉE, elle entre dans le catalogue — et
+   * elle n'a ni photo ni mesures.
+   *
+   * C'est ce qui vient d'arriver : `tests/integration/catalogue.test.ts` prend
+   * une fiche publiée et vérifie qu'elle a des visuels ; il tombait sur la
+   * pièce laissée par ce fichier-ci. Un test qui ne range pas derrière lui fait
+   * échouer les autres, dans un fichier qu'on n'a pas touché, et on cherche la
+   * cause au mauvais endroit.
+   *
+   * `afterAll` plutôt qu'un appel en fin de test : si l'assertion échoue, le
+   * corps s'arrête, et c'est précisément le cas où la pièce resterait.
+   */
+  test.afterAll(removeTestPieces)
+
+  test('crée une pièce, qui naît en brouillon et peut être publiée sans photo', async ({
     page,
   }) => {
     await removeTestPieces()
@@ -250,14 +269,25 @@ test.describe('Le catalogue depuis la régie', () => {
     await page.goBack()
     await expect(main(page).getByText('brouillon').first()).toBeVisible()
 
-    // Et la mise en vente est refusée : une fiche sans visuel produirait une
-    // vignette vide au catalogue, et le domaine le refuse.
+    // La fiche prévient qu'elle n'a pas de photo, et dit la conséquence exacte :
+    // elle peut être mise en vente, mais elle ne sera pas référencée.
     await expect(
       main(page).getByText('aucune photo', { exact: false }).first(),
     ).toBeVisible()
+
+    // Et le geste est bel et bien OFFERT. C'est le cœur de ce test depuis que
+    // le refus « sans photo » est tombé : l'inventaire qui alimente la boutique
+    // ne stocke aucune photo, et une régie qui interdirait à la main ce que
+    // l'import fait par centaines serait incohérente.
+    await main(page).getByRole('button', { name: 'Mettre en vente' }).click()
+
+    // La conséquence FONCTIONNELLE, pas le libellé du bouton : une pièce
+    // publiée sans date de mise en ligne serait « en vente » et pourtant
+    // introuvable au catalogue, en 404 sur sa fiche, et impossible à mettre au
+    // panier. Le lien public est ce qui prouve que la date est posée.
     await expect(
-      main(page).getByRole('button', { name: 'Mettre en vente' }),
-    ).toHaveCount(0)
+      main(page).getByRole('link', { name: 'Voir la fiche publique' }),
+    ).toBeVisible()
   })
 
   test('n’expose ni coût d’achat ni notes internes sur la fiche PUBLIQUE', async ({

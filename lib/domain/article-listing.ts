@@ -47,13 +47,9 @@ export type ListingRefusal =
   | 'reserved'
   /** Une commande attend son paiement : la retirer ferait perdre la vente. */
   | 'awaiting-payment'
-  /** Sans photo, une fiche publiée est une fiche que personne n'ouvre. */
-  | 'no-image'
 
 export interface ListingSubject {
   status: ArticleStatus
-  /** Au moins un visuel réellement stocké. */
-  hasImage: boolean
   /**
    * La réservation court-elle encore ?
    *
@@ -129,8 +125,15 @@ export function planListing(
     // vente et quelqu'un est en train de la payer.
     if (subject.lockLive) return { ok: false, reason: 'reserved' }
 
-    if (!subject.hasImage) return { ok: false, reason: 'no-image' }
-
+    // Il y avait ici un refus « sans photo ». Il est tombé avec le contrat de
+    // synchronisation : l'inventaire qui alimente la boutique ne stocke aucune
+    // photo, et une régie qui interdirait ce que l'import fait par centaines
+    // serait incohérente — la boutiquière ne pourrait pas republier à la main
+    // une pièce arrivée par la synchronisation.
+    //
+    // La fiche sans visuel reste un mauvais produit, simplement ce n'est plus
+    // ici qu'on l'empêche : elle s'affiche avec un substitut, et elle n'est pas
+    // indexée tant qu'aucun cliché n'existe.
     return {
       ok: true,
       to: 'AVAILABLE',
