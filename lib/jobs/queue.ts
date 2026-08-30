@@ -178,7 +178,8 @@ export async function enqueue(
  * ---------------------------------------------------------------------------
  * À quoi cela sert, et pourquoi ce n'est pas un contournement du cron
  * ---------------------------------------------------------------------------
- * Le cron passe toutes les cinq minutes. C'est parfait pour une confirmation de
+ * Le cron ne passe qu’à intervalle, et cet intervalle dépend du plan de
+ * l’hébergeur. C'est parfait pour une confirmation de
  * commande, et inacceptable pour un lien de réinitialisation : la personne
  * attend devant son écran. Elle recliquerait — et le compteur par adresse est à
  * trois par heure, donc au troisième clic elle serait plafonnée en silence et ne
@@ -296,7 +297,7 @@ const RETRY_DELAYS_MINUTES = [1, 5, 30, 120, 360] as const
  * Le verrou était relâché sans toucher à `runAt`, ce qui rendait le travail
  * immédiatement reprenable. Tant que l'exécutant ne prenait qu'un paquet par
  * passage, cela n'avait pas d'effet visible : la reprise tombait au passage
- * suivant du cron, cinq minutes plus tard.
+ * suivant du cron, un intervalle plus tard.
  *
  * Depuis que l'exécutant redemande du travail tant qu'il lui reste du temps,
  * ce n'est plus vrai : un travail qui échoue est repris DANS LE MÊME PASSAGE,

@@ -112,8 +112,9 @@ export function isArticleListed(
 /**
  * La réservation affichée est-elle encore réelle ?
  *
- * Le statut RESERVED ne redevient AVAILABLE qu'au passage du balayage — toutes
- * les cinq minutes, et seulement si la tâche planifiée est bien configurée.
+ * Le statut RESERVED ne redevient AVAILABLE qu'au passage du balayage — à un
+ * intervalle qui dépend du plan de l'hébergeur, et seulement si la tâche
+ * planifiée est bien configurée.
  * S'en remettre au seul statut pour l'affichage avait deux conséquences :
  *
  *  - dans le meilleur des cas, la pastille « en cours d'achat » survivait

@@ -427,7 +427,7 @@ export function offerNeedsAttention(standing: OfferStanding): boolean {
  * ---------------------------------------------------------------------------
  * Pourquoi l'échéance est relue ici
  * ---------------------------------------------------------------------------
- * Le balayage ne passe que toutes les cinq minutes. Une contre-proposition
+ * Le balayage ne passe que par intermittence. Une contre-proposition
  * échue il y a trois minutes porte encore `PENDING` en base : afficher un
  * bouton dessus ferait cliquer sur un geste que le serveur refusera.
  */

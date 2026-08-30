@@ -25,7 +25,7 @@ Trois choses le lisent, et c'est ce qui empêche la déclaration de mentir :
 | Qui | Ce qu'il en fait |
 | --- | --- |
 | `components/shop/privacy-register.tsx` | Affiche la page publique de confidentialité |
-| `lib/privacy/retention.ts` | Applique les durées, toutes les cinq minutes |
+| `lib/privacy/retention.ts` | Applique les durées, à chaque passage du balayage |
 | `tests/security/privacy-register.test.ts` | Vérifie la cohérence de l'ensemble |
 
 Conséquence voulue : brancher un prestataire sans l'inscrire au registre se

@@ -449,7 +449,7 @@ describe('buyerMayAnswer', () => {
   })
 
   it('refuse une contre-proposition échue même si le statut dit « en attente »', () => {
-    // Le balayage ne passe que toutes les cinq minutes : c'est l'échéance qui
+    // Le balayage ne passe que par intermittence : c'est l'échéance qui
     // fait foi. Sans cela, un bouton s'afficherait sur un geste que le serveur
     // refusera.
     const apres = new Date('2026-09-02T00:00:00Z')

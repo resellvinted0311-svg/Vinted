@@ -197,7 +197,7 @@ async function requestPasswordReset(
  * ---------------------------------------------------------------------------
  * Pourquoi il ne suffit pas de laisser faire le cron
  * ---------------------------------------------------------------------------
- * Il passe toutes les cinq minutes. Pour une confirmation de commande, c'est
+ * Il ne passe qu’à intervalle. Pour une confirmation de commande, c'est
  * sans importance. Pour un lien de réinitialisation, c'est une éternité : la
  * personne attend devant son écran, ne voit rien arriver, et reclique. Or le
  * compteur par adresse est à trois par heure — au troisième clic elle serait

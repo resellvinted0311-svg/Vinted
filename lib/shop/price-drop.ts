@@ -67,7 +67,7 @@ import { enqueueSyncEvents } from '@/lib/sync/outbound'
  * quand des dizaines de pièces sont dues d'un coup) :
  *
  *  - la transaction interactive a un délai maximal ; le dépasser annule TOUT,
- *    et le passage suivant remourrait à l'identique, toutes les cinq minutes ;
+ *    et chaque passage suivant remourrait à l'identique ;
  *  - en production la connexion est unique (`connection_limit=1`) : une
  *    longue transaction affamerait les cinq autres travaux du cron.
  *

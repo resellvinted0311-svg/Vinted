@@ -9,8 +9,8 @@ import type { ArticleStatus } from '@prisma/client'
  * Un premier découpage en distinguait quatre — publier, retirer, archiver,
  * restaurer — plus une libération de verrou échu. Trois d'entre eux étaient le
  * même geste sous deux noms : « restaurer » est publier, « archiver » est
- * retirer, et la libération d'un verrou échu est déjà faite toutes les cinq
- * minutes par le balayage périodique.
+ * retirer, et la libération d'un verrou échu est déjà faite par le balayage
+ * périodique.
  *
  * Chaque geste en trop coûte un membre d'union, un bouton, un état de refus,
  * une clé de traduction dans huit langues et un cas de test — pour une
@@ -54,8 +54,8 @@ export interface ListingSubject {
    * La réservation court-elle encore ?
    *
    * `status = RESERVED` ne suffit pas : le balayage qui libère les verrous
-   * échus passe toutes les cinq minutes, donc une pièce peut porter l'état
-   * RESERVED alors que son verrou est mort depuis quatre minutes. La traiter
+   * échus ne passe que par intermittence, donc une pièce peut porter l'état
+   * RESERVED alors que son verrou est mort depuis longtemps. La traiter
    * comme réservée bloquerait la boutiquière sans raison.
    */
   lockLive: boolean

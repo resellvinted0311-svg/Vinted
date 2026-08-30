@@ -94,6 +94,33 @@ réécrirait les articles de démonstration par-dessus un catalogue réel.
 5. le seed, **uniquement** si `SEED_ON_BUILD=1`
 6. `next build`
 
+## 4 bis. Le balayage périodique, et la limite du plan
+
+`vercel.json` déclare **une exécution par jour** de `/api/cron`. Ce n'est pas le
+rythme souhaitable : c'est le seul que tous les plans acceptent.
+
+**Ce qui s'est réellement passé.** Ce fichier demandait `*/5 * * * *`. Sur un
+plan Hobby, une cadence au-delà de la limite du plan fait **refuser le
+déploiement avant le build** — pas échouer, refuser. Le symptôme est
+déroutant : aucun build en erreur, aucun déploiement nouveau, et une intégration
+Git qui semble pourtant connectée. La boutique est restée dix-sept jours sur le
+commit précédant l'ajout de ce fichier sans que rien ne le signale.
+
+**Ce qu'une cadence lente coûte, exactement.** Rien de faux, seulement du retard
+de ménage. Aucune règle du domaine ne suppose que le balayage est passé : un
+verrou de panier est jugé sur `reservedUntil > now`, une offre sur son échéance.
+Ce qui traîne, ce sont les LIGNES, pas les décisions. Concrètement, une pièce
+dont le panier est abandonné peut rester affichée « réservée » — donc invisible
+à l'achat — jusqu'à vingt-quatre heures. Tolérable avant l'ouverture,
+inacceptable ensuite.
+
+**Retrouver les cinq minutes**, au choix :
+
+- passer le projet en plan payant, et remettre `"schedule": "*/5 * * * *"` ;
+- ou appeler `/api/cron` depuis un ordonnanceur extérieur, avec l'en-tête
+  `Authorization: Bearer $CRON_SECRET`. La route ne demande rien d'autre, et le
+  cron quotidien de Vercel reste alors un filet de sécurité.
+
 ## 5. Comptes de démonstration
 
 Le seed ne crée AUCUN compte en production, et n'en crée en développement que

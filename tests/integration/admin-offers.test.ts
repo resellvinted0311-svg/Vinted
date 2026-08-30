@@ -176,7 +176,7 @@ describe('file des offres à trancher', () => {
   })
 
   it('marque une offre échue plutôt que de la faire disparaître', async () => {
-    // Le balayage ne passe que toutes les cinq minutes : une offre expirée il y
+    // Le balayage ne passe que par intermittence : une offre expirée il y
     // a trois minutes doit être visible telle qu'elle est.
     const articleId = await makeArticle('echue')
     await makeOffer(articleId, { expiresInHours: -1 })

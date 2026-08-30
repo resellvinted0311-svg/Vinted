@@ -691,8 +691,8 @@ export async function answerCounterOffer(input: {
       return { ok: false as const, reason: 'not-pending' as const }
     }
 
-    // Le balayage ne passe que toutes les cinq minutes : c'est l'échéance qui
-    // fait foi, pas le statut.
+    // Le balayage ne passe que par intermittence : c'est l'échéance qui fait
+    // foi, pas le statut.
     if (counter.expiresAt <= now) {
       return { ok: false as const, reason: 'expired' as const }
     }

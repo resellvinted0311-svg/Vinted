@@ -157,9 +157,9 @@ function toEntry(row: PendingOfferRow, locale: string, now: Date): AdminOfferEnt
  * répondre. Les laisser dans cette liste ferait croire au vendeur qu'il a
  * quelque chose à faire de sa propre proposition.
  *
- * Les offres échues restent affichées, marquées : le balayage ne passe que
- * toutes les cinq minutes, et une offre expirée il y a trois minutes doit être
- * visible telle qu'elle est plutôt que de disparaître sans explication.
+ * Les offres échues restent affichées, marquées : le balayage ne passe que par
+ * intermittence, et une offre expirée il y a trois minutes doit être visible
+ * telle qu'elle est plutôt que de disparaître sans explication.
  */
 export async function listPendingOffers(
   locale: string,

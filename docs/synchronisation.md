@@ -759,7 +759,8 @@ lecteur de la version initiale se tromperait.
    calcul de calibration de grille.
 
 4. **`article.price_dropped` est émis par la baisse automatique, et par elle
-   seule.** Le déclencheur est le cron (toutes les cinq minutes) : il applique
+   seule.** Le déclencheur est le cron, dont la cadence dépend du plan de
+   l'hébergeur (voir `DEPLOY.md` §4 bis) : il applique
    le barème `Setting.autoDropSchedule` — des paliers d'ancienneté depuis la
    publication, chaque pourcentage calculé sur le prix d'ORIGINE, jamais
    composé, jamais sous le prix plancher. Votre propre import ne déclenche

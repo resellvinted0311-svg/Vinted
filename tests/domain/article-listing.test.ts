@@ -16,8 +16,8 @@ import {
  * ---------------------------------------------------------------------------
  * Chacun des refus ci-dessous correspond à une façon connue de perdre de
  * l'argent ou une cliente : republier une pièce vendue, archiver sous le
- * paiement de quelqu'un, publier une fiche sans photo que personne n'ouvrira,
- * ou laisser une pièce « en vente » que le catalogue n'affiche pas.
+ * paiement de quelqu'un, ou laisser une pièce « en vente » que le catalogue
+ * n'affiche pas.
  *
  * Écrites à l'intérieur d'une requête, ces règles ne s'exercent qu'avec une
  * base et un jeu de données ; on écrit alors les cas passants et on oublie les
@@ -86,7 +86,7 @@ describe('publier', () => {
   })
 
   it('ACCEPTE une pièce dont le verrou est échu, et efface le réservataire', () => {
-    // Le balayage qui libère les verrous échus passe toutes les cinq minutes :
+    // Le balayage qui libère les verrous échus ne passe que par intermittence :
     // une pièce peut porter RESERVED alors que son verrou est mort depuis
     // quatre minutes. Bloquer la boutiquière là-dessus n'aurait aucun sens.
     expect(

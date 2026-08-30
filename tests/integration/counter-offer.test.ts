@@ -387,7 +387,7 @@ describe('répondre à une contre-proposition', () => {
   it('refuse une contre-proposition échue', async () => {
     const { user, counterOfferId } = await counteredSetup('m')
 
-    // Le balayage ne passe que toutes les cinq minutes : c'est l'échéance qui
+    // Le balayage ne passe que par intermittence : c'est l'échéance qui
     // fait foi, pas le statut.
     const far = new Date(Date.now() + 365 * 24 * 3_600_000)
     expect(
