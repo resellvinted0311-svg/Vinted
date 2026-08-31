@@ -482,3 +482,33 @@ describe('la cadence entre deux lots', () => {
     expect(INTERVALLE_ENTRE_LOTS_MS).toBeLessThan(sansMarge * 1.5)
   })
 })
+
+/**
+ * Le code de statut distingue deux pannes que le corps vide confond.
+ *
+ * Un 502 ou un 504 dit « interrompu en cours de route » : réduire les lots aide.
+ * Un 500 dit « exception » : réduire les lots ne changera rien, et le conseil
+ * envoie chercher au mauvais endroit — c'est exactement ce qui s'est produit au
+ * premier import, sur la garde des réglages de démonstration.
+ */
+describe('le conseil derrière un corps vide', () => {
+  it('parle de taille de lot sur une interruption', () => {
+    expect(conseilPourRefus({ status: 504, reason: 'reponse-vide' })).toMatch(
+      /taille-lot/,
+    )
+  })
+
+  it('n’en parle PAS sur un 500, et renvoie aux journaux', () => {
+    const conseil = conseilPourRefus({ status: 500, reason: 'reponse-vide' })
+    expect(conseil).not.toMatch(/taille-lot/)
+    expect(conseil).toMatch(/journaux/)
+  })
+
+  it('nomme les réglages quand la boutique le dit elle-même', () => {
+    // La route répond maintenant `shop-not-configured` au lieu de lever : c'est
+    // le seul cas où l'on peut être affirmatif sur la cause.
+    expect(
+      conseilPourRefus({ status: 503, reason: 'shop-not-configured' }),
+    ).toMatch(/Réglages/)
+  })
+})

@@ -3,6 +3,11 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { authenticateSync } from '@/lib/sync/auth'
 import {
+  DemoSettingsInProductionError,
+  MissingSettingError,
+} from '@/lib/config/settings'
+import { logger } from '@/lib/observability/logger'
+import {
   loadSyncContext,
   syncArticle,
   type SyncResult,
@@ -177,17 +182,49 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // (`connection_limit=1`, recommandation de Prisma derrière un pooler) : lancer
   // cent transactions de front les ferait toutes attendre la même connexion,
   // jusqu'au délai du pool.
-  const context = await loadSyncContext()
-  const results: SyncResult[] = []
+  try {
+    const context = await loadSyncContext()
+    const results: SyncResult[] = []
 
-  for (const [index, article] of body.articles.entries()) {
-    results.push(await syncArticle(article, index, context, { dryRun }))
+    for (const [index, article] of body.articles.entries()) {
+      results.push(await syncArticle(article, index, context, { dryRun }))
+    }
+
+    return NextResponse.json(
+      { ok: results.every((result) => result.action !== 'rejected'), results },
+      { status: statusFor(results) },
+    )
+  } catch (error) {
+    /**
+     * Une boutique mal configurée n'est pas une panne, et ne doit pas se lire
+     * comme telle.
+     *
+     * Sans ce filet, `getPricingConfig()` levait, Next rendait un 500 SANS
+     * CORPS, et l'appelant n'avait rien à interpréter. C'est arrivé au premier
+     * import réel : la personne a passé le message pour un dépassement de temps
+     * et réduit ses lots, ce qui ne pouvait évidemment rien changer.
+     *
+     * Le refus est le même. Ce qu'on en dit change — et c'est exactement la
+     * distinction qu'on a déjà dû faire sur la limitation de débit.
+     */
+    if (error instanceof DemoSettingsInProductionError) {
+      return errorResponse(503, 'shop-not-configured', error.message)
+    }
+
+    if (error instanceof MissingSettingError) {
+      return errorResponse(503, 'shop-not-configured', error.message)
+    }
+
+    // Tout le reste reste opaque VERS L'EXTÉRIEUR : un message d'exception peut
+    // porter un nom de table, une requête, une valeur. Il part dans le journal,
+    // pas dans la réponse.
+    logger.failure('sync.articles_failed', error)
+    return errorResponse(
+      500,
+      'internal-error',
+      'la boutique a échoué en interne ; consultez ses journaux',
+    )
   }
-
-  return NextResponse.json(
-    { ok: results.every((result) => result.action !== 'rejected'), results },
-    { status: statusFor(results) },
-  )
 }
 
 /**

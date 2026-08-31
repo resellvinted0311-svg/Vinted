@@ -477,9 +477,20 @@ export function conseilPourRefus({
   status: number
   reason: string
 }): string {
-  if (reason === 'reponse-vide' || reason === 'reponse-non-json') {
-    return 'La boutique a été interrompue avant de répondre — presque toujours un dépassement de temps sur un lot trop gros. Relancez avec --taille-lot=25.'
+  if (reason === 'shop-not-configured') {
+    return 'La boutique tourne encore sur les chiffres du jeu de démonstration et refuse de calculer un prix. Renseignez vos vraies valeurs dans Réglages, puis relancez.'
   }
+
+  if (reason === 'reponse-vide' || reason === 'reponse-non-json') {
+    // Le code compte : un 502 ou un 504 dit « interrompu », un 500 dit
+    // « exception ». Les confondre a déjà fait réduire des lots pour un
+    // problème qui n'avait rien à voir avec leur taille.
+    if (status === 502 || status === 504) {
+      return 'La boutique a été interrompue avant de répondre — dépassement de temps sur un lot trop gros. Relancez avec --taille-lot=25.'
+    }
+    return 'La boutique a échoué sans rien renvoyer. Ce n’est pas une question de taille de lot : regardez ses journaux d’exécution dans Vercel, filtre « sync ».'
+  }
+
   return conseilPourStatut(status)
 }
 
