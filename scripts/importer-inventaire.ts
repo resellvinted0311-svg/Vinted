@@ -229,12 +229,30 @@ async function main(): Promise<void> {
   const charges: Record<string, unknown>[] = []
   const refus: Refus[] = []
   const rangements: string[] = []
+
+  /**
+   * Quelques libellés écartés, par motif.
+   *
+   * Un décompte — « 394 catégorie-indéduisible » — ne dit pas quoi corriger. Il
+   * laisse croire que les libellés sont incomplets, alors que la cause la plus
+   * fréquente est l'inverse : ils nomment un vêtement que la table de mots ne
+   * connaît pas encore. Sans exemples, personne ne peut trancher.
+   */
+  const exemples = new Map<Refus, string[]>()
+  const MAX_EXEMPLES = 8
+
   let tronquees = 0
 
   for (const ligne of lignes) {
     const traduite = traduire(ligne)
     if ('refus' in traduite) {
       refus.push(traduite.refus)
+
+      const deja = exemples.get(traduite.refus) ?? []
+      const libelle = (ligne.article ?? '').trim()
+      if (deja.length < MAX_EXEMPLES && libelle !== '') {
+        exemples.set(traduite.refus, [...deja, libelle])
+      }
       continue
     }
     charges.push(traduite.charge)
@@ -244,6 +262,11 @@ async function main(): Promise<void> {
 
   tableau('Catégories déduites du libellé — À VÉRIFIER :', compter(rangements))
   tableau('Pièces écartées avant l’envoi :', compter(refus))
+
+  for (const [motif, libelles] of exemples) {
+    console.log(`\n  Exemples — ${motif} :`)
+    for (const libelle of libelles) console.log(`    · ${libelle}`)
+  }
   if (tronquees > 0) {
     console.log(
       `\n  ${tronquees} titre(s) ou taille(s) tronqué(s) aux bornes du contrat.`,
