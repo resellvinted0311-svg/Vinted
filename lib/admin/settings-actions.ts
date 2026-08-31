@@ -138,9 +138,16 @@ export async function updateSettingsAction(
       }
 
       // Voir l'en-tête : conséquence, pas case à cocher.
-      await tx.setting.update({
+      //
+      // `upsert` pour la même raison que dans `writeSettings` : ce marqueur a
+      // été ajouté APRÈS la mise en service, donc sa ligne n'existe pas dans
+      // une base semée avant lui. Un `update` y levait P2025 et annulait tout
+      // l'enregistrement — la boutique ne pouvait plus quitter le mode
+      // démonstration par l'écran prévu pour ça.
+      await tx.setting.upsert({
         where: { key: 'settingsProfile' },
-        data: { value: 'production' },
+        update: { value: 'production' },
+        create: { key: 'settingsProfile', value: 'production' },
       })
 
       // Une entrée PAR réglage modifié, et rien pour ceux qu'on a réenvoyés

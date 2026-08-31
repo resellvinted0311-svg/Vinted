@@ -100,10 +100,17 @@ beforeEach(async () => {
     })
   }
 
+  /**
+   * `upsert` : un test de ce fichier SUPPRIME `settingsProfile` pour reproduire
+   * une base plus ancienne que le code. Restaurer par `update` échouerait alors
+   * sur une ligne absente, et emporterait tous les tests suivants avec lui —
+   * l'échec désignerait le mauvais coupable.
+   */
   for (const row of original) {
-    await prisma.setting.update({
+    await prisma.setting.upsert({
       where: { key: row.key },
-      data: { value: row.value as never },
+      update: { value: row.value as never },
+      create: { key: row.key, value: row.value as never },
     })
   }
 
@@ -115,9 +122,10 @@ beforeEach(async () => {
 
 afterAll(async () => {
   for (const row of original) {
-    await prisma.setting.update({
+    await prisma.setting.upsert({
       where: { key: row.key },
-      data: { value: row.value as never },
+      update: { value: row.value as never },
+      create: { key: row.key, value: row.value as never },
     })
   }
   await prisma.auditLog.deleteMany({ where: { actorId: admin.id } })
@@ -184,6 +192,41 @@ describe('l’enregistrement', () => {
       select: { value: true },
     })
     expect(profile.value).toBe('production')
+  })
+
+  it('bascule le profil même si la LIGNE n’existe pas encore', async () => {
+    /**
+     * Le cas réel, et non un cas de laboratoire.
+     *
+     * La base de production avait été semée AVANT que `settingsProfile`
+     * n'existe dans le code. La ligne était donc absente, `update` levait
+     * P2025, la transaction entière était annulée — et l'écran répondait par
+     * une erreur sans rien enregistrer.
+     *
+     * Conséquence exacte, celle qu'on ne veut plus jamais revoir : la boutique
+     * restait sur ses chiffres de démonstration, `getPricingConfig()`
+     * continuait de refuser, l'import d'inventaire répondait 503 « boutique non
+     * configurée » — et le seul écran prévu pour en sortir était précisément
+     * celui qui échouait. Un cul-de-sac.
+     */
+    await prisma.setting.delete({ where: { key: 'settingsProfile' } })
+
+    const form = await currentForm()
+    form.set('minMarginCents', '654')
+
+    const state = await updateSettingsAction({ status: 'idle' }, form)
+    expect(state).toEqual({ status: 'done', changed: 1 })
+
+    const profile = await prisma.setting.findUniqueOrThrow({
+      where: { key: 'settingsProfile' },
+      select: { value: true },
+    })
+    expect(profile.value).toBe('production')
+
+    // Et la valeur saisie est bien là : la bascule et l'écriture sont dans la
+    // même transaction, donc l'une sans l'autre serait un demi-enregistrement.
+    const after = await getSettings(['minMarginCents'])
+    expect(after.minMarginCents).toBe(654)
   })
 
   it('IGNORE un champ qui ne figure pas dans la liste fermée', async () => {

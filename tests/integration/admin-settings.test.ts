@@ -57,10 +57,14 @@ beforeEach(async () => {
     })
   }
 
+  // `upsert` : un test peut SUPPRIMER une ligne — c'est même le seul moyen
+  // d'exercer le cas d'une base plus ancienne que le code. Une restauration par
+  // `update` échouerait alors, et le réglage manquerait à toute la suite.
   for (const row of original) {
-    await prisma.setting.update({
+    await prisma.setting.upsert({
       where: { key: row.key },
-      data: { value: row.value as never },
+      update: { value: row.value as never },
+      create: { key: row.key, value: row.value as never },
     })
   }
 
@@ -69,9 +73,10 @@ beforeEach(async () => {
 
 afterAll(async () => {
   for (const row of original) {
-    await prisma.setting.update({
+    await prisma.setting.upsert({
       where: { key: row.key },
-      data: { value: row.value as never },
+      update: { value: row.value as never },
+      create: { key: row.key, value: row.value as never },
     })
   }
   delete process.env.VERCEL_ENV
@@ -276,5 +281,64 @@ describe('le garde-fou de mise en service', () => {
 
     delete process.env.VERCEL_ENV
     await expect(getPricingConfig()).resolves.toBeDefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Une base plus ancienne que le code
+// ---------------------------------------------------------------------------
+
+/**
+ * Un réglage ajouté APRÈS la mise en service n'a pas de ligne.
+ *
+ * Une migration crée des tables, pas des lignes ; et le seed qui l'aurait posée
+ * ne tourne qu'à la demande. Écrire une valeur validée dans une ligne absente
+ * est donc le cas NORMAL d'une base déployée avant que le réglage n'existe.
+ *
+ * `update` y levait P2025, ce qui annulait la transaction ENTIÈRE : aucun
+ * réglage n'était enregistré, l'écran rendait une erreur, et la boutique restait
+ * bloquée sur ses chiffres de démonstration — sans moyen d'en sortir par
+ * l'interface faite pour ça. C'est arrivé en production, le jour de la mise en
+ * service.
+ */
+describe('un réglage dont la ligne n’existe pas encore', () => {
+  it('est CRÉÉ, au lieu de faire échouer tout l’enregistrement', async () => {
+    await prisma.setting.delete({ where: { key: 'shippingMarkupPercent' } })
+
+    const result = await writeSettings([
+      { key: 'shippingMarkupPercent', value: 12 },
+    ])
+
+    expect(result.ok).toBe(true)
+
+    const ecrit = await prisma.setting.findUnique({
+      where: { key: 'shippingMarkupPercent' },
+    })
+    expect(ecrit?.value).toBe(12)
+  })
+
+  it('n’entraîne PAS les autres réglages du même envoi dans sa chute', async () => {
+    // Le tout-ou-rien reste vrai pour une valeur INVALIDE — c'est sa raison
+    // d'être. Il ne doit pas se déclencher pour une ligne simplement absente,
+    // qui n'a rien d'une erreur de saisie.
+    await prisma.setting.delete({ where: { key: 'shippingMarkupPercent' } })
+
+    const result = await writeSettings([
+      { key: 'minMarginCents', value: 700 },
+      { key: 'shippingMarkupPercent', value: 18 },
+    ])
+
+    expect(result.ok).toBe(true)
+
+    const rows = await prisma.setting.findMany({
+      where: { key: { in: ['minMarginCents', 'shippingMarkupPercent'] } },
+      select: { key: true, value: true },
+    })
+    expect(new Map(rows.map((r) => [r.key, r.value]))).toEqual(
+      new Map([
+        ['minMarginCents', 700],
+        ['shippingMarkupPercent', 18],
+      ]),
+    )
   })
 })

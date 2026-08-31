@@ -444,10 +444,30 @@ export async function writeSettings(
     validated.push({ key: entry.key, value: parsed.data })
   }
 
+  /**
+   * `upsert`, et non `update`.
+   *
+   * -------------------------------------------------------------------------
+   * Une migration crée des TABLES, jamais des LIGNES
+   * -------------------------------------------------------------------------
+   * Un réglage ajouté au code après la mise en service n'existe pas dans une
+   * base déjà déployée : le seed qui l'y aurait mis ne tourne qu'à la demande,
+   * et les migrations ne peuplent rien. `update` lève alors P2025, la
+   * transaction entière est annulée, et AUCUN réglage n'est enregistré.
+   *
+   * C'est arrivé exactement ainsi en production : la base avait été semée avant
+   * que `settingsProfile` n'existe. L'écran rendait une erreur, rien n'était
+   * écrit, et la boutique restait bloquée sur ses chiffres de démonstration
+   * sans qu'on puisse en sortir par l'interface prévue pour ça.
+   *
+   * Écrire une valeur validée dans une ligne absente n'est pas un cas
+   * douteux — c'est le cas NORMAL d'une base plus ancienne que le code.
+   */
   for (const entry of validated) {
-    await client.setting.update({
+    await client.setting.upsert({
       where: { key: entry.key },
-      data: { value: entry.value as never },
+      update: { value: entry.value as never },
+      create: { key: entry.key, value: entry.value as never },
     })
   }
 
