@@ -7,6 +7,7 @@ import {
   versCouleur,
   versEtat,
   CATEGORIES_DEDUITES,
+  INTERVALLE_ENTRE_LOTS_MS,
   MAX_TITLE,
   conseilPourRefus,
   conseilPourStatut,
@@ -14,7 +15,11 @@ import {
   lireReponseBrute,
   type LigneInventaire,
 } from '@/scripts/inventaire-mapping'
-import { syncArticleSchema } from '@/lib/validation/sync'
+import {
+  syncArticleSchema,
+  SYNC_RATE_LIMIT,
+  SYNC_RATE_WINDOW_SECONDS,
+} from '@/lib/validation/sync'
 import { CATEGORIES } from '@/prisma/seed-data/catalogue'
 
 /**
@@ -445,5 +450,35 @@ describe('une réponse qui n’est pas du JSON', () => {
     expect(conseilPourRefus({ status: 401, reason: 'unauthorized' })).toMatch(
       /SYNC_API_KEY/,
     )
+  })
+})
+
+/**
+ * La cadence, dérivée du débit annoncé.
+ *
+ * Huit cents pièces par lots de vingt-cinq demandent trente-trois appels, pour
+ * un plafond de trente par minute. Envoyés à la file, les trois derniers étaient
+ * refusés — APRÈS que les trente premiers lots avaient été écrits. Un import à
+ * moitié fait, et un message d'erreur qui parlait de débit.
+ */
+describe('la cadence entre deux lots', () => {
+  it('tient sous le plafond annoncé par la boutique', () => {
+    // Le calcul, refait à l'endroit : combien d'appels tiendraient dans la
+    // fenêtre à cette cadence ? Il en faut MOINS que le plafond.
+    const appelsParFenetre =
+      (SYNC_RATE_WINDOW_SECONDS * 1000) / INTERVALLE_ENTRE_LOTS_MS
+
+    expect(appelsParFenetre).toBeLessThan(SYNC_RATE_LIMIT)
+  })
+
+  it('est DÉRIVÉE du plafond, jamais recopiée', () => {
+    // Une constante écrite à la main dériverait le jour où le plafond change,
+    // et le script se remettrait à se faire refuser sans que rien ne le dise.
+    const sansMarge = (SYNC_RATE_WINDOW_SECONDS * 1000) / SYNC_RATE_LIMIT
+    expect(INTERVALLE_ENTRE_LOTS_MS).toBeGreaterThan(sansMarge)
+
+    // La marge reste raisonnable : au-delà, un import de huit cents pièces
+    // deviendrait pénible pour rien.
+    expect(INTERVALLE_ENTRE_LOTS_MS).toBeLessThan(sansMarge * 1.5)
   })
 })

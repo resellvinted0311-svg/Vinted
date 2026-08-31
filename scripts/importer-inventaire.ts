@@ -50,6 +50,7 @@
 import { MAX_BATCH_SIZE } from '../lib/validation/sync'
 import {
   COLONNES,
+  INTERVALLE_ENTRE_LOTS_MS,
   conseilPourRefus,
   lireReponseBrute,
   traduire,
@@ -254,12 +255,40 @@ async function main(): Promise<void> {
     return
   }
 
-  console.log(`\n${charges.length} pièces à envoyer, par lots de ${tailleLot}.`)
+  const lots = Math.ceil(charges.length / tailleLot)
+  const secondes = Math.round(((lots - 1) * INTERVALLE_ENTRE_LOTS_MS) / 1000)
+  console.log(
+    `\n${charges.length} pièces à envoyer, en ${lots} lot(s) de ${tailleLot}.` +
+      (secondes > 0
+        ? ` Cadence imposée par le débit de la boutique : environ ${secondes} s d’attente cumulée.`
+        : ''),
+  )
 
   const actions: string[] = []
   const motifs: string[] = []
 
+  const nombreDeLots = Math.ceil(charges.length / tailleLot)
+
   for (let debut = 0; debut < charges.length; debut += tailleLot) {
+    const numero = Math.floor(debut / tailleLot) + 1
+
+    /**
+     * Attendre AVANT le lot, sauf le premier.
+     *
+     * La boutique accorde trente appels par minute. Envoyés à la file, les
+     * trente-troisièmes lots d'un import de huit cents pièces étaient refusés —
+     * après que les trente premiers avaient déjà été écrits. Un import à moitié
+     * fait, et un message qui parle de débit.
+     *
+     * On attend donc, plutôt que de demander à l'utilisateur de découper son
+     * import à la main.
+     */
+    if (numero > 1) {
+      await new Promise((resoudre) =>
+        setTimeout(resoudre, INTERVALLE_ENTRE_LOTS_MS),
+      )
+    }
+
     const lot = charges.slice(debut, debut + tailleLot)
     const resultats = await envoyer(boutique, syncCle, lot, essaiABlanc)
 
@@ -270,7 +299,7 @@ async function main(): Promise<void> {
       }
     }
 
-    console.log(`  lot ${Math.floor(debut / tailleLot) + 1} : ${lot.length} pièces`)
+    console.log(`  lot ${numero}/${nombreDeLots} : ${lot.length} pièces`)
   }
 
   tableau('Réponse de la boutique :', compter(actions))

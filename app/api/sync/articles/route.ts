@@ -7,7 +7,11 @@ import {
   syncArticle,
   type SyncResult,
 } from '@/lib/sync/articles'
-import { MAX_BATCH_SIZE } from '@/lib/validation/sync'
+import {
+  MAX_BATCH_SIZE,
+  SYNC_RATE_LIMIT,
+  SYNC_RATE_WINDOW_SECONDS,
+} from '@/lib/validation/sync'
 
 /**
  * Import d'inventaire depuis l'application de gestion.
@@ -42,9 +46,6 @@ export const dynamic = 'force-dynamic'
  */
 export const maxDuration = 60
 
-/** Trente appels par minute et par clé, comme annoncé au §7.4 du contrat. */
-const RATE_LIMIT = 30
-const RATE_WINDOW_SECONDS = 60
 
 /**
  * Corps accepté, dans trois formes.
@@ -120,8 +121,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // aperçoive.
   const allowed = await checkRateLimit({
     key: `sync:articles:${caller.counterKey}`,
-    limit: RATE_LIMIT,
-    windowSeconds: RATE_WINDOW_SECONDS,
+    limit: SYNC_RATE_LIMIT,
+    windowSeconds: SYNC_RATE_WINDOW_SECONDS,
     sensitive: true,
   })
 
@@ -129,8 +130,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return errorResponse(
       429,
       'rate-limited',
-      `au-delà de ${RATE_LIMIT} appels par minute`,
-      { 'Retry-After': String(RATE_WINDOW_SECONDS) },
+      `au-delà de ${SYNC_RATE_LIMIT} appels par minute`,
+      { 'Retry-After': String(SYNC_RATE_WINDOW_SECONDS) },
     )
   }
 

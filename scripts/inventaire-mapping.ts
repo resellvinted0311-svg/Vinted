@@ -13,6 +13,10 @@
  */
 
 import {
+  SYNC_RATE_LIMIT,
+  SYNC_RATE_WINDOW_SECONDS,
+} from '../lib/validation/sync'
+import {
   ARTICLE_COLORS,
   type ArticleColor,
   type ArticleCondition,
@@ -495,3 +499,26 @@ export function conseilPourStatut(status: number): string {
   }
   return 'Consultez les journaux d’exécution de la boutique dans Vercel.'
 }
+
+// ---------------------------------------------------------------------------
+// Cadence
+// ---------------------------------------------------------------------------
+
+/**
+ * Combien de temps attendre entre deux lots, en millisecondes.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi le script doit se cadencer LUI-MÊME
+ * ---------------------------------------------------------------------------
+ * La boutique accorde trente appels par minute. Huit cents pièces par lots de
+ * vingt-cinq en demandent trente-trois : envoyés à la file, les trois derniers
+ * étaient refusés — après que les trente premiers lots avaient DÉJÀ été écrits.
+ * Un import à moitié fait, et un message qui parle de débit.
+ *
+ * La parade n'est pas de découper l'import à la main, c'est d'attendre. Une
+ * marge de dix pour cent absorbe le fait que la fenêtre du compteur ne commence
+ * pas au premier appel du script mais à celui qui a créé la clé.
+ */
+export const INTERVALLE_ENTRE_LOTS_MS = Math.ceil(
+  ((SYNC_RATE_WINDOW_SECONDS * 1000) / SYNC_RATE_LIMIT) * 1.1,
+)

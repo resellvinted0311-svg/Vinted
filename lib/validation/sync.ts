@@ -81,6 +81,21 @@ export type SyncRejectionReason = (typeof SYNC_REJECTION_REASONS)[number]
 export const MAX_BATCH_SIZE = 100
 
 /**
+ * Débit accordé à l'appelant : trente appels par minute.
+ *
+ * Ces deux valeurs vivent ICI, et non dans la route, parce qu'elles ne servent
+ * pas qu'à refuser : l'appelant en a besoin pour se CADENCER. Un import de huit
+ * cents pièces par lots de vingt-cinq demande trente-trois appels — trois de
+ * trop — et sans cadence il se faisait refuser au trente-et-unième, après avoir
+ * déjà écrit les trente premiers lots.
+ *
+ * Les publier est donc ce qui permet à un client honnête de rester dans les
+ * clous sans les deviner.
+ */
+export const SYNC_RATE_LIMIT = 30
+export const SYNC_RATE_WINDOW_SECONDS = 60
+
+/**
  * Nombre d'images par pièce.
  *
  * Le plancher est ZÉRO, et ce n'est pas un relâchement de confort. L'inventaire
