@@ -609,6 +609,7 @@
       "save": "Guardar",
       "saved": "{count, plural, =0 {Nada a guardar.} one {Uma definição guardada.} other {# definições guardadas.}}",
       "demoProfile": "A loja continua a funcionar com os valores de demonstração, que são fictícios. Introduza aqui os seus números reais: até lá, nenhum preço será calculado em produção.",
+      "missingRows": "Alguns parâmetros não têm qualquer linha na base de dados. Enquanto faltarem, a loja recusa calcular um preço. Os indicados abaixo que constam deste formulário são criados na primeira gravação.",
       "errorOnField": "O valor de «{field}» não foi aceite.",
       "groups": {
         "economy": "Economia",
@@ -620,7 +621,8 @@
       "errors": {
         "rateLimited": "Demasiadas gravações seguidas. Tente daqui a pouco.",
         "invalidRequest": "O formulário está incompleto. Recarregue a página.",
-        "invalidValue": "Um valor não foi aceite."
+        "invalidValue": "Um valor não foi aceite.",
+        "unknownZone": "A zona de expedição escolhida não existe na base de dados. Recarregue a página: a lista é construída a partir das zonas realmente registadas."
       },
       "fields": {
         "minMarginCents": {
@@ -646,6 +648,10 @@
         "packagingWeightGrams": {
           "label": "Peso da embalagem (gramas)",
           "hint": "Somado ao peso da peça para escolher o escalão tarifário."
+        },
+        "floorShippingZoneCode": {
+          "label": "Zona de referência para o preço mínimo",
+          "hint": "A zona para onde a loja mais expede. A sua tarifa de envio entra no cálculo do preço mínimo."
         },
         "autoDropSchedule": {
           "label": "Escala de redução automática",

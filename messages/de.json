@@ -609,6 +609,7 @@
       "save": "Speichern",
       "saved": "{count, plural, =0 {Nichts zu speichern.} one {Eine Einstellung gespeichert.} other {# Einstellungen gespeichert.}}",
       "demoProfile": "Der Shop läuft noch mit den Werten des Demonstrationsdatensatzes, die frei erfunden sind. Tragen Sie hier Ihre echten Zahlen ein: bis dahin wird in der Produktion kein Preis berechnet.",
+      "missingRows": "Für einige Einstellungen gibt es keine Zeile in der Datenbank. Solange sie fehlen, weigert sich der Laden, einen Preis zu berechnen. Die unten aufgeführten, die in diesem Formular vorkommen, werden beim ersten Speichern angelegt.",
       "errorOnField": "Der Wert für „{field}“ wurde nicht angenommen.",
       "groups": {
         "economy": "Wirtschaftlichkeit",
@@ -620,7 +621,8 @@
       "errors": {
         "rateLimited": "Zu viele Speichervorgänge hintereinander. Bitte gleich noch einmal versuchen.",
         "invalidRequest": "Das Formular ist unvollständig. Laden Sie die Seite neu.",
-        "invalidValue": "Ein Wert wurde nicht angenommen."
+        "invalidValue": "Ein Wert wurde nicht angenommen.",
+        "unknownZone": "Die gewählte Versandzone existiert nicht in der Datenbank. Laden Sie die Seite neu: Die Liste wird aus den tatsächlich erfassten Zonen erstellt."
       },
       "fields": {
         "minMarginCents": {
@@ -646,6 +648,10 @@
         "packagingWeightGrams": {
           "label": "Verpackungsgewicht (Gramm)",
           "hint": "Wird zum Gewicht des Stücks addiert, um die Gewichtsstufe zu bestimmen."
+        },
+        "floorShippingZoneCode": {
+          "label": "Referenzzone für den Mindestpreis",
+          "hint": "Die Zone, in die der Laden am häufigsten versendet. Ihr Versandtarif fließt in die Berechnung des Mindestpreises ein."
         },
         "autoDropSchedule": {
           "label": "Staffel der automatischen Reduzierung",

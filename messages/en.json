@@ -609,6 +609,7 @@
       "save": "Save",
       "saved": "{count, plural, =0 {Nothing to save.} one {One setting saved.} other {# settings saved.}}",
       "demoProfile": "The shop is still running on the demonstration values, which are fictional. Enter your real figures here: until you do, no price will be computed in production.",
+      "missingRows": "Some settings have no row in the database. While they are missing, the shop refuses to calculate a price. Those listed below that appear in this form are created on the first save.",
       "errorOnField": "The value for “{field}” was not accepted.",
       "groups": {
         "economy": "Economics",
@@ -620,7 +621,8 @@
       "errors": {
         "rateLimited": "Too many saves in a row. Try again in a moment.",
         "invalidRequest": "The form is incomplete. Reload the page and start again.",
-        "invalidValue": "One value was not accepted."
+        "invalidValue": "One value was not accepted.",
+        "unknownZone": "The selected shipping zone does not exist in the database. Reload the page: the list is built from the zones actually on record."
       },
       "fields": {
         "minMarginCents": {
@@ -646,6 +648,10 @@
         "packagingWeightGrams": {
           "label": "Packaging weight (grams)",
           "hint": "Added to the weight of the piece to pick the carrier’s weight bracket."
+        },
+        "floorShippingZoneCode": {
+          "label": "Reference zone for the floor price",
+          "hint": "The zone the shop ships to most. Its shipping rate feeds the floor price calculation."
         },
         "autoDropSchedule": {
           "label": "Automatic markdown schedule",

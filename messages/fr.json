@@ -609,6 +609,7 @@
       "save": "Enregistrer",
       "saved": "{count, plural, =0 {Aucun changement à enregistrer.} one {Un réglage enregistré.} other {# réglages enregistrés.}}",
       "demoProfile": "La boutique tourne encore sur les valeurs du jeu de démonstration, qui sont fictives. Renseignez vos vrais chiffres ici : tant que ce n’est pas fait, aucun prix ne sera calculé en production.",
+      "missingRows": "Des réglages n’ont aucune ligne en base. Tant qu’ils manquent, la boutique refuse de calculer un prix. Ceux qui figurent ci-dessous dans le formulaire sont créés dès le premier enregistrement.",
       "errorOnField": "La valeur de « {field} » n’est pas acceptée.",
       "groups": {
         "economy": "Économie",
@@ -620,7 +621,8 @@
       "errors": {
         "rateLimited": "Trop d’enregistrements coup sur coup. Réessayez dans un moment.",
         "invalidRequest": "Le formulaire est incomplet. Rechargez la page et recommencez.",
-        "invalidValue": "Une valeur n’est pas acceptée."
+        "invalidValue": "Une valeur n’est pas acceptée.",
+        "unknownZone": "La zone d’expédition choisie n’existe pas en base. Rechargez la page : la liste est construite à partir des zones réellement enregistrées."
       },
       "fields": {
         "minMarginCents": {
@@ -646,6 +648,10 @@
         "packagingWeightGrams": {
           "label": "Poids de l’emballage (grammes)",
           "hint": "Ajouté au poids de la pièce pour choisir la tranche tarifaire du transporteur."
+        },
+        "floorShippingZoneCode": {
+          "label": "Zone de référence pour le prix plancher",
+          "hint": "La zone où la boutique expédie le plus. Son tarif de port entre dans le calcul du prix plancher."
         },
         "autoDropSchedule": {
           "label": "Barème de baisse automatique",

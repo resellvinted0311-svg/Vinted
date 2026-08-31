@@ -609,6 +609,7 @@
       "save": "Salva",
       "saved": "{count, plural, =0 {Niente da salvare.} one {Una impostazione salvata.} other {# impostazioni salvate.}}",
       "demoProfile": "Il negozio funziona ancora con i valori dimostrativi, che sono fittizi. Inserisca qui le sue cifre reali: fino ad allora nessun prezzo verrà calcolato in produzione.",
+      "missingRows": "Alcune impostazioni non hanno alcuna riga nella base dati. Finché mancano, la boutique rifiuta di calcolare un prezzo. Quelle elencate sotto che compaiono in questo modulo vengono create al primo salvataggio.",
       "errorOnField": "Il valore di «{field}» non è stato accettato.",
       "groups": {
         "economy": "Economia",
@@ -620,7 +621,8 @@
       "errors": {
         "rateLimited": "Troppi salvataggi di seguito. Riprovi tra poco.",
         "invalidRequest": "Il modulo è incompleto. Ricarichi la pagina.",
-        "invalidValue": "Un valore non è stato accettato."
+        "invalidValue": "Un valore non è stato accettato.",
+        "unknownZone": "La zona di spedizione scelta non esiste nella base dati. Ricarichi la pagina: l’elenco è costruito a partire dalle zone realmente registrate."
       },
       "fields": {
         "minMarginCents": {
@@ -646,6 +648,10 @@
         "packagingWeightGrams": {
           "label": "Peso dell’imballaggio (grammi)",
           "hint": "Si somma al peso del capo per scegliere la fascia tariffaria."
+        },
+        "floorShippingZoneCode": {
+          "label": "Zona di riferimento per il prezzo minimo",
+          "hint": "La zona verso cui la boutique spedisce di più. La sua tariffa di spedizione entra nel calcolo del prezzo minimo."
         },
         "autoDropSchedule": {
           "label": "Scala del ribasso automatico",

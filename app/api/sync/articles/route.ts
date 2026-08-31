@@ -207,12 +207,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
      * Le refus est le même. Ce qu'on en dit change — et c'est exactement la
      * distinction qu'on a déjà dû faire sur la limitation de débit.
      */
+    /**
+     * DEUX motifs, et non un seul.
+     *
+     * Ils partageaient `shop-not-configured`, ce qui obligeait l'appelant à
+     * deviner : « la boutique tourne sur les chiffres de démonstration » et
+     * « ce réglage n'a aucune ligne en base » ne se réparent pas au même
+     * endroit, et le script conseillait donc de saisir des valeurs à quelqu'un
+     * qui venait précisément de les saisir.
+     *
+     * Le détail portait déjà la vérité ; le motif, lui, est ce sur quoi un
+     * programme branche. Il devait donc la porter aussi.
+     */
     if (error instanceof DemoSettingsInProductionError) {
-      return errorResponse(503, 'shop-not-configured', error.message)
+      return errorResponse(503, 'shop-in-demo-mode', error.message)
     }
 
     if (error instanceof MissingSettingError) {
-      return errorResponse(503, 'shop-not-configured', error.message)
+      return errorResponse(503, 'setting-missing', error.message)
     }
 
     // Tout le reste reste opaque VERS L'EXTÉRIEUR : un message d'exception peut

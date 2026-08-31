@@ -42,15 +42,27 @@ export interface SettingsFormValues {
   [key: string]: string
 }
 
+/** Une zone d'expédition telle qu'elle existe en base. */
+export interface ZoneOption {
+  code: string
+  name: string
+}
+
 export function SettingsForm({
   fields,
   values,
   profile,
+  zones,
+  missing,
 }: {
   fields: readonly EditableSetting[]
   values: SettingsFormValues
   /** `development` tant que personne n'a enregistré de vraies valeurs. */
   profile: 'development' | 'production'
+  /** Les zones réellement en base, pour la liste du réglage de plancher. */
+  zones: readonly ZoneOption[]
+  /** Les réglages dont la LIGNE est absente. Voir la bannière ci-dessous. */
+  missing: readonly string[]
 }) {
   const t = useTranslations('admin.settings')
   const [state, formAction] = useActionState(updateSettingsAction, INITIAL)
@@ -59,6 +71,31 @@ export function SettingsForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-8">
+      {/**
+       * Les lignes absentes, nommées.
+       *
+       * Un champ vide et un champ dont la ligne n'existe pas se ressemblent à
+       * l'écran, et n'ont rien à voir : le second fait refuser l'enregistrement
+       * ENTIER, y compris les valeurs qu'on vient de saisir. On enregistrait,
+       * rien ne se passait, et le message ne désignait qu'un champ qu'on
+       * croyait rempli.
+       *
+       * Ceux qui figurent dans le formulaire se réparent en enregistrant. Les
+       * autres — ils sont rares et volontairement non éditables — sont nommés
+       * quand même : sans cela, la boutique refuserait de calculer un prix pour
+       * une raison qu'aucun écran n'affiche.
+       */}
+      {missing.length > 0 ? (
+        <Notice tone="warning" role="status">
+          <p>{t('missingRows')}</p>
+          <ul className="mt-2 list-disc pl-5 font-mono text-sm">
+            {missing.map((key) => (
+              <li key={key}>{key}</li>
+            ))}
+          </ul>
+        </Notice>
+      ) : null}
+
       {profile === 'development' ? (
         <Notice tone="warning" role="status">
           <p>{t('demoProfile')}</p>
@@ -95,6 +132,7 @@ export function SettingsForm({
                   key={field.key}
                   field={field}
                   value={values[field.key] ?? ''}
+                  zones={zones}
                 />
               ))}
           </div>
@@ -109,13 +147,24 @@ export function SettingsForm({
 function SettingField({
   field,
   value,
+  zones,
 }: {
   field: EditableSetting
   value: string
+  zones: readonly ZoneOption[]
 }) {
   const t = useTranslations('admin.settings')
   const label = t(`fields.${field.key}.label`)
   const hint = t(`fields.${field.key}.hint`)
+
+  if (field.kind === 'zoneCode') {
+    return (
+      <Field hint={hint}>
+        <FieldLabel>{label}</FieldLabel>
+        <ZoneSelect name={field.key} value={value} zones={zones} />
+      </Field>
+    )
+  }
 
   if (field.kind === 'boolean') {
     return (
@@ -182,6 +231,54 @@ function ScheduleTextarea({ name, value }: { name: string; value: string }) {
       spellCheck={false}
       className="w-full rounded border border-[var(--color-rule)] bg-transparent p-2 font-mono text-sm"
     />
+  )
+}
+
+/**
+ * La zone qui sert de référence au calcul du prix plancher.
+ *
+ * ---------------------------------------------------------------------------
+ * Une liste, et pas un champ de saisie
+ * ---------------------------------------------------------------------------
+ * Ce réglage était volontairement absent du formulaire, pour une raison juste :
+ * un champ libre y aurait écrit une zone inexistante, et le calcul du plancher
+ * serait tombé sur toutes les pièces à la fois — loin d'ici, et sans rien qui
+ * désigne cette saisie.
+ *
+ * Les options viennent de la base, donc on ne peut choisir qu'une zone qui
+ * existe. Ce n'est PAS la validation pour autant : l'action revérifie le code
+ * reçu contre la base, parce qu'une Server Action est un POST et qu'une liste
+ * côté navigateur ne contraint personne.
+ *
+ * L'option vide n'est là que si rien n'est encore choisi : elle évite qu'un
+ * navigateur sélectionne d'office la première zone et fasse croire à un choix
+ * que personne n'a fait.
+ */
+function ZoneSelect({
+  name,
+  value,
+  zones,
+}: {
+  name: string
+  value: string
+  zones: readonly ZoneOption[]
+}) {
+  const control = useFieldControlProps()
+
+  return (
+    <select
+      {...control}
+      name={name}
+      defaultValue={value}
+      className="w-full rounded border border-[var(--color-rule)] bg-transparent p-2 text-sm"
+    >
+      {value === '' ? <option value="" /> : null}
+      {zones.map((zone) => (
+        <option key={zone.code} value={zone.code}>
+          {zone.name}
+        </option>
+      ))}
+    </select>
   )
 }
 

@@ -46,14 +46,35 @@ import type { AutoDropStage, PricingConfig } from '@/lib/domain/pricing'
 /** Client Prisma ou client de transaction : les deux savent lire. */
 type Reader = Prisma.TransactionClient | typeof prisma
 
-/** Erreur de configuration : la boutique ne peut pas fonctionner sans. */
+/**
+ * Erreur de configuration : la boutique ne peut pas fonctionner sans.
+ *
+ * ---------------------------------------------------------------------------
+ * Elle nomme TOUS les réglages fautifs, pas le premier
+ * ---------------------------------------------------------------------------
+ * La version d'avant s'arrêtait au premier manquant. Sur une base plus ancienne
+ * que le code, il en manque rarement un seul : on corrigeait, on relançait, on
+ * découvrait le suivant, et ainsi de suite — un aller-retour par ligne absente,
+ * chacun coûtant un import complet pour l'apprendre.
+ *
+ * `keys` est donc un tableau, et le message les énumère.
+ */
 export class MissingSettingError extends Error {
-  constructor(
-    readonly key: string,
-    reason: string,
-  ) {
-    super(`Réglage « ${key} » ${reason}. Renseignez-le dans la table Setting.`)
+  readonly keys: readonly string[]
+
+  constructor(keys: string | readonly string[], reason: string) {
+    const list = typeof keys === 'string' ? [keys] : [...keys]
+    const named = list.map((key) => `« ${key} »`).join(', ')
+    const plural = list.length > 1 ? 'Réglages' : 'Réglage'
+
+    super(`${plural} ${named} ${reason}. Renseignez-les dans « Réglages ».`)
     this.name = 'MissingSettingError'
+    this.keys = list
+  }
+
+  /** Le premier fautif. Conservé : des appelants n'en attendent qu'un. */
+  get key(): string {
+    return this.keys[0] ?? ''
   }
 }
 
@@ -210,25 +231,68 @@ export async function getSettings<K extends SettingKey>(
   const byKey = new Map(rows.map((row) => [row.key, row.value]))
   const result = {} as { [P in K]: SettingValue<P> }
 
+  // On parcourt TOUT avant de lever : voir `MissingSettingError`. Corriger
+  // ligne par ligne, en redécouvrant la suivante à chaque essai, est ce que
+  // cette boucle évite.
+  const absent: K[] = []
+  const malformed: string[] = []
+
   for (const key of keys) {
     if (!byKey.has(key)) {
-      throw new MissingSettingError(key, 'est absent de la base')
+      absent.push(key)
+      continue
     }
 
     const parsed = SCHEMAS[key].safeParse(byKey.get(key))
     if (!parsed.success) {
       // Le message ne cite jamais la valeur : un réglage peut être sensible,
       // et de toute façon c'est la forme attendue qui aide à corriger.
-      throw new MissingSettingError(
-        key,
-        `n'a pas la forme attendue (${parsed.error.issues[0]?.message ?? 'invalide'})`,
+      malformed.push(
+        `${key} (${parsed.error.issues[0]?.message ?? 'invalide'})`,
       )
+      continue
     }
 
     result[key] = parsed.data as SettingValue<K>
   }
 
+  // L'absence d'abord : une ligne à créer et une ligne à corriger ne se
+  // réparent pas au même endroit, et l'absence est de loin la plus fréquente
+  // sur une base déployée avant que le réglage n'existe.
+  if (absent.length > 0) {
+    throw new MissingSettingError(absent, 'est absent de la base')
+  }
+
+  if (malformed.length > 0) {
+    throw new MissingSettingError(malformed, 'n’a pas la forme attendue')
+  }
+
   return result
+}
+
+/**
+ * Les réglages ABSENTS de la base, parmi tous ceux que le code connaît.
+ *
+ * Sert à l'écran de réglages, qui doit pouvoir dire « il manque ceci » au lieu
+ * d'afficher un champ vide. Un champ vide et un champ dont la ligne n'existe
+ * pas se ressemblent à l'écran, et n'ont rien à voir : le second fait refuser
+ * l'enregistrement ENTIER, y compris les valeurs qu'on venait de saisir.
+ *
+ * Ne lève pas : c'est un diagnostic, et il doit rester lisible précisément
+ * quand la configuration est en défaut.
+ */
+export async function findMissingSettings(
+  client: Reader = prisma,
+): Promise<SettingKey[]> {
+  const keys = Object.keys(SCHEMAS) as SettingKey[]
+
+  const rows = await client.setting.findMany({
+    where: { key: { in: keys } },
+    select: { key: true },
+  })
+
+  const present = new Set(rows.map((row) => row.key))
+  return keys.filter((key) => !present.has(key))
 }
 
 // ---------------------------------------------------------------------------
@@ -251,6 +315,11 @@ export type SettingFieldKind =
   | 'boolean'
   | 'nullablePercent'
   | 'dropSchedule'
+  /**
+   * Un code de zone d'expédition, choisi dans une liste CONSTRUITE À PARTIR DE
+   * LA BASE — jamais saisi librement. Voir `floorShippingZoneCode`.
+   */
+  | 'zoneCode'
 
 export interface EditableSetting {
   key: SettingKey
@@ -276,9 +345,6 @@ export interface EditableSetting {
  *    `refundOutboundShippingOnWithdrawal` : conditions légales. Elles se
  *    changent avec un juriste, pas dans un formulaire entre deux commandes ;
  *  - `cgvVersion` : une version de CGV se change en publiant de nouvelles CGV ;
- *  - `floorShippingZoneCode` : référence un code de zone qui doit exister en
- *    base. Un champ libre y écrirait une zone inexistante, et le calcul du
- *    plancher tomberait sur toutes les pièces à la fois ;
  *  - `impactCoefficients` : tant qu'aucune source vérifiée ne les fournit, le
  *    bloc reste masqué. Un formulaire inviterait à les inventer ;
  *  - `settingsProfile` : il n'est pas un réglage mais une conséquence — il
@@ -294,6 +360,30 @@ export const EDITABLE_SETTINGS: readonly EditableSetting[] = [
 
   { key: 'shippingMarkupPercent', kind: 'percent', group: 'shipping' },
   { key: 'packagingWeightGrams', kind: 'integer', group: 'shipping' },
+
+  /**
+   * Éditable depuis qu'il se choisit dans une LISTE, et pas avant.
+   *
+   * -------------------------------------------------------------------------
+   * Ce qui a changé, et pourquoi ça change la réponse
+   * -------------------------------------------------------------------------
+   * Il était exclu pour une raison juste : un champ de saisie libre y aurait
+   * écrit une zone inexistante, et le calcul du plancher serait tombé sur
+   * toutes les pièces à la fois. L'objection portait sur le CHAMP, pas sur le
+   * réglage.
+   *
+   * Le champ est maintenant une liste construite à partir des zones réellement
+   * présentes en base, et l'action revérifie le code choisi contre la base
+   * avant d'écrire — la liste vient du serveur, mais un formulaire s'envoie
+   * sans passer par la page qui l'a rendu.
+   *
+   * Ce que son exclusion coûtait, et qui a été payé : sa ligne manquait en
+   * production, aucun écran ne pouvait la créer, et la boutique refusait donc
+   * de calculer un prix — sans aucun moyen d'en sortir par l'interface. Un
+   * réglage OBLIGATOIRE qu'aucun écran ne peut renseigner est un cul-de-sac,
+   * pas une protection.
+   */
+  { key: 'floorShippingZoneCode', kind: 'zoneCode', group: 'shipping' },
 
   { key: 'autoDropSchedule', kind: 'dropSchedule', group: 'drop' },
 
@@ -349,6 +439,15 @@ export function parseSettingInput(key: string, raw: string): SettingParse {
       // faux. C'est le formulaire qui garantit la présence de la clé, par un
       // champ caché ; ici on interprète ce qui arrive.
       return { ok: true, value: trimmed === 'on' || trimmed === 'true' }
+
+    case 'zoneCode': {
+      // On vérifie ici la FORME, jamais l'existence : cette fonction est pure
+      // et testable sans base. Que la zone existe se vérifie dans l'action, qui
+      // a le client, juste avant d'écrire.
+      if (trimmed === '') return { ok: false, reason: 'malformed' }
+      if (trimmed.length > 32) return { ok: false, reason: 'malformed' }
+      return { ok: true, value: trimmed }
+    }
 
     case 'nullablePercent': {
       // Vide = « aucun seuil », ce qui rend l'acceptation automatique inerte.
@@ -508,6 +607,27 @@ export async function getShippingConfig(client: Reader = prisma): Promise<{
  * commission d'un prestataire de paiement change par contrat ; les deux
  * doivent se corriger en back-office, sans redéploiement.
  */
+/**
+ * Les réglages SANS LESQUELS la boutique ne peut pas calculer un prix.
+ *
+ * Nommés dans une constante exportée, et non écrits à l'intérieur de la
+ * fonction, pour qu'un test puisse vérifier l'invariant qui manquait : chacun
+ * doit être renseignable depuis le back-office.
+ *
+ * Ce que son absence a coûté : `floorShippingZoneCode` était obligatoire pour
+ * vendre et absent du formulaire. Sa ligne manquait en production, aucun écran
+ * ne pouvait la créer, et la boutique refusait donc de calculer un prix sans
+ * qu'aucun chemin ne mène à la réparation. Un réglage obligatoire que
+ * l'interface ne peut pas poser est un cul-de-sac, et rien ne l'interdisait.
+ */
+export const PRICING_SETTING_KEYS = [
+  'minMarginCents',
+  'contributionRateBps',
+  'stripePercentBps',
+  'stripeFixedCents',
+  'settingsProfile',
+] as const satisfies readonly SettingKey[]
+
 /** Réglages de négociation, tels que l'attend `lib/domain/offers`. */
 export async function getOfferPolicy(
   client: Reader = prisma,
@@ -546,16 +666,7 @@ export class DemoSettingsInProductionError extends Error {
 export async function getPricingConfig(
   client: Reader = prisma,
 ): Promise<PricingConfig> {
-  const values = await getSettings(
-    [
-      'minMarginCents',
-      'contributionRateBps',
-      'stripePercentBps',
-      'stripeFixedCents',
-      'settingsProfile',
-    ],
-    client,
-  )
+  const values = await getSettings(PRICING_SETTING_KEYS, client)
 
   // ---------------------------------------------------------------------------
   // Le garde-fou, et pourquoi il est ICI

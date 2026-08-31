@@ -109,6 +109,33 @@ export async function updateSettingsAction(
     entries.push({ key: setting.key, value: parsed.value })
   }
 
+  /**
+   * La zone de plancher doit EXISTER, et c'est ici qu'on le vérifie.
+   *
+   * `parseSettingInput` est pure : elle contrôle la forme, pas le contenu de la
+   * base. L'écran propose une liste construite à partir des zones réellement
+   * présentes, mais une Server Action est un POST — rien n'oblige un appelant à
+   * passer par la page qui a rendu la liste, et une liste côté client n'est
+   * jamais une validation.
+   *
+   * Sans ce contrôle, un code de zone inexistant s'écrirait sans broncher, et
+   * le calcul du plancher tomberait ensuite sur TOUTES les pièces à la fois —
+   * loin d'ici, et sans rien qui désigne ce formulaire.
+   */
+  const zoneEntry = entries.find(
+    (entry) => entry.key === 'floorShippingZoneCode',
+  )
+  if (zoneEntry) {
+    const zone = await prisma.shippingZone.findUnique({
+      where: { code: String(zoneEntry.value) },
+      select: { id: true },
+    })
+    // Sans clé de champ : le message générique « la valeur de X n'est pas
+    // acceptée » n'apprendrait rien ici, alors que le motif, lui, se dit en une
+    // phrase — et dire quoi faire vaut mieux que désigner un champ.
+    if (!zone) return ERROR('unknownZone')
+  }
+
   // Les valeurs d'avant, pour la piste d'audit. Lues AVANT la transaction : une
   // modification de réglage de prix est exactement le geste qu'on veut pouvoir
   // reconstituer six mois plus tard, quand une commande paraît anormale.

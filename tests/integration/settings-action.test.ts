@@ -229,6 +229,64 @@ describe('l’enregistrement', () => {
     expect(after.minMarginCents).toBe(654)
   })
 
+  it('REFUSE une zone de plancher qui n’existe pas en base', async () => {
+    /**
+     * La liste déroulante est construite à partir des zones réelles, mais une
+     * Server Action est un POST : rien n'oblige un appelant à passer par la
+     * page qui a rendu cette liste. Une liste côté navigateur n'est pas une
+     * validation.
+     *
+     * Sans ce contrôle, le code inexistant s'écrirait sans broncher, et le
+     * calcul du plancher tomberait ensuite sur TOUTES les pièces à la fois —
+     * loin d'ici, et sans rien qui désigne ce formulaire.
+     */
+    const before = await getSettings(['floorShippingZoneCode'])
+
+    const form = await currentForm()
+    form.set('floorShippingZoneCode', 'ZONE_QUI_N_EXISTE_PAS')
+
+    const state = await updateSettingsAction({ status: 'idle' }, form)
+    expect(state).toMatchObject({ status: 'error', messageKey: 'unknownZone' })
+
+    const after = await getSettings(['floorShippingZoneCode'])
+    expect(after).toEqual(before)
+  })
+
+  it('accepte une zone qui existe, et l’écrit', async () => {
+    const zone = await prisma.shippingZone.findFirstOrThrow({
+      orderBy: { position: 'asc' },
+      select: { code: true },
+    })
+
+    const form = await currentForm()
+    form.set('floorShippingZoneCode', zone.code)
+    await updateSettingsAction({ status: 'idle' }, form)
+
+    const after = await getSettings(['floorShippingZoneCode'])
+    expect(after.floorShippingZoneCode).toBe(zone.code)
+  })
+
+  it('CRÉE la zone de plancher quand sa ligne est absente', async () => {
+    // Le blocage réel : cette ligne manquait en production, elle n'était
+    // éditable nulle part, et la boutique refusait donc de calculer un prix
+    // sans qu'aucun écran ne mène à la réparation.
+    await prisma.setting.delete({ where: { key: 'floorShippingZoneCode' } })
+
+    const zone = await prisma.shippingZone.findFirstOrThrow({
+      orderBy: { position: 'asc' },
+      select: { code: true },
+    })
+
+    const form = await currentForm()
+    form.set('floorShippingZoneCode', zone.code)
+
+    const state = await updateSettingsAction({ status: 'idle' }, form)
+    expect(state).toMatchObject({ status: 'done' })
+
+    const after = await getSettings(['floorShippingZoneCode'])
+    expect(after.floorShippingZoneCode).toBe(zone.code)
+  })
+
   it('IGNORE un champ qui ne figure pas dans la liste fermée', async () => {
     const before = await getSettings(['withdrawalPeriodDays'])
 

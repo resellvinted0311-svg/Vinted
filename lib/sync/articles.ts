@@ -4,7 +4,11 @@ import { Prisma } from '@prisma/client'
 
 import { prisma } from '@/lib/db/client'
 import { SITE } from '@/lib/config/site'
-import { getPricingConfig, getSettings } from '@/lib/config/settings'
+import {
+  getPricingConfig,
+  getSettings,
+  type SettingKey,
+} from '@/lib/config/settings'
 import {
   computeFloorPriceCents,
   computeNetMarginCents,
@@ -149,14 +153,24 @@ export interface SyncContext {
   categories: Map<string, CategoryEntry>
 }
 
+/**
+ * Les réglages que l'import exige, en plus de ceux du calcul de prix.
+ *
+ * Exportés pour la même raison que `PRICING_SETTING_KEYS` : un test vérifie que
+ * chacun est renseignable depuis le back-office. `floorShippingZoneCode` ne
+ * l'était pas, et c'est précisément lui qui a bloqué le premier import réel —
+ * obligatoire pour vendre, absent de tout formulaire.
+ */
+export const SYNC_SETTING_KEYS = [
+  'packagingWeightGrams',
+  'offersOpenAfterDays',
+  'floorShippingZoneCode',
+] as const satisfies readonly SettingKey[]
+
 export async function loadSyncContext(): Promise<SyncContext> {
   const [pricing, settings] = await Promise.all([
     getPricingConfig(),
-    getSettings([
-      'packagingWeightGrams',
-      'offersOpenAfterDays',
-      'floorShippingZoneCode',
-    ]),
+    getSettings(SYNC_SETTING_KEYS),
   ])
 
   const [rateRows, categoryRows] = await Promise.all([

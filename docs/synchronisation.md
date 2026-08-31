@@ -255,6 +255,23 @@ refus identiques ferait chercher l'erreur dans les données.
 Un lot est traité **article par article** : une pièce rejetée n'annule pas les
 autres.
 
+**Deux refus globaux disent que la boutique n'est pas prête**, et ils ne se
+réparent pas au même endroit. Tous deux répondent `503` avec `results: []` :
+
+- **`shop-in-demo-mode`** — la boutique tourne encore sur les chiffres du jeu de
+  démonstration et refuse de calculer un prix. Il faut saisir les vraies valeurs
+  dans « Réglages » ;
+- **`setting-missing`** — un réglage n'a **aucune ligne** en base, ce qui arrive
+  sur une base déployée avant que ce réglage n'existe dans le code. Le détail
+  les nomme **tous**, pas seulement le premier. L'écran « Réglages » les liste
+  en tête et crée ceux qui figurent dans son formulaire, dès le premier
+  enregistrement.
+
+Ils ont longtemps partagé un motif unique, `shop-not-configured`. La confusion
+n'était pas théorique : le script d'import conseillait « renseignez vos vraies
+valeurs dans Réglages » à quelqu'un qui venait de le faire — et dont
+l'enregistrement avait justement été refusé parce qu'une ligne manquait.
+
 **Toute clé inconnue est refusée**, elle n'est pas ignorée. Le cas qui a décidé
 de la règle : `colour` au lieu de `color`. Ignorer publierait la pièce SANS sa
 couleur, invisible dans la facette « couleur », et personne ne l'apprendrait

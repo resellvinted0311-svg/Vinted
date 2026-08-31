@@ -3,12 +3,16 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import { prisma } from '@/lib/db/client'
 import {
   EDITABLE_SETTINGS,
+  PRICING_SETTING_KEYS,
   parseSettingInput,
   writeSettings,
   getSettings,
   getPricingConfig,
+  findMissingSettings,
+  MissingSettingError,
   DemoSettingsInProductionError,
 } from '@/lib/config/settings'
+import { SYNC_SETTING_KEYS } from '@/lib/sync/articles'
 
 /**
  * Les réglages métier, écrits depuis le back-office.
@@ -158,6 +162,33 @@ describe('la liste des réglages modifiables', () => {
     expect(editable).toContain('minMarginCents')
     expect(editable).toContain('shippingMarkupPercent')
     expect(editable).toContain('autoDropSchedule')
+  })
+
+  it('couvre TOUT ce sans quoi la boutique refuse de calculer un prix', () => {
+    /**
+     * L'invariant qui manquait, et ce qu'il a coûté.
+     *
+     * `floorShippingZoneCode` était obligatoire pour vendre ET absent de ce
+     * formulaire. Sa ligne manquait en production : la boutique refusait de
+     * calculer un prix, l'import répondait 503, et aucun écran ne permettait de
+     * poser la valeur. Un réglage obligatoire que l'interface ne peut pas
+     * renseigner est un cul-de-sac, pas une protection — et rien ici ne
+     * l'interdisait.
+     *
+     * Ce test l'interdit. Le jour où un réglage obligatoire s'ajoute sans son
+     * champ, il échoue AVANT la mise en service, et non après.
+     *
+     * `settingsProfile` est la seule exception admise : il n'est pas un choix
+     * mais une conséquence de l'enregistrement, et il est écrit d'office.
+     */
+    const editable = new Set<string>(EDITABLE_SETTINGS.map((s) => s.key))
+    const requis = [...PRICING_SETTING_KEYS, ...SYNC_SETTING_KEYS]
+
+    const orphelins = requis.filter(
+      (key) => key !== 'settingsProfile' && !editable.has(key),
+    )
+
+    expect(orphelins).toEqual([])
   })
 })
 
@@ -340,5 +371,53 @@ describe('un réglage dont la ligne n’existe pas encore', () => {
         ['shippingMarkupPercent', 18],
       ]),
     )
+  })
+})
+
+/**
+ * Le diagnostic, et pourquoi il vaut mieux que le premier fautif.
+ *
+ * Une base plus ancienne que le code n'a presque jamais UNE ligne en retard.
+ * S'arrêter à la première obligeait à corriger, relancer un import complet,
+ * découvrir la suivante, recommencer — un aller-retour par ligne, chacun payé
+ * d'un import.
+ */
+describe('les réglages absents', () => {
+  it('sont TOUS nommés, et pas seulement le premier', async () => {
+    await prisma.setting.delete({ where: { key: 'shippingMarkupPercent' } })
+    await prisma.setting.delete({ where: { key: 'packagingWeightGrams' } })
+
+    const erreur = await getSettings([
+      'minMarginCents',
+      'shippingMarkupPercent',
+      'packagingWeightGrams',
+    ]).catch((error: unknown) => error)
+
+    expect(erreur).toBeInstanceOf(MissingSettingError)
+    const missing = erreur as MissingSettingError
+    expect([...missing.keys].sort()).toEqual([
+      'packagingWeightGrams',
+      'shippingMarkupPercent',
+    ])
+
+    // Le message doit citer les deux : c'est lui qui est remonté jusqu'au
+    // terminal, et un message qui n'en cite qu'un fait croire à un seul défaut.
+    expect(missing.message).toContain('shippingMarkupPercent')
+    expect(missing.message).toContain('packagingWeightGrams')
+  })
+
+  it('se listent sans lever, pour l’écran qui doit les afficher', async () => {
+    // `findMissingSettings` sert précisément quand la configuration est en
+    // défaut : lever y rendrait l'écran de réparation inaccessible, ce qui est
+    // exactement le cul-de-sac qu'on vient de payer.
+    await prisma.setting.delete({ where: { key: 'shippingMarkupPercent' } })
+
+    const manquants = await findMissingSettings()
+    expect(manquants).toContain('shippingMarkupPercent')
+    expect(manquants).not.toContain('minMarginCents')
+  })
+
+  it('ne signale rien quand la base est complète', async () => {
+    expect(await findMissingSettings()).toEqual([])
   })
 })

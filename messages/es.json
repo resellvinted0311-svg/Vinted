@@ -609,6 +609,7 @@
       "save": "Guardar",
       "saved": "{count, plural, =0 {Nada que guardar.} one {Un ajuste guardado.} other {# ajustes guardados.}}",
       "demoProfile": "La tienda sigue funcionando con los valores de demostración, que son ficticios. Introduzca aquí sus cifras reales: hasta entonces no se calculará ningún precio en producción.",
+      "missingRows": "Algunos ajustes no tienen ninguna fila en la base de datos. Mientras falten, la tienda se niega a calcular un precio. Los indicados abajo que figuran en este formulario se crean al guardar por primera vez.",
       "errorOnField": "El valor de «{field}» no se ha aceptado.",
       "groups": {
         "economy": "Economía",
@@ -620,7 +621,8 @@
       "errors": {
         "rateLimited": "Demasiados guardados seguidos. Inténtelo dentro de un momento.",
         "invalidRequest": "El formulario está incompleto. Recargue la página.",
-        "invalidValue": "Un valor no se ha aceptado."
+        "invalidValue": "Un valor no se ha aceptado.",
+        "unknownZone": "La zona de envío elegida no existe en la base de datos. Recargue la página: la lista se construye a partir de las zonas realmente registradas."
       },
       "fields": {
         "minMarginCents": {
@@ -646,6 +648,10 @@
         "packagingWeightGrams": {
           "label": "Peso del embalaje (gramos)",
           "hint": "Se añade al peso de la pieza para elegir el tramo tarifario."
+        },
+        "floorShippingZoneCode": {
+          "label": "Zona de referencia para el precio mínimo",
+          "hint": "La zona a la que la tienda envía más. Su tarifa de envío entra en el cálculo del precio mínimo."
         },
         "autoDropSchedule": {
           "label": "Escala de rebaja automática",

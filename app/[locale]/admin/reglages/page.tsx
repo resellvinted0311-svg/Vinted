@@ -5,7 +5,7 @@ import { SettingsForm } from '@/components/admin/settings-form'
 import { requireAdmin } from '@/lib/auth/session'
 import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 import { prisma } from '@/lib/db/client'
-import { EDITABLE_SETTINGS } from '@/lib/config/settings'
+import { EDITABLE_SETTINGS, findMissingSettings } from '@/lib/config/settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,10 +70,29 @@ export default async function AdminSettingsPage({
   const t = await getTranslations('admin.settings')
 
   const keys = EDITABLE_SETTINGS.map((field) => field.key)
-  const rows = await prisma.setting.findMany({
-    where: { key: { in: [...keys, 'settingsProfile'] } },
-    select: { key: true, value: true },
-  })
+
+  /**
+   * Trois lectures, et chacune répond à une question différente.
+   *
+   *  - les valeurs à afficher ;
+   *  - les zones d'expédition RÉELLES, qui peuplent la liste du réglage de
+   *    plancher — jamais une liste écrite en dur, qui divergerait de la base à
+   *    la première zone ajoutée ;
+   *  - les réglages dont la LIGNE est absente, y compris ceux que ce
+   *    formulaire ne propose pas. Voir la bannière plus bas.
+   */
+  const [rows, zones, missing] = await Promise.all([
+    prisma.setting.findMany({
+      where: { key: { in: [...keys, 'settingsProfile'] } },
+      select: { key: true, value: true },
+    }),
+    prisma.shippingZone.findMany({
+      orderBy: { position: 'asc' },
+      select: { code: true, name: true },
+    }),
+    findMissingSettings(),
+  ])
+
   const byKey = new Map(rows.map((row) => [row.key, row.value]))
 
   const values: Record<string, string> = {}
@@ -94,6 +113,8 @@ export default async function AdminSettingsPage({
           fields={EDITABLE_SETTINGS}
           values={values}
           profile={profile}
+          zones={zones}
+          missing={missing}
         />
       </div>
     </div>
@@ -110,6 +131,11 @@ export default async function AdminSettingsPage({
  */
 function toFormValue(kind: string, value: unknown): string {
   if (kind === 'boolean') return value === true ? 'true' : 'false'
+
+  // Le seul réglage éditable dont la valeur est une CHAÎNE. Sans ce cas, il
+  // retombait sur le garde-fou numérique en fin de fonction et s'affichait
+  // vide — donc « aucune zone choisie » sur une boutique qui en avait une.
+  if (kind === 'zoneCode') return typeof value === 'string' ? value : ''
 
   if (kind === 'dropSchedule') {
     if (!Array.isArray(value)) return ''

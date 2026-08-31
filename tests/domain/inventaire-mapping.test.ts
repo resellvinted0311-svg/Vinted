@@ -505,10 +505,38 @@ describe('le conseil derrière un corps vide', () => {
   })
 
   it('nomme les réglages quand la boutique le dit elle-même', () => {
-    // La route répond maintenant `shop-not-configured` au lieu de lever : c'est
-    // le seul cas où l'on peut être affirmatif sur la cause.
-    expect(
-      conseilPourRefus({ status: 503, reason: 'shop-not-configured' }),
-    ).toMatch(/Réglages/)
+    // Le motif d'avant, qui confondait les deux causes. Il subsiste pour une
+    // boutique pas encore redéployée, et son conseil doit rester prudent.
+    const conseil = conseilPourRefus({
+      status: 503,
+      reason: 'shop-not-configured',
+    })
+    expect(conseil).toMatch(/Réglages/)
+    // Il ne tranche PAS : il dit que le détail tranche.
+    expect(conseil).toMatch(/soit/)
+  })
+
+  it('distingue le mode démonstration d’une ligne absente', () => {
+    /**
+     * Les deux partageaient un motif, et le conseil disait « renseignez vos
+     * vraies valeurs dans Réglages » à quelqu'un qui venait de les saisir — et
+     * dont l'enregistrement avait justement été refusé pour cette raison. Le
+     * conseil envoyait donc refaire ce qui ne pouvait pas marcher.
+     *
+     * Même défaut que « réduisez la taille des lots » sur un 500 : affirmer une
+     * cause qu'on ne connaît pas coûte plus cher que de n'en affirmer aucune.
+     */
+    const demo = conseilPourRefus({ status: 503, reason: 'shop-in-demo-mode' })
+    expect(demo).toMatch(/démonstration/)
+
+    const absent = conseilPourRefus({ status: 503, reason: 'setting-missing' })
+    expect(absent).toMatch(/n’existe pas en base/)
+
+    // Le point du test : il n'envoie PAS ressaisir des valeurs. C'est le
+    // conseil qu'on donnait, à quelqu'un dont la saisie venait justement d'être
+    // refusée pour cette raison. Écarter le mode démonstration à voix haute est
+    // en revanche utile — c'est ce qu'on soupçonnait à tort.
+    expect(absent).not.toMatch(/Renseignez vos vraies valeurs/)
+    expect(absent).toMatch(/Ce n’est pas le mode démonstration/)
   })
 })

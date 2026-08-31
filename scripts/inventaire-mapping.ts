@@ -477,8 +477,29 @@ export function conseilPourRefus({
   status: number
   reason: string
 }): string {
-  if (reason === 'shop-not-configured') {
+  if (reason === 'shop-in-demo-mode') {
     return 'La boutique tourne encore sur les chiffres du jeu de démonstration et refuse de calculer un prix. Renseignez vos vraies valeurs dans Réglages, puis relancez.'
+  }
+
+  /**
+   * Un réglage sans ligne en base, ce qui n'est PAS le mode démonstration.
+   *
+   * Les deux partageaient un motif, et le conseil affiché disait « renseignez
+   * vos valeurs dans Réglages » à quelqu'un qui venait de les renseigner —
+   * l'enregistrement avait même été refusé pour cette raison exacte, sans que
+   * rien ne le relie à ce message.
+   *
+   * Le détail de la réponse nomme les réglages fautifs : il est affiché juste
+   * au-dessus, et le conseil dit quoi en faire.
+   */
+  if (reason === 'setting-missing') {
+    return 'Ce n’est pas le mode démonstration : la ligne du réglage nommé ci-dessus n’existe pas en base. Ouvrez « Réglages » — les réglages absents y sont listés en tête, et ceux qui figurent dans le formulaire sont créés dès le premier enregistrement.'
+  }
+
+  // Le motif d'avant, qui confondait les deux. Gardé pour qu'une boutique pas
+  // encore redéployée ne retombe pas sur le conseil générique du statut.
+  if (reason === 'shop-not-configured') {
+    return 'La boutique refuse de calculer un prix : soit elle tourne sur les chiffres de démonstration, soit un réglage n’a aucune ligne en base. Le détail ci-dessus tranche ; dans les deux cas, cela se règle dans « Réglages ».'
   }
 
   if (reason === 'reponse-vide' || reason === 'reponse-non-json') {
