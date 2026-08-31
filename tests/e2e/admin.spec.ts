@@ -382,6 +382,43 @@ test.describe('Les réglages métier', () => {
     ).toBeVisible()
   })
 
+  test('proposent la zone de plancher en LISTE, peuplée depuis la base', async ({
+    page,
+  }) => {
+    /**
+     * Ce réglage est obligatoire pour calculer un prix, et il n'était éditable
+     * nulle part. Sa ligne manquait en production : la boutique refusait de
+     * vendre, et aucun écran ne menait à la réparation.
+     *
+     * La liste — et non un champ libre — est ce qui a permis de l'ouvrir sans
+     * rouvrir le défaut qui l'avait fait exclure : on ne peut pas y saisir une
+     * zone inexistante.
+     */
+    await page.context().clearCookies()
+    await signIn(page, ACCOUNT)
+    await page.goto('/fr/admin/reglages')
+
+    const champ = main(page).getByLabel('Zone de référence pour le prix plancher')
+    await expect(champ).toBeVisible()
+
+    // Une liste, pas une saisie : c'est la propriété qui porte la garantie.
+    expect(await champ.evaluate((el) => el.tagName)).toBe('SELECT')
+
+    // Peuplée depuis la base, et non écrite en dur : une liste figée
+    // divergerait des zones réelles à la première ajoutée.
+    const codes = await champ.evaluate((el) =>
+      [...(el as HTMLSelectElement).options].map((option) => option.value),
+    )
+    expect(codes.filter((code) => code !== '').length).toBeGreaterThan(0)
+
+    // Et la valeur affichée est bien celle qui est enregistrée — pas la
+    // première de la liste, ce que le navigateur fait quand aucune option ne
+    // porte la valeur stockée.
+    const choisie = await champ.inputValue()
+    expect(codes).toContain(choisie)
+    expect(choisie).not.toBe('')
+  })
+
   test('n’exposent AUCUN réglage juridique à la modification', async ({ page }) => {
     await page.context().clearCookies()
     await signIn(page, ACCOUNT)

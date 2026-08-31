@@ -507,7 +507,21 @@ export function conseilPourRefus({
     // « exception ». Les confondre a déjà fait réduire des lots pour un
     // problème qui n'avait rien à voir avec leur taille.
     if (status === 502 || status === 504) {
-      return 'La boutique a été interrompue avant de répondre — dépassement de temps sur un lot trop gros. Relancez avec --taille-lot=25.'
+      /**
+       * Ce que le conseil taisait, et qui bloquait autant que le défaut.
+       *
+       * Un lot interrompu n'est PAS perdu : chaque pièce ouvre sa propre
+       * transaction, donc celles traitées avant l'interruption sont écrites. Et
+       * une pièce se retrouve par son `externalId` — la renvoyer la met à jour,
+       * elle ne la duplique pas.
+       *
+       * Sans le dire, relancer ressemble à un pari sur un catalogue en double.
+       * On n'ose pas, et l'import reste en plan.
+       */
+      return (
+        `La boutique a été interrompue avant de répondre — dépassement de temps sur un lot trop gros. Relancez avec --taille-lot=${Math.ceil(TAILLE_LOT_DEFAUT / 2)}.\n` +
+        'Rien n’est perdu et rien ne sera dupliqué : les pièces déjà traitées sont enregistrées, et les renvoyer les met simplement à jour.'
+      )
     }
     return 'La boutique a échoué sans rien renvoyer. Ce n’est pas une question de taille de lot : regardez ses journaux d’exécution dans Vercel, filtre « sync ».'
   }
@@ -551,6 +565,30 @@ export function conseilPourStatut(status: number): string {
  * marge de dix pour cent absorbe le fait que la fenêtre du compteur ne commence
  * pas au premier appel du script mais à celui qui a créé la clé.
  */
+/**
+ * Taille de lot par défaut.
+ *
+ * ---------------------------------------------------------------------------
+ * Le MAXIMUM du contrat n'est pas un DÉFAUT
+ * ---------------------------------------------------------------------------
+ * Le défaut était `MAX_BATCH_SIZE`, soit cent — c'est-à-dire le plus grand lot
+ * que la boutique accepte de RECEVOIR, emprunté comme le nombre qu'on lui envoie
+ * d'office. Les deux répondent à des questions différentes : l'un dit ce qui
+ * tient dans une requête, l'autre ce qui tient dans le temps imparti à une
+ * fonction.
+ *
+ * Ils ne coïncident pas. Chaque pièce ouvre sa PROPRE transaction — c'est ce qui
+ * garantit qu'une pièce refusée n'annule pas les autres — et la connexion
+ * applicative est réglée à une seule en production. Cent transactions à la file
+ * ont dépassé les soixante secondes de la fonction, qui a été tuée sans rien
+ * renvoyer.
+ *
+ * Vingt-cinq est le nombre que le conseil affiché recommandait déjà en cas de
+ * dépassement ; il devient le défaut, pour qu'on n'ait pas à buter dessus une
+ * première fois pour l'apprendre. Monter reste possible et documenté.
+ */
+export const TAILLE_LOT_DEFAUT = 25
+
 export const INTERVALLE_ENTRE_LOTS_MS = Math.ceil(
   ((SYNC_RATE_WINDOW_SECONDS * 1000) / SYNC_RATE_LIMIT) * 1.1,
 )

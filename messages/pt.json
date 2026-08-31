@@ -610,6 +610,7 @@
       "saved": "{count, plural, =0 {Nada a guardar.} one {Uma definição guardada.} other {# definições guardadas.}}",
       "demoProfile": "A loja continua a funcionar com os valores de demonstração, que são fictícios. Introduza aqui os seus números reais: até lá, nenhum preço será calculado em produção.",
       "missingRows": "Alguns parâmetros não têm qualquer linha na base de dados. Enquanto faltarem, a loja recusa calcular um preço. Os indicados abaixo que constam deste formulário são criados na primeira gravação.",
+      "unknownZoneOption": "{code} — zona desconhecida da base de dados",
       "errorOnField": "O valor de «{field}» não foi aceite.",
       "groups": {
         "economy": "Economia",

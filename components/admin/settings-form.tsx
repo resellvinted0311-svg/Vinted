@@ -263,7 +263,24 @@ function ZoneSelect({
   value: string
   zones: readonly ZoneOption[]
 }) {
+  const t = useTranslations('admin.settings')
   const control = useFieldControlProps()
+
+  /**
+   * Une valeur stockée qui n'a pas d'option est REMPLACÉE EN SILENCE.
+   *
+   * C'est le comportement du navigateur, pas un choix : `defaultValue` sur un
+   * code qu'aucune option ne porte laisse la liste se rabattre sur sa première
+   * entrée. L'écran affichait donc une zone que personne n'avait choisie, et
+   * l'enregistrement suivant l'aurait écrite pour de bon — une valeur de prix
+   * changée par un affichage.
+   *
+   * Le cas n'est pas théorique : il survient dès qu'un code est écrit à la main
+   * en base, ou qu'une zone est renommée ou supprimée après coup. On rend donc
+   * une option pour la valeur stockée, marquée comme inconnue, pour qu'elle
+   * reste VISIBLE et corrigible.
+   */
+  const connue = zones.some((zone) => zone.code === value)
 
   return (
     <select
@@ -273,6 +290,9 @@ function ZoneSelect({
       className="w-full rounded border border-[var(--color-rule)] bg-transparent p-2 text-sm"
     >
       {value === '' ? <option value="" /> : null}
+      {value !== '' && !connue ? (
+        <option value={value}>{t('unknownZoneOption', { code: value })}</option>
+      ) : null}
       {zones.map((zone) => (
         <option key={zone.code} value={zone.code}>
           {zone.name}

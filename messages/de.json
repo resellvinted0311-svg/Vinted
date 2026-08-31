@@ -610,6 +610,7 @@
       "saved": "{count, plural, =0 {Nichts zu speichern.} one {Eine Einstellung gespeichert.} other {# Einstellungen gespeichert.}}",
       "demoProfile": "Der Shop läuft noch mit den Werten des Demonstrationsdatensatzes, die frei erfunden sind. Tragen Sie hier Ihre echten Zahlen ein: bis dahin wird in der Produktion kein Preis berechnet.",
       "missingRows": "Für einige Einstellungen gibt es keine Zeile in der Datenbank. Solange sie fehlen, weigert sich der Laden, einen Preis zu berechnen. Die unten aufgeführten, die in diesem Formular vorkommen, werden beim ersten Speichern angelegt.",
+      "unknownZoneOption": "{code} — der Datenbank unbekannte Zone",
       "errorOnField": "Der Wert für „{field}“ wurde nicht angenommen.",
       "groups": {
         "economy": "Wirtschaftlichkeit",

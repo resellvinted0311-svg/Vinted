@@ -610,6 +610,7 @@
       "saved": "{count, plural, =0 {Nie ma czego zapisywać.} one {Zapisano jedno ustawienie.} few {Zapisano # ustawienia.} many {Zapisano # ustawień.} other {Zapisano # ustawień.}}",
       "demoProfile": "Sklep nadal działa na wartościach demonstracyjnych, które są fikcyjne. Wprowadź tutaj swoje prawdziwe liczby: do tego czasu żadna cena nie zostanie obliczona na produkcji.",
       "missingRows": "Niektóre ustawienia nie mają żadnego wiersza w bazie. Dopóki ich brakuje, sklep odmawia obliczenia ceny. Te wymienione poniżej, które występują w tym formularzu, powstaną przy pierwszym zapisie.",
+      "unknownZoneOption": "{code} — strefa nieznana bazie",
       "errorOnField": "Wartość „{field}” nie została przyjęta.",
       "groups": {
         "economy": "Ekonomia",

@@ -44,13 +44,14 @@
  *   BOUTIQUE_URL=https://exemple.vercel.app \
  *   SYNC_API_KEY=... \
  *   npx tsx scripts/importer-inventaire.ts [--pour-de-vrai] [--limite=50]
- *                                          [--taille-lot=25]
+ *                                          [--taille-lot=25]  (défaut : 25)
  */
 
 import { MAX_BATCH_SIZE } from '../lib/validation/sync'
 import {
   COLONNES,
   INTERVALLE_ENTRE_LOTS_MS,
+  TAILLE_LOT_DEFAUT,
   conseilPourRefus,
   lireReponseBrute,
   traduire,
@@ -202,9 +203,12 @@ async function main(): Promise<void> {
    * une seule requête : selon la latence de la base, la fonction peut être tuée
    * avant d'avoir répondu. Pouvoir descendre est ce qui permet de terminer un
    * import au lieu de buter dessus.
+   *
+   * Le défaut n'est plus ce maximum : voir `TAILLE_LOT_DEFAUT`. Il l'a été, et
+   * le premier import réel s'est arrêté sur un dépassement de temps.
    */
   const lotBrut = options.find((a) => a.startsWith('--taille-lot='))?.split('=')[1]
-  const tailleLot = lotBrut === undefined ? MAX_BATCH_SIZE : Number(lotBrut)
+  const tailleLot = lotBrut === undefined ? TAILLE_LOT_DEFAUT : Number(lotBrut)
 
   if (!Number.isInteger(tailleLot) || tailleLot <= 0 || tailleLot > MAX_BATCH_SIZE) {
     console.error(`--taille-lot attend un entier entre 1 et ${MAX_BATCH_SIZE}`)

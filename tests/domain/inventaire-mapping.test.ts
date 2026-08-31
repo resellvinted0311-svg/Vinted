@@ -8,6 +8,7 @@ import {
   versEtat,
   CATEGORIES_DEDUITES,
   INTERVALLE_ENTRE_LOTS_MS,
+  TAILLE_LOT_DEFAUT,
   MAX_TITLE,
   conseilPourRefus,
   conseilPourStatut,
@@ -17,6 +18,7 @@ import {
 } from '@/scripts/inventaire-mapping'
 import {
   syncArticleSchema,
+  MAX_BATCH_SIZE,
   SYNC_RATE_LIMIT,
   SYNC_RATE_WINDOW_SECONDS,
 } from '@/lib/validation/sync'
@@ -502,6 +504,30 @@ describe('le conseil derrière un corps vide', () => {
     const conseil = conseilPourRefus({ status: 500, reason: 'reponse-vide' })
     expect(conseil).not.toMatch(/taille-lot/)
     expect(conseil).toMatch(/journaux/)
+  })
+
+  it('dit qu’un lot interrompu n’est ni perdu ni dupliqué', () => {
+    /**
+     * Sans cette phrase, relancer ressemble à un pari sur un catalogue en
+     * double : on ne relance pas, et l'import reste en plan. Or chaque pièce a
+     * sa propre transaction — celles traitées sont écrites — et une pièce se
+     * retrouve par son `externalId`, donc la renvoyer la met à jour.
+     */
+    const conseil = conseilPourRefus({ status: 504, reason: 'reponse-non-json' })
+    expect(conseil).toMatch(/taille-lot/)
+    expect(conseil).toMatch(/dupliqué/)
+    expect(conseil).toMatch(/à jour/)
+  })
+
+  it('n’envoie JAMAIS d’office le lot maximum du contrat', () => {
+    /**
+     * Le défaut valait `MAX_BATCH_SIZE`. Les deux nombres répondent à des
+     * questions différentes : ce que la boutique accepte de recevoir, et ce qui
+     * tient dans le temps imparti à une fonction. Confondus, le premier import
+     * réel s'est arrêté sur un FUNCTION_INVOCATION_TIMEOUT.
+     */
+    expect(TAILLE_LOT_DEFAUT).toBeLessThan(MAX_BATCH_SIZE)
+    expect(TAILLE_LOT_DEFAUT).toBeGreaterThan(0)
   })
 
   it('nomme les réglages quand la boutique le dit elle-même', () => {

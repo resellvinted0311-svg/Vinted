@@ -610,6 +610,7 @@
       "saved": "{count, plural, =0 {Niente da salvare.} one {Una impostazione salvata.} other {# impostazioni salvate.}}",
       "demoProfile": "Il negozio funziona ancora con i valori dimostrativi, che sono fittizi. Inserisca qui le sue cifre reali: fino ad allora nessun prezzo verrà calcolato in produzione.",
       "missingRows": "Alcune impostazioni non hanno alcuna riga nella base dati. Finché mancano, la boutique rifiuta di calcolare un prezzo. Quelle elencate sotto che compaiono in questo modulo vengono create al primo salvataggio.",
+      "unknownZoneOption": "{code} — zona sconosciuta alla base dati",
       "errorOnField": "Il valore di «{field}» non è stato accettato.",
       "groups": {
         "economy": "Economia",
