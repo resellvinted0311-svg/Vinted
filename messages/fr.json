@@ -488,6 +488,7 @@
       "required": "Ce champ est obligatoire.",
       "banned": "Ce compte est suspendu.",
       "rateLimited": "Trop de tentatives. Réessayez dans quelques minutes.",
+      "securityUnavailable": "Le service de sécurité ne répond pas. Ce n’est pas vous — réessayez dans un instant.",
       "generic": "L’opération n’a pas abouti. Réessayez.",
       "notConfigured": "La connexion n’est pas encore activée sur ce déploiement. Le catalogue et les favoris fonctionnent normalement.",
       "invalidLink": "Ce lien n’est plus valide. Il a peut-être expiré, ou déjà servi."

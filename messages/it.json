@@ -488,6 +488,7 @@
       "required": "Questo campo è obbligatorio.",
       "banned": "Questo account è sospeso.",
       "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
+      "securityUnavailable": "The security service is not responding. This is not you — please try again shortly.",
       "generic": "L’operazione non è andata a buon fine. Riprova.",
       "notConfigured": "L’accesso non è ancora attivo su questo deploy. Il catalogo e i preferiti funzionano normalmente.",
       "invalidLink": "Questo collegamento non è più valido. Potrebbe essere scaduto o già stato usato."

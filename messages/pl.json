@@ -488,6 +488,7 @@
       "required": "To pole jest wymagane.",
       "banned": "To konto jest zawieszone.",
       "rateLimited": "Zbyt wiele prób. Spróbuj ponownie za kilka minut.",
+      "securityUnavailable": "The security service is not responding. This is not you — please try again shortly.",
       "generic": "Operacja nie została ukończona. Spróbuj ponownie.",
       "notConfigured": "Logowanie nie jest jeszcze włączone w tym wdrożeniu. Katalog i ulubione działają normalnie.",
       "invalidLink": "Ten link nie jest już ważny. Mógł wygasnąć albo został już użyty."

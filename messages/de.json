@@ -488,6 +488,7 @@
       "required": "Dieses Feld ist erforderlich.",
       "banned": "Dieses Konto ist gesperrt.",
       "rateLimited": "Zu viele Versuche. Versuchen Sie es in einigen Minuten erneut.",
+      "securityUnavailable": "The security service is not responding. This is not you — please try again shortly.",
       "generic": "Der Vorgang wurde nicht abgeschlossen. Versuchen Sie es erneut.",
       "notConfigured": "Die Anmeldung ist auf diesem Deployment noch nicht aktiviert. Katalog und Favoriten funktionieren normal.",
       "invalidLink": "Dieser Link ist nicht mehr gültig. Er ist möglicherweise abgelaufen oder wurde bereits verwendet."

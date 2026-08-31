@@ -7,7 +7,10 @@ import {
   requestPasswordResetSchema,
   resetPasswordSchema,
 } from '@/lib/validation/auth'
-import { checkRateLimit } from '@/lib/security/rate-limit'
+import {
+  checkRateLimit,
+  rateLimitOutcome,
+} from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { pseudonymize } from '@/lib/security/pseudonymize'
 import { mailboxIdentity } from '@/lib/security/mail-identity'
@@ -130,13 +133,21 @@ async function requestPasswordReset(
   })
   if (!parsed.success) return { status: 'error', messageKey: 'invalidEmail' }
 
-  const byOrigin = await checkRateLimit({
+  const byOrigin = await rateLimitOutcome({
     key: `password-reset:${await clientFingerprint()}`,
     limit: 5,
     windowSeconds: 900,
     sensitive: true,
   })
-  if (!byOrigin) return { status: 'error', messageKey: 'rateLimited' }
+  if (byOrigin !== 'allowed') {
+    // « Trop de tentatives » serait FAUX quand le compteur ne répond pas :
+    // la personne chercherait ce qu'elle a fait de mal, et attendrait une
+    // échéance qui n'existe pas.
+    return {
+      status: 'error',
+      messageKey: byOrigin === 'limited' ? 'rateLimited' : 'securityUnavailable',
+    }
+  }
 
   // Compter par empreinte d'appelant SEULEMENT laisserait une porte ouverte :
   // un parc de sorties suffirait à noyer la boîte d'une personne ciblée sous
@@ -266,13 +277,21 @@ export async function resetPasswordAction(
   // à usage unique, il n'y a rien à marteler dessus. Ce qui se martèle, c'est
   // la DEVINETTE — envoyer des jetons au hasard pour tomber sur un valide. La
   // borne rend l'exercice sans objet, en plus des 256 bits d'entropie.
-  const allowed = await checkRateLimit({
+  const allowed = await rateLimitOutcome({
     key: `password-reset-submit:${await clientFingerprint()}`,
     limit: 10,
     windowSeconds: 900,
     sensitive: true,
   })
-  if (!allowed) return { status: 'error', messageKey: 'rateLimited' }
+  if (allowed !== 'allowed') {
+    // « Trop de tentatives » serait FAUX quand le compteur ne répond pas :
+    // la personne chercherait ce qu'elle a fait de mal, et attendrait une
+    // échéance qui n'existe pas.
+    return {
+      status: 'error',
+      messageKey: allowed === 'limited' ? 'rateLimited' : 'securityUnavailable',
+    }
+  }
 
   const outcome = await consumePasswordReset(parsed.data.token, parsed.data.password)
 

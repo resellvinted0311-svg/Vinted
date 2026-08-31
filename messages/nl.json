@@ -488,6 +488,7 @@
       "required": "Dit veld is verplicht.",
       "banned": "Dit account is geschorst.",
       "rateLimited": "Te veel pogingen. Probeer het over enkele minuten opnieuw.",
+      "securityUnavailable": "The security service is not responding. This is not you — please try again shortly.",
       "generic": "De handeling is niet voltooid. Probeer het opnieuw.",
       "notConfigured": "Inloggen is nog niet ingeschakeld op deze deployment. De catalogus en favorieten werken gewoon.",
       "invalidLink": "Deze link is niet meer geldig. Hij is mogelijk verlopen of al gebruikt."

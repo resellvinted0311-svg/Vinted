@@ -488,6 +488,7 @@
       "required": "This field is required.",
       "banned": "This account is suspended.",
       "rateLimited": "Too many attempts. Try again in a few minutes.",
+      "securityUnavailable": "The security service is not responding. This is not you — please try again shortly.",
       "generic": "The operation did not complete. Try again.",
       "notConfigured": "Sign-in is not enabled on this deployment yet. The catalogue and favourites work normally.",
       "invalidLink": "This link is no longer valid. It may have expired, or already been used."

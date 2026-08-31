@@ -488,6 +488,7 @@
       "required": "Este campo é obrigatório.",
       "banned": "Esta conta está suspensa.",
       "rateLimited": "Demasiadas tentativas. Tente novamente dentro de alguns minutos.",
+      "securityUnavailable": "The security service is not responding. This is not you — please try again shortly.",
       "generic": "A operação não foi concluída. Tente novamente.",
       "notConfigured": "O início de sessão ainda não está ativado nesta implementação. O catálogo e os favoritos funcionam normalmente.",
       "invalidLink": "Esta ligação já não é válida. Pode ter expirado ou já ter sido usada."

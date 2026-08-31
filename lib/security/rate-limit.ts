@@ -171,20 +171,47 @@ export async function clearRateLimit(key: string): Promise<void> {
   }
 }
 
-/** Renvoie `true` si l'appel est autorisé, `false` s'il doit être refusé. */
-export async function checkRateLimit(input: RateLimitInput): Promise<boolean> {
+/**
+ * Pourquoi un refus n'est pas l'autre.
+ *
+ * ---------------------------------------------------------------------------
+ * Le défaut que cette distinction ferme
+ * ---------------------------------------------------------------------------
+ * Un chemin sensible se ferme quand le compteur ne répond pas — c'est la bonne
+ * décision, et elle ne change pas. Mais l'appelant ne recevait qu'un `false`,
+ * indiscernable d'un vrai dépassement : la personne lisait « trop de
+ * tentatives » à sa PREMIÈRE, et cherchait ce qu'elle avait fait de mal.
+ *
+ * C'est arrivé en vrai, à la mise en service : deux variables Upstash mal
+ * recopiées, et la première inscription du site a été refusée avec un message
+ * qui accusait l'utilisateur. Vingt minutes de recherche au mauvais endroit,
+ * parce que le message était faux.
+ *
+ * Le refus est le même. Ce qui change est ce qu'on peut en DIRE.
+ */
+export type RateLimitOutcome =
+  /** Sous le plafond. */
+  | 'allowed'
+  /** Plafond atteint : attendre l'échéance de la fenêtre. */
+  | 'limited'
+  /** Le compteur ne répond pas, et le chemin est sensible : attendre n'y fera rien. */
+  | 'unavailable'
+
+export async function rateLimitOutcome(
+  input: RateLimitInput,
+): Promise<RateLimitOutcome> {
   const url = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
 
   if (url && token) {
     try {
-      return await checkUpstash(input, url, token)
+      return (await checkUpstash(input, url, token)) ? 'allowed' : 'limited'
     } catch (error) {
       logger.failure('rate_limit.backend_failed', error, {
         sensitive: input.sensitive ?? false,
       })
       // Chemin sensible : on refuse. Chemin de confort : on laisse passer.
-      return !input.sensitive
+      return input.sensitive ? 'unavailable' : 'allowed'
     }
   }
 
@@ -193,7 +220,20 @@ export async function checkRateLimit(input: RateLimitInput): Promise<boolean> {
     logger.error('rate_limit.memory_fallback_in_production')
   }
 
-  return checkInMemory(input)
+  return checkInMemory(input) ? 'allowed' : 'limited'
+}
+
+/**
+ * Autorisé, oui ou non.
+ *
+ * Reste la forme normale pour tout ce qui répond à un PROGRAMME — routes JSON,
+ * synchronisation, actions de la régie. Un client HTTP reçoit un 429 et
+ * réessaie ; la nuance ne lui apporte rien.
+ *
+ * Les écrans que lit une personne appellent `rateLimitOutcome` et distinguent.
+ */
+export async function checkRateLimit(input: RateLimitInput): Promise<boolean> {
+  return (await rateLimitOutcome(input)) === 'allowed'
 }
 
 /** Réinitialise les compteurs en mémoire. Réservé aux tests. */

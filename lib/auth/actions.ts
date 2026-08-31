@@ -5,7 +5,11 @@ import { signUpSchema, signInSchema, magicLinkSchema } from '@/lib/validation/au
 import { hashPassword, verifyPassword } from './password'
 import { createDatabaseSession, destroyCurrentSession } from './session'
 import { signIn as authSignIn } from './index'
-import { checkRateLimit, clearRateLimit } from '@/lib/security/rate-limit'
+import {
+  checkRateLimit,
+  clearRateLimit,
+  rateLimitOutcome,
+} from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { pseudonymize } from '@/lib/security/pseudonymize'
 import { mailboxIdentity } from '@/lib/security/mail-identity'
@@ -59,13 +63,21 @@ export async function signUpAction(
   const { email, password, firstName, lastName, locale, marketingConsent } =
     parsed.data
 
-  const allowed = await checkRateLimit({
+  const allowed = await rateLimitOutcome({
     key: `signup:${await clientFingerprint()}`,
     limit: 5,
     windowSeconds: 3600,
     sensitive: true,
   })
-  if (!allowed) return { status: 'error', messageKey: 'rateLimited' }
+  if (allowed !== 'allowed') {
+    // « Trop de tentatives » serait FAUX quand le compteur ne répond pas :
+    // la personne chercherait ce qu'elle a fait de mal, et attendrait une
+    // échéance qui n'existe pas.
+    return {
+      status: 'error',
+      messageKey: allowed === 'limited' ? 'rateLimited' : 'securityUnavailable',
+    }
+  }
 
   const existing = await prisma.user.findUnique({
     where: { email },
@@ -145,21 +157,37 @@ export async function signInAction(
     rotateDaily: true,
   })
 
-  const perAccount = await checkRateLimit({
+  const perAccount = await rateLimitOutcome({
     key: `signin:${fingerprint}:${account}`,
     limit: 10,
     windowSeconds: 900,
     sensitive: true,
   })
-  if (!perAccount) return { status: 'error', messageKey: 'rateLimited' }
+  if (perAccount !== 'allowed') {
+    // « Trop de tentatives » serait FAUX quand le compteur ne répond pas :
+    // la personne chercherait ce qu'elle a fait de mal, et attendrait une
+    // échéance qui n'existe pas.
+    return {
+      status: 'error',
+      messageKey: perAccount === 'limited' ? 'rateLimited' : 'securityUnavailable',
+    }
+  }
 
-  const perOrigin = await checkRateLimit({
+  const perOrigin = await rateLimitOutcome({
     key: `signin-origin:${fingerprint}`,
     limit: 30,
     windowSeconds: 900,
     sensitive: true,
   })
-  if (!perOrigin) return { status: 'error', messageKey: 'rateLimited' }
+  if (perOrigin !== 'allowed') {
+    // « Trop de tentatives » serait FAUX quand le compteur ne répond pas :
+    // la personne chercherait ce qu'elle a fait de mal, et attendrait une
+    // échéance qui n'existe pas.
+    return {
+      status: 'error',
+      messageKey: perOrigin === 'limited' ? 'rateLimited' : 'securityUnavailable',
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Le compteur qui manquait : les échecs sur CE COMPTE, toutes origines
@@ -262,13 +290,21 @@ export async function magicLinkAction(
     return { status: 'error', messageKey: 'invalidEmail' }
   }
 
-  const byOrigin = await checkRateLimit({
+  const byOrigin = await rateLimitOutcome({
     key: `magic:${await clientFingerprint()}`,
     limit: 5,
     windowSeconds: 900,
     sensitive: true,
   })
-  if (!byOrigin) return { status: 'error', messageKey: 'rateLimited' }
+  if (byOrigin !== 'allowed') {
+    // « Trop de tentatives » serait FAUX quand le compteur ne répond pas :
+    // la personne chercherait ce qu'elle a fait de mal, et attendrait une
+    // échéance qui n'existe pas.
+    return {
+      status: 'error',
+      messageKey: byOrigin === 'limited' ? 'rateLimited' : 'securityUnavailable',
+    }
+  }
 
   // Compter par IP seulement laissait une porte ouverte : un pool de proxys
   // suffisait à noyer la boîte d'une personne ciblée sous des courriels
