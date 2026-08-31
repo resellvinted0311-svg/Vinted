@@ -530,6 +530,8 @@
   },
   "admin": {
     "title": "Beheer",
+    "dashboard": "Dashboard",
+    "viewShop": "View shop",
     "navLabel": "Navigatie van het beheer",
     "intro": "Wat op een beslissing wacht. Niets anders.",
     "offers": "Ontvangen biedingen",

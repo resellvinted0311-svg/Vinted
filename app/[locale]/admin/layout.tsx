@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getTranslations, getMessages, setRequestLocale } from 'next-intl/server'
 
 import { Link } from '@/lib/i18n/navigation'
+import { SITE } from '@/lib/config/site'
 import { requireAdmin } from '@/lib/auth/session'
 import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 
@@ -29,13 +30,18 @@ import { handleAdminAuthError } from '@/lib/auth/admin-guard'
  * aussi — est dans `lib/auth/admin-guard.ts`.
  *
  * ---------------------------------------------------------------------------
- * La chrome de la boutique est conservée
+ * La régie a sa PROPRE coque, et c'est un changement de fond
  * ---------------------------------------------------------------------------
- * En-tête et pied de page vivent dans le layout de langue, au-dessus de ce
- * groupe. Les en retirer supposerait de déplacer `<main id="contenu">`, donc de
- * tenir le lien d'évitement à deux endroits. Et cela n'aurait pas de sens ici :
- * la boutique a UN vendeur, qui passe de son catalogue à sa régie par le même
- * en-tête — celui-ci porte déjà le lien « Admin » quand le rôle s'y prête.
+ * Elle héritait auparavant de l'en-tête et du pied de page de la boutique :
+ * on administrait son stock à l'intérieur de la vitrine, recherche et panier
+ * au-dessus de la tête, et un retour arrière pouvait ramener au catalogue sans
+ * qu'on l'ait demandé. Ces deux mondes n'ont ni le même métier ni le même
+ * public — un seul les traverse, et c'est justement pour cela qu'il ne faut pas
+ * qu'il se demande où il est.
+ *
+ * Aucun lien AMBIANT ne mène donc à la boutique. La seule sortie est nommée, et
+ * elle s'ouvre dans un onglet neuf : la régie n'est jamais quittée par accident,
+ * et l'historique du navigateur ne mélange pas les deux.
  */
 export const dynamic = 'force-dynamic'
 
@@ -56,6 +62,7 @@ export default async function AdminLayout({
   }
 
   const t = await getTranslations('admin')
+  const tNav = await getTranslations('nav')
 
   // ---------------------------------------------------------------------------
   // La régie remet l'espace `admin` que la mise en page publique a retiré
@@ -70,29 +77,73 @@ export default async function AdminLayout({
   // correct. C'est le genre de défaut qu'on ne voit pas en relisant le code.
   const messages = await getMessages()
 
+  const entrees = [
+    { href: '/admin', label: t('dashboard') },
+    { href: '/admin/pieces', label: t('articles.title') },
+    { href: '/admin/commandes', label: t('orders') },
+    { href: '/admin/offres', label: t('offers') },
+    { href: '/admin/reglages', label: t('settings.title') },
+  ] as const
+
   return (
     <NextIntlClientProvider messages={messages}>
-    <div className="mx-auto w-full max-w-[60rem] px-4 pb-24 pt-12 sm:px-6">
-      <nav aria-label={t('navLabel')} className="mb-10 flex flex-wrap gap-x-6 gap-y-2">
-        <Link href="/admin" className="label-reg text-muted hover:text-ink">
-          {t('title')}
-        </Link>
-        <Link href="/admin/pieces" className="label-reg text-muted hover:text-ink">
-          {t('articles.title')}
-        </Link>
-        <Link href="/admin/commandes" className="label-reg text-muted hover:text-ink">
-          {t('orders')}
-        </Link>
-        <Link href="/admin/offres" className="label-reg text-muted hover:text-ink">
-          {t('offers')}
-        </Link>
-        <Link href="/admin/reglages" className="label-reg text-muted hover:text-ink">
-          {t('settings.title')}
-        </Link>
-      </nav>
+      <a
+        href="#contenu"
+        className="skip-link rounded-input ruled bg-surface px-3 py-2 text-base"
+      >
+        {tNav('skipToContent')}
+      </a>
 
-      {children}
-    </div>
+      {/*
+        Barre d'outil, pas manchette de journal. La boutique se présente ; la
+        régie s'annonce et s'efface. D'où une seule ligne, un fond distinct du
+        papier de la vitrine, et aucune recherche ni panier.
+      */}
+      <header className="ruled-b bg-surface">
+        <div className="mx-auto flex w-full max-w-[60rem] flex-wrap items-baseline gap-x-6 gap-y-2 px-4 py-3 sm:px-6">
+          <span className="label-reg text-ink">
+            {SITE.name} · {t('title')}
+          </span>
+
+          <nav
+            aria-label={t('navLabel')}
+            className="flex flex-1 flex-wrap gap-x-5 gap-y-1"
+          >
+            {entrees.map((entree) => (
+              <Link
+                key={entree.href}
+                href={entree.href}
+                className="label-reg text-muted hover:text-ink"
+              >
+                {entree.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/*
+            La seule porte vers la boutique, et elle est explicite.
+            `target="_blank"` n'est pas une coquetterie : il garantit que la
+            régie n'est pas QUITTÉE. Sans lui, consulter une fiche publique
+            remplacerait l'écran de gestion, et le retour arrière ferait revenir
+            dans la vitrine plutôt que dans l'outil.
+          */}
+          <a
+            href={`/${locale}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="label-reg text-muted hover:text-ink"
+          >
+            {t('viewShop')}
+          </a>
+        </div>
+      </header>
+
+      <main
+        id="contenu"
+        className="mx-auto w-full max-w-[60rem] flex-1 px-4 pb-24 pt-10 sm:px-6"
+      >
+        {children}
+      </main>
     </NextIntlClientProvider>
   )
 }

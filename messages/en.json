@@ -530,6 +530,8 @@
   },
   "admin": {
     "title": "Back office",
+    "dashboard": "Dashboard",
+    "viewShop": "View shop",
     "navLabel": "Back-office navigation",
     "intro": "What is waiting for a decision. Nothing else.",
     "offers": "Offers received",

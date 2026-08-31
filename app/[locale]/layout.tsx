@@ -6,10 +6,6 @@ import { Archivo, Inter_Tight, IBM_Plex_Mono } from 'next/font/google'
 
 import { routing, locales, localeTags, type Locale } from '@/lib/i18n/routing'
 import { SITE } from '@/lib/config/site'
-import { ToastProvider } from '@/components/ui/toast'
-import { FavoritesProvider } from '@/components/shop/favorites-provider'
-import { SiteHeader } from '@/components/shop/site-header'
-import { SiteFooter } from '@/components/shop/site-footer'
 
 import '../globals.css'
 
@@ -102,8 +98,15 @@ export default async function LocaleLayout({
   // Permet le rendu statique des pages de cette langue.
   setRequestLocale(locale)
 
-  const t = await getTranslations('nav')
-
+  // ---------------------------------------------------------------------------
+  // Cette mise en page ne porte plus AUCUNE chrome
+  // ---------------------------------------------------------------------------
+  // En-tête, pied de page, favoris et notifications sont descendus dans le
+  // groupe `(shop)`, où ils décrivent quelque chose. Ils étaient ici, donc la
+  // régie les héritait : on gérait son stock à l'intérieur de la vitrine.
+  //
+  // Ne restent que ce qui vaut pour TOUT le site : le document, les fontes, et
+  // les traductions du client.
   // ---------------------------------------------------------------------------
   // L'espace de noms `admin` ne part PAS chez le public
   // ---------------------------------------------------------------------------
@@ -129,24 +132,7 @@ export default async function LocaleLayout({
     >
       <body className="flex min-h-dvh flex-col">
         <NextIntlClientProvider messages={publicMessages}>
-          <ToastProvider>
-            <FavoritesProvider>
-              <a
-                href="#contenu"
-                className="skip-link rounded-input ruled bg-surface px-3 py-2 text-base"
-              >
-                {t('skipToContent')}
-              </a>
-
-              <SiteHeader />
-
-              <main id="contenu" className="flex-1">
-                {children}
-              </main>
-
-              <SiteFooter />
-            </FavoritesProvider>
-          </ToastProvider>
+          {children}
         </NextIntlClientProvider>
       </body>
     </html>

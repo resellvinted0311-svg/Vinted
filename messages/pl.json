@@ -530,6 +530,8 @@
   },
   "admin": {
     "title": "Zaplecze",
+    "dashboard": "Dashboard",
+    "viewShop": "View shop",
     "navLabel": "Nawigacja zaplecza",
     "intro": "To, co czeka na decyzję. Nic więcej.",
     "offers": "Otrzymane oferty",

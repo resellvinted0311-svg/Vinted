@@ -530,6 +530,8 @@
   },
   "admin": {
     "title": "Verwaltung",
+    "dashboard": "Dashboard",
+    "viewShop": "View shop",
     "navLabel": "Navigation der Verwaltung",
     "intro": "Was eine Entscheidung erwartet. Sonst nichts.",
     "offers": "Eingegangene Angebote",

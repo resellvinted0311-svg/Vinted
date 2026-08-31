@@ -530,6 +530,8 @@
   },
   "admin": {
     "title": "Régie",
+    "dashboard": "Tableau de bord",
+    "viewShop": "Voir la boutique",
     "navLabel": "Navigation de la régie",
     "intro": "Ce qui attend une décision. Rien d’autre.",
     "offers": "Offres reçues",

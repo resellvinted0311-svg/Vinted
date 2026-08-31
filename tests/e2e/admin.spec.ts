@@ -48,6 +48,18 @@ function main(page: Page) {
 }
 
 /**
+ * La barre de navigation de la régie.
+ *
+ * Elle est désormais dans l'EN-TÊTE, hors du contenu : la régie a sa propre
+ * coque depuis qu'elle a cessé d'hériter de celle de la boutique. Un test qui
+ * cherchait « Réglages » dans `#contenu` ne le trouvait donc plus — et il avait
+ * raison de tomber, c'est exactement le déplacement qu'on voulait constater.
+ */
+function adminNav(page: Page) {
+  return page.getByRole('navigation', { name: 'Navigation de la régie' })
+}
+
+/**
  * Toutes les adresses d'administration, DÉRIVÉES du système de fichiers.
  *
  * ---------------------------------------------------------------------------
@@ -104,6 +116,33 @@ test.describe('Accès à la régie', () => {
     await page.context().clearCookies()
     await page.goto('/fr/admin')
     await expect(page).toHaveURL(/\/fr\/connexion/)
+  })
+
+  test('ne porte AUCUNE trace de la boutique', async ({ page }) => {
+    // La régie héritait de l'en-tête et du pied de page de la vitrine : on
+    // administrait son stock avec la recherche, le panier et le sélecteur de
+    // langue au-dessus de la tête, et un retour arrière pouvait ramener au
+    // catalogue sans qu'on l'ait demandé.
+    //
+    // Ce test tient la séparation. Il ne vérifie pas une apparence : il vérifie
+    // qu'aucun chemin AMBIANT ne mène de l'outil de gestion vers la boutique.
+    await page.context().clearCookies()
+    await signIn(page, ACCOUNT)
+    await page.goto('/fr/admin')
+
+    // Sa propre barre est là.
+    await expect(adminNav(page)).toBeVisible()
+
+    // Celle de la boutique, non.
+    await expect(page.getByRole('search')).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Panier' })).toHaveCount(0)
+    await expect(page.getByRole('contentinfo')).toHaveCount(0)
+
+    // La seule sortie est nommée, et elle s'ouvre AILLEURS : sans cela,
+    // consulter la boutique remplacerait l'écran de gestion, et le retour
+    // arrière ramènerait dans la vitrine plutôt que dans l'outil.
+    const sortie = page.getByRole('link', { name: 'Voir la boutique' })
+    await expect(sortie).toHaveAttribute('target', '_blank')
   })
 
   test('un compte CLIENT ne sait pas qu’elle existe', async ({ page }) => {
@@ -317,7 +356,7 @@ test.describe('Les réglages métier', () => {
     await signIn(page, ACCOUNT)
 
     await page.goto('/fr/admin')
-    await main(page).getByRole('link', { name: 'Réglages' }).first().click()
+    await adminNav(page).getByRole('link', { name: 'Réglages' }).click()
     await expect(page).toHaveURL(/\/fr\/admin\/reglages/)
 
     // Les nombres qui décident des prix vivaient dans `prisma/seed.ts`, donc
