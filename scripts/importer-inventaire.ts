@@ -291,6 +291,25 @@ async function main(): Promise<void> {
         : ''),
   )
 
+  /**
+   * Envoyées et visibles ne sont PAS le même nombre, et il faut le dire.
+   *
+   * Une pièce vendue ou retirée est envoyée en `ARCHIVED` : elle entre dans la
+   * boutique et n'y paraît pas. Sur cet inventaire, les vendues sont la grande
+   * majorité — annoncer « 811 pièces à envoyer » laissait donc attendre huit
+   * cents vêtements en ligne, pour un catalogue dix fois plus petit.
+   *
+   * Le décompte par statut existait, dilué dans la table des catégories : il
+   * fallait additionner une quinzaine de lignes de tête pour l'obtenir. On le
+   * pose en clair, puisque c'est le seul chiffre qui répond à « combien de
+   * vêtements verront mes clientes ».
+   */
+  const enLigne = rangements.filter((rang) => rang.endsWith('AVAILABLE')).length
+  console.log(
+    `  dont ${enLigne} en vente, visibles dans la boutique — ` +
+      `${charges.length - enLigne} archivées (vendues ou retirées), envoyées mais non affichées.`,
+  )
+
   const actions: string[] = []
   const motifs: string[] = []
 
