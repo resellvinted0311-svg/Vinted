@@ -175,6 +175,46 @@ describe('déduire la catégorie du libellé', () => {
     expect(versCategorie('Top court fuschia avec strass taille XS')).toBe('t-shirts')
   })
 
+  it('reconnaît les mots du second relevé', () => {
+    // Deuxième passe sur l'inventaire réel : le décompte des premiers mots
+    // non reconnus les a nommés, du plus fréquent au moins fréquent.
+    expect(versCategorie('Capri blanc avec voile transparent en bas')).toBe(
+      'jeans-pantalons',
+    )
+    expect(versCategorie('Maillot Nike x FC Barcelone rayé taille XS')).toBe('t-shirts')
+    expect(versCategorie('Body Rougegorge noir en dentelles dos nu')).toBe(
+      'lingerie-nuit',
+    )
+    expect(versCategorie('Corset')).toBe('lingerie-nuit')
+    expect(versCategorie('Portefeuille en cuir marron')).toBe('accessoires')
+    expect(versCategorie('Béret')).toBe('accessoires')
+    expect(versCategorie('Jort Ober noir avec détail poche arrière taille S')).toBe(
+      'shorts',
+    )
+  })
+
+  it('ne laisse pas une COULEUR l’emporter sur le vêtement', () => {
+    /**
+     * « Bleu capri » est une teinte courante, et elle peut apparaître dans le
+     * libellé de n'importe quel vêtement. Rangé parmi les motifs francs,
+     * « capri » aurait envoyé un haut au rayon pantalons — donc au poids par
+     * défaut d'un pantalon, et au palier transporteur qui va avec.
+     */
+    expect(versCategorie('Top bleu capri à bretelles')).toBe('t-shirts')
+    expect(versCategorie('Robe bleu capri plissée')).toBe('robes')
+    expect(versCategorie('Jupe bleu capri taille S')).toBe('jupes')
+
+    // Et seul, il désigne bien le vêtement.
+    expect(versCategorie('Capri blanc taille XS')).toBe('jeans-pantalons')
+  })
+
+  it('ne confond pas un maillot de bain avec un maillot de sport', () => {
+    // `maillot de bain` est un motif composé, donc testé AVANT. Sans cet ordre,
+    // chaque maillot de bain partirait au rayon t-shirts.
+    expect(versCategorie('Maillot de bain une pièce noir')).toBe('maillots-de-bain')
+    expect(versCategorie('Maillot Nike rayé')).toBe('t-shirts')
+  })
+
   it('ne laisse pas « top » l’emporter sur le vêtement réel', () => {
     // « top » se trouve à l'intérieur de « Topshop », une maison courante en
     // seconde main. Testé parmi les motifs francs, il aurait rangé une jupe au

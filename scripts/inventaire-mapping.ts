@@ -177,9 +177,17 @@ const CATEGORIES_FRANCHES: ReadonlyArray<readonly [readonly string[], string]> =
   [['robe'], 'robes'],
   [['chemise', 'chemisier', 'blouse'], 'chemises'],
   [['pull', 'sweat', 'hoodie', 'cardigan', 'gilet'], 'pulls-sweats'],
-  [['t-shirt', 'tshirt', 'tee shirt', 'debardeur', 'marcel'], 't-shirts'],
+  /**
+   * `maillot` sans autre précision : un maillot de sport, pas de bain.
+   *
+   * Sûr ici parce que `maillot de bain` est un motif COMPOSÉ, donc testé avant.
+   * L'inverse — `maillot` au premier étage — enverrait chaque maillot de bain
+   * au rayon t-shirts.
+   */
+  [['t-shirt', 'tshirt', 'tee shirt', 'debardeur', 'marcel', 'maillot'], 't-shirts'],
   [['jupe'], 'jupes'],
-  [['short', 'bermuda'], 'shorts'],
+  // `jort` : un short en jean. Relevé tel quel dans l'inventaire.
+  [['short', 'bermuda', 'jort'], 'shorts'],
   /**
    * `pantacourt` est un mot à part entière, et non une variante de `pantalon` :
    * il ne le contient pas, donc la recherche par sous-chaîne ne l'attrape pas.
@@ -209,19 +217,30 @@ const CATEGORIES_FRANCHES: ReadonlyArray<readonly [readonly string[], string]> =
     'chaussures',
   ],
   [['sac', 'cabas', 'pochette', 'sacoche'], 'sacs'],
-  [['pyjama', 'nuisette', 'soutien-gorge', 'peignoir'], 'lingerie-nuit'],
+  /**
+   * `body` et `corset` : rangés en lingerie, et non en hauts.
+   *
+   * Le choix se décide sur les pièces réelles — dentelles, décolletés, et une
+   * maison de lingerie parmi les marques relevées. Il se paie en poids par
+   * défaut : un body pèse ce que pèse de la lingerie, pas un t-shirt.
+   */
+  [['pyjama', 'nuisette', 'soutien-gorge', 'peignoir', 'body', 'corset'], 'lingerie-nuit'],
   [
     [
       'ceinture',
       'echarpe',
       'foulard',
       'bonnet',
+      'beret',
       'casquette',
       'chapeau',
       'cravate',
       'collier',
       'bracelet',
       'lunettes',
+      // Petite maroquinerie : un portefeuille n'est pas un sac, mais il en
+      // partage l'essentiel — pas de taille, et un poids d'accessoire.
+      'portefeuille',
     ],
     'accessoires',
   ],
@@ -246,6 +265,19 @@ const CATEGORIES_AMBIGUES: ReadonlyArray<readonly [readonly string[], string]> =
    * « jean » et « polo », et elle a la même raison d'être.
    */
   [['top'], 't-shirts'],
+  /**
+   * `capri` : un pantalon court, mais AUSSI une couleur.
+   *
+   * « Bleu capri » est une teinte courante, et elle apparaît dans le libellé de
+   * n'importe quel vêtement. Rangé au premier étage, « Top bleu capri » serait
+   * parti au rayon pantalons — avec le poids par défaut d'un pantalon, donc un
+   * palier transporteur de trop.
+   *
+   * Placé APRÈS `top` : quand les deux mots sont présents, c'est le vêtement
+   * nommé qui gagne, et « capri » ne décide que seul. Même famille que
+   * `pantacourt`, pour la même raison.
+   */
+  [['capri'], 'jeans-pantalons'],
 ]
 
 const CATEGORIES = [
