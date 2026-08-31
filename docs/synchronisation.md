@@ -255,6 +255,23 @@ refus identiques ferait chercher l'erreur dans les données.
 Un lot est traité **article par article** : une pièce rejetée n'annule pas les
 autres.
 
+**`206` : le lot n'a pas été traité en entier.** La fonction s'arrête d'elle-même
+avant que son hébergeur ne la tue, et annonce dans `deferred` combien de pièces
+elle n'a pas regardées. Les autres sont écrites, chacune dans sa propre
+transaction. L'appelant renvoie simplement le reliquat : une pièce se retrouve
+par son `externalId`, donc la renvoyer la met à jour au lieu de la dupliquer.
+
+`deferred` est présent dans TOUTE réponse portant des résultats, y compris à
+zéro — un champ qui n'apparaît qu'en cas de problème est un champ qu'on oublie
+de lire.
+
+Sans cette garde, la fonction était tuée en cours de lot et la réponse partait
+sans corps : un `504` opaque, sans moyen de savoir ce qui était passé. Le seul
+recours était de deviner une taille de lot plus petite ; deux imports réels s'y
+sont arrêtés, à cent puis à vingt-cinq pièces. La bonne taille n'est pas
+devinable de l'extérieur — elle dépend de la latence entre la fonction et sa
+base — d'où la décision côté boutique.
+
 **Deux refus globaux disent que la boutique n'est pas prête**, et ils ne se
 réparent pas au même endroit. Tous deux répondent `503` avec `results: []` :
 

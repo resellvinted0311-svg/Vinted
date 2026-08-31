@@ -9,6 +9,7 @@ import {
 import { logger } from '@/lib/observability/logger'
 import {
   loadSyncContext,
+  resteAssezDeTemps,
   syncArticle,
   type SyncResult,
 } from '@/lib/sync/articles'
@@ -50,6 +51,12 @@ export const dynamic = 'force-dynamic'
  * Soixante secondes, comme la tâche planifiée, qui en fait beaucoup moins.
  */
 export const maxDuration = 60
+
+/**
+ * Part du budget qu'on s'autorise à consommer avant d'arrêter d'entamer des
+ * pièces. Le reste paie la sérialisation de la réponse et son retour.
+ */
+const BUDGET_MS = maxDuration * 1000 * 0.75
 
 
 /**
@@ -182,17 +189,69 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // (`connection_limit=1`, recommandation de Prisma derrière un pooler) : lancer
   // cent transactions de front les ferait toutes attendre la même connexion,
   // jusqu'au délai du pool.
+  const commenceA = Date.now()
+
   try {
     const context = await loadSyncContext()
     const results: SyncResult[] = []
 
+    /**
+     * S'ARRÊTER avant d'être tué.
+     *
+     * -------------------------------------------------------------------------
+     * Ce que l'absence de garde a coûté
+     * -------------------------------------------------------------------------
+     * La fonction traitait les pièces jusqu'à épuisement du temps imparti, puis
+     * l'hébergeur la tuait. La réponse partait SANS CORPS : l'appelant recevait
+     * un 504 opaque, sans savoir combien de pièces étaient passées — alors
+     * qu'elles l'étaient réellement, chacune dans sa propre transaction.
+     *
+     * Le seul recours était de deviner une taille de lot plus petite, de
+     * relancer, et de recommencer si elle ne suffisait pas. Deux imports réels
+     * s'y sont arrêtés, à cent puis à vingt-cinq pièces.
+     *
+     * La bonne taille de lot n'est pas devinable de l'extérieur : elle dépend de
+     * la latence entre cette fonction et la base, qui change avec la région, la
+     * charge et le moment. C'est donc ICI qu'il faut décider — le seul endroit
+     * qui sache combien de temps une pièce vient réellement de coûter.
+     *
+     * On mesure la pièce la plus LENTE, et on n'en entame pas une nouvelle si
+     * elle ne tient pas dans ce qui reste. Ce qui n'a pas été traité est compté
+     * et annoncé ; l'appelant le renvoie, sans rien perdre ni dupliquer.
+     */
+    let piecePlusLenteMs = 0
+    let traitees = 0
+
     for (const [index, article] of body.articles.entries()) {
+      const continuer = resteAssezDeTemps({
+        index,
+        ecouleMs: Date.now() - commenceA,
+        piecePlusLenteMs,
+        budgetMs: BUDGET_MS,
+      })
+      if (!continuer) break
+
+      const avant = Date.now()
       results.push(await syncArticle(article, index, context, { dryRun }))
+      piecePlusLenteMs = Math.max(piecePlusLenteMs, Date.now() - avant)
+      traitees += 1
     }
 
+    const reportees = body.articles.length - traitees
+
     return NextResponse.json(
-      { ok: results.every((result) => result.action !== 'rejected'), results },
-      { status: statusFor(results) },
+      {
+        ok: results.every((result) => result.action !== 'rejected'),
+        results,
+        /**
+         * Combien de pièces du lot n'ont PAS été regardées, faute de temps.
+         *
+         * Toujours présent, y compris à zéro : un champ qui n'apparaît que
+         * lorsqu'il y a un problème est un champ qu'on oublie de lire.
+         */
+        deferred: reportees,
+      },
+      { status: reportees > 0 ? 206 : statusFor(results) },
     )
   } catch (error) {
     /**

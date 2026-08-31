@@ -124,7 +124,9 @@ export async function canonicalBrandName(
 }
 
 /**
- * Écrit les huit traductions.
+ * Les huit traductions d'une pièce — la règle, commune à la création et à la
+ * mise à jour. `composeTranslations` les compose, `createTranslations` et
+ * `writeTranslations` les écrivent.
  *
  * ---------------------------------------------------------------------------
  * Pourquoi HUIT lignes et non une
@@ -153,6 +155,96 @@ export async function canonicalBrandName(
  * machine l'a composé. Une fausse mention use la confiance dans toutes les
  * autres.
  */
+/**
+ * Les huit lignes de traduction, composées mais PAS écrites.
+ *
+ * Extrait pour que la création puisse les écrire d'un seul appel — voir
+ * `createTranslations`. La composition, elle, ne change pas d'un pouce : c'est
+ * le même texte, dans les mêmes huit langues.
+ */
+async function composeTranslations(
+  articleId: string,
+  input: ArticleContentInput,
+  category: CategoryForWrite,
+  brandName: string | null,
+): Promise<
+  {
+    articleId: string
+    locale: string
+    title: string
+    description: string
+    isMachineTranslated: boolean
+    isFallback: boolean
+  }[]
+> {
+  const measurements = measurementList(input.measurements)
+  const lignes = []
+
+  for (const locale of routing.locales) {
+    const description =
+      input.description ??
+      (await composeDescription(
+        {
+          categoryName:
+            category.nameByLocale.get(locale) ??
+            category.nameByLocale.get(routing.defaultLocale) ??
+            category.slug,
+          brandName,
+          sizeLabel: input.sizeLabel,
+          condition: input.condition,
+          color: input.color ?? null,
+          material: input.material ?? null,
+          fit: input.fit ?? null,
+          measurements,
+        },
+        locale,
+      ))
+
+    lignes.push({
+      articleId,
+      locale,
+      title: input.title,
+      description,
+      // Rien n'a été traduit par machine : c'est du texte d'origine, ou un
+      // relevé assemblé à partir de libellés traduits à la main. Annoncer une
+      // traduction automatique serait faux.
+      isMachineTranslated: false,
+      isFallback: locale !== routing.defaultLocale,
+    })
+  }
+
+  return lignes
+}
+
+/**
+ * Les traductions d'une pièce QUI VIENT D'ÊTRE CRÉÉE : un seul appel.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi une fonction distincte de `writeTranslations`
+ * ---------------------------------------------------------------------------
+ * Huit `upsert` sont huit allers-retours vers la base. Sur une mise à jour, on
+ * n'y coupe pas : les lignes peuvent exister ou non, chacune séparément.
+ *
+ * À la CRÉATION, la question ne se pose pas — l'article vient de naître, aucune
+ * traduction ne le vise. Un `createMany` fait donc en un aller-retour ce que la
+ * boucle faisait en huit.
+ *
+ * Ce n'était pas une optimisation prématurée : l'import réel s'est arrêté deux
+ * fois sur un dépassement de temps. Une pièce coûtait une quinzaine d'échanges
+ * avec une base distante, dont ces huit — et la fonction était tuée avant
+ * d'avoir fini son lot, sans rien renvoyer.
+ */
+export async function createTranslations(
+  tx: Prisma.TransactionClient,
+  articleId: string,
+  input: ArticleContentInput,
+  category: CategoryForWrite,
+  brandName: string | null,
+): Promise<void> {
+  const lignes = await composeTranslations(articleId, input, category, brandName)
+  await tx.articleTranslation.createMany({ data: lignes })
+}
+
 export async function writeTranslations(
   tx: Prisma.TransactionClient,
   articleId: string,

@@ -21,6 +21,7 @@ import {
 } from './economics'
 import {
   canonicalBrandName,
+  createTranslations,
   resolveBrandId,
   writeTranslations,
   writeMeasurements,
@@ -232,7 +233,9 @@ export async function createShopArticle(
       select: { id: true, slug: true },
     })
 
-    await writeTranslations(tx, article.id, input, context.category, displayBrand)
+    // Création : les huit lignes s'écrivent d'un seul appel. Voir
+    // `createTranslations` — huit `upsert` sont huit allers-retours.
+    await createTranslations(tx, article.id, input, context.category, displayBrand)
     await writeMeasurements(tx, article.id, input.measurements)
 
     return {

@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/db/client'
 import { __resetRateLimitForTests } from '@/lib/security/rate-limit'
 import { POST } from '@/app/api/sync/articles/route'
+import { resteAssezDeTemps } from '@/lib/sync/articles'
 
 /**
  * La route d'import, appelée comme l'application de gestion l'appellera.
@@ -223,5 +224,107 @@ describe('essai à blanc', () => {
 
     expect(response.status).toBe(422)
     expect((await response.json()).results[0].reason).toBe('invalid-field')
+  })
+})
+
+describe('la garde de temps', () => {
+  /**
+   * Ce que la garde empêche.
+   *
+   * Sans elle, la fonction traitait jusqu'à épuisement du temps imparti puis
+   * était TUÉE par l'hébergeur : la réponse partait sans corps, et l'appelant
+   * recevait un 504 opaque sans savoir combien de pièces étaient passées —
+   * alors qu'elles l'étaient réellement, chacune dans sa propre transaction.
+   *
+   * Le seul recours était de deviner une taille de lot plus petite. Deux
+   * imports réels s'y sont arrêtés, à cent puis à vingt-cinq pièces.
+   */
+  it('annonce TOUJOURS combien de pièces n’ont pas été regardées', async () => {
+    // Zéro compris, et c'est le point : un champ qui n'apparaît que lorsqu'il y
+    // a un problème est un champ que l'appelant oublie de lire.
+    const response = await post({ articles: [article(1), article(2)] })
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.deferred).toBe(0)
+    expect(body.results).toHaveLength(2)
+  })
+
+  it('ne reporte rien tant que le budget tient', async () => {
+    const response = await post({ articles: [article(3)] })
+    const body = await response.json()
+
+    expect(body.deferred).toBe(0)
+    expect(body.results.map((r: { action: string }) => r.action)).toEqual([
+      'created',
+    ])
+  })
+})
+
+describe('resteAssezDeTemps', () => {
+  /**
+   * La décision d'entamer une pièce de plus, isolée de l'horloge.
+   *
+   * Elle vit dans une fonction pure précisément pour être exercée ici sur ses
+   * cas limites, plutôt qu'au travers d'un temps truqué qui ne prouverait pas
+   * grand-chose.
+   */
+  it('laisse TOUJOURS passer la première pièce', () => {
+    // Sans cette exception, une boutique très lente répondrait « zéro traitée »
+    // à chaque appel, et l'appelant renverrait le même lot indéfiniment.
+    expect(
+      resteAssezDeTemps({
+        index: 0,
+        ecouleMs: 999_999,
+        piecePlusLenteMs: 999_999,
+        budgetMs: 45_000,
+      }),
+    ).toBe(true)
+  })
+
+  it('continue tant que la pièce la plus lente tient dans ce qui reste', () => {
+    expect(
+      resteAssezDeTemps({
+        index: 5,
+        ecouleMs: 30_000,
+        piecePlusLenteMs: 2_000,
+        budgetMs: 45_000,
+      }),
+    ).toBe(true)
+  })
+
+  it('s’arrête dès qu’elle n’y tient plus', () => {
+    expect(
+      resteAssezDeTemps({
+        index: 5,
+        ecouleMs: 44_000,
+        piecePlusLenteMs: 2_000,
+        budgetMs: 45_000,
+      }),
+    ).toBe(false)
+  })
+
+  it('accepte le cas où elle tient EXACTEMENT', () => {
+    // La borne est inclusive : refuser ici gaspillerait une pièce par lot sans
+    // rien protéger.
+    expect(
+      resteAssezDeTemps({
+        index: 3,
+        ecouleMs: 43_000,
+        piecePlusLenteMs: 2_000,
+        budgetMs: 45_000,
+      }),
+    ).toBe(true)
+  })
+
+  it('s’arrête quand le budget est déjà dépassé', () => {
+    expect(
+      resteAssezDeTemps({
+        index: 1,
+        ecouleMs: 50_000,
+        piecePlusLenteMs: 10,
+        budgetMs: 45_000,
+      }),
+    ).toBe(false)
   })
 })

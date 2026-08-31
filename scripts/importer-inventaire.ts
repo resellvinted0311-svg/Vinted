@@ -130,7 +130,7 @@ async function envoyer(
   cle: string,
   articles: Record<string, unknown>[],
   essaiABlanc: boolean,
-): Promise<ResultatBoutique[]> {
+): Promise<{ resultats: ResultatBoutique[]; reportees: number }> {
   const url = new URL('/api/sync/articles', boutique)
   if (essaiABlanc) url.searchParams.set('dryRun', '1')
 
@@ -161,7 +161,7 @@ async function envoyer(
     process.exit(1)
   }
 
-  return lecture.resultats
+  return { resultats: lecture.resultats, reportees: lecture.reportees }
 }
 
 // ---------------------------------------------------------------------------
@@ -311,9 +311,10 @@ async function main(): Promise<void> {
   const lots = Math.ceil(charges.length / tailleLot)
   const secondes = Math.round(((lots - 1) * INTERVALLE_ENTRE_LOTS_MS) / 1000)
   console.log(
-    `\n${charges.length} pièces à envoyer, en ${lots} lot(s) de ${tailleLot}.` +
+    `\n${charges.length} pièces à envoyer, par lots d’au plus ${tailleLot} ` +
+      `(${lots} tour(s) si la boutique les traite entiers).` +
       (secondes > 0
-        ? ` Cadence imposée par le débit de la boutique : environ ${secondes} s d’attente cumulée.`
+        ? ` Cadence imposée par son débit : environ ${secondes} s d’attente cumulée.`
         : ''),
   )
 
@@ -339,10 +340,32 @@ async function main(): Promise<void> {
   const actions: string[] = []
   const motifs: string[] = []
 
-  const nombreDeLots = Math.ceil(charges.length / tailleLot)
+  /**
+   * Une FILE, et non un découpage figé.
+   *
+   * ---------------------------------------------------------------------------
+   * Pourquoi la taille de lot n'est plus qu'un plafond
+   * ---------------------------------------------------------------------------
+   * La boutique s'arrête d'elle-même avant d'être tuée par son hébergeur, et
+   * annonce combien de pièces du lot elle n'a pas regardées. Ce nombre dépend de
+   * la latence entre elle et sa base — donc de la région, de la charge et du
+   * moment. Il n'est pas devinable d'ici.
+   *
+   * Le découpage d'avant supposait l'inverse : une taille choisie à l'avance,
+   * identique du premier lot au dernier. Quand elle était trop grande, la
+   * fonction était tuée et l'appelant ne savait même pas ce qui était passé. On
+   * relançait avec la moitié, et parfois il fallait recommencer.
+   *
+   * Ici, ce que la boutique n'a pas traité retourne en tête de file et repart au
+   * tour suivant. Renvoyer une pièce est sans danger : elle se retrouve par son
+   * `externalId` et se met à jour au lieu de se dupliquer.
+   */
+  let file = [...charges]
+  let envoyees = 0
+  let tour = 0
 
-  for (let debut = 0; debut < charges.length; debut += tailleLot) {
-    const numero = Math.floor(debut / tailleLot) + 1
+  while (file.length > 0) {
+    tour += 1
 
     /**
      * Attendre AVANT le lot, sauf le premier.
@@ -355,14 +378,19 @@ async function main(): Promise<void> {
      * On attend donc, plutôt que de demander à l'utilisateur de découper son
      * import à la main.
      */
-    if (numero > 1) {
+    if (tour > 1) {
       await new Promise((resoudre) =>
         setTimeout(resoudre, INTERVALLE_ENTRE_LOTS_MS),
       )
     }
 
-    const lot = charges.slice(debut, debut + tailleLot)
-    const resultats = await envoyer(boutique, syncCle, lot, essaiABlanc)
+    const lot = file.slice(0, tailleLot)
+    const { resultats, reportees } = await envoyer(
+      boutique,
+      syncCle,
+      lot,
+      essaiABlanc,
+    )
 
     for (const resultat of resultats) {
       actions.push(resultat.action)
@@ -371,7 +399,39 @@ async function main(): Promise<void> {
       }
     }
 
-    console.log(`  lot ${numero}/${nombreDeLots} : ${lot.length} pièces`)
+    // Ce que la boutique a réellement traité, identifié par la réponse et non
+    // par un décompte : les deux divergent dès qu'elle s'arrête en chemin.
+    const traites = new Set(resultats.map((resultat) => resultat.externalId))
+    const restants = lot.filter(
+      (charge) => !traites.has(String(charge.externalId)),
+    )
+
+    /**
+     * Aucune pièce traitée : on ne peut pas boucler indéfiniment.
+     *
+     * La boutique garantit d'en traiter au moins une par appel — elle n'applique
+     * sa garde de temps qu'à partir de la deuxième. Zéro veut donc dire qu'autre
+     * chose ne va pas, et réessayer à l'identique tournerait sans fin.
+     */
+    if (restants.length === lot.length) {
+      console.error(
+        `\nLa boutique n’a traité aucune des ${lot.length} pièces envoyées, sans refuser le lot.`,
+      )
+      console.error(
+        'Arrêt : réessayer à l’identique tournerait sans fin. Regardez les journaux de la boutique dans Vercel, filtre « sync ».',
+      )
+      process.exit(1)
+    }
+
+    file = [...restants, ...file.slice(lot.length)]
+    envoyees += lot.length - restants.length
+
+    console.log(
+      `  ${String(envoyees).padStart(5)}/${charges.length} pièces` +
+        (reportees > 0
+          ? ` — ${reportees} reportée(s) au tour suivant, la boutique a manqué de temps`
+          : ''),
+    )
   }
 
   tableau('Réponse de la boutique :', compter(actions))

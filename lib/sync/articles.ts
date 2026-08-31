@@ -25,6 +25,7 @@ import {
 } from '@/lib/validation/sync'
 import { allocateInventoryNumber, buildArticleSlug } from './identifiers'
 import {
+  createTranslations,
   resolveBrandId,
   writeTranslations,
   writeMeasurements,
@@ -166,6 +167,38 @@ export const SYNC_SETTING_KEYS = [
   'offersOpenAfterDays',
   'floorShippingZoneCode',
 ] as const satisfies readonly SettingKey[]
+
+/**
+ * Peut-on entamer une pièce de plus sans risquer de se faire tuer ?
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi la pièce la plus LENTE, et non la moyenne
+ * ---------------------------------------------------------------------------
+ * On décide d'entamer une pièce dont on ne connaît pas encore le coût. La
+ * moyenne le sous-estime dès qu'une pièce sort du lot — et il suffit d'UNE
+ * pièce trop longue pour que la fonction soit tuée, ce qui coûte la réponse
+ * entière, pas seulement cette pièce. La plus lente observée est la borne
+ * prudente, et c'est la bonne : on préfère reporter une pièce qui serait passée
+ * plutôt que d'en perdre vingt.
+ *
+ * La PREMIÈRE passe toujours. Sans cette exception, une boutique très lente
+ * répondrait « zéro traitée » à chaque appel, et l'appelant renverrait le même
+ * lot indéfiniment. Un lot doit toujours avancer d'au moins une pièce.
+ */
+export function resteAssezDeTemps({
+  index,
+  ecouleMs,
+  piecePlusLenteMs,
+  budgetMs,
+}: {
+  index: number
+  ecouleMs: number
+  piecePlusLenteMs: number
+  budgetMs: number
+}): boolean {
+  if (index === 0) return true
+  return budgetMs - ecouleMs >= piecePlusLenteMs
+}
 
 export async function loadSyncContext(): Promise<SyncContext> {
   const [pricing, settings] = await Promise.all([
@@ -581,7 +614,7 @@ async function createArticle(
       select: { id: true },
     })
 
-    await writeTranslations(tx, article.id, input, category, brand?.name ?? null)
+    await createTranslations(tx, article.id, input, category, brand?.name ?? null)
     await writeMeasurements(tx, article.id, input.measurements)
 
     // Pas de travail vide : inscrire un téléchargement sans aucune URL ferait

@@ -459,7 +459,18 @@ export interface ResultatBoutique {
 }
 
 export type LectureReponse =
-  | { resultats: ResultatBoutique[] }
+  | {
+      resultats: ResultatBoutique[]
+      /**
+       * Pièces du lot que la boutique n'a PAS regardées, faute de temps.
+       *
+       * Elle s'arrête d'elle-même avant d'être tuée par son hébergeur, et le
+       * dit. Zéro quand tout le lot est passé — et zéro aussi face à une
+       * boutique pas encore redéployée, qui ne connaît pas ce champ : elle a
+       * alors traité ce qu'elle a pu, et l'ancien comportement s'applique.
+       */
+      reportees: number
+    }
   | { refusGlobal: { status: number; reason: string; detail: string } }
 
 /**
@@ -482,7 +493,13 @@ export type LectureReponse =
  */
 export function lireReponse(
   status: number,
-  corps: { ok?: boolean; reason?: string; detail?: string; results?: unknown },
+  corps: {
+    ok?: boolean
+    reason?: string
+    detail?: string
+    results?: unknown
+    deferred?: unknown
+  },
 ): LectureReponse {
   if (!Array.isArray(corps.results)) {
     return {
@@ -507,7 +524,12 @@ export function lireReponse(
     }
   }
 
-  return { resultats: corps.results as ResultatBoutique[] }
+  const reportees =
+    typeof corps.deferred === 'number' && Number.isFinite(corps.deferred)
+      ? Math.max(0, Math.trunc(corps.deferred))
+      : 0
+
+  return { resultats: corps.results as ResultatBoutique[], reportees }
 }
 
 /**

@@ -513,6 +513,38 @@ describe('lire la réponse de la boutique', () => {
     expect(lecture.resultats).toHaveLength(2)
   })
 
+  it('lit combien de pièces la boutique a REPORTÉES faute de temps', () => {
+    /**
+     * La boutique s'arrête d'elle-même avant d'être tuée par son hébergeur, et
+     * dit combien de pièces du lot elle n'a pas regardées. Sans lire ce nombre,
+     * le script croirait le lot terminé et laisserait ces pièces au bord de la
+     * route, sans que rien ne le signale.
+     */
+    const lecture = lireReponse(206, {
+      ok: true,
+      results: [{ externalId: 'a', action: 'created' }],
+      deferred: 12,
+    })
+
+    expect('resultats' in lecture).toBe(true)
+    if (!('resultats' in lecture)) return
+    expect(lecture.reportees).toBe(12)
+  })
+
+  it('lit ZÉRO report face à une boutique qui ne connaît pas ce champ', () => {
+    // Une boutique pas encore redéployée ne renvoie pas `deferred`. Elle a
+    // traité ce qu'elle a pu ; interpréter l'absence comme un report ferait
+    // renvoyer indéfiniment des pièces déjà écrites.
+    const lecture = lireReponse(200, {
+      ok: true,
+      results: [{ externalId: 'a', action: 'created' }],
+    })
+
+    expect('resultats' in lecture).toBe(true)
+    if (!('resultats' in lecture)) return
+    expect(lecture.reportees).toBe(0)
+  })
+
   it('voit un refus EN BLOC derrière un tableau vide', () => {
     // Le cas exact : clé absente ou fausse. Sans cette lecture, l'utilisateur
     // ne pouvait pas savoir que la boutique avait refusé.
