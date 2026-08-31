@@ -8,6 +8,8 @@ import {
   versEtat,
   CATEGORIES_DEDUITES,
   MAX_TITLE,
+  conseilPourStatut,
+  lireReponse,
   type LigneInventaire,
 } from '@/scripts/inventaire-mapping'
 import { syncArticleSchema } from '@/lib/validation/sync'
@@ -317,5 +319,76 @@ describe('ce que la traduction produit', () => {
 
     expect(traduite.tronquee).toBe(true)
     expect(syncArticleSchema.safeParse(traduite.charge).success).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// La réponse de la boutique
+// ---------------------------------------------------------------------------
+
+/**
+ * Un refus EN BLOC doit se voir.
+ *
+ * La route rend la même forme dans les deux cas — `{ ok, results }` — mais un
+ * refus global rend `results: []` avec un motif à côté. Le script ne testait
+ * que la PRÉSENCE de `results` ; or un tableau vide est `truthy`. Le refus
+ * passait donc sans bruit : aucun tableau à afficher faute de lignes, et une
+ * exécution qui se terminait sur « aucune écriture n'a eu lieu ».
+ *
+ * C'était vrai, et ça ne disait rien. C'est arrivé au premier essai réel.
+ */
+describe('lire la réponse de la boutique', () => {
+  it('rend les résultats quand la boutique a traité le lot', () => {
+    const lecture = lireReponse(207, {
+      ok: false,
+      results: [
+        { externalId: 'a', action: 'created' },
+        { externalId: 'b', action: 'rejected', reason: 'unknown-category' },
+      ],
+    })
+
+    expect('resultats' in lecture).toBe(true)
+    if (!('resultats' in lecture)) return
+    expect(lecture.resultats).toHaveLength(2)
+  })
+
+  it('voit un refus EN BLOC derrière un tableau vide', () => {
+    // Le cas exact : clé absente ou fausse. Sans cette lecture, l'utilisateur
+    // ne pouvait pas savoir que la boutique avait refusé.
+    const lecture = lireReponse(401, {
+      ok: false,
+      reason: 'unauthorized',
+      detail: 'clé invalide',
+      results: [],
+    })
+
+    expect('refusGlobal' in lecture).toBe(true)
+    if (!('refusGlobal' in lecture)) return
+    expect(lecture.refusGlobal).toEqual({
+      status: 401,
+      reason: 'unauthorized',
+      detail: 'clé invalide',
+    })
+  })
+
+  it('traite une réponse sans liste comme un refus, pas comme un vide', () => {
+    // Une erreur serveur ne rend pas toujours la forme du contrat. La confondre
+    // avec « rien à faire » ferait croire à un import réussi sans effet.
+    const lecture = lireReponse(500, { error: 'boom' } as never)
+
+    expect('refusGlobal' in lecture).toBe(true)
+    if (!('refusGlobal' in lecture)) return
+    expect(lecture.refusGlobal.status).toBe(500)
+    expect(lecture.refusGlobal.reason).toBe('reponse-illisible')
+  })
+
+  it('donne un conseil qui désigne le bon endroit', () => {
+    // Le message doit envoyer chercher là où est la cause. Un 401 renvoie à la
+    // clé ET au redéploiement — une variable ajoutée ne s'applique qu'au
+    // déploiement suivant, et c'est le piège le plus courant.
+    expect(conseilPourStatut(401)).toMatch(/SYNC_API_KEY/)
+    expect(conseilPourStatut(401)).toMatch(/redéploy/i)
+    expect(conseilPourStatut(429)).toMatch(/minute/)
+    expect(conseilPourStatut(500)).toMatch(/démonstration/)
   })
 })

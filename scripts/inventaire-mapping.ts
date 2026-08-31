@@ -353,3 +353,83 @@ export function traduire(
     },
   }
 }
+
+// ---------------------------------------------------------------------------
+// Lecture de la réponse de la boutique
+// ---------------------------------------------------------------------------
+
+export interface ResultatBoutique {
+  externalId: string
+  action: string
+  reason?: string
+  detail?: string
+}
+
+export type LectureReponse =
+  | { resultats: ResultatBoutique[] }
+  | { refusGlobal: { status: number; reason: string; detail: string } }
+
+/**
+ * Distinguer un lot REFUSÉ EN BLOC d'un lot traité pièce par pièce.
+ *
+ * ---------------------------------------------------------------------------
+ * Le défaut que cette fonction ferme
+ * ---------------------------------------------------------------------------
+ * La route rend la même forme dans les deux cas : `{ ok, results }`. Mais quand
+ * elle refuse le lot ENTIER — clé absente ou fausse, corps illisible, débit
+ * fermé, plus de cent pièces — elle rend `results: []` avec un motif à côté.
+ *
+ * Le script ne testait que la PRÉSENCE de `results`. Or un tableau vide est
+ * `truthy` : le refus passait, aucun tableau ne s'affichait faute de lignes à
+ * compter, et l'exécution se terminait sur « aucune écriture n'a eu lieu » —
+ * ce qui était vrai, et ne disait rien de la raison.
+ *
+ * C'est arrivé au premier essai réel : la boutique refusait, et le rapport
+ * ressemblait à un succès sans effet. Un refus doit se voir.
+ */
+export function lireReponse(
+  status: number,
+  corps: { ok?: boolean; reason?: string; detail?: string; results?: unknown },
+): LectureReponse {
+  if (!Array.isArray(corps.results)) {
+    return {
+      refusGlobal: {
+        status,
+        reason: corps.reason ?? 'reponse-illisible',
+        detail: corps.detail ?? 'la boutique n’a pas renvoyé de liste de résultats',
+      },
+    }
+  }
+
+  // Un lot vide ENVOYÉ ne peut pas produire un lot vide REÇU : la route refuse
+  // un lot vide en amont. Zéro résultat veut donc toujours dire « refusé en
+  // bloc », jamais « rien à faire ».
+  if (corps.results.length === 0) {
+    return {
+      refusGlobal: {
+        status,
+        reason: corps.reason ?? 'refus-sans-motif',
+        detail: corps.detail ?? '',
+      },
+    }
+  }
+
+  return { resultats: corps.results as ResultatBoutique[] }
+}
+
+/** Ce qu'il faut aller regarder, selon le code renvoyé. */
+export function conseilPourStatut(status: number): string {
+  if (status === 401) {
+    return 'SYNC_API_KEY est absente de la boutique, ou différente de celle passée ici. Vérifiez la variable dans Vercel — et redéployez : une variable ajoutée ne s’applique qu’au déploiement suivant.'
+  }
+  if (status === 429) {
+    return 'Débit fermé : trente appels par minute. Attendez une minute et relancez.'
+  }
+  if (status === 400) {
+    return 'La boutique n’a pas compris le corps envoyé. Signalez-le, c’est un défaut du script.'
+  }
+  if (status >= 500) {
+    return 'La boutique a échoué en interne. La cause la plus probable à ce stade : ses réglages sont encore ceux du jeu de démonstration, et elle refuse de calculer un prix en production. Renseignez-les dans Réglages.'
+  }
+  return 'Consultez les journaux d’exécution de la boutique dans Vercel.'
+}

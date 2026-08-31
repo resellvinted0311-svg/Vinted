@@ -49,9 +49,12 @@
 import { MAX_BATCH_SIZE } from '../lib/validation/sync'
 import {
   COLONNES,
+  conseilPourStatut,
+  lireReponse,
   traduire,
   type LigneInventaire,
   type Refus,
+  type ResultatBoutique,
 } from './inventaire-mapping'
 
 // ---------------------------------------------------------------------------
@@ -118,13 +121,6 @@ async function lireInventaire(
 // Envoi vers la boutique
 // ---------------------------------------------------------------------------
 
-interface ResultatBoutique {
-  externalId: string
-  action: string
-  reason?: string
-  detail?: string
-}
-
 async function envoyer(
   boutique: string,
   cle: string,
@@ -143,26 +139,27 @@ async function envoyer(
     body: JSON.stringify({ articles }),
   })
 
-  const corps = (await reponse.json()) as {
-    results?: ResultatBoutique[]
-    error?: string
-    message?: string
-  }
+  const corps = (await reponse.json()) as Record<string, unknown>
 
   // 200 tout passe, 207 lot mixte, 422 tout refusé : dans les trois cas la
   // réponse porte le détail pièce par pièce, et c'est lui qui nous intéresse.
-  // Une réponse SANS `results` est autre chose — clé refusée, débit fermé,
-  // corps illisible — et là il n'y a rien à interpréter.
-  if (!corps.results) {
-    console.error(
-      `Réponse inattendue de la boutique (${reponse.status}) : ${
-        corps.error ?? corps.message ?? JSON.stringify(corps)
-      }`,
-    )
+  //
+  // Un refus EN BLOC, lui, rend la même forme avec un tableau vide et un motif
+  // à côté. Le distinguer est le travail de `lireReponse` — et ne pas le faire
+  // rendait le refus muet : aucun tableau à afficher, et une exécution qui se
+  // terminait sur « aucune écriture n'a eu lieu », ce qui était vrai et ne
+  // disait rien.
+  const lecture = lireReponse(reponse.status, corps)
+
+  if ('refusGlobal' in lecture) {
+    const { status, reason, detail } = lecture.refusGlobal
+    console.error(`\nLa boutique a refusé le lot ENTIER — ${status} ${reason}`)
+    if (detail) console.error(`  ${detail}`)
+    console.error(`\n${conseilPourStatut(status)}`)
     process.exit(1)
   }
 
-  return corps.results
+  return lecture.resultats
 }
 
 // ---------------------------------------------------------------------------
