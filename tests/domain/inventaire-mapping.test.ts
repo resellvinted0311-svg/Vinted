@@ -12,6 +12,9 @@ import {
   MAX_TITLE,
   conseilPourRefus,
   conseilPourStatut,
+  motsDeTete,
+  TAILLE_UNIQUE,
+  type PieceTraduite,
   lireReponse,
   lireReponseBrute,
   type LigneInventaire,
@@ -149,6 +152,38 @@ describe('déduire la catégorie du libellé', () => {
     expect(versCategorie('Polo piqué bleu marine')).toBe('t-shirts')
   })
 
+  it('reconnaît les mots relevés sur l’inventaire réel', () => {
+    /**
+     * Ces deux-là manquaient, et ils pesaient à eux seuls la totalité des
+     * exemples remontés par le rapport de refus.
+     *
+     * `pantacourt` ne contient pas `pantalon` : la recherche par sous-chaîne ne
+     * pouvait pas l'attraper. Il est rangé avec les pantalons — c'est un
+     * pantalon coupé — et non avec les shorts, parce que le poids par défaut
+     * décide du palier transporteur.
+     */
+    expect(versCategorie('Pantacourt turquoise avec multiples poches taille XS')).toBe(
+      'jeans-pantalons',
+    )
+    expect(versCategorie('Pantacourt Adidas gris anthracite taille S')).toBe(
+      'jeans-pantalons',
+    )
+
+    expect(versCategorie('Top gris avec dentelles et imprimés fleurs taille S')).toBe(
+      't-shirts',
+    )
+    expect(versCategorie('Top court fuschia avec strass taille XS')).toBe('t-shirts')
+  })
+
+  it('ne laisse pas « top » l’emporter sur le vêtement réel', () => {
+    // « top » se trouve à l'intérieur de « Topshop », une maison courante en
+    // seconde main. Testé parmi les motifs francs, il aurait rangé une jupe au
+    // rayon t-shirts. Testé en dernier, le vêtement gagne toujours.
+    expect(versCategorie('Jupe Topshop plissée noire')).toBe('jupes')
+    expect(versCategorie('Robe Topshop fleurie')).toBe('robes')
+    expect(versCategorie('Veste Topshop en jean')).toBe('vestes-legeres')
+  })
+
   it('ne devine RIEN quand le libellé ne dit pas ce que c’est', () => {
     // Le refus est le comportement voulu : une catégorie fourre-tout emporterait
     // un poids par défaut faux, et le port avec.
@@ -283,6 +318,83 @@ describe('les pièces écartées avant l’envoi', () => {
     expect(traduire(ligne({ prix_annonce: null }))).toEqual({ refus: 'sans-prix' })
     expect(traduire(ligne({ prix_annonce: '0' }))).toEqual({ refus: 'sans-prix' })
     expect(traduire(ligne({ prix_achat: null }))).toEqual({ refus: 'sans-cout' })
+  })
+
+  it('n’écarte PAS un sac au motif qu’il n’a pas de taille', () => {
+    /**
+     * Un sac à main n'a pas de taille : ce n'est pas une donnée manquante,
+     * c'est une propriété qu'il ne peut pas avoir. Les refuser écartait des
+     * dizaines de pièces parfaitement vendables.
+     *
+     * « TU » ne devine rien — il énonce l'absence, et c'est la mention d'usage.
+     * À distinguer d'un vêtement, où fabriquer une taille annoncerait un M sur
+     * une pièce dont personne ne connaît la coupe.
+     */
+    const sac = traduire(
+      ligne({ article: 'Sac baguette vintage Morgan avec sequins', taille: '' }),
+    )
+    expect(sac).not.toHaveProperty('refus')
+    expect((sac as PieceTraduite).categorie).toBe('sacs')
+    expect((sac as PieceTraduite).charge.sizeLabel).toBe(TAILLE_UNIQUE)
+
+    const ceinture = traduire(ligne({ article: 'Ceinture Guess crème', taille: '' }))
+    expect((ceinture as PieceTraduite).charge.sizeLabel).toBe(TAILLE_UNIQUE)
+
+    // Et une taille RÉELLEMENT saisie n'est jamais remplacée.
+    const sacDimensionne = traduire(
+      ligne({ article: 'Sac à main Coach marron', taille: 'M' }),
+    )
+    expect((sacDimensionne as PieceTraduite).charge.sizeLabel).toBe('M')
+  })
+
+  it('écarte TOUJOURS un vêtement sans taille', () => {
+    // Le point du test : « TU » est borné aux objets qui n'ont pas de taille.
+    // Un jean en a une — elle est seulement mal saisie — et « TU » y serait un
+    // mensonge que la cliente découvrirait à la réception.
+    expect(traduire(ligne({ article: 'Jean Levi’s taille 10 ans', taille: '' }))).toEqual(
+      { refus: 'sans-taille' },
+    )
+    expect(traduire(ligne({ article: 'Robe longue fleurie', taille: '' }))).toEqual({
+      refus: 'sans-taille',
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Le diagnostic des libellés non reconnus
+// ---------------------------------------------------------------------------
+
+describe('les premiers mots des libellés non reconnus', () => {
+  it('les classe par fréquence, pour dire quel mot ajouter d’abord', () => {
+    // Huit exemples sur trois cents refus disent qu'il manque des mots, sans
+    // dire lesquels. Ce décompte transforme un tas anonyme en liste de mots à
+    // ajouter, du plus rentable au moins rentable.
+    const tete = motsDeTete([
+      'Top gris avec dentelles',
+      'Top court fuschia',
+      'Top kaki avec décolleté',
+      'Pantacourt turquoise',
+      'Pantacourt gris anthracite',
+      'Bustier noir',
+    ])
+
+    expect(tete).toEqual([
+      { mot: 'top', nombre: 3 },
+      { mot: 'pantacourt', nombre: 2 },
+      { mot: 'bustier', nombre: 1 },
+    ])
+  })
+
+  it('ignore accents, casse et ponctuation de tête', () => {
+    // Sans normalisation, « Écharpe » et « echarpe » compteraient pour deux
+    // mots différents, et la liste dirait deux fois moins que la réalité.
+    expect(motsDeTete(['Écharpe en soie', 'echarpe rouge', '· Écharpe verte'])).toEqual([
+      { mot: 'echarpe', nombre: 3 },
+    ])
+  })
+
+  it('rend une liste vide quand rien n’a été refusé', () => {
+    expect(motsDeTete([])).toEqual([])
   })
 })
 

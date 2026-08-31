@@ -180,7 +180,18 @@ const CATEGORIES_FRANCHES: ReadonlyArray<readonly [readonly string[], string]> =
   [['t-shirt', 'tshirt', 'tee shirt', 'debardeur', 'marcel'], 't-shirts'],
   [['jupe'], 'jupes'],
   [['short', 'bermuda'], 'shorts'],
-  [['pantalon', 'chino', 'jogging', 'legging'], 'jeans-pantalons'],
+  /**
+   * `pantacourt` est un mot à part entière, et non une variante de `pantalon` :
+   * il ne le contient pas, donc la recherche par sous-chaîne ne l'attrape pas.
+   * Il pesait à lui seul une part visible des libellés que la table ne savait
+   * pas ranger.
+   *
+   * Rangé avec les pantalons, et non avec les shorts : c'est un pantalon coupé,
+   * pas un short. Le choix se paie en poids par défaut, donc en palier
+   * transporteur — et se tromper vers le haut coûte un prix plancher un peu
+   * élevé, alors que se tromper vers le bas fait expédier à perte.
+   */
+  [['pantalon', 'pantacourt', 'chino', 'jogging', 'legging'], 'jeans-pantalons'],
   [['combinaison', 'salopette'], 'combinaisons'],
   [['manteau', 'doudoune', 'parka', 'trench', 'caban'], 'manteaux'],
   [['veste', 'blouson', 'blazer', 'bomber', 'perfecto', 'coupe-vent'], 'vestes-legeres'],
@@ -221,6 +232,20 @@ const CATEGORIES_AMBIGUES: ReadonlyArray<readonly [readonly string[], string]> =
   [['jean'], 'jeans-pantalons'],
   // Vêtement, mais aussi la moitié d'un nom de maison très présent en friperie.
   [['polo'], 't-shirts'],
+  /**
+   * `top` : très fréquent dans cet inventaire, et AMBIGU pour deux raisons.
+   *
+   * La recherche se fait par sous-chaîne : « top » se trouve à l'intérieur de
+   * « Topshop », une maison de prêt-à-porter courante en seconde main. Testé
+   * parmi les motifs francs, il aurait rangé « Jupe Topshop » au rayon
+   * t-shirts.
+   *
+   * Testé EN DERNIER, le vêtement réel du libellé l'emporte toujours : une
+   * jupe, une robe ou une veste sont reconnues avant, et « top » ne décide que
+   * lorsque rien d'autre ne le dispute. C'est la même précaution que pour
+   * « jean » et « polo », et elle a la même raison d'être.
+   */
+  [['top'], 't-shirts'],
 ]
 
 const CATEGORIES = [
@@ -240,6 +265,14 @@ export function versCategorie(libelle: string | null): string | null {
 }
 
 /** Les catégories que cette table sait produire — vérifiées contre le catalogue. */
+/**
+ * Le libellé de taille des objets qui n'en ont pas. Voir `traduire`.
+ *
+ * Nommé plutôt qu'écrit sur place : il part dans le catalogue public, où il
+ * s'affichera tel quel sur chaque fiche de sac.
+ */
+export const TAILLE_UNIQUE = 'TU'
+
 export const CATEGORIES_DEDUITES: readonly string[] = [
   ...new Set(CATEGORIES.map(([, slug]) => slug)),
 ]
@@ -303,7 +336,31 @@ export function traduire(
   const etat = versEtat(ligne.etat)
   if (etat === null) return { refus: 'sans-etat' }
 
-  const taille = (ligne.taille ?? '').trim()
+  /**
+   * Un sac n'a pas de taille, et l'absence n'est pas une donnée manquante.
+   *
+   * -------------------------------------------------------------------------
+   * Pourquoi « TU » n'est pas une valeur inventée
+   * -------------------------------------------------------------------------
+   * Le contrat exige un libellé de taille. Sur un vêtement, en fabriquer un
+   * serait inacceptable : on annoncerait un M sur une pièce dont personne ne
+   * connaît la coupe, et la cliente le découvrirait à la réception.
+   *
+   * Un sac à main, une pochette, une ceinture ou une écharpe n'ont pas de
+   * taille du tout. « TU » — taille unique — ne devine rien : il énonce
+   * l'absence, et c'est la mention d'usage en friperie. Le refus, lui,
+   * écartait des dizaines de pièces parfaitement vendables au motif qu'elles
+   * n'avaient pas une propriété qu'elles ne peuvent pas avoir.
+   *
+   * Strictement borné à ces deux familles. Un « Jean taille 10 ans » dont la
+   * colonne « taille » est vide reste REFUSÉ : lui a une taille, elle est
+   * seulement mal saisie, et « TU » y serait un mensonge.
+   */
+  const sansTailleParNature = categorie === 'sacs' || categorie === 'accessoires'
+
+  const tailleSaisie = (ligne.taille ?? '').trim()
+  const taille =
+    tailleSaisie === '' && sansTailleParNature ? TAILLE_UNIQUE : tailleSaisie
   if (taille === '') return { refus: 'sans-taille' }
 
   const priceCents = versCentimes(ligne.prix_annonce)
@@ -467,6 +524,45 @@ export function lireReponseBrute(status: number, texte: string): LectureReponse 
   }
 
   return lireReponse(status, corps)
+}
+
+/**
+ * Les premiers mots des libellés que la table n'a pas su ranger, par fréquence.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi ce décompte, et pas seulement des exemples
+ * ---------------------------------------------------------------------------
+ * Huit exemples sur trois cents refus disent qu'il MANQUE des mots, sans dire
+ * lesquels ni combien chacun coûte. On en ajoutait deux au jugé, on relançait,
+ * et il en restait deux cent quatre-vingts sans savoir pourquoi.
+ *
+ * Dans cet inventaire, le libellé commence par le vêtement — « Pantacourt
+ * turquoise… », « Top gris… », « Sac baguette… ». Compter les premiers mots
+ * transforme donc un tas anonyme en une liste de mots à ajouter, du plus
+ * rentable au moins rentable.
+ *
+ * Heuristique assumée, et c'est pour cela qu'elle sert au DIAGNOSTIC et jamais
+ * au rangement : un libellé qui commencerait par une marque ferait remonter la
+ * marque. On la lit, on ne lui obéit pas.
+ */
+export function motsDeTete(
+  libelles: readonly string[],
+  max = 15,
+): { mot: string; nombre: number }[] {
+  const comptes = new Map<string, number>()
+
+  for (const libelle of libelles) {
+    const premier = normaliser(libelle).split(/[^a-z0-9]+/).filter(Boolean)[0]
+    // Un mot d'une seule lettre ne nomme aucun vêtement : c'est une puce, un
+    // article, ou le reste d'une ponctuation.
+    if (premier === undefined || premier.length < 2) continue
+    comptes.set(premier, (comptes.get(premier) ?? 0) + 1)
+  }
+
+  return [...comptes]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, max)
+    .map(([mot, nombre]) => ({ mot, nombre }))
 }
 
 /** Ce qu'il faut aller regarder, selon le refus. */

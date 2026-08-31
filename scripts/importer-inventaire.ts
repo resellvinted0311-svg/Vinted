@@ -54,6 +54,7 @@ import {
   TAILLE_LOT_DEFAUT,
   conseilPourRefus,
   lireReponseBrute,
+  motsDeTete,
   traduire,
   type LigneInventaire,
   type Refus,
@@ -245,6 +246,15 @@ async function main(): Promise<void> {
   const exemples = new Map<Refus, string[]>()
   const MAX_EXEMPLES = 8
 
+  /**
+   * TOUS les libellés dont la catégorie n'a pas pu être déduite.
+   *
+   * Gardés en entier — et non huit d'entre eux — pour le décompte des premiers
+   * mots, qui est ce qui dit quels mots ajouter à la table et ce que chacun
+   * rapporterait. Voir `motsDeTete`.
+   */
+  const libellesIndeduisibles: string[] = []
+
   let tronquees = 0
 
   for (const ligne of lignes) {
@@ -256,6 +266,9 @@ async function main(): Promise<void> {
       const libelle = (ligne.article ?? '').trim()
       if (deja.length < MAX_EXEMPLES && libelle !== '') {
         exemples.set(traduite.refus, [...deja, libelle])
+      }
+      if (traduite.refus === 'categorie-indeduisible' && libelle !== '') {
+        libellesIndeduisibles.push(libelle)
       }
       continue
     }
@@ -270,6 +283,19 @@ async function main(): Promise<void> {
   for (const [motif, libelles] of exemples) {
     console.log(`\n  Exemples — ${motif} :`)
     for (const libelle of libelles) console.log(`    · ${libelle}`)
+  }
+
+  // Ce que les exemples ne disent pas : QUELS mots manquent, et ce que chacun
+  // coûte. Voir `motsDeTete`.
+  const tete = motsDeTete(libellesIndeduisibles)
+  if (tete.length > 0) {
+    console.log(
+      '\n  Premiers mots des libellés non reconnus — les ajouter à la table' +
+        ' des catégories rapporterait, dans l’ordre :',
+    )
+    for (const { mot, nombre } of tete) {
+      console.log(`    ${String(nombre).padStart(5)}  ${mot}`)
+    }
   }
   if (tronquees > 0) {
     console.log(
