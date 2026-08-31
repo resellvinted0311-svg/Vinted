@@ -117,3 +117,86 @@ describe('sans Upstash configuré', () => {
     expect(await rateLimitOutcome(SENSIBLE)).toBe('limited')
   })
 })
+
+// ---------------------------------------------------------------------------
+// Configuration recopiée de travers
+// ---------------------------------------------------------------------------
+
+/**
+ * Des guillemets autour d'une URL ou d'un jeton.
+ *
+ * Le cas réel : une consigne d'installation donnée sous forme de ligne de shell
+ * — `URL="https://…"` — recopiée telle quelle dans le champ d'un tableau de
+ * bord. Le shell mange les guillemets, pas le formulaire.
+ *
+ * La boutique construisait alors `"https://…"/incr/…`, refusé par `fetch` avec
+ * un `TypeError`. Et comme un chemin sensible se ferme quand le compteur ne
+ * répond pas, PLUS PERSONNE ne pouvait s'inscrire — pour deux guillemets.
+ */
+describe('des guillemets autour des variables', () => {
+  it('n’empêchent plus l’appel, et l’URL construite reste valide', async () => {
+    vi.stubEnv('UPSTASH_REDIS_REST_URL', '"https://exemple.invalid"')
+    vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', '"jeton-d-essai"')
+
+    const appel = vi.fn().mockResolvedValue(reponseIncr(1))
+    vi.stubGlobal('fetch', appel)
+
+    expect(await rateLimitOutcome(SENSIBLE)).toBe('allowed')
+
+    const [adresse, options] = appel.mock.calls[0] as [string, RequestInit]
+
+    // L'assertion qui compte : l'adresse doit être analysable. C'est
+    // exactement ce que `fetch` refusait de faire.
+    expect(() => new URL(adresse)).not.toThrow()
+    expect(adresse.startsWith('https://exemple.invalid/incr/')).toBe(true)
+
+    // Le jeton aussi : un guillemet dans l'en-tête, et Upstash répond 401.
+    expect(options.headers).toMatchObject({
+      Authorization: 'Bearer jeton-d-essai',
+    })
+  })
+
+  it('valent aussi pour les apostrophes et les espaces en trop', async () => {
+    vi.stubEnv('UPSTASH_REDIS_REST_URL', "  'https://exemple.invalid'  ")
+    vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', '  jeton-d-essai\n')
+
+    const appel = vi.fn().mockResolvedValue(reponseIncr(1))
+    vi.stubGlobal('fetch', appel)
+
+    await rateLimitOutcome(SENSIBLE)
+
+    const [adresse, options] = appel.mock.calls[0] as [string, RequestInit]
+    expect(adresse.startsWith('https://exemple.invalid/incr/')).toBe(true)
+    expect(options.headers).toMatchObject({
+      Authorization: 'Bearer jeton-d-essai',
+    })
+  })
+
+  it('ne touchent PAS un guillemet isolé, qui n’est pas une paire', async () => {
+    // Un seul guillemet n'est pas une erreur de recopie reconnaissable : le
+    // retirer serait deviner. On laisse passer, et l'appel échouera bruyamment.
+    vi.stubEnv('UPSTASH_REDIS_REST_URL', '"https://exemple.invalid')
+    vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', 'jeton-d-essai')
+
+    const appel = vi.fn().mockResolvedValue(reponseIncr(1))
+    vi.stubGlobal('fetch', appel)
+
+    await rateLimitOutcome(SENSIBLE)
+
+    const [adresse] = appel.mock.calls[0] as [string]
+    expect(adresse.startsWith('"https://')).toBe(true)
+  })
+
+  it('une variable qui n’est QUE des guillemets vaut « absente »', async () => {
+    // Sinon on partirait appeler l'URL vide, et le repli en mémoire — le bon
+    // comportement ici — ne serait jamais choisi.
+    vi.stubEnv('UPSTASH_REDIS_REST_URL', '""')
+    vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', '""')
+
+    const appel = vi.fn()
+    vi.stubGlobal('fetch', appel)
+
+    expect(await rateLimitOutcome(SENSIBLE)).toBe('allowed')
+    expect(appel).not.toHaveBeenCalled()
+  })
+})

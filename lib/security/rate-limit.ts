@@ -52,6 +52,43 @@ export interface RateLimitInput {
 
 const memoryCounters = new Map<string, { count: number; resetAt: number }>()
 let warnedAboutMemoryFallback = false
+const warnedAboutQuotes = new Set<string>()
+
+/**
+ * Lit une variable d'environnement en la débarrassant de ses guillemets.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi ce nettoyage n'est pas de la complaisance
+ * ---------------------------------------------------------------------------
+ * Une URL et un jeton ne commencent ni ne finissent JAMAIS par un guillemet.
+ * Une valeur ainsi encadrée n'est donc pas une valeur exotique à respecter :
+ * c'est une erreur de copie, et une seule interprétation est possible.
+ *
+ * Le cas réel qui l'a imposé : une consigne d'installation donnée sous forme de
+ * ligne de shell — `URL="https://…"` — recopiée telle quelle dans le champ d'un
+ * tableau de bord. Dans un shell les guillemets sont de la syntaxe ; dans un
+ * formulaire ce sont des caractères. La boutique construisait alors
+ * `"https://…"/incr/…`, que `fetch` refuse avec un `TypeError` illisible — et
+ * comme la limitation de débit se ferme en cas de panne, PLUS PERSONNE ne
+ * pouvait s'inscrire. Une heure de recherche pour deux guillemets.
+ *
+ * On nettoie, et on le DIT : accepter en silence une configuration malformée
+ * revient à masquer la prochaine, qui ne sera peut-être pas rattrapable.
+ */
+function readCleanEnv(name: string): string | undefined {
+  const brut = process.env[name]?.trim()
+  if (!brut) return undefined
+
+  const nettoye = brut.replace(/^(["'])(.*)\1$/s, '$2').trim()
+  if (nettoye === '') return undefined
+
+  if (nettoye !== brut && !warnedAboutQuotes.has(name)) {
+    warnedAboutQuotes.add(name)
+    logger.warn('config.surrounding_quotes_stripped', { variable: name })
+  }
+
+  return nettoye
+}
 
 function checkInMemory({ key, limit, windowSeconds }: RateLimitInput): boolean {
   const now = Date.now()
@@ -150,8 +187,8 @@ async function checkUpstash(
  * journalise.
  */
 export async function clearRateLimit(key: string): Promise<void> {
-  const url = process.env.UPSTASH_REDIS_REST_URL
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  const url = readCleanEnv('UPSTASH_REDIS_REST_URL')
+  const token = readCleanEnv('UPSTASH_REDIS_REST_TOKEN')
 
   // Le compteur en mémoire porte la clé nue ; celui d'Upstash est préfixé.
   // Se tromper de forme ici effacerait une clé qui n'existe pas, sans erreur —
@@ -200,8 +237,8 @@ export type RateLimitOutcome =
 export async function rateLimitOutcome(
   input: RateLimitInput,
 ): Promise<RateLimitOutcome> {
-  const url = process.env.UPSTASH_REDIS_REST_URL
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  const url = readCleanEnv('UPSTASH_REDIS_REST_URL')
+  const token = readCleanEnv('UPSTASH_REDIS_REST_TOKEN')
 
   if (url && token) {
     try {
