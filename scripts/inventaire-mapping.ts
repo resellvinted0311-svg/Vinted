@@ -417,6 +417,68 @@ export function lireReponse(
   return { resultats: corps.results as ResultatBoutique[] }
 }
 
+/**
+ * Lire une réponse à partir de son TEXTE, pas d'un objet déjà analysé.
+ *
+ * ---------------------------------------------------------------------------
+ * Le défaut que cette fonction ferme
+ * ---------------------------------------------------------------------------
+ * Le script appelait directement `reponse.json()`. Une réponse SANS corps le
+ * faisait échouer sur `SyntaxError: Unexpected end of JSON input`, une pile
+ * d'appels internes à Node, et rien qui désigne la cause.
+ *
+ * Or une réponse vide a une signification très précise ici : la fonction a été
+ * TUÉE avant de répondre, faute de temps. C'est arrivé au premier import réel,
+ * sur un lot de cent pièces — cent transactions dans le budget par défaut d'une
+ * fonction serverless.
+ *
+ * Une panne doit se lire, pas se deviner dans une trace d'exécution.
+ */
+export function lireReponseBrute(status: number, texte: string): LectureReponse {
+  const propre = texte.trim()
+
+  if (propre === '') {
+    return {
+      refusGlobal: {
+        status,
+        reason: 'reponse-vide',
+        detail: 'la boutique n’a rien renvoyé',
+      },
+    }
+  }
+
+  let corps: Record<string, unknown>
+  try {
+    corps = JSON.parse(propre) as Record<string, unknown>
+  } catch {
+    // Un extrait, pas la page entière : une page d'erreur d'hébergeur fait
+    // plusieurs kilo-octets et noierait le rapport.
+    return {
+      refusGlobal: {
+        status,
+        reason: 'reponse-non-json',
+        detail: propre.slice(0, 200),
+      },
+    }
+  }
+
+  return lireReponse(status, corps)
+}
+
+/** Ce qu'il faut aller regarder, selon le refus. */
+export function conseilPourRefus({
+  status,
+  reason,
+}: {
+  status: number
+  reason: string
+}): string {
+  if (reason === 'reponse-vide' || reason === 'reponse-non-json') {
+    return 'La boutique a été interrompue avant de répondre — presque toujours un dépassement de temps sur un lot trop gros. Relancez avec --taille-lot=25.'
+  }
+  return conseilPourStatut(status)
+}
+
 /** Ce qu'il faut aller regarder, selon le code renvoyé. */
 export function conseilPourStatut(status: number): string {
   if (status === 401) {

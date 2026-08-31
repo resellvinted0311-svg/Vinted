@@ -26,6 +26,22 @@ import { MAX_BATCH_SIZE } from '@/lib/validation/sync'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+/**
+ * Durée maximale de la fonction, en secondes.
+ *
+ * Elle manquait, et c'est un oubli qui s'est payé au premier import réel. Un lot
+ * porte jusqu'à cent pièces, et chaque pièce ouvre sa PROPRE transaction — c'est
+ * la garantie qu'une pièce refusée n'annule pas les autres. Cent transactions
+ * derrière un pooler ne tiennent pas dans le budget par défaut.
+ *
+ * La fonction était donc tuée en cours de route, et la réponse arrivait SANS
+ * corps : l'appelant recevait un `JSON.parse` en erreur, sans rien qui désigne
+ * la cause. Un dépassement de temps doit se lire comme un dépassement de temps.
+ *
+ * Soixante secondes, comme la tâche planifiée, qui en fait beaucoup moins.
+ */
+export const maxDuration = 60
+
 /** Trente appels par minute et par clé, comme annoncé au §7.4 du contrat. */
 const RATE_LIMIT = 30
 const RATE_WINDOW_SECONDS = 60

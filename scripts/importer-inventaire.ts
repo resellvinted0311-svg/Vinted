@@ -44,13 +44,14 @@
  *   BOUTIQUE_URL=https://exemple.vercel.app \
  *   SYNC_API_KEY=... \
  *   npx tsx scripts/importer-inventaire.ts [--pour-de-vrai] [--limite=50]
+ *                                          [--taille-lot=25]
  */
 
 import { MAX_BATCH_SIZE } from '../lib/validation/sync'
 import {
   COLONNES,
-  conseilPourStatut,
-  lireReponse,
+  conseilPourRefus,
+  lireReponseBrute,
   traduire,
   type LigneInventaire,
   type Refus,
@@ -139,23 +140,21 @@ async function envoyer(
     body: JSON.stringify({ articles }),
   })
 
-  const corps = (await reponse.json()) as Record<string, unknown>
+  // Le TEXTE, pas `.json()`. Une fonction tuée avant d'avoir répondu rend un
+  // corps vide, et `.json()` échouait alors sur un `SyntaxError` accompagné
+  // d'une pile d'appels internes à Node — rien qui désigne la cause.
+  const texte = await reponse.text()
 
   // 200 tout passe, 207 lot mixte, 422 tout refusé : dans les trois cas la
   // réponse porte le détail pièce par pièce, et c'est lui qui nous intéresse.
-  //
-  // Un refus EN BLOC, lui, rend la même forme avec un tableau vide et un motif
-  // à côté. Le distinguer est le travail de `lireReponse` — et ne pas le faire
-  // rendait le refus muet : aucun tableau à afficher, et une exécution qui se
-  // terminait sur « aucune écriture n'a eu lieu », ce qui était vrai et ne
-  // disait rien.
-  const lecture = lireReponse(reponse.status, corps)
+  // Tout le reste est un refus en bloc, et doit se lire comme tel.
+  const lecture = lireReponseBrute(reponse.status, texte)
 
   if ('refusGlobal' in lecture) {
-    const { status, reason, detail } = lecture.refusGlobal
-    console.error(`\nLa boutique a refusé le lot ENTIER — ${status} ${reason}`)
-    if (detail) console.error(`  ${detail}`)
-    console.error(`\n${conseilPourStatut(status)}`)
+    const refus = lecture.refusGlobal
+    console.error(`\nLa boutique a refusé le lot ENTIER — ${refus.status} ${refus.reason}`)
+    if (refus.detail) console.error(`  ${refus.detail}`)
+    console.error(`\n${conseilPourRefus(refus)}`)
     process.exit(1)
   }
 
@@ -192,6 +191,22 @@ async function main(): Promise<void> {
 
   if (limite !== null && (!Number.isInteger(limite) || limite <= 0)) {
     console.error('--limite attend un entier positif')
+    process.exit(1)
+  }
+
+  /**
+   * Taille des lots envoyés.
+   *
+   * Le contrat en autorise cent, mais cent pièces font cent transactions dans
+   * une seule requête : selon la latence de la base, la fonction peut être tuée
+   * avant d'avoir répondu. Pouvoir descendre est ce qui permet de terminer un
+   * import au lieu de buter dessus.
+   */
+  const lotBrut = options.find((a) => a.startsWith('--taille-lot='))?.split('=')[1]
+  const tailleLot = lotBrut === undefined ? MAX_BATCH_SIZE : Number(lotBrut)
+
+  if (!Number.isInteger(tailleLot) || tailleLot <= 0 || tailleLot > MAX_BATCH_SIZE) {
+    console.error(`--taille-lot attend un entier entre 1 et ${MAX_BATCH_SIZE}`)
     process.exit(1)
   }
 
@@ -239,13 +254,13 @@ async function main(): Promise<void> {
     return
   }
 
-  console.log(`\n${charges.length} pièces à envoyer, par lots de ${MAX_BATCH_SIZE}.`)
+  console.log(`\n${charges.length} pièces à envoyer, par lots de ${tailleLot}.`)
 
   const actions: string[] = []
   const motifs: string[] = []
 
-  for (let debut = 0; debut < charges.length; debut += MAX_BATCH_SIZE) {
-    const lot = charges.slice(debut, debut + MAX_BATCH_SIZE)
+  for (let debut = 0; debut < charges.length; debut += tailleLot) {
+    const lot = charges.slice(debut, debut + tailleLot)
     const resultats = await envoyer(boutique, syncCle, lot, essaiABlanc)
 
     for (const resultat of resultats) {
@@ -255,7 +270,7 @@ async function main(): Promise<void> {
       }
     }
 
-    console.log(`  lot ${Math.floor(debut / MAX_BATCH_SIZE) + 1} : ${lot.length} pièces`)
+    console.log(`  lot ${Math.floor(debut / tailleLot) + 1} : ${lot.length} pièces`)
   }
 
   tableau('Réponse de la boutique :', compter(actions))

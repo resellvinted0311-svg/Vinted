@@ -8,8 +8,10 @@ import {
   versEtat,
   CATEGORIES_DEDUITES,
   MAX_TITLE,
+  conseilPourRefus,
   conseilPourStatut,
   lireReponse,
+  lireReponseBrute,
   type LigneInventaire,
 } from '@/scripts/inventaire-mapping'
 import { syncArticleSchema } from '@/lib/validation/sync'
@@ -390,5 +392,58 @@ describe('lire la réponse de la boutique', () => {
     expect(conseilPourStatut(401)).toMatch(/redéploy/i)
     expect(conseilPourStatut(429)).toMatch(/minute/)
     expect(conseilPourStatut(500)).toMatch(/démonstration/)
+  })
+})
+
+/**
+ * Une réponse sans corps est un dépassement de temps, pas un mystère.
+ *
+ * Le script appelait `reponse.json()` directement. Sur un lot de cent pièces —
+ * donc cent transactions — la fonction de la boutique était tuée avant d'avoir
+ * répondu, et l'import s'arrêtait sur `SyntaxError: Unexpected end of JSON
+ * input` suivi d'une pile d'appels internes à Node.
+ *
+ * Rien là-dedans ne disait quoi faire. Or il y avait quelque chose à faire :
+ * réduire la taille des lots.
+ */
+describe('une réponse qui n’est pas du JSON', () => {
+  it('devient un refus lisible plutôt qu’une SyntaxError', () => {
+    const lecture = lireReponseBrute(504, '')
+
+    expect('refusGlobal' in lecture).toBe(true)
+    if (!('refusGlobal' in lecture)) return
+    expect(lecture.refusGlobal.reason).toBe('reponse-vide')
+  })
+
+  it('garde un EXTRAIT d’une page d’erreur, jamais la page entière', () => {
+    // Une page d'erreur d'hébergeur fait plusieurs kilo-octets : la recopier
+    // noierait le rapport et cacherait ce qu'on cherche.
+    const page = `<!doctype html><html>${'x'.repeat(5000)}</html>`
+    const lecture = lireReponseBrute(502, page)
+
+    if (!('refusGlobal' in lecture)) throw new Error('aurait dû être un refus')
+    expect(lecture.refusGlobal.reason).toBe('reponse-non-json')
+    expect(lecture.refusGlobal.detail.length).toBeLessThanOrEqual(200)
+  })
+
+  it('laisse passer une vraie réponse JSON', () => {
+    const lecture = lireReponseBrute(
+      200,
+      JSON.stringify({ ok: true, results: [{ externalId: 'a', action: 'created' }] }),
+    )
+
+    expect('resultats' in lecture).toBe(true)
+  })
+
+  it('conseille de réduire les lots — c’est le seul geste utile ici', () => {
+    // Le conseil doit désigner l'action, pas décrire le symptôme. Un « erreur
+    // serveur » générique renverrait vers les réglages, qui n'y sont pour rien.
+    const conseil = conseilPourRefus({ status: 504, reason: 'reponse-vide' })
+    expect(conseil).toMatch(/taille-lot/)
+
+    // Et il ne doit pas écraser les autres causes.
+    expect(conseilPourRefus({ status: 401, reason: 'unauthorized' })).toMatch(
+      /SYNC_API_KEY/,
+    )
   })
 })
