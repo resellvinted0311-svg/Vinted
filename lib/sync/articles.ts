@@ -631,6 +631,34 @@ function attributeFields(
 // Création
 // ---------------------------------------------------------------------------
 
+/**
+ * Bornes des transactions d'écriture d'une pièce.
+ *
+ * ---------------------------------------------------------------------------
+ * Le défaut de Prisma est de CINQ secondes, et il ne suffit pas ici
+ * ---------------------------------------------------------------------------
+ * Une transaction interactive est annulée au-delà de `timeout` — cinq secondes
+ * si on ne dit rien. Or créer une pièce demande une poignée d'allers-retours
+ * (marque, numéro d'inventaire, article, traductions, mesures), et la base de
+ * production est derrière un pooler, dans une autre région : le premier import
+ * réel mesurait plus de deux secondes par pièce.
+ *
+ * Deux secondes de moyenne contre cinq de plafond, ce n'est pas une marge :
+ * c'est un échec dès le premier ralentissement. Et l'échec coûte le PLAFOND —
+ * cinq secondes passées à ne rien écrire. Un passage de quarante secondes n'y
+ * faisait donc plus que huit tentatives, toutes perdues, et l'import n'avançait
+ * plus : cent soixante-neuf passages pour vingt pièces créées.
+ *
+ * `maxWait` borne l'attente d'une connexion libre, avant même de commencer. La
+ * connexion applicative est réglée à UNE seule en production : deux secondes
+ * suffisent à la manquer dès qu'un autre travail tourne.
+ *
+ * Ces bornes ne rendent rien plus lent. Elles disent au bout de combien de
+ * temps on renonce — et renoncer trop tôt ne fait pas gagner du temps, il en
+ * perd.
+ */
+const TRANSACTION_ECRITURE = { timeout: 20_000, maxWait: 10_000 } as const
+
 async function createArticle(
   input: SyncArticleInput,
   category: CategoryEntry,
@@ -725,7 +753,7 @@ async function createArticle(
       imagesPending: awaitsImages,
       published: publishesNow,
     }
-  })
+  }, TRANSACTION_ECRITURE)
 }
 
 // ---------------------------------------------------------------------------
@@ -851,7 +879,7 @@ async function updateArticle(
       imagesPending: needsImages || !hasStoredImages,
       published: status === 'AVAILABLE',
     }
-  })
+  }, TRANSACTION_ECRITURE)
 }
 
 /**

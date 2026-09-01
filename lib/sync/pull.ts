@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { Prisma } from '@prisma/client'
+
 import { prisma } from '@/lib/db/client'
 import { logger } from '@/lib/observability/logger'
 import {
@@ -77,6 +79,19 @@ export interface PullReport {
    * ressembler à un import réussi.
    */
   echouees: number
+  /**
+   * Les causes des échecs, par code, et leur nombre.
+   *
+   * Un CODE — `P2002`, `P2028`, `P2024` — et jamais un message : un message
+   * d'exception porte des noms de table, des requêtes, parfois des valeurs, et
+   * cet écran est une page web. Le code, lui, ne dit rien d'autre que la nature
+   * de la panne, et c'est exactement ce qu'il faut pour la corriger.
+   *
+   * Sans ce relevé, un import qui échoue en masse n'offre qu'un compte : on sait
+   * que vingt-trois pièces sont tombées, pas pourquoi — et il faut aller lire
+   * des journaux d'hébergeur auxquels on n'a pas toujours accès.
+   */
+  causes: { code: string; nombre: number }[]
   /** Reste-t-il des pièces non examinées ? Un passage de plus les prendra. */
   reste: number
 }
@@ -121,6 +136,20 @@ function lireConfiguration(): {
     cle: (process.env.APP_SUPABASE_SERVICE_KEY as string).trim(),
     workspaceId: (process.env.APP_WORKSPACE_ID as string).trim(),
   }
+}
+
+/**
+ * Le CODE d'une panne, sans rien de ce qu'elle contient.
+ *
+ * Prisma numérote ses erreurs connues ; c'est cette référence qu'on remonte.
+ * Pour le reste, le nom de la classe suffit à distinguer une panne réseau d'une
+ * erreur de programmation, et n'expose aucune donnée.
+ */
+export function codeDePanne(error: unknown): string {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) return error.code
+  if (error instanceof Prisma.PrismaClientValidationError) return 'validation'
+  if (error instanceof Error) return error.name
+  return 'inconnu'
 }
 
 /** Lignes d'inventaire de l'espace de travail, par pages de mille. */
@@ -226,6 +255,7 @@ export async function pullInventaire({
 
   const context = await loadSyncContext()
   const resultats: SyncResult[] = []
+  const causes = new Map<string, number>()
   let echouees = 0
   let piecePlusLenteMs = 0
 
@@ -269,6 +299,8 @@ export async function pullInventaire({
       )
     } catch (error) {
       echouees += 1
+      const code = codeDePanne(error)
+      causes.set(code, (causes.get(code) ?? 0) + 1)
       // L'identifiant de la pièce, jamais son contenu : le journal doit
       // permettre de la retrouver, pas d'en recopier les données.
       logger.failure('sync.pull_piece_failed', error, {
@@ -291,6 +323,9 @@ export async function pullInventaire({
     inchangees: compter('unchanged'),
     refusees: compter('rejected'),
     echouees,
+    causes: [...causes]
+      .sort((a, b) => b[1] - a[1])
+      .map(([code, nombre]) => ({ code, nombre })),
     // Les pièces en échec ont bien été VUES : les recompter dans le reste
     // ferait boucler l'écran sur elles indéfiniment.
     reste: charges.length - resultats.length - echouees,

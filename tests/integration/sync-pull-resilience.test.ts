@@ -112,6 +112,24 @@ describe('une pièce qui lève', () => {
     expect(rapport.echouees).toBeGreaterThan(0)
   })
 
+  it('remonte la CAUSE, sous forme de code', async () => {
+    /**
+     * Un compte d'échecs sans cause oblige à aller lire les journaux de
+     * l'hébergeur — auxquels on n'a pas toujours accès. C'est exactement ce qui
+     * s'est passé : vingt-trois pièces tombées, et rien pour dire pourquoi.
+     *
+     * Un CODE, jamais un message : un message d'exception porte des noms de
+     * table, des requêtes, parfois des valeurs — et cet écran est une page web.
+     */
+    const rapport = await pullInventaire({ budgetMs: 20_000 })
+
+    expect(rapport.causes).toHaveLength(1)
+    expect(rapport.causes[0]?.nombre).toBe(1)
+
+    // Le libellé de l'exception simulée ne doit apparaître nulle part.
+    expect(JSON.stringify(rapport.causes)).not.toContain('unicité')
+  })
+
   it('ne revient PAS dans le reste à examiner', async () => {
     /**
      * Elle a été vue. La recompter dans `reste` ferait boucler l'écran sur

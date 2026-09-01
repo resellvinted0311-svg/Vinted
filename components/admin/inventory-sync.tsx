@@ -144,6 +144,22 @@ function Rapport({ report }: { report: PullReport }) {
         <Ligne libelle={t('rejected')} valeur={report.refusees} />
         <Ligne libelle={t('failed')} valeur={report.echouees} />
       </dl>
+
+      {/**
+        * La CAUSE, quand il y en a une.
+        *
+        * Un compte d'échecs sans cause oblige à aller lire les journaux de
+        * l'hébergeur — auxquels on n'a pas toujours accès. Le code Prisma tient
+        * en six caractères et dit la nature de la panne, sans exposer la
+        * moindre donnée.
+        */}
+      {report.causes.length > 0 ? (
+        <p className="mt-2 font-mono text-sm">
+          {report.causes
+            .map((cause) => `${cause.code} × ${cause.nombre}`)
+            .join('  ·  ')}
+        </p>
+      ) : null}
     </Notice>
   )
 }
