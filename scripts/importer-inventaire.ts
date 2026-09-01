@@ -54,6 +54,7 @@ import {
   TAILLE_LOT_DEFAUT,
   conseilPourRefus,
   lireReponseBrute,
+  messageVariablesManquantes,
   motsDeTete,
   traduire,
   type LigneInventaire,
@@ -65,13 +66,35 @@ import {
 // Environnement
 // ---------------------------------------------------------------------------
 
-function exigerVariable(nom: string): string {
-  const valeur = process.env[nom]
-  if (!valeur || valeur.trim() === '') {
-    console.error(`Variable d’environnement manquante : ${nom}`)
+/**
+ * Les cinq variables, lues D'UN COUP.
+ *
+ * Une par une, le script s'arrêtait sur la première absente — alors qu'elles
+ * manquent presque toujours ensemble : un terminal neuf ne garde rien des
+ * `export` du précédent. On en corrigeait une, on relançait, on découvrait la
+ * suivante. Voir `messageVariablesManquantes`.
+ */
+function exigerVariables<const N extends readonly string[]>(
+  noms: N,
+): Record<N[number], string> {
+  const valeurs = {} as Record<N[number], string>
+  const absentes: string[] = []
+
+  for (const nom of noms) {
+    const valeur = process.env[nom]
+    if (!valeur || valeur.trim() === '') {
+      absentes.push(nom)
+      continue
+    }
+    valeurs[nom as N[number]] = valeur.trim()
+  }
+
+  if (absentes.length > 0) {
+    console.error(messageVariablesManquantes(absentes, noms.length))
     process.exit(1)
   }
-  return valeur.trim()
+
+  return valeurs
 }
 
 // ---------------------------------------------------------------------------
@@ -216,11 +239,18 @@ async function main(): Promise<void> {
     process.exit(1)
   }
 
-  const appUrl = exigerVariable('APP_SUPABASE_URL')
-  const appCle = exigerVariable('APP_SUPABASE_SERVICE_KEY')
-  const workspaceId = exigerVariable('APP_WORKSPACE_ID')
-  const boutique = exigerVariable('BOUTIQUE_URL')
-  const syncCle = exigerVariable('SYNC_API_KEY')
+  const env = exigerVariables([
+    'APP_SUPABASE_URL',
+    'APP_SUPABASE_SERVICE_KEY',
+    'APP_WORKSPACE_ID',
+    'BOUTIQUE_URL',
+    'SYNC_API_KEY',
+  ])
+  const appUrl = env.APP_SUPABASE_URL
+  const appCle = env.APP_SUPABASE_SERVICE_KEY
+  const workspaceId = env.APP_WORKSPACE_ID
+  const boutique = env.BOUTIQUE_URL
+  const syncCle = env.SYNC_API_KEY
 
   console.log(
     essaiABlanc

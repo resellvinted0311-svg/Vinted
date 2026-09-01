@@ -13,6 +13,7 @@ import {
   conseilPourRefus,
   conseilPourStatut,
   motsDeTete,
+  messageVariablesManquantes,
   TAILLE_UNIQUE,
   type PieceTraduite,
   lireReponse,
@@ -748,5 +749,48 @@ describe('le conseil derrière un corps vide', () => {
     // en revanche utile — c'est ce qu'on soupçonnait à tort.
     expect(absent).not.toMatch(/Renseignez vos vraies valeurs/)
     expect(absent).toMatch(/Ce n’est pas le mode démonstration/)
+  })
+})
+
+describe('les variables d’environnement absentes', () => {
+  const TOUTES = [
+    'APP_SUPABASE_URL',
+    'APP_SUPABASE_SERVICE_KEY',
+    'APP_WORKSPACE_ID',
+    'BOUTIQUE_URL',
+    'SYNC_API_KEY',
+  ]
+
+  it('les nomme TOUTES, et pas seulement la première', () => {
+    // Le script s'arrêtait sur la première : on en corrigeait une, on
+    // relançait, on découvrait la suivante. Cinq allers-retours pour un seul
+    // défaut.
+    const message = messageVariablesManquantes(TOUTES, 5)
+    for (const nom of TOUTES) expect(message).toContain(nom)
+  })
+
+  it('reconnaît le terminal neuf quand elles manquent TOUTES', () => {
+    /**
+     * La réponse n'est pas la même : il n'y a rien à retrouver ni à corriger,
+     * seulement à recharger. Un `export` ne vaut que pour le terminal où il a
+     * été tapé, et rien ne le dit à qui ouvre un nouvel onglet.
+     */
+    const message = messageVariablesManquantes(TOUTES, 5)
+    expect(message).toMatch(/terminal/)
+    expect(message).toMatch(/Rechargez/)
+  })
+
+  it('ne parle PAS de terminal neuf quand une seule manque', () => {
+    // Une seule absente sur cinq n'est pas un terminal vide : c'est une faute
+    // de frappe ou un `export` oublié, et envoyer tout recharger ferait chercher
+    // au mauvais endroit.
+    const message = messageVariablesManquantes(['SYNC_API_KEY'], 5)
+    expect(message).toContain('SYNC_API_KEY')
+    expect(message).not.toMatch(/nouvel onglet/)
+    expect(message).toMatch(/export/)
+  })
+
+  it('ne dit rien quand il n’en manque aucune', () => {
+    expect(messageVariablesManquantes([], 5)).toBe('')
   })
 })

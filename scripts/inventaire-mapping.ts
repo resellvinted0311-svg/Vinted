@@ -619,6 +619,43 @@ export function motsDeTete(
     .map(([mot, nombre]) => ({ mot, nombre }))
 }
 
+/**
+ * Le message des variables d'environnement absentes.
+ *
+ * ---------------------------------------------------------------------------
+ * Toutes à la fois, et la cause la plus probable avec
+ * ---------------------------------------------------------------------------
+ * Le script s'arrêtait à la PREMIÈRE manquante. Or elles ne manquent presque
+ * jamais seule : un nouveau terminal ne garde rien des `export` du précédent,
+ * et il en manque alors cinq. On en corrigeait une, on relançait, on découvrait
+ * la suivante.
+ *
+ * Quand elles manquent TOUTES, ce n'est pas une variable oubliée mais un
+ * terminal neuf — et c'est ce qu'il faut dire, parce que la réponse n'est pas
+ * la même : il n'y a rien à retrouver, seulement à recharger.
+ */
+export function messageVariablesManquantes(
+  absentes: readonly string[],
+  total: number,
+): string {
+  if (absentes.length === 0) return ''
+
+  const liste = absentes.map((nom) => `  · ${nom}`).join('\n')
+
+  if (absentes.length === total) {
+    return (
+      `Aucune des ${total} variables d’environnement n’est définie :\n${liste}\n\n` +
+      'Elles ne sont pas perdues : un `export` ne vaut que pour LE terminal où il a été tapé, ' +
+      'et un nouvel onglet repart sans rien. Rechargez-les, puis relancez.'
+    )
+  }
+
+  return (
+    `Variable(s) d’environnement manquante(s) :\n${liste}\n\n` +
+    'Vérifiez l’orthographe et le `export` devant chacune : sans `export`, la valeur reste dans le shell et le script ne la voit pas.'
+  )
+}
+
 /** Ce qu'il faut aller regarder, selon le refus. */
 export function conseilPourRefus({
   status,
