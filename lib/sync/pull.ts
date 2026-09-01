@@ -69,6 +69,14 @@ export interface PullReport {
   misesAJour: number
   inchangees: number
   refusees: number
+  /**
+   * Pièces sur lesquelles la boutique a LEVÉ, et qu'elle a passées.
+   *
+   * Distinct de `refusees`, qui est une décision : ici, quelque chose s'est mal
+   * passé. Le compte est affiché parce qu'un import à trous ne doit pas
+   * ressembler à un import réussi.
+   */
+  echouees: number
   /** Reste-t-il des pièces non examinées ? Un passage de plus les prendra. */
   reste: number
 }
@@ -218,6 +226,7 @@ export async function pullInventaire({
 
   const context = await loadSyncContext()
   const resultats: SyncResult[] = []
+  let echouees = 0
   let piecePlusLenteMs = 0
 
   for (const [index, charge] of charges.entries()) {
@@ -230,7 +239,43 @@ export async function pullInventaire({
     if (!continuer) break
 
     const avant = maintenant()
-    resultats.push(await syncArticle(charge, index, context, { dryRun: false }))
+
+    /**
+     * UNE pièce qui lève ne doit pas emporter le passage entier.
+     *
+     * -------------------------------------------------------------------------
+     * Ce que son absence a coûté
+     * -------------------------------------------------------------------------
+     * Le module annonce en tête qu'« une pièce rejetée n'annule pas les
+     * autres ». C'était vrai des refus de VALIDATION, qui reviennent en
+     * résultat — et faux de tout le reste : une exception traversait la boucle,
+     * le passage ne rendait aucun compte, et l'écran affichait « la
+     * synchronisation a échoué » sur un import qui venait d'en écrire des
+     * dizaines.
+     *
+     * Le cas le plus probable n'a rien d'exotique : deux passages qui se
+     * chevauchent — un clic pendant que la tâche planifiée tourne, ou deux
+     * onglets — voient tous deux une pièce absente et la créent tous deux. Le
+     * second se heurte à l'unicité de `externalId`. Rien n'est perdu : la pièce
+     * existe, écrite par l'autre.
+     *
+     * On compte donc, on journalise, et on continue. Le compte est REMONTÉ à
+     * l'écran : une pièce en échec est un incident, dix en sont un autre, et
+     * les taire ferait passer un import à trous pour un import réussi.
+     */
+    try {
+      resultats.push(
+        await syncArticle(charge, index, context, { dryRun: false }),
+      )
+    } catch (error) {
+      echouees += 1
+      // L'identifiant de la pièce, jamais son contenu : le journal doit
+      // permettre de la retrouver, pas d'en recopier les données.
+      logger.failure('sync.pull_piece_failed', error, {
+        externalId: String(charge.externalId),
+      })
+    }
+
     piecePlusLenteMs = Math.max(piecePlusLenteMs, maintenant() - avant)
   }
 
@@ -245,6 +290,9 @@ export async function pullInventaire({
     misesAJour: compter('updated'),
     inchangees: compter('unchanged'),
     refusees: compter('rejected'),
-    reste: charges.length - resultats.length,
+    echouees,
+    // Les pièces en échec ont bien été VUES : les recompter dans le reste
+    // ferait boucler l'écran sur elles indéfiniment.
+    reste: charges.length - resultats.length - echouees,
   }
 }

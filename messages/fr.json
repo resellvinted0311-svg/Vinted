@@ -862,6 +862,7 @@
       "unchanged": "Inchangées",
       "skipped": "Écartées",
       "rejected": "Refusées",
+      "failed": "En échec",
       "errors": {
         "rateLimited": "Trop de synchronisations coup sur coup. Réessayez dans un moment.",
         "notConfigured": "La boutique n’a pas les accès à l’application de gestion. Il manque, dans ses variables d’environnement : {missing}. Ajoutez-les, puis redéployez.",

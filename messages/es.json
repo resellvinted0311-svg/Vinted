@@ -862,6 +862,7 @@
       "unchanged": "Sin cambios",
       "skipped": "Descartadas",
       "rejected": "Rechazadas",
+      "failed": "Con error",
       "errors": {
         "rateLimited": "Demasiadas sincronizaciones seguidas. Inténtelo de nuevo en un momento.",
         "notConfigured": "La tienda no tiene acceso a la aplicación de gestión. Falta, en sus variables de entorno: {missing}. Añádalas y vuelva a desplegar.",

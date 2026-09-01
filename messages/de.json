@@ -862,6 +862,7 @@
       "unchanged": "Unverändert",
       "skipped": "Übergangen",
       "rejected": "Abgelehnt",
+      "failed": "Fehlgeschlagen",
       "errors": {
         "rateLimited": "Zu viele Synchronisationen hintereinander. Versuchen Sie es gleich noch einmal.",
         "notConfigured": "Der Laden hat keinen Zugang zur Verwaltungs-App. In seinen Umgebungsvariablen fehlt: {missing}. Ergänzen Sie sie und deployen Sie erneut.",

@@ -862,6 +862,7 @@
       "unchanged": "Unchanged",
       "skipped": "Skipped",
       "rejected": "Rejected",
+      "failed": "Failed",
       "errors": {
         "rateLimited": "Too many synchronisations in a row. Try again shortly.",
         "notConfigured": "The shop has no access to the management app. Missing from its environment variables: {missing}. Add them, then redeploy.",

@@ -142,6 +142,7 @@ function Rapport({ report }: { report: PullReport }) {
         <Ligne libelle={t('unchanged')} valeur={report.inchangees} />
         <Ligne libelle={t('skipped')} valeur={report.ecartees} />
         <Ligne libelle={t('rejected')} valeur={report.refusees} />
+        <Ligne libelle={t('failed')} valeur={report.echouees} />
       </dl>
     </Notice>
   )

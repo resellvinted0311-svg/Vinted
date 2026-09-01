@@ -862,6 +862,7 @@
       "unchanged": "Ongewijzigd",
       "skipped": "Overgeslagen",
       "rejected": "Geweigerd",
+      "failed": "Mislukt",
       "errors": {
         "rateLimited": "Te veel synchronisaties na elkaar. Probeer het zo opnieuw.",
         "notConfigured": "De winkel heeft geen toegang tot de beheer-app. Ontbreekt in haar omgevingsvariabelen: {missing}. Voeg ze toe en deploy opnieuw.",

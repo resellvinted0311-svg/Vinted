@@ -862,6 +862,7 @@
       "unchanged": "Invariati",
       "skipped": "Scartati",
       "rejected": "Rifiutati",
+      "failed": "In errore",
       "errors": {
         "rateLimited": "Troppe sincronizzazioni di seguito. Riprovi tra poco.",
         "notConfigured": "La boutique non ha accesso all’applicazione di gestione. Manca, nelle sue variabili d’ambiente: {missing}. Le aggiunga, poi rilanci il deploy.",

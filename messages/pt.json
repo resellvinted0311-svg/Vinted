@@ -862,6 +862,7 @@
       "unchanged": "Inalteradas",
       "skipped": "Descartadas",
       "rejected": "Recusadas",
+      "failed": "Com erro",
       "errors": {
         "rateLimited": "Demasiadas sincronizações seguidas. Tente novamente daqui a pouco.",
         "notConfigured": "A loja não tem acesso à aplicação de gestão. Falta, nas suas variáveis de ambiente: {missing}. Acrescente-as e volte a publicar.",
