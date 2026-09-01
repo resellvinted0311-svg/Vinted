@@ -272,6 +272,44 @@ sont arrêtés, à cent puis à vingt-cinq pièces. La bonne taille n'est pas
 devinable de l'extérieur — elle dépend de la latence entre la fonction et sa
 base — d'où la décision côté boutique.
 
+### 2.8 bis. `POST /api/sync/app-event` — une pièce, tout de suite
+
+Le balayage quotidien relit l'inventaire ENTIER pour retrouver ce qui a bougé.
+C'est ce qu'il faut quand on ne sait pas quoi chercher, et c'est absurde quand
+on le sait : mille lignes lues pour une pièce ajoutée, et jusqu'à vingt-quatre
+heures d'attente.
+
+Cette route accepte un **webhook de base Supabase** posé sur la table
+`articles` de l'application. Elle traite UNE ligne, avec la même traduction et
+la même écriture que tout le reste — donc aucun rangement ne diffère.
+
+Même clé que l'import par lot (`SYNC_API_KEY`, en-tête `Authorization: Bearer`)
+: c'est le même droit, écrire dans le catalogue, et un second secret pour le
+même droit serait un secret de plus à faire tourner et à oublier.
+
+**Elle ne remplace pas le balayage, elle le complète.** Un webhook se perd —
+réseau, déploiement en cours — et le passage quotidien rattrape alors ce qui
+manque. Une notification perdue devient un retard, jamais une pièce oubliée.
+
+| Événement | Effet |
+|---|---|
+| `INSERT`, `UPDATE` | la pièce est créée ou mise à jour |
+| `DELETE` | la pièce est **archivée**, jamais effacée : son prix et son libellé figurent peut-être déjà sur une facture |
+
+**Le filtre d'espace de travail est vérifié ICI, sur la ligne reçue.** La base
+de l'application est multi-locataire, et un webhook posé sur la table entière —
+le réglage par défaut — enverrait les lignes de tout le monde. On ne peut pas
+s'en remettre au réglage : il vit dans une console tierce, se modifie sans que
+ce dépôt le sache, et personne ne relit un filtre posé une fois. Sans
+`APP_WORKSPACE_ID` configuré, la route **refuse tout** plutôt que d'accepter
+n'importe quoi.
+
+Une ligne ignorée ou incomplète répond `200` : l'émetteur n'a rien fait de mal,
+et un webhook qui reçoit une erreur réessaie — indéfiniment, sur une ligne
+qu'on ignore par construction.
+
+---
+
 **Deux refus globaux disent que la boutique n'est pas prête**, et ils ne se
 réparent pas au même endroit. Tous deux répondent `503` avec `results: []` :
 
