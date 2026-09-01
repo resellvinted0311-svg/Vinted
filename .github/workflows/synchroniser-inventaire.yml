@@ -69,7 +69,11 @@ jobs:
           APP_SUPABASE_URL: ${{ secrets.APP_SUPABASE_URL }}
           APP_SUPABASE_SERVICE_KEY: ${{ secrets.APP_SUPABASE_SERVICE_KEY }}
           APP_WORKSPACE_ID: ${{ secrets.APP_WORKSPACE_ID }}
-          BOUTIQUE_URL: ${{ secrets.BOUTIQUE_URL }}
+          # L'adresse du site n'est PAS un secret : elle est imprimée sur
+          # chaque page. En exiger une la faisait passer pour confidentielle et
+          # ajoutait une manipulation pour rien. Un secret la remplace tout de
+          # même, pour une boutique déployée ailleurs.
+          BOUTIQUE_URL: ${{ secrets.BOUTIQUE_URL || 'https://vinted-iota.vercel.app' }}
           SYNC_API_KEY: ${{ secrets.SYNC_API_KEY }}
         run: |
           if [ "${{ inputs.essai_a_blanc }}" = "true" ]; then

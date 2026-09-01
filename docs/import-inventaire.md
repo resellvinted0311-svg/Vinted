@@ -26,10 +26,15 @@ les trois heures**, et à la demande depuis l'onglet *Actions* du dépôt. Plus
 rien à faire depuis un poste : une pièce mise en vente dans l'application paraît
 au plus tard trois heures après, une pièce vendue disparaît dans le même délai.
 
-Cinq secrets à poser une fois dans *Settings → Secrets and variables → Actions* :
-`APP_SUPABASE_URL`, `APP_SUPABASE_SERVICE_KEY`, `APP_WORKSPACE_ID`,
-`BOUTIQUE_URL`, `SYNC_API_KEY`. Ce sont exactement les variables que le script
-attendait sur un poste.
+Quatre secrets à poser une fois dans *Settings → Secrets and variables →
+Actions* : `APP_SUPABASE_URL`, `APP_SUPABASE_SERVICE_KEY`, `APP_WORKSPACE_ID`,
+`SYNC_API_KEY`. Ce sont les variables que le script attendait sur un poste,
+moins une.
+
+`BOUTIQUE_URL` n'en est pas un : l'adresse du site est imprimée sur chacune de
+ses pages. En exiger un secret la faisait passer pour confidentielle et ajoutait
+une manipulation pour rien. Un secret du même nom la remplace tout de même, pour
+une boutique déployée ailleurs.
 
 **La clé de l'application ne rejoint PAS l'environnement de la boutique** — voir
 la section suivante, qui reste vraie. Les secrets d'Actions et les variables
