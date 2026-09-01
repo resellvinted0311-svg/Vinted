@@ -351,14 +351,38 @@ describe('le statut envoyé', () => {
 describe('les pièces écartées avant l’envoi', () => {
   it('nomme le champ qui manque, pour que le rapport soit lisible', () => {
     expect(traduire(ligne({ article: '   ' }))).toEqual({ refus: 'sans-titre' })
-    expect(traduire(ligne({ article: 'Lot vintage' }))).toEqual({
-      refus: 'categorie-indeduisible',
-    })
     expect(traduire(ligne({ etat: '' }))).toEqual({ refus: 'sans-etat' })
     expect(traduire(ligne({ taille: '' }))).toEqual({ refus: 'sans-taille' })
     expect(traduire(ligne({ prix_annonce: null }))).toEqual({ refus: 'sans-prix' })
-    expect(traduire(ligne({ prix_annonce: '0' }))).toEqual({ refus: 'sans-prix' })
     expect(traduire(ligne({ prix_achat: null }))).toEqual({ refus: 'sans-cout' })
+  })
+
+  it('joint la VALEUR fautive quand il y en a une', () => {
+    /**
+     * Le motif seul ne distingue pas une colonne vide d'un libellé que la table
+     * ne connaît pas. Ce sont deux corrections opposées — remplir une donnée, ou
+     * élargir une liste — et il a fallu aller lire la ligne en base pour
+     * trancher, la première fois que le cas s'est présenté.
+     */
+    expect(traduire(ligne({ etat: 'Comme neuf' }))).toEqual({
+      refus: 'sans-etat',
+      valeur: 'Comme neuf',
+    })
+    expect(traduire(ligne({ article: 'Lot vintage' }))).toEqual({
+      refus: 'categorie-indeduisible',
+      valeur: 'Lot vintage',
+    })
+    expect(traduire(ligne({ prix_annonce: '0' }))).toEqual({
+      refus: 'sans-prix',
+      valeur: '0',
+    })
+  })
+
+  it('n’attache AUCUNE valeur quand la colonne est vide', () => {
+    // Une valeur absente ne doit pas se présenter comme une valeur fautive :
+    // c'est justement l'autre cause, et la confondre enverrait chercher un
+    // libellé inexistant.
+    expect(traduire(ligne({ etat: '   ' }))).not.toHaveProperty('valeur')
   })
 
   it('n’écarte PAS un sac au motif qu’il n’a pas de taille', () => {

@@ -12,6 +12,7 @@ import {
   type AppRow,
 } from '@/lib/sync/app-event'
 import { loadSyncContext, syncArticle } from '@/lib/sync/articles'
+import { codeDePanne } from '@/lib/sync/pull'
 import { authenticateSync } from '@/lib/sync/auth'
 import { traduire, type LigneInventaire } from '@/lib/sync/inventaire-app'
 
@@ -147,10 +148,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const traduite = traduire(versLigneInventaire(decision.ligne))
   if ('refus' in traduite) {
-    // La pièce est incomplète du côté de l'application — libellé qui ne dit pas
-    // le vêtement, état, taille ou prix manquant. Ce n'est pas une panne : on le
-    // dit, sans réessayer.
-    return reponse(200, { ok: true, skipped: traduite.refus })
+    /**
+     * La pièce est incomplète du côté de l'application. Ce n'est pas une panne :
+     * on le dit, sans réessayer.
+     *
+     * Et on dit AVEC QUOI. « sans-etat » seul ne distingue pas une colonne vide
+     * d'un libellé que la table ne connaît pas — deux corrections opposées :
+     * remplir une donnée, ou élargir une liste. Il a fallu aller lire la ligne
+     * en base pour trancher, la première fois.
+     *
+     * La valeur ne sort que vers un appelant AUTHENTIFIÉ, qui est par
+     * construction le propriétaire de la donnée : on lui montre ce qu'il vient
+     * lui-même de saisir.
+     */
+    return reponse(200, {
+      ok: true,
+      skipped: traduite.refus,
+      ...(traduite.valeur ? { value: traduite.valeur } : {}),
+    })
   }
 
   /**
@@ -183,9 +198,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return reponse(503, { ok: false, reason: 'shop-not-configured' })
     }
 
-    // Le message part au journal, jamais dans la réponse : il peut porter un
-    // nom de table, une requête, une valeur.
+    /**
+     * Le CODE de la panne remonte, son MESSAGE non.
+     *
+     * Un message d'exception porte des noms de table, des requêtes, parfois des
+     * valeurs : il part au journal. Le code — `P2002`, `P2028`, `P2024` — ne dit
+     * que la nature de la panne, et c'est exactement ce qu'il faut pour la
+     * corriger.
+     *
+     * Sans lui, un `internal-error` obligeait à aller lire les journaux de
+     * l'hébergeur — auxquels on n'a pas toujours accès. La réponse, elle, est
+     * consignée par l'appelant : c'est là qu'il faut mettre de quoi diagnostiquer.
+     */
     logger.failure('sync.app_event_failed', error)
-    return reponse(500, { ok: false, reason: 'internal-error' })
+    return reponse(500, {
+      ok: false,
+      reason: 'internal-error',
+      code: codeDePanne(error),
+    })
   }
 }

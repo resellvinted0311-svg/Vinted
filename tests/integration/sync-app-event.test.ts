@@ -281,3 +281,100 @@ describe('la décision, isolée', () => {
     ).toEqual({ action: 'ignore', motif: 'autre-espace' })
   })
 })
+
+describe('ce qu’une pièce écartée fait savoir', () => {
+  it('nomme la VALEUR fautive, pas seulement le motif', async () => {
+    /**
+     * « sans-etat » seul ne distingue pas une colonne vide d'un libellé que la
+     * table ne connaît pas. Ce sont deux corrections opposées — remplir une
+     * donnée, ou élargir une liste — et il a fallu aller lire la ligne en base
+     * pour trancher, la première fois que le cas s'est présenté.
+     */
+    const reponse = await post({
+      type: 'INSERT',
+      table: 'articles',
+      record: ligne(40, { etat: 'Comme neuf' }),
+    })
+
+    expect(await reponse.json()).toMatchObject({
+      skipped: 'sans-etat',
+      value: 'Comme neuf',
+    })
+  })
+
+  it('n’invente RIEN quand la colonne est vide', async () => {
+    // Une valeur absente ne doit pas se présenter comme une valeur fautive :
+    // c'est justement l'autre cause, et la confondre enverrait chercher un
+    // libellé inexistant.
+    const corps = await (
+      await post({
+        type: 'INSERT',
+        table: 'articles',
+        record: ligne(41, { etat: '' }),
+      })
+    ).json()
+
+    expect(corps).toMatchObject({ skipped: 'sans-etat' })
+    expect(corps).not.toHaveProperty('value')
+  })
+
+  it('nomme le libellé quand la catégorie ne se déduit pas', async () => {
+    const corps = await (
+      await post({
+        type: 'INSERT',
+        table: 'articles',
+        record: ligne(42, { article: 'Lot vintage années 90' }),
+      })
+    ).json()
+
+    expect(corps).toMatchObject({
+      skipped: 'categorie-indeduisible',
+      value: 'Lot vintage années 90',
+    })
+  })
+})
+
+describe('une panne', () => {
+  it('remonte son CODE, jamais son message', async () => {
+    /**
+     * `internal-error` seul obligeait à aller lire les journaux de l'hébergeur
+     * — auxquels on n'a pas toujours accès. Or la réponse, elle, est consignée
+     * par l'appelant : c'est là qu'il faut mettre de quoi diagnostiquer.
+     *
+     * On force la panne en retirant la configuration de prix, ce qui fait
+     * échouer la lecture du contexte comme le ferait n'importe quelle autre
+     * panne de base.
+     */
+    const avant = await prisma.setting.findUniqueOrThrow({
+      where: { key: 'minMarginCents' },
+      select: { value: true },
+    })
+
+    await prisma.setting.update({
+      where: { key: 'minMarginCents' },
+      data: { value: 'pas-un-nombre' },
+    })
+
+    try {
+      const reponse = await post({
+        type: 'INSERT',
+        table: 'articles',
+        record: ligne(50),
+      })
+      const corps = await reponse.json()
+
+      // Une configuration illisible se lit comme telle : ce n'est pas une
+      // panne interne, et la confondre enverrait chercher au mauvais endroit.
+      expect(reponse.status).toBe(503)
+      expect(corps).toMatchObject({ reason: 'shop-not-configured' })
+
+      // Et jamais la valeur fautive, qui pourrait être un chiffre d'affaires.
+      expect(JSON.stringify(corps)).not.toContain('pas-un-nombre')
+    } finally {
+      await prisma.setting.update({
+        where: { key: 'minMarginCents' },
+        data: { value: avant.value as never },
+      })
+    }
+  })
+})

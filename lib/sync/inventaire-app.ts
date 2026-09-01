@@ -359,17 +359,56 @@ export interface PieceTraduite {
   tronquee: boolean
 }
 
+/**
+ * Un refus, et la VALEUR qui l'a provoqué.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi le motif seul ne suffit pas
+ * ---------------------------------------------------------------------------
+ * « sans-etat » ne dit pas si la colonne est vide ou si elle porte un libellé
+ * que la table ne connaît pas — et ce sont deux corrections opposées : remplir
+ * une donnée manquante, ou élargir une liste de correspondances.
+ *
+ * Le cas qui l'a imposé : une pièce ajoutée dans l'application était écartée, et
+ * la réponse disait seulement « sans-etat ». Il a fallu aller lire la ligne en
+ * base pour découvrir laquelle des deux causes s'appliquait.
+ *
+ * La valeur est TRONQUÉE et n'est renvoyée qu'à un appelant authentifié, qui
+ * est par construction le propriétaire de la donnée : il s'agit de lui montrer
+ * ce qu'il vient lui-même de saisir.
+ */
+export interface RefusDetaille {
+  refus: Refus
+  /** Le libellé fautif, tel qu'il est en base. Absent quand rien n'a été saisi. */
+  valeur?: string
+}
+
+/** La valeur fautive, bornée : un message n'est pas un déversoir. */
+function extrait(valeur: string | number | null | undefined): string | undefined {
+  const texte = String(valeur ?? '').trim()
+  return texte === '' ? undefined : texte.slice(0, 80)
+}
+
+function valeurOuRien(
+  valeur: string | number | null | undefined,
+): { valeur?: string } {
+  const texte = extrait(valeur)
+  return texte === undefined ? {} : { valeur: texte }
+}
+
 export function traduire(
   ligne: LigneInventaire,
-): PieceTraduite | { refus: Refus } {
+): PieceTraduite | RefusDetaille {
   const titre = (ligne.article ?? '').trim()
   if (titre === '') return { refus: 'sans-titre' }
 
   const categorie = versCategorie(titre)
-  if (categorie === null) return { refus: 'categorie-indeduisible' }
+  if (categorie === null) {
+    return { refus: 'categorie-indeduisible', ...valeurOuRien(titre) }
+  }
 
   const etat = versEtat(ligne.etat)
-  if (etat === null) return { refus: 'sans-etat' }
+  if (etat === null) return { refus: 'sans-etat', ...valeurOuRien(ligne.etat) }
 
   /**
    * Un sac n'a pas de taille, et l'absence n'est pas une donnée manquante.
@@ -399,10 +438,14 @@ export function traduire(
   if (taille === '') return { refus: 'sans-taille' }
 
   const priceCents = versCentimes(ligne.prix_annonce)
-  if (priceCents === null || priceCents <= 0) return { refus: 'sans-prix' }
+  if (priceCents === null || priceCents <= 0) {
+    return { refus: 'sans-prix', ...valeurOuRien(ligne.prix_annonce) }
+  }
 
   const costCents = versCentimes(ligne.prix_achat)
-  if (costCents === null || costCents < 0) return { refus: 'sans-cout' }
+  if (costCents === null || costCents < 0) {
+    return { refus: 'sans-cout', ...valeurOuRien(ligne.prix_achat) }
+  }
 
   /**
    * Vendue ailleurs, ou retirée de la vente : la pièce quitte le catalogue.
