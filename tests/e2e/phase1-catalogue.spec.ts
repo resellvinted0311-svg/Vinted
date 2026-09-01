@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 
+import { PAGE_SIZE } from '@/lib/domain/catalogue'
+
 /**
  * Livrable de Phase 1 : naviguer dans 50 articles en 8 langues.
  *
@@ -68,7 +70,17 @@ test.describe('Catalogue', () => {
     expect(await brandBoxes.count()).toBeGreaterThan(1)
   })
 
-  test('la pagination par curseur ne répète pas d’article', async ({ page }) => {
+  test('« Voir la suite » AJOUTE les pièces sous les précédentes', async ({
+    page,
+  }) => {
+    /**
+     * Ce que le lien faisait, et pourquoi ça ne convenait pas.
+     *
+     * Il menait à une page 2 : la grille était remplacée, et les trente
+     * premières pièces disparaissaient. Sur un catalogue de friperie, où l'on
+     * choisit en comparant, comparer deux articles vus à quelques rangées
+     * d'écart obligeait à revenir en arrière et à faire défiler à nouveau.
+     */
     await page.goto('/fr/catalogue?tri=prix_asc')
 
     // Comparaison sur les URL, pas sur les titres : plusieurs articles
@@ -79,16 +91,53 @@ test.describe('Catalogue', () => {
         links.map((link) => (link as HTMLAnchorElement).pathname),
       )
 
-    const firstPage = await hrefs()
-    const more = page.getByRole('link', { name: 'Voir la suite' })
+    const premier = await hrefs()
+    expect(premier.length).toBe(PAGE_SIZE)
 
-    expect(await more.count()).toBeGreaterThan(0)
+    const more = page.getByRole('link', { name: 'Voir la suite' })
+    expect(await more.count()).toBe(1)
+    await more.click()
+
+    await expect
+      .poll(async () => (await hrefs()).length)
+      .toBeGreaterThan(premier.length)
+
+    const apres = await hrefs()
+
+    // Les premières sont TOUJOURS là : c'est tout l'objet du changement.
+    for (const href of premier) expect(apres).toContain(href)
+
+    // Et aucune n'est servie deux fois — la pagination par curseur reste juste.
+    expect(new Set(apres).size).toBe(apres.length)
+
+    // L'adresse n'a pas bougé : on n'a pas changé de page, on a rallongé
+    // celle-ci. Un rechargement ne doit pas ramener le visiteur au lot 2 seul.
+    await expect(page).not.toHaveURL(/apres=/)
+  })
+})
+
+test.describe('Catalogue — « Voir la suite » sans JavaScript', () => {
+  test.use({ javaScriptEnabled: false })
+
+  test('reste un LIEN, qui mène au lot suivant', async ({ page }) => {
+    /**
+     * L'ajout est une amélioration, pas un remplacement : le lien demeure un
+     * lien. Sans JavaScript — et pour un moteur de recherche, qui suit
+     * `rel="next"` — le catalogue reste parcourable en entier.
+     *
+     * Sans cette garantie, le référencement du catalogue s'arrêterait aux
+     * trente premières pièces, et les autres n'existeraient pour personne.
+     */
+    await page.goto('/fr/catalogue?tri=prix_asc')
+
+    const more = page.getByRole('link', { name: 'Voir la suite' })
+    await expect(more).toHaveAttribute('rel', 'next')
+
     await more.click()
     await expect(page).toHaveURL(/apres=/)
 
-    const secondPage = await hrefs()
-    expect(secondPage.length).toBeGreaterThan(0)
-    expect(secondPage.filter((href) => firstPage.includes(href))).toEqual([])
+    const titres = page.locator('article h3 a')
+    expect(await titres.count()).toBeGreaterThan(0)
   })
 })
 

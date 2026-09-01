@@ -55,6 +55,7 @@
     "noResults": "Geen items komen overeen met deze filters.",
     "noResultsHint": "Verwijder een filter om ruimer te zoeken.",
     "loadMore": "Meer tonen",
+    "loadingMore": "Laden…",
     "sort": "Sorteren",
     "sortOptions": {
       "nouveautes": "Nieuwste",

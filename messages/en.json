@@ -55,6 +55,7 @@
     "noResults": "No items match these filters.",
     "noResultsHint": "Remove a filter to widen the search.",
     "loadMore": "Show more",
+    "loadingMore": "Loading…",
     "sort": "Sort",
     "sortOptions": {
       "nouveautes": "Newest",

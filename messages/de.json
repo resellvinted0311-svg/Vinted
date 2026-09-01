@@ -55,6 +55,7 @@
     "noResults": "Keine Artikel entsprechen diesen Filtern.",
     "noResultsHint": "Entfernen Sie einen Filter, um die Suche zu erweitern.",
     "loadMore": "Mehr anzeigen",
+    "loadingMore": "Wird geladen…",
     "sort": "Sortieren",
     "sortOptions": {
       "nouveautes": "Neuheiten",

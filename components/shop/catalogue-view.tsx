@@ -1,5 +1,4 @@
 import { getTranslations } from 'next-intl/server'
-import { Link } from '@/lib/i18n/navigation'
 import { listArticles, getFacets } from '@/lib/db/queries/articles'
 import {
   filtersToSearchParams,
@@ -12,6 +11,7 @@ import {
   GRID_IMAGE_SIZES,
 } from './article-card'
 import { CatalogueFiltersPanel } from './catalogue-filters'
+import { LoadMore } from './load-more'
 import { ActiveFilterChips } from './active-filter-chips'
 
 /**
@@ -84,8 +84,16 @@ export async function CatalogueView({
     }
   }
 
-  const nextHref = page.nextCursor
-    ? `${basePath}?${filtersToSearchParams(chipFilters, sort, page.nextCursor).toString()}`
+  /**
+   * La chaîne de requête du lot suivant — pas une adresse complète.
+   *
+   * Le chemin est ajouté par le composant client, à partir de `basePath` qui
+   * vient d'ici. L'action serveur, elle, ne reçoit et ne renvoie QUE des
+   * chaînes de requête : aucun chemin ne transite par le navigateur, donc
+   * aucun ne peut être détourné.
+   */
+  const requeteSuivante = page.nextCursor
+    ? filtersToSearchParams(chipFilters, sort, page.nextCursor).toString()
     : null
 
   return (
@@ -175,19 +183,23 @@ export async function CatalogueView({
                     priority={index < 4}
                   />
                 ))}
+                {/*
+                  DANS la grille, et non après elle : les fiches ajoutées
+                  doivent être les sœurs des premières. Rendues dans un second
+                  conteneur, elles recommenceraient les colonnes, et la
+                  jointure se verrait dès que la dernière rangée est
+                  incomplète. Le bouton, lui, occupe une rangée entière.
+                */}
+                {requeteSuivante ? (
+                  <LoadMore
+                    basePath={basePath}
+                    requete={requeteSuivante}
+                    locale={locale}
+                    libelle={t('loadMore')}
+                    libelleEnCours={t('loadingMore')}
+                  />
+                ) : null}
               </ArticleGrid>
-
-              {nextHref ? (
-                <div className="mt-10 flex justify-center">
-                  <Link
-                    href={nextHref}
-                    rel="next"
-                    className="lift label-reg inline-flex min-h-[44px] items-center rounded-input border-[1.5px] border-rule bg-surface px-6 text-ink"
-                  >
-                    {t('loadMore')}
-                  </Link>
-                </div>
-              ) : null}
             </div>
           )}
         </div>

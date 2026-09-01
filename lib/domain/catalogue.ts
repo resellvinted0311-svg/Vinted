@@ -11,8 +11,18 @@ export type SortKey = (typeof SORT_KEYS)[number]
 
 export const DEFAULT_SORT: SortKey = 'nouveautes'
 
-/** Nombre d'articles par page. Volontairement modeste sur mobile. */
-export const PAGE_SIZE = 24
+/**
+ * Nombre d'articles par lot.
+ *
+ * Trente, et non plus vingt-quatre : c'est le rythme demandé, et il tombe juste
+ * sur les trois largeurs de la grille — deux, trois et quatre colonnes — donc
+ * aucune rangée incomplète ne vient couper la lecture avant le bouton.
+ *
+ * « Par lot » et non « par page » depuis que « Voir la suite » ajoute les
+ * pièces SOUS les précédentes au lieu de changer de page. Le mot compte : rien
+ * ne remplace rien, tout s'accumule.
+ */
+export const PAGE_SIZE = 30
 
 export interface CatalogueFilters {
   categorySlugs: string[]
