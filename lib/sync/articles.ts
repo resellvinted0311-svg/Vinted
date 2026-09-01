@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { createHash } from 'node:crypto'
+
 import { Prisma } from '@prisma/client'
 
 import { prisma } from '@/lib/db/client'
@@ -84,6 +86,11 @@ import {
 export type SyncAction =
   | 'created'
   | 'updated'
+  /**
+   * La pièce existe déjà et l'application n'a RIEN changé : la boutique ne
+   * l'a pas touchée. Voir `empreinte`.
+   */
+  | 'unchanged'
   | 'rejected'
   | 'would-create'
   | 'would-update'
@@ -167,6 +174,60 @@ export const SYNC_SETTING_KEYS = [
   'offersOpenAfterDays',
   'floorShippingZoneCode',
 ] as const satisfies readonly SettingKey[]
+
+/**
+ * L'empreinte de ce que l'application vient d'envoyer.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce qu'elle rend possible : ne rien faire
+ * ---------------------------------------------------------------------------
+ * Elle est comparée à celle du dernier envoi. Identique, la pièce n'est pas
+ * réécrite du tout — ni article, ni traductions, ni mesures.
+ *
+ * Le gain n'est pas seulement de la vitesse. `priceCents` était réécrit à
+ * chaque passage avec le prix de l'application : une baisse automatique décidée
+ * par la boutique était donc ANNULÉE à la synchronisation suivante, sans que
+ * rien ne le signale. Tant qu'on synchronisait à la main, cela passait
+ * inaperçu ; toutes les trois heures, la baisse automatique n'aurait jamais
+ * existé.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi les clés sont TRIÉES
+ * ---------------------------------------------------------------------------
+ * `JSON.stringify` suit l'ordre d'insertion. Deux envois identiques sérialisés
+ * dans deux ordres différents donneraient deux empreintes différentes, et la
+ * pièce serait réécrite à chaque fois — la protection ne protégerait rien, sans
+ * qu'aucun test évident ne le montre.
+ *
+ * Le poids RÉSOLU entre dans l'empreinte, et non celui reçu : une pièce sans
+ * poids prend celui de sa catégorie, et changer ce défaut doit provoquer une
+ * réécriture.
+ */
+export function empreinte(
+  input: SyncArticleInput,
+  weightGrams: number,
+): string {
+  const stable = JSON.stringify(
+    { ...input, weightGrams },
+    (_cle, valeur: unknown) => {
+      if (
+        valeur === null ||
+        typeof valeur !== 'object' ||
+        Array.isArray(valeur)
+      ) {
+        return valeur
+      }
+
+      const trie: Record<string, unknown> = {}
+      for (const cle of Object.keys(valeur as object).sort()) {
+        trie[cle] = (valeur as Record<string, unknown>)[cle]
+      }
+      return trie
+    },
+  )
+
+  return createHash('sha256').update(stable).digest('hex')
+}
 
 /**
  * Peut-on entamer une pièce de plus sans risquer de se faire tuer ?
@@ -391,6 +452,7 @@ export async function syncArticle(
       status: true,
       publishedAt: true,
       reservedUntil: true,
+      syncFingerprint: true,
       images: {
         orderBy: { position: 'asc' },
         select: { sourceUrl: true },
@@ -425,6 +487,30 @@ export async function syncArticle(
         'pièce en cours de paiement : l’archivage est refusé jusqu’à l’échéance du verrou',
         { lockedUntil: existing.reservedUntil?.toISOString() },
       )
+    }
+  }
+
+  // ---- Rien n'a changé ---------------------------------------------------
+  //
+  // Placé APRÈS les refus : une pièce vendue doit répondre `already-sold`, et
+  // une pièce en cours de paiement `locked-by-checkout`, même si l'application
+  // n'a rien modifié. Taire ces deux-là derrière un « inchangé » ferait croire
+  // à l'application que son archivage a été pris en compte.
+  //
+  // Placé AVANT l'essai à blanc, qui doit annoncer ce que l'écriture ferait
+  // vraiment — c'est-à-dire, ici, rien.
+  const marque = empreinte(input, weightGrams)
+
+  if (existing && existing.syncFingerprint === marque) {
+    return {
+      externalId: input.externalId,
+      action: 'unchanged',
+      sku: existing.sku,
+      slug: existing.slug,
+      url: publicUrlFor(existing.slug),
+      ...economics,
+      imagesPending: false,
+      published: existing.status === 'AVAILABLE',
     }
   }
 
@@ -469,8 +555,8 @@ export async function syncArticle(
 
   // ---- Écriture ----------------------------------------------------------
   return existing
-    ? updateArticle(input, existing, category, economics, weightGrams, context)
-    : createArticle(input, category, economics, weightGrams, context)
+    ? updateArticle(input, existing, category, economics, weightGrams, context, marque)
+    : createArticle(input, category, economics, weightGrams, context, marque)
 }
 
 interface Economics {
@@ -551,6 +637,7 @@ async function createArticle(
   economics: Economics,
   weightGrams: number,
   context: SyncContext,
+  marque: string,
 ): Promise<SyncResult> {
   // Attend-elle des visuels ? C'est la question qui décide de tout ici.
   //
@@ -591,6 +678,7 @@ async function createArticle(
         sku,
         slug,
         externalId: input.externalId,
+        syncFingerprint: marque,
         brandId,
         ...attributeFields(input, category.id, weightGrams),
         floorPriceCents: economics.floorPriceCents,
@@ -650,6 +738,7 @@ interface ExistingArticle {
   slug: string
   status: string
   publishedAt: Date | null
+  syncFingerprint: string | null
   images: readonly { sourceUrl: string | null }[]
 }
 
@@ -660,6 +749,7 @@ async function updateArticle(
   economics: Economics,
   weightGrams: number,
   context: SyncContext,
+  marque: string,
 ): Promise<SyncResult> {
   return prisma.$transaction(async (tx) => {
     const brandId = await resolveBrandId(tx, input.brandName)
@@ -716,6 +806,7 @@ async function updateArticle(
       where: { id: existing.id },
       data: {
         brandId,
+        syncFingerprint: marque,
         ...attributeFields(input, category.id, weightGrams),
         floorPriceCents: economics.floorPriceCents,
         descriptionIsGenerated: input.description === undefined,

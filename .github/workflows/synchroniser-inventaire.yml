@@ -1,0 +1,79 @@
+# Synchronisation automatique de l'inventaire vers la boutique.
+#
+# ---------------------------------------------------------------------------
+# Pourquoi ici, et pas dans la boutique
+# ---------------------------------------------------------------------------
+# La boutique ne doit JAMAIS détenir la clé de service de l'application : cette
+# base est multi-locataire, et une intrusion sur la boutique deviendrait une
+# fuite des stocks de tous ses autres clients. C'est écrit dans
+# `docs/synchronisation.md`, et cela ne change pas.
+#
+# Cette tâche joue donc exactement le rôle qu'un poste de travail jouait : elle
+# lit l'inventaire, traduit, et appelle la route publique avec la clé de
+# synchronisation. La clé de l'application vit dans les secrets d'Actions, pas
+# dans l'environnement d'exécution du site — ce sont deux surfaces différentes.
+#
+# ---------------------------------------------------------------------------
+# Pourquoi toutes les trois heures
+# ---------------------------------------------------------------------------
+# Depuis l'empreinte de synchronisation, un passage sans changement n'écrit
+# rien : il lit les pièces et s'arrête là. Le coût d'un passage à vide est donc
+# faible, ce qui permet une cadence courte sans épuiser les minutes d'Actions.
+#
+# Une pièce mise en vente dans l'application paraît donc au plus tard trois
+# heures après ; une pièce vendue disparaît dans le même délai.
+name: Synchroniser l’inventaire
+
+on:
+  schedule:
+    # Toutes les trois heures. L'heure est en UTC, ce qui n'a aucune importance
+    # ici : la tâche est périodique, pas quotidienne.
+    - cron: '0 */3 * * *'
+  # Le bouton « Run workflow » de l'onglet Actions. C'est lui qui sert au tout
+  # premier import, et à forcer un rattrapage sans attendre l'heure suivante.
+  workflow_dispatch:
+    inputs:
+      essai_a_blanc:
+        description: 'Essai à blanc (n’écrit rien dans la boutique)'
+        type: boolean
+        default: false
+
+# Jamais deux passages en même temps : ils écriraient les mêmes pièces, et le
+# second se ferait refuser au débit après que le premier a déjà écrit.
+concurrency:
+  group: synchroniser-inventaire
+  cancel-in-progress: false
+
+jobs:
+  synchroniser:
+    runs-on: ubuntu-latest
+    # Le premier import écrit plus de mille pièces, en respectant la cadence
+    # imposée par le débit de la boutique. Les suivants sont bien plus courts.
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `--ignore-scripts` : le script d'import ne touche pas la base de la
+      # boutique et n'a donc pas besoin du client Prisma. L'éviter retire une
+      # minute d'installation à chaque passage.
+      - run: npm ci --ignore-scripts
+
+      - name: Importer l’inventaire
+        env:
+          APP_SUPABASE_URL: ${{ secrets.APP_SUPABASE_URL }}
+          APP_SUPABASE_SERVICE_KEY: ${{ secrets.APP_SUPABASE_SERVICE_KEY }}
+          APP_WORKSPACE_ID: ${{ secrets.APP_WORKSPACE_ID }}
+          BOUTIQUE_URL: ${{ secrets.BOUTIQUE_URL }}
+          SYNC_API_KEY: ${{ secrets.SYNC_API_KEY }}
+        run: |
+          if [ "${{ inputs.essai_a_blanc }}" = "true" ]; then
+            npx tsx scripts/importer-inventaire.ts
+          else
+            npx tsx scripts/importer-inventaire.ts --pour-de-vrai
+          fi

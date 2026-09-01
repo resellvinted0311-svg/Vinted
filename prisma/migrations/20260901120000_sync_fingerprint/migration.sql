@@ -1,0 +1,11 @@
+-- Empreinte de la dernière charge reçue de l'application de gestion.
+--
+-- Elle permet à la synchronisation de NE RIEN ÉCRIRE quand rien n'a changé.
+-- Sans elle, chaque passage réécrivait `priceCents` avec le prix de
+-- l'application — donc annulait toute baisse automatique décidée par la
+-- boutique, sans trace nulle part.
+--
+-- Nullable, et sans valeur par défaut : les pièces déjà importées n'en ont pas.
+-- Elles seront réécrites une fois, puis marquées. Un défaut aurait été pire —
+-- il ferait croire à une empreinte connue et sauterait la première mise à jour.
+ALTER TABLE "Article" ADD COLUMN "syncFingerprint" TEXT;

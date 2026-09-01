@@ -19,6 +19,38 @@ poussera d'elle-même, le script devient inutile et se supprime.
 
 ---
 
+## Automatique : la tâche planifiée GitHub
+
+`.github/workflows/synchroniser-inventaire.yml` lance ce même script **toutes
+les trois heures**, et à la demande depuis l'onglet *Actions* du dépôt. Plus
+rien à faire depuis un poste : une pièce mise en vente dans l'application paraît
+au plus tard trois heures après, une pièce vendue disparaît dans le même délai.
+
+Cinq secrets à poser une fois dans *Settings → Secrets and variables → Actions* :
+`APP_SUPABASE_URL`, `APP_SUPABASE_SERVICE_KEY`, `APP_WORKSPACE_ID`,
+`BOUTIQUE_URL`, `SYNC_API_KEY`. Ce sont exactement les variables que le script
+attendait sur un poste.
+
+**La clé de l'application ne rejoint PAS l'environnement de la boutique** — voir
+la section suivante, qui reste vraie. Les secrets d'Actions et les variables
+d'exécution du site sont deux surfaces distinctes : la tâche planifiée occupe
+exactement la place qu'occupait le poste de travail, ni plus ni moins.
+
+### Pourquoi une cadence courte ne coûte presque rien
+
+Depuis l'empreinte de synchronisation (`Article.syncFingerprint`), un passage
+sans changement **n'écrit rien** : la boutique lit la pièce, constate que
+l'application n'a rien modifié, et s'arrête là. Une douzaine d'allers-retours
+par pièce deviennent un seul.
+
+Ce n'est pas qu'une économie. `priceCents` était réécrit à chaque passage avec
+le prix de l'application : **une baisse automatique décidée par la boutique
+était annulée à la synchronisation suivante**, sans trace. À la main, cela
+passait inaperçu ; toutes les trois heures, la baisse automatique n'aurait
+jamais existé.
+
+---
+
 ## Ce qu'il ne fait pas, délibérément
 
 **Il ne donne pas à la boutique l'accès à l'inventaire.** La base de

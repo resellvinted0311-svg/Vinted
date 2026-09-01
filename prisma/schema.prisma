@@ -355,6 +355,24 @@ model Article {
   externalId       String?   @unique
   /// Dernière synchronisation réussie depuis l'application de gestion.
   externalSyncedAt DateTime?
+  /// Empreinte de ce que l'application a envoyé la dernière fois.
+  ///
+  /// Sert à NE RIEN FAIRE quand rien n'a changé, ce qui règle deux problèmes
+  /// que la synchronisation automatique aurait rendus permanents.
+  ///
+  /// Le premier est un coût : réécrire à l'identique mille pièces à chaque
+  /// passage, c'est une douzaine d'allers-retours par pièce pour aucun
+  /// changement.
+  ///
+  /// Le second est un DÉFAUT. `priceCents` est réécrit à chaque passage avec le
+  /// prix de l'application ; une baisse automatique décidée par la boutique
+  /// était donc annulée à la synchronisation suivante, sans trace. Tant qu'on
+  /// synchronisait à la main, cela passait inaperçu. Toutes les trois heures,
+  /// la baisse automatique n'aurait tout simplement jamais existé.
+  ///
+  /// Nulle sur les pièces nées ici, et sur celles importées avant l'empreinte :
+  /// elles seront réécrites une fois, puis marquées.
+  syncFingerprint  String?
 
   /// La description a-t-elle été COMPOSÉE par la boutique, faute d'en recevoir
   /// une ? Le texte est alors strictement factuel — marque, taille, état,

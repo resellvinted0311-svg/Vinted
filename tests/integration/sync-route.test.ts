@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/db/client'
 import { __resetRateLimitForTests } from '@/lib/security/rate-limit'
 import { POST } from '@/app/api/sync/articles/route'
-import { resteAssezDeTemps } from '@/lib/sync/articles'
+import { empreinte, resteAssezDeTemps } from '@/lib/sync/articles'
 
 /**
  * La route d'import, appelée comme l'application de gestion l'appellera.
@@ -326,5 +326,134 @@ describe('resteAssezDeTemps', () => {
         budgetMs: 45_000,
       }),
     ).toBe(false)
+  })
+})
+
+describe('une pièce que l’application n’a pas modifiée', () => {
+  /**
+   * Le défaut que le court-circuit ferme — et que l'automatisation aurait rendu
+   * permanent.
+   *
+   * `priceCents` était réécrit à CHAQUE passage avec le prix de l'application.
+   * Une baisse automatique décidée par la boutique était donc annulée à la
+   * synchronisation suivante, sans trace nulle part. Tant qu'on synchronisait à
+   * la main, cela passait inaperçu ; toutes les trois heures, la baisse
+   * automatique n'aurait tout simplement jamais existé.
+   */
+  it('n’est pas réécrite au second envoi', async () => {
+    const premier = await post({ articles: [article(40)] })
+    expect((await premier.json()).results[0].action).toBe('created')
+
+    const second = await post({ articles: [article(40)] })
+    const corps = await second.json()
+
+    expect(corps.results[0].action).toBe('unchanged')
+    expect(corps.deferred).toBe(0)
+  })
+
+  it('conserve un prix BAISSÉ par la boutique', async () => {
+    await post({ articles: [article(41)] })
+
+    // La baisse automatique, telle que le cron l'applique : la boutique décide
+    // seule, l'application n'en sait rien et continue d'envoyer son prix.
+    await prisma.article.update({
+      where: { externalId: `${PREFIX}41` },
+      data: { priceCents: 2900 },
+    })
+
+    await post({ articles: [article(41)] })
+
+    const apres = await prisma.article.findUniqueOrThrow({
+      where: { externalId: `${PREFIX}41` },
+      select: { priceCents: true },
+    })
+
+    // 2900, et non 3800 : sans le court-circuit, le prix de l'application
+    // écrasait la baisse à chaque passage.
+    expect(apres.priceCents).toBe(2900)
+  })
+
+  it('EST réécrite dès que l’application change quelque chose', async () => {
+    await post({ articles: [article(42)] })
+
+    const second = await post({ articles: [article(42, { priceCents: 4200 })] })
+    const corps = await second.json()
+    expect(corps.results[0].action).toBe('updated')
+
+    const apres = await prisma.article.findUniqueOrThrow({
+      where: { externalId: `${PREFIX}42` },
+      select: { priceCents: true },
+    })
+    expect(apres.priceCents).toBe(4200)
+  })
+
+  it('EST réécrite quand l’application la retire de la vente', async () => {
+    // Le cas qui compte pour la boutiquière : une pièce vendue ailleurs doit
+    // disparaître du catalogue, même si tout le reste est identique.
+    await post({ articles: [article(43)] })
+
+    const second = await post({
+      articles: [article(43, { status: 'ARCHIVED' })],
+    })
+    expect((await second.json()).results[0].action).toBe('updated')
+
+    const apres = await prisma.article.findUniqueOrThrow({
+      where: { externalId: `${PREFIX}43` },
+      select: { status: true },
+    })
+    expect(apres.status).toBe('ARCHIVED')
+  })
+})
+
+describe('l’empreinte', () => {
+  const base = {
+    externalId: 'x-1',
+    title: 'Chemise',
+    categorySlug: 'chemises',
+    condition: 'VERY_GOOD' as const,
+    sizeLabel: 'L',
+    priceCents: 3800,
+    costCents: 900,
+    images: [],
+  }
+
+  it('ne dépend PAS de l’ordre des clés', () => {
+    /**
+     * `JSON.stringify` suit l'ordre d'insertion. Sans tri, deux envois
+     * identiques sérialisés dans deux ordres différents donneraient deux
+     * empreintes différentes — la pièce serait réécrite à chaque passage, et la
+     * protection ne protégerait rien sans que rien ne le montre.
+     */
+    const a = empreinte({ ...base } as never, 320)
+    const b = empreinte(
+      {
+        images: [],
+        costCents: 900,
+        priceCents: 3800,
+        sizeLabel: 'L',
+        condition: 'VERY_GOOD',
+        categorySlug: 'chemises',
+        title: 'Chemise',
+        externalId: 'x-1',
+      } as never,
+      320,
+    )
+
+    expect(a).toBe(b)
+  })
+
+  it('change dès qu’une valeur change', () => {
+    expect(empreinte({ ...base } as never, 320)).not.toBe(
+      empreinte({ ...base, priceCents: 3900 } as never, 320),
+    )
+  })
+
+  it('change quand le POIDS RÉSOLU change, à envoi identique', () => {
+    // Une pièce sans poids prend celui de sa catégorie. Changer ce défaut doit
+    // provoquer une réécriture : le poids décide du palier transporteur, donc
+    // du prix plancher.
+    expect(empreinte({ ...base } as never, 320)).not.toBe(
+      empreinte({ ...base } as never, 700),
+    )
   })
 })
