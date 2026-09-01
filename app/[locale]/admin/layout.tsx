@@ -80,6 +80,9 @@ export default async function AdminLayout({
   const entrees = [
     { href: '/admin', label: t('dashboard') },
     { href: '/admin/pieces', label: t('articles.title') },
+    // Juste après les pièces : c'est de là que viennent la plupart d'entre
+    // elles, et c'est là qu'on va quand le catalogue paraît incomplet.
+    { href: '/admin/inventaire', label: t('inventory.title') },
     { href: '/admin/commandes', label: t('orders') },
     { href: '/admin/offres', label: t('offers') },
     { href: '/admin/reglages', label: t('settings.title') },

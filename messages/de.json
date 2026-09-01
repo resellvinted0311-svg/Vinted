@@ -846,6 +846,27 @@
         "storage-unavailable": "The image host is unavailable. Try again in a moment.",
         "unknown": "The upload failed."
       }
+    },
+    "inventory": {
+      "title": "Bestand",
+      "intro": "Übernimmt die Teile aus der Verwaltungs-App. Die Synchronisation läuft auch einmal täglich von selbst; diese Schaltfläche dient dem ersten Import und dem Nicht-Warten auf den nächsten Durchlauf.",
+      "start": "Jetzt synchronisieren",
+      "running": "Synchronisierung läuft…",
+      "stop": "Anhalten",
+      "progress": "{examined} Teile geprüft, in {passes} Durchlauf/Durchläufen.",
+      "finished": "Fertig: Alle Teile aus der App wurden geprüft.",
+      "partial": "Durchlauf beendet. Noch {remaining} Teil(e) zu prüfen — der Laden macht automatisch weiter.",
+      "read": "Gelesen",
+      "created": "Angelegt",
+      "updated": "Aktualisiert",
+      "unchanged": "Unverändert",
+      "skipped": "Übergangen",
+      "rejected": "Abgelehnt",
+      "errors": {
+        "rateLimited": "Zu viele Synchronisationen hintereinander. Versuchen Sie es gleich noch einmal.",
+        "notConfigured": "Der Laden hat keinen Zugang zur Verwaltungs-App. Setzen Sie APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY und APP_WORKSPACE_ID in seinen Umgebungsvariablen und deployen Sie erneut.",
+        "failed": "Die Synchronisation ist fehlgeschlagen. Sehen Sie in den Laufzeitprotokollen des Ladens nach."
+      }
     }
   },
   "orderEmail": {

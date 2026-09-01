@@ -9,18 +9,21 @@
  * c'est la partie du script qui peut se tromper en silence, donc la seule qui
  * mérite vraiment des tests.
  *
- * Les entrées-sorties sont dans `scripts/importer-inventaire.ts`.
+ * Les entrées-sorties sont dans `scripts/importer-inventaire.ts` (ligne de
+ * commande) et `lib/sync/pull.ts` (tâche planifiée de la boutique). Les deux
+ * partagent CE fichier, pour qu'aucune des deux ne range une pièce autrement
+ * que l'autre.
  */
 
 import {
   SYNC_RATE_LIMIT,
   SYNC_RATE_WINDOW_SECONDS,
-} from '../lib/validation/sync'
+} from '@/lib/validation/sync'
 import {
   ARTICLE_COLORS,
   type ArticleColor,
   type ArticleCondition,
-} from '../lib/domain/vocabulary'
+} from '@/lib/domain/vocabulary'
 
 // ---------------------------------------------------------------------------
 // Bornes du contrat, reprises pour tronquer AVANT l'envoi

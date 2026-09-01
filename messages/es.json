@@ -846,6 +846,27 @@
         "storage-unavailable": "The image host is unavailable. Try again in a moment.",
         "unknown": "The upload failed."
       }
+    },
+    "inventory": {
+      "title": "Inventario",
+      "intro": "Recupera las prendas de la aplicación de gestión. La sincronización también se ejecuta sola una vez al día; este botón sirve para la primera importación y para no esperar al siguiente pase.",
+      "start": "Sincronizar ahora",
+      "running": "Sincronizando…",
+      "stop": "Detener",
+      "progress": "{examined} prendas examinadas, en {passes} pase(s).",
+      "finished": "Terminado: se han examinado todas las prendas de la aplicación.",
+      "partial": "Pase terminado. Quedan {remaining} prenda(s) por examinar: la tienda continúa automáticamente.",
+      "read": "Leídas",
+      "created": "Creadas",
+      "updated": "Actualizadas",
+      "unchanged": "Sin cambios",
+      "skipped": "Descartadas",
+      "rejected": "Rechazadas",
+      "errors": {
+        "rateLimited": "Demasiadas sincronizaciones seguidas. Inténtelo de nuevo en un momento.",
+        "notConfigured": "La tienda no tiene acceso a la aplicación de gestión. Indique APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY y APP_WORKSPACE_ID en sus variables de entorno y vuelva a desplegar.",
+        "failed": "La sincronización ha fallado. Consulte los registros de ejecución de la tienda."
+      }
     }
   },
   "orderEmail": {

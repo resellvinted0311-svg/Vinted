@@ -60,7 +60,7 @@ import {
   type LigneInventaire,
   type Refus,
   type ResultatBoutique,
-} from './inventaire-mapping'
+} from '../lib/sync/inventaire-app'
 
 // ---------------------------------------------------------------------------
 // Environnement

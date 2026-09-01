@@ -846,6 +846,27 @@
         "storage-unavailable": "The image host is unavailable. Try again in a moment.",
         "unknown": "The upload failed."
       }
+    },
+    "inventory": {
+      "title": "Inventario",
+      "intro": "Riprende i capi dall’applicazione di gestione. La sincronizzazione gira anche da sola una volta al giorno; questo pulsante serve al primo import e a non aspettare il passaggio successivo.",
+      "start": "Sincronizza ora",
+      "running": "Sincronizzazione in corso…",
+      "stop": "Interrompi",
+      "progress": "{examined} capi esaminati, in {passes} passaggio/i.",
+      "finished": "Fatto: tutti i capi dell’applicazione sono stati esaminati.",
+      "partial": "Passaggio concluso. Restano {remaining} capo/i da esaminare — la boutique prosegue da sola.",
+      "read": "Letti",
+      "created": "Creati",
+      "updated": "Aggiornati",
+      "unchanged": "Invariati",
+      "skipped": "Scartati",
+      "rejected": "Rifiutati",
+      "errors": {
+        "rateLimited": "Troppe sincronizzazioni di seguito. Riprovi tra poco.",
+        "notConfigured": "La boutique non ha accesso all’applicazione di gestione. Indichi APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY e APP_WORKSPACE_ID nelle sue variabili d’ambiente, poi rilanci il deploy.",
+        "failed": "La sincronizzazione non è riuscita. Consulti i registri di esecuzione della boutique."
+      }
     }
   },
   "orderEmail": {

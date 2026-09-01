@@ -7,6 +7,12 @@ import { expireStaleOffers } from '@/lib/shop/offers'
 import { applyDuePriceDrops } from '@/lib/shop/price-drop'
 import { runJobs } from '@/lib/jobs/worker'
 import { captureException } from '@/lib/observability/sentry'
+import { logger } from '@/lib/observability/logger'
+import {
+  pullInventaire,
+  PullNotConfiguredError,
+  type PullReport,
+} from '@/lib/sync/pull'
 
 /**
  * Travaux périodiques.
@@ -111,6 +117,50 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     runJobs(),
   ])
 
+  /**
+   * La synchronisation de l'inventaire, APRÈS les autres et jamais avec elles.
+   *
+   * -------------------------------------------------------------------------
+   * Pourquoi séquentiel
+   * -------------------------------------------------------------------------
+   * Les six travaux ci-dessus sont brefs et se partagent bien l'unique
+   * connexion applicative. Celui-ci écrit des centaines de pièces : lancé de
+   * front, il ferait attendre les autres derrière lui, et une libération de
+   * verrou de stock retardée d'une minute est une vente perdue.
+   *
+   * Il reçoit donc ce qui RESTE du budget de la fonction, une fois le reste
+   * fait. C'est aussi le bon ordre de priorité : le ménage d'abord, l'import
+   * ensuite — un import repoussé d'un passage ne coûte rien, puisqu'il reprend
+   * là où il s'est arrêté.
+   */
+  const pull = await (async (): Promise<PullReport | null> => {
+    const reste = maxDuration * 1000 - (Date.now() - startedAt)
+
+    // Sous ce seuil, entamer l'import ferait tuer la fonction avant qu'elle
+    // n'ait rendu son compte rendu — et on perdrait aussi celui des six autres.
+    if (reste < 10_000) return null
+
+    try {
+      return await pullInventaire({ budgetMs: reste * 0.8 })
+    } catch (error) {
+      /**
+       * Une boutique sans clé de lecture n'est pas en panne.
+       *
+       * Tant que les variables ne sont pas posées, ce travail n'a simplement
+       * pas lieu — et le remonter comme une exception ferait sonner une alerte
+       * toutes les nuits pour une configuration qu'on a peut-être choisie.
+       */
+      if (error instanceof PullNotConfiguredError) {
+        logger.info('cron.pull_not_configured', {
+          missing: error.manquantes.length,
+        })
+        return null
+      }
+      captureException(error, { event: 'cron.pull_failed' })
+      return null
+    }
+  })()
+
   // ---------------------------------------------------------------------------
   // Chaque échec est REMONTÉ, pas seulement journalisé
   // ---------------------------------------------------------------------------
@@ -151,6 +201,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     expiredOffers: offers.status === 'fulfilled' ? offers.value : null,
     priceDrops: drops.status === 'fulfilled' ? drops.value : null,
     jobs: jobs.status === 'fulfilled' ? jobs.value : null,
+    inventaire: pull,
     durationMs: Date.now() - startedAt,
   })
 }

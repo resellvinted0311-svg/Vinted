@@ -60,6 +60,20 @@ export type AuditAction =
    * conservée dix ans exactement ce qu'on a pris soin de sortir du dépôt.
    */
   | 'settings.updated'
+  /**
+   * Une synchronisation d'inventaire lancée à la main depuis la régie.
+   *
+   * Consignée parce qu'elle écrit en masse dans le catalogue : elle crée des
+   * pièces, en archive d'autres, et réécrit des prix. Quand une pièce paraîtra
+   * avoir changé toute seule, il faudra pouvoir dire si quelqu'un a lancé un
+   * passage ce jour-là — et lequel.
+   *
+   * Une entrée par PASSAGE, `entityId` valant `batch` : la piste dit qu'une
+   * écriture de masse a eu lieu, pas ce qu'elle contenait. Y recopier les
+   * identifiants de plusieurs centaines de pièces la rendrait illisible sans
+   * rien apprendre que le catalogue ne dise déjà.
+   */
+  | 'inventory.pulled'
 
 /** Ce qu'une charge utile d'audit a le droit de contenir. */
 export type AuditValue = string | number | boolean | null

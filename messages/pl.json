@@ -846,6 +846,27 @@
         "storage-unavailable": "The image host is unavailable. Try again in a moment.",
         "unknown": "The upload failed."
       }
+    },
+    "inventory": {
+      "title": "Magazyn",
+      "intro": "Pobiera części z aplikacji zarządzającej. Synchronizacja działa też sama raz dziennie; ten przycisk służy do pierwszego importu i do tego, by nie czekać na kolejny przebieg.",
+      "start": "Synchronizuj teraz",
+      "running": "Synchronizacja w toku…",
+      "stop": "Zatrzymaj",
+      "progress": "Sprawdzono {examined} rzeczy w {passes} przebiegu/ach.",
+      "finished": "Gotowe: wszystkie rzeczy z aplikacji zostały sprawdzone.",
+      "partial": "Przebieg zakończony. Zostało {remaining} rzeczy do sprawdzenia — sklep kontynuuje automatycznie.",
+      "read": "Wczytane",
+      "created": "Utworzone",
+      "updated": "Zaktualizowane",
+      "unchanged": "Bez zmian",
+      "skipped": "Pominięte",
+      "rejected": "Odrzucone",
+      "errors": {
+        "rateLimited": "Zbyt wiele synchronizacji pod rząd. Proszę spróbować za chwilę.",
+        "notConfigured": "Sklep nie ma dostępu do aplikacji zarządzającej. Proszę ustawić APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY i APP_WORKSPACE_ID w jego zmiennych środowiskowych i wdrożyć ponownie.",
+        "failed": "Synchronizacja nie powiodła się. Proszę sprawdzić dzienniki wykonania sklepu."
+      }
     }
   },
   "orderEmail": {

@@ -846,6 +846,27 @@
         "storage-unavailable": "L’hébergeur d’images est indisponible. Réessayez dans un moment.",
         "unknown": "L’envoi a échoué."
       }
+    },
+    "inventory": {
+      "title": "Inventaire",
+      "intro": "Reprend les pièces de l’application de gestion. La synchronisation tourne aussi seule une fois par jour ; ce bouton sert au premier import et à ne pas attendre le passage suivant.",
+      "start": "Synchroniser maintenant",
+      "running": "Synchronisation en cours…",
+      "stop": "Arrêter",
+      "progress": "{examined} pièces examinées, en {passes} passage(s).",
+      "finished": "Terminé : toutes les pièces de l’application ont été examinées.",
+      "partial": "Passage terminé. Il reste {remaining} pièce(s) à examiner — la boutique continue automatiquement.",
+      "read": "Lues",
+      "created": "Créées",
+      "updated": "Mises à jour",
+      "unchanged": "Inchangées",
+      "skipped": "Écartées",
+      "rejected": "Refusées",
+      "errors": {
+        "rateLimited": "Trop de synchronisations coup sur coup. Réessayez dans un moment.",
+        "notConfigured": "La boutique n’a pas les accès à l’application de gestion. Renseignez APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY et APP_WORKSPACE_ID dans ses variables d’environnement, puis redéployez.",
+        "failed": "La synchronisation a échoué. Consultez les journaux d’exécution de la boutique."
+      }
     }
   },
   "orderEmail": {

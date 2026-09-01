@@ -19,7 +19,7 @@ import {
   lireReponse,
   lireReponseBrute,
   type LigneInventaire,
-} from '@/scripts/inventaire-mapping'
+} from '@/lib/sync/inventaire-app'
 import {
   syncArticleSchema,
   MAX_BATCH_SIZE,

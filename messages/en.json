@@ -846,6 +846,27 @@
         "storage-unavailable": "The image host is unavailable. Try again in a moment.",
         "unknown": "The upload failed."
       }
+    },
+    "inventory": {
+      "title": "Inventory",
+      "intro": "Pulls the pieces from the management app. Synchronisation also runs on its own once a day; this button is for the first import and for not waiting until the next run.",
+      "start": "Synchronise now",
+      "running": "Synchronising…",
+      "stop": "Stop",
+      "progress": "{examined} pieces examined, over {passes} pass(es).",
+      "finished": "Done: every piece from the app has been examined.",
+      "partial": "Pass complete. {remaining} piece(s) left to examine — the shop carries on automatically.",
+      "read": "Read",
+      "created": "Created",
+      "updated": "Updated",
+      "unchanged": "Unchanged",
+      "skipped": "Skipped",
+      "rejected": "Rejected",
+      "errors": {
+        "rateLimited": "Too many synchronisations in a row. Try again shortly.",
+        "notConfigured": "The shop has no access to the management app. Set APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY and APP_WORKSPACE_ID in its environment variables, then redeploy.",
+        "failed": "Synchronisation failed. Check the shop’s runtime logs."
+      }
     }
   },
   "orderEmail": {

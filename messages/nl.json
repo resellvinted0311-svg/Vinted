@@ -846,6 +846,27 @@
         "storage-unavailable": "The image host is unavailable. Try again in a moment.",
         "unknown": "The upload failed."
       }
+    },
+    "inventory": {
+      "title": "Voorraad",
+      "intro": "Haalt de stukken uit de beheer-app. De synchronisatie loopt ook eenmaal per dag vanzelf; deze knop dient voor de eerste import en om niet op de volgende ronde te wachten.",
+      "start": "Nu synchroniseren",
+      "running": "Bezig met synchroniseren…",
+      "stop": "Stoppen",
+      "progress": "{examined} stukken bekeken, in {passes} ronde(n).",
+      "finished": "Klaar: alle stukken uit de app zijn bekeken.",
+      "partial": "Ronde voltooid. Nog {remaining} stuk(ken) te bekijken — de winkel gaat vanzelf verder.",
+      "read": "Gelezen",
+      "created": "Aangemaakt",
+      "updated": "Bijgewerkt",
+      "unchanged": "Ongewijzigd",
+      "skipped": "Overgeslagen",
+      "rejected": "Geweigerd",
+      "errors": {
+        "rateLimited": "Te veel synchronisaties na elkaar. Probeer het zo opnieuw.",
+        "notConfigured": "De winkel heeft geen toegang tot de beheer-app. Vul APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY en APP_WORKSPACE_ID in bij haar omgevingsvariabelen en deploy opnieuw.",
+        "failed": "De synchronisatie is mislukt. Raadpleeg de uitvoeringslogboeken van de winkel."
+      }
     }
   },
   "orderEmail": {
