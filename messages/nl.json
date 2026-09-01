@@ -864,7 +864,7 @@
       "rejected": "Geweigerd",
       "errors": {
         "rateLimited": "Te veel synchronisaties na elkaar. Probeer het zo opnieuw.",
-        "notConfigured": "De winkel heeft geen toegang tot de beheer-app. Vul APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY en APP_WORKSPACE_ID in bij haar omgevingsvariabelen en deploy opnieuw.",
+        "notConfigured": "De winkel heeft geen toegang tot de beheer-app. Ontbreekt in haar omgevingsvariabelen: {missing}. Voeg ze toe en deploy opnieuw.",
         "failed": "De synchronisatie is mislukt. Raadpleeg de uitvoeringslogboeken van de winkel."
       }
     }

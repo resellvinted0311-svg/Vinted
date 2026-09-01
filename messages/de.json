@@ -864,7 +864,7 @@
       "rejected": "Abgelehnt",
       "errors": {
         "rateLimited": "Zu viele Synchronisationen hintereinander. Versuchen Sie es gleich noch einmal.",
-        "notConfigured": "Der Laden hat keinen Zugang zur Verwaltungs-App. Setzen Sie APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY und APP_WORKSPACE_ID in seinen Umgebungsvariablen und deployen Sie erneut.",
+        "notConfigured": "Der Laden hat keinen Zugang zur Verwaltungs-App. In seinen Umgebungsvariablen fehlt: {missing}. Ergänzen Sie sie und deployen Sie erneut.",
         "failed": "Die Synchronisation ist fehlgeschlagen. Sehen Sie in den Laufzeitprotokollen des Ladens nach."
       }
     }

@@ -864,7 +864,7 @@
       "rejected": "Odrzucone",
       "errors": {
         "rateLimited": "Zbyt wiele synchronizacji pod rząd. Proszę spróbować za chwilę.",
-        "notConfigured": "Sklep nie ma dostępu do aplikacji zarządzającej. Proszę ustawić APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY i APP_WORKSPACE_ID w jego zmiennych środowiskowych i wdrożyć ponownie.",
+        "notConfigured": "Sklep nie ma dostępu do aplikacji zarządzającej. W jego zmiennych środowiskowych brakuje: {missing}. Proszę je dodać i wdrożyć ponownie.",
         "failed": "Synchronizacja nie powiodła się. Proszę sprawdzić dzienniki wykonania sklepu."
       }
     }

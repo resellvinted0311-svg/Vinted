@@ -41,7 +41,19 @@ import {
 
 export type AdminSyncState =
   | { status: 'idle' }
-  | { status: 'error'; messageKey: string }
+  | {
+      status: 'error'
+      messageKey: string
+      /**
+       * Les variables réellement absentes, sur `notConfigured`.
+       *
+       * Le message les nommait TOUTES LES TROIS, quelle que soit celle qui
+       * manquait : on relisait les trois, on en trouvait deux correctes, et on
+       * cherchait ailleurs. Un diagnostic qui ne distingue pas ne diagnostique
+       * rien.
+       */
+      missing?: readonly string[]
+    }
   | { status: 'done'; report: PullReport }
 
 export async function pullInventaireAction(): Promise<AdminSyncState> {
@@ -92,7 +104,13 @@ export async function pullInventaireAction(): Promise<AdminSyncState> {
     // configuration absente, et l'écran doit dire quoi poser plutôt
     // qu'afficher une erreur interne.
     if (error instanceof PullNotConfiguredError) {
-      return { status: 'error', messageKey: 'notConfigured' }
+      // Les NOMS des variables absentes, jamais leurs valeurs : ce sont des
+      // clés d'accès, et un nom suffit à savoir quoi poser.
+      return {
+        status: 'error',
+        messageKey: 'notConfigured',
+        missing: error.manquantes,
+      }
     }
 
     // Tout le reste reste opaque VERS L'ÉCRAN : un message d'exception peut

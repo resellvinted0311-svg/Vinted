@@ -864,7 +864,7 @@
       "rejected": "Rifiutati",
       "errors": {
         "rateLimited": "Troppe sincronizzazioni di seguito. Riprovi tra poco.",
-        "notConfigured": "La boutique non ha accesso all’applicazione di gestione. Indichi APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY e APP_WORKSPACE_ID nelle sue variabili d’ambiente, poi rilanci il deploy.",
+        "notConfigured": "La boutique non ha accesso all’applicazione di gestione. Manca, nelle sue variabili d’ambiente: {missing}. Le aggiunga, poi rilanci il deploy.",
         "failed": "La sincronizzazione non è riuscita. Consulti i registri di esecuzione della boutique."
       }
     }

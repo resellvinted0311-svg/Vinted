@@ -864,7 +864,7 @@
       "rejected": "Rejected",
       "errors": {
         "rateLimited": "Too many synchronisations in a row. Try again shortly.",
-        "notConfigured": "The shop has no access to the management app. Set APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY and APP_WORKSPACE_ID in its environment variables, then redeploy.",
+        "notConfigured": "The shop has no access to the management app. Missing from its environment variables: {missing}. Add them, then redeploy.",
         "failed": "Synchronisation failed. Check the shop’s runtime logs."
       }
     }

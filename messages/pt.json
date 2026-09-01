@@ -864,7 +864,7 @@
       "rejected": "Recusadas",
       "errors": {
         "rateLimited": "Demasiadas sincronizações seguidas. Tente novamente daqui a pouco.",
-        "notConfigured": "A loja não tem acesso à aplicação de gestão. Indique APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY e APP_WORKSPACE_ID nas suas variáveis de ambiente e volte a publicar.",
+        "notConfigured": "A loja não tem acesso à aplicação de gestão. Falta, nas suas variáveis de ambiente: {missing}. Acrescente-as e volte a publicar.",
         "failed": "A sincronização falhou. Consulte os registos de execução da loja."
       }
     }

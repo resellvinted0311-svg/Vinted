@@ -864,7 +864,7 @@
       "rejected": "Rechazadas",
       "errors": {
         "rateLimited": "Demasiadas sincronizaciones seguidas. Inténtelo de nuevo en un momento.",
-        "notConfigured": "La tienda no tiene acceso a la aplicación de gestión. Indique APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY y APP_WORKSPACE_ID en sus variables de entorno y vuelva a desplegar.",
+        "notConfigured": "La tienda no tiene acceso a la aplicación de gestión. Falta, en sus variables de entorno: {missing}. Añádalas y vuelva a desplegar.",
         "failed": "La sincronización ha fallado. Consulte los registros de ejecución de la tienda."
       }
     }

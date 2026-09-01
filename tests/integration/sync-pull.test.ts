@@ -240,3 +240,42 @@ describe('un passage trop court', () => {
     ])
   })
 })
+
+describe('ce que l’écran reçoit quand la configuration manque', () => {
+  it('porte les NOMS des absentes, pas un message figé', async () => {
+    /**
+     * Le message nommait les trois variables, quelle que soit celle qui
+     * manquait. On relisait les trois, on en trouvait deux correctes, et on
+     * cherchait ailleurs — un diagnostic qui ne distingue pas ne diagnostique
+     * rien.
+     *
+     * Le test porte sur ce que l'erreur EXPOSE, puisque c'est cela que l'écran
+     * affiche.
+     */
+    vi.stubEnv('APP_WORKSPACE_ID', '')
+
+    const erreur = await pullInventaire({ budgetMs: 5_000 }).catch(
+      (error: unknown) => error,
+    )
+
+    expect(erreur).toBeInstanceOf(PullNotConfiguredError)
+    const manquantes = (erreur as PullNotConfiguredError).manquantes
+
+    // Une seule : les deux autres sont posées, et les nommer enverrait les
+    // vérifier pour rien.
+    expect(manquantes).toEqual(['APP_WORKSPACE_ID'])
+  })
+
+  it('ne divulgue AUCUNE valeur, seulement des noms', async () => {
+    // Ces variables sont des clés d'accès. Le nom suffit à savoir quoi poser ;
+    // la valeur n'a rien à faire dans un message d'écran ni dans un journal.
+    vi.stubEnv('APP_SUPABASE_SERVICE_KEY', '')
+
+    const erreur = (await pullInventaire({ budgetMs: 5_000 }).catch(
+      (error: unknown) => error,
+    )) as PullNotConfiguredError
+
+    expect(erreur.message).not.toContain('cle-de-service-de-test')
+    expect(erreur.message).not.toContain(WORKSPACE)
+  })
+})

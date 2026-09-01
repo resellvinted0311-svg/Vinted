@@ -864,7 +864,7 @@
       "rejected": "Refusées",
       "errors": {
         "rateLimited": "Trop de synchronisations coup sur coup. Réessayez dans un moment.",
-        "notConfigured": "La boutique n’a pas les accès à l’application de gestion. Renseignez APP_SUPABASE_URL, APP_SUPABASE_SERVICE_KEY et APP_WORKSPACE_ID dans ses variables d’environnement, puis redéployez.",
+        "notConfigured": "La boutique n’a pas les accès à l’application de gestion. Il manque, dans ses variables d’environnement : {missing}. Ajoutez-les, puis redéployez.",
         "failed": "La synchronisation a échoué. Consultez les journaux d’exécution de la boutique."
       }
     }

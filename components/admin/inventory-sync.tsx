@@ -78,7 +78,13 @@ export function InventorySync() {
     <div className="flex flex-col gap-6">
       {state.status === 'error' ? (
         <Notice tone="warning" role="alert">
-          <p>{t(`errors.${state.messageKey}`)}</p>
+          <p>
+            {state.missing
+              ? // Seules celles qui manquent VRAIMENT. Les nommer toutes les
+                // trois faisait relire des variables déjà correctes.
+                t('errors.notConfigured', { missing: state.missing.join(', ') })
+              : t(`errors.${state.messageKey}`)}
+          </p>
         </Notice>
       ) : null}
 
