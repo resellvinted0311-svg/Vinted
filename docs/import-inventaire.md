@@ -56,6 +56,93 @@ jamais existé.
 
 ---
 
+## Immédiat : le déclencheur posé sur la base de l'application
+
+Le balayage quotidien relit tout l'inventaire pour retrouver ce qui a bougé. Un
+déclencheur, lui, prévient à l'instant où une ligne change — et la boutique n'a
+plus qu'une pièce à traiter (`POST /api/sync/app-event`, voir
+`docs/synchronisation.md` §2.8 bis).
+
+L'entrée « Webhooks » de la console Supabase a changé de place au fil des
+versions ; le SQL ci-dessous ne dépend d'aucune console. Il s'exécute UNE fois,
+dans l'éditeur SQL de l'application, en remplaçant la clé.
+
+```sql
+create extension if not exists pg_net;
+
+create or replace function public.notifier_boutique()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  l record;
+  donnees jsonb;
+begin
+  if tg_op = 'DELETE' then l := old; else l := new; end if;
+
+  -- Les seules colonnes que la boutique lit. Envoyer la ligne entière ferait
+  -- circuler des champs que personne n'a examinés, pour rien.
+  donnees := jsonb_build_object(
+    'id', l.id,
+    'workspace_id', l.workspace_id,
+    'article', l.article,
+    'marque', l.marque,
+    'taille', l.taille,
+    'etat', l.etat,
+    'couleur', l.couleur,
+    'description', l.description,
+    'prix_achat', l.prix_achat,
+    'prix_annonce', l.prix_annonce,
+    'prix_vendu', l.prix_vendu,
+    'en_vente', l.en_vente
+  );
+
+  -- Asynchrone : `net.http_post` met en file et rend la main. Une boutique
+  -- injoignable ne doit JAMAIS retarder une saisie dans l'application.
+  perform net.http_post(
+    url := 'https://<boutique>/api/sync/app-event',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer <SYNC_API_KEY>'
+    ),
+    body := jsonb_build_object(
+      'type', tg_op,
+      'table', tg_table_name,
+      'record', case when tg_op = 'DELETE' then null else donnees end,
+      'old_record', case when tg_op = 'DELETE' then donnees else null end
+    )
+  );
+
+  return null;
+end;
+$$;
+
+create trigger boutique_articles
+after insert or update or delete on public.articles
+for each row execute function public.notifier_boutique();
+```
+
+**Pour l'enlever**, sans rien casser d'autre :
+
+```sql
+drop trigger if exists boutique_articles on public.articles;
+drop function if exists public.notifier_boutique();
+```
+
+**`security definer`** parce que l'accès au schéma `net` n'est pas accordé à
+tous les rôles : sans lui, le déclencheur échouerait selon le rôle qui écrit.
+`set search_path` l'accompagne toujours — une fonction en `security definer`
+sans chemin figé est une porte ouverte sur la résolution de noms.
+
+**Le déclencheur ne remplace pas le balayage.** `net.http_post` ne réessaie
+pas : boutique en cours de déploiement, coupure réseau, et la notification est
+perdue. Le passage quotidien rattrape alors la pièce. C'est ce qui fait d'une
+notification perdue un retard, et non un oubli.
+
+---
+
 ## Ce qu'il ne fait pas, délibérément
 
 **Il ne donne pas à la boutique l'accès à l'inventaire.** La base de
