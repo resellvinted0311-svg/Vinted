@@ -95,8 +95,24 @@ export async function SiteHeader() {
         */}
         <Wordmark size="sm" tagline={false} className="nav-bar__mark" />
 
+        {/*
+          Le point de repère annonce ce qu'il contient, et pas autre chose.
+
+          Il s'intitulait « Catégories » — dans les huit langues — sur un menu
+          qui n'en offre AUCUNE : ni robes, ni vestes, ni chaussures, seulement
+          le catalogue, les marques et la page à propos. Pour qui navigue au
+          lecteur d'écran, la liste des points de repère annonçait donc une
+          entrée qui n'existe pas, et c'est un défaut RGAA opposable — pas une
+          maladresse de rédaction.
+
+          Il vient de la refonte de cette barre : l'ancien en-tête portait une
+          vraie navigation par catégorie sous ce libellé, la nouvelle ne l'a pas
+          reprise et l'intitulé est resté. Exposer réellement les catégories ici
+          est une décision de composition qui reste à prendre ; annoncer juste
+          ce qu'on offre n'en est pas une.
+        */}
         <nav
-          aria-label={t('categories')}
+          aria-label={t('mainNav')}
           className="nav-bar__nav flex flex-wrap gap-x-6 gap-y-1"
         >
           {links.map((link) => (
