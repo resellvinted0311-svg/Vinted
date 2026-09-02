@@ -114,10 +114,117 @@ test.describe('Barre de navigation', () => {
     ).toBeGreaterThanOrEqual(0)
     expect(boite!.y).toBeLessThan(48)
 
-    // Et elle reste utilisable, pas seulement présente.
+    // Et elle reste utilisable, pas seulement présente. Ciblé DANS la barre :
+    // « catalogue » figure aussi dans l'appel de bas de page, et une assertion
+    // qui l'attraperait passerait même si la barre était vide.
     await expect(
-      page.getByRole('link', { name: 'Catalogue' }).first(),
+      barre.getByRole('link', { name: 'Tout le catalogue' }),
     ).toBeVisible()
+  })
+
+  test('ne porte ni prénom, ni régie, ni déconnexion, ni langue', async ({
+    page,
+  }) => {
+    /*
+      Ces quatre-là sont descendus ailleurs — le prénom, l'accès à la régie et
+      la déconnexion dans l'espace compte, la langue dans le colophon — parce
+      qu'une barre de navigation porte des chemins, pas des commandes ni un
+      état.
+
+      Le test vérifie la barre CONNECTÉE, en compte administrateur : c'est le
+      seul cas où les quatre existaient à la fois, donc le seul où la
+      régression se verrait.
+    */
+    await page.goto('/fr/connexion')
+    await page
+      .getByLabel('Adresse e-mail')
+      .filter({ visible: true })
+      .first()
+      .fill('admin@nina-diego.test')
+    await page.getByLabel('Mot de passe').filter({ visible: true }).fill(SEED_PASSWORD)
+    await page.getByRole('button', { name: 'Se connecter' }).click()
+    await expect(page).toHaveURL(/\/fr\/compte/)
+
+    await page.goto('/fr')
+    const barre = page.locator('header .nav-float')
+
+    // On attend que la barre reflète la session avant de conclure à une
+    // absence : sans cette attente, le test passerait aussi sur une barre pas
+    // encore renseignée, c'est-à-dire sur rien.
+    await expect(barre.getByRole('link', { name: 'Mon compte' })).toBeVisible({
+      timeout: 15_000,
+    })
+
+    await expect(barre.getByRole('button', { name: 'Se déconnecter' })).toHaveCount(0)
+    await expect(barre.getByRole('link', { name: 'Admin' })).toHaveCount(0)
+    await expect(barre.getByLabel('Langue')).toHaveCount(0)
+    // « Nina » est le prénom du compte administrateur du jeu d'essai. Il
+    // apparaît aussi dans la signature de la boutique, d'où la recherche
+    // limitée au groupe de droite plutôt qu'à la barre entière.
+    await expect(
+      barre.locator('.nav-bar__tools').getByText('Nina'),
+    ).toHaveCount(0)
+  })
+})
+
+test.describe('La vitrine tient dans un écran', () => {
+  // Un portable courant. La barre flottante recouvre le haut de la fenêtre :
+  // c'est ce qui reste EN DESSOUS qui décide de ce qu'on voit d'un coup d'œil.
+  test.use({ viewport: { width: 1280, height: 800 } })
+
+  test('la pièce du moment et l’arrivage se lisent sans défiler', async ({
+    page,
+  }) => {
+    /**
+     * Ce que ce test protège.
+     *
+     * Les deux premières sections avaient grandi jusqu'à dépasser la fenêtre :
+     * il fallait faire défiler pour découvrir qu'une pièce avait un prix. Rien
+     * ne cassait pour autant, et la régression est facile à réintroduire — il
+     * suffit d'agrandir une échelle typographique ou une fiche du rail de deux
+     * ou trois rem, chacune étant un réglage qui paraît anodin pris isolément.
+     *
+     * On mesure donc la hauteur réelle rendue, pas les valeurs qui la
+     * produisent : c'est la seule façon d'attraper la somme.
+     */
+    await page.goto('/fr')
+    await page.waitForLoadState('load')
+
+    const mesures = await page.evaluate(() => {
+      const barre = document
+        .querySelector('header .nav-float')!
+        .getBoundingClientRect()
+
+      // La barre flotte au-dessus du contenu : sa hauteur, plus son
+      // décollement du bord, est autant de fenêtre en moins.
+      const dispo = window.innerHeight - (barre.height + 16)
+
+      return Array.from(document.querySelectorAll('main section'))
+        .slice(0, 2)
+        .map((section) => ({
+          titre: (section.querySelector('h1, h2')?.textContent ?? '?')
+            .trim()
+            .slice(0, 30),
+          hauteur: Math.round(section.getBoundingClientRect().height),
+          dispo: Math.round(dispo),
+        }))
+    })
+
+    expect(mesures).toHaveLength(2)
+
+    // Garde-fou sur la sélection elle-même : si l'ordre des sections change,
+    // le test doit le dire plutôt que de mesurer autre chose en silence.
+    expect(
+      mesures[1]!.titre,
+      'la deuxième section de l’accueil n’est plus l’arrivage',
+    ).toContain('vient d')
+
+    for (const mesure of mesures) {
+      expect(
+        mesure.hauteur,
+        `« ${mesure.titre} » occupe ${mesure.hauteur} px pour ${mesure.dispo} px de fenêtre sous la barre : il faut défiler pour la voir en entier`,
+      ).toBeLessThanOrEqual(mesure.dispo)
+    }
   })
 })
 
@@ -165,20 +272,27 @@ test.describe('Connexion', () => {
     ).toBeVisible()
 
     /*
-      L'en-tête doit refléter la session, alors même que l'accueil est servi
+      La barre doit refléter la session, alors même que l'accueil est servi
       depuis le cache statique.
 
-      C'est précisément pour cela que le bouton n'apparaît pas dans le HTML :
-      il attend l'hydratation, puis la réponse de `/api/session`. Deux allers
+      C'est précisément pour cela que l'entrée n'apparaît pas dans le HTML :
+      elle attend l'hydratation, puis la réponse de `/api/session`. Deux allers
       supplémentaires, dont un aller-retour réseau — le délai par défaut de
       cinq secondes suffit sur une machine au repos, pas sur une machine qui
-      exécute cent tests en parallèle. Le test tombait alors sur un en-tête
+      exécute cent tests en parallèle. Le test tombait alors sur une barre
       simplement pas encore à jour, ce qui n'apprenait rien.
+
+      Ce qui bascule n'est plus un bouton de déconnexion mais le libellé de
+      l'entrée de compte : « Se connecter » devient « Mon compte ».
     */
     await page.goto('/fr')
+    const barre = page.locator('header .nav-float')
+    await expect(barre.getByRole('link', { name: 'Mon compte' })).toBeVisible({
+      timeout: 15_000,
+    })
     await expect(
-      page.getByRole('button', { name: 'Se déconnecter' }),
-    ).toBeVisible({ timeout: 15_000 })
+      barre.getByRole('link', { name: 'Se connecter' }),
+    ).toHaveCount(0)
   })
 
   test('un compte admin voit l’accès au back-office, pas un client', async ({
@@ -207,27 +321,24 @@ test.describe('Connexion', () => {
     await page.getByRole('button', { name: 'Se connecter' }).click()
     await expect(page).toHaveURL(/\/fr\/compte/)
 
-    // Même attente que ci-dessus : le bouton n'existe qu'une fois l'en-tête
-    // renseigné par `/api/session`, et cet aller-retour peut prendre son temps
-    // sur une machine chargée.
+    /*
+      La déconnexion vit maintenant DANS l'espace compte, en bas, et non plus
+      dans la barre de navigation. Elle y est servie par le rendu de la page :
+      pas d'attente d'hydratation, le bouton est dans le HTML.
+
+      C'est un vrai formulaire posté vers une action serveur. Le rendu qui suit
+      ne trouve plus de session et redirige vers la connexion — la
+      déconnexion se PROUVE donc par cette redirection, sans qu'on ait à
+      guetter un état côté client.
+    */
     const signOut = page.getByRole('button', { name: 'Se déconnecter' })
-    await expect(signOut).toBeVisible({ timeout: 15_000 })
+    await expect(signOut).toBeVisible()
     await signOut.click()
 
-    // On attend que l'en-tête ait basculé avant de naviguer : sans cela, le
-    // test partirait pendant que l'action serveur est encore en vol et
-    // enverrait l'ancien cookie.
-    await expect(page.getByRole('link', { name: 'Se connecter' })).toBeVisible()
+    await expect(page).toHaveURL(/\/fr\/connexion/, { timeout: 15_000 })
 
-    // Ce basculement ne suffit pas : l'en-tête se met à jour dès que l'état
-    // local change, donc AVANT que le router.refresh() déclenché dans la
-    // foulée soit terminé. Naviguer à cet instant fait annuler la nouvelle
-    // navigation par Chromium (net::ERR_ABORTED) une fois sur trois environ.
-    //
-    // `networkidle` ne convient pas ici : le flux RSC de Next garde une
-    // connexion ouverte, l'attente n'aboutit jamais. On reprend donc la
-    // navigation ET son assertion — si la redirection ne se produit pas, le
-    // test échoue toujours, ce qui est bien ce qu'il doit vérifier.
+    // Et le cookie est bien mort côté serveur, pas seulement oublié par la
+    // page : on redemande une page protégée.
     await expect(async () => {
       await page.goto('/fr/compte')
       await expect(page).toHaveURL(/\/fr\/connexion/)

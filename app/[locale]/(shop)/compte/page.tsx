@@ -3,7 +3,9 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { redirect } from '@/lib/i18n/navigation'
 import { getCurrentUser } from '@/lib/auth/session'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Link } from '@/lib/i18n/navigation'
+import { signOutAction } from '@/lib/auth/actions'
 
 /**
  * Rendu dynamique explicite.
@@ -45,6 +47,7 @@ export default async function AccountPage({
 
   const t = await getTranslations('account')
   const tp = await getTranslations('privacy')
+  const tAuth = await getTranslations('auth')
 
   const sections = [
     { href: '/compte/commandes', label: t('orders') },
@@ -87,6 +90,24 @@ export default async function AccountPage({
           Accéder au back-office
         </Link>
       ) : null}
+
+      {/*
+        La déconnexion, descendue de la barre de navigation.
+
+        Elle y était affichée en permanence, sur chaque page, alors qu'on s'en
+        sert une fois par session au plus. Ici elle est à sa place — au bas de
+        l'espace compte, après ce qu'on vient y faire — et elle reste à deux
+        clics de n'importe où.
+
+        Un vrai <form> et non un bouton scripté : l'action serveur s'exécute
+        sans JavaScript, et le rendu qui suit retombe sur la redirection vers
+        la connexion, puisque la session n'existe plus.
+      */}
+      <form action={signOutAction} className="mt-10 border-t border-sand pt-6">
+        <Button type="submit" variant="outline" size="sm">
+          {tAuth('signOut')}
+        </Button>
+      </form>
     </div>
   )
 }

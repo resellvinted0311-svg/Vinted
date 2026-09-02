@@ -1,7 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { Wordmark } from './wordmark'
-import { LocaleSwitcher } from './locale-switcher'
 import { AccountNav } from './account-nav'
 import { CartCountBadge } from './cart-count-badge'
 
@@ -11,29 +10,43 @@ import { CartCountBadge } from './cart-count-badge'
  * ---------------------------------------------------------------------------
  * Ce qu'elle porte, et ce qu'elle ne porte plus
  * ---------------------------------------------------------------------------
- * Les informations principales, et elles seules : la signature, les trois
- * entrées du site, les favoris, le panier, le compte et la langue. La
- * recherche en est SORTIE — elle vit désormais dans la vue catalogue, à côté
- * des résultats qu'elle filtre. Un champ de recherche posé dans l'en-tête
- * s'affiche sur la page d'accueil, sur une fiche article, sur le tunnel de
- * paiement : partout où l'on ne cherche pas.
+ * Cinq chemins : les trois entrées du site, les favoris, le panier, plus
+ * l'entrée du compte. Rien d'autre.
+ *
+ * En sont sortis, dans l'ordre : la recherche, partie dans la vue catalogue
+ * auprès des résultats qu'elle filtre ; le sélecteur de langue, descendu dans
+ * le colophon, puisqu'on le règle une fois en arrivant et que la langue vit
+ * ensuite dans l'adresse ; le prénom, le lien vers la régie et la
+ * déconnexion, remontés dans l'espace compte, qui est l'écran prévu pour eux.
+ *
+ * La règle qui a servi à trancher : une barre de navigation porte des CHEMINS,
+ * pas des commandes ni un état. Un prénom et un bouton de déconnexion affichés
+ * en permanence en faisaient un tableau de bord.
+ *
+ * ---------------------------------------------------------------------------
+ * Composée en romain, pas en petites capitales de régie
+ * ---------------------------------------------------------------------------
+ * Les entrées étaient en chasse fixe, capitales, interlettrage large — le
+ * traitement que la charte réserve aux DONNÉES : une référence, un poids, un
+ * intitulé de colonne. Appliqué à « Marques » et « Panier », il donnait le ton
+ * d'un terminal plutôt que d'une boutique. Les libellés reviennent au romain
+ * du texte courant ; l'étiquette de régie reste là où il y a une donnée.
  *
  * ---------------------------------------------------------------------------
  * Flottante, et pourquoi `sticky` plutôt que `fixed`
  * ---------------------------------------------------------------------------
  * `position: fixed` sort la barre du flux : il faut alors réserver sa hauteur
  * en haut du contenu, à la main, et cette réserve se désaccorde à chaque
- * changement de gabarit — deux registres sur téléphone, un seul sur bureau.
- * `sticky` garde la barre dans le flux : elle occupe sa vraie hauteur, la
- * réserve est automatique, et rien ne passe sous elle au chargement.
+ * changement de gabarit. `sticky` garde la barre dans le flux : elle occupe sa
+ * vraie hauteur, la réserve est automatique, et rien ne passe sous elle au
+ * chargement.
  *
  * Le décollement des bords vient du rembourrage de l'élément collant
  * lui-même : c'est lui qui reste visible une fois la barre accrochée en haut.
  *
- * Entièrement statique, à l'exception du compte, du compteur de panier et du
- * sélecteur de langue : ce sont eux qui lisent la session ou l'URL, et les
- * garder côté client est ce qui permet aux pages publiques de rester
- * prérendues.
+ * Entièrement statique, à l'exception du compte et du compteur de panier : ce
+ * sont eux qui lisent la session, et les garder côté client est ce qui permet
+ * aux pages publiques de rester prérendues.
  */
 export async function SiteHeader() {
   const t = await getTranslations('nav')
@@ -49,9 +62,12 @@ export async function SiteHeader() {
     { href: '/panier', label: t('cart'), badge: true },
   ] as const
 
+  const lien =
+    'whitespace-nowrap text-base text-muted transition-colors duration-150 ease-out hover:text-ink'
+
   return (
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
-      <div className="nav-bar nav-float mx-auto max-w-[80rem] px-4 py-3 sm:px-5">
+      <div className="nav-bar nav-float mx-auto max-w-[80rem] px-4 py-3 sm:px-6">
         {/*
           La signature sans sa baseline : une barre de navigation porte le nom
           de la boutique, pas son argument. La baseline reste là où elle
@@ -61,40 +77,27 @@ export async function SiteHeader() {
 
         <nav
           aria-label={t('categories')}
-          className="nav-bar__nav flex flex-wrap gap-x-5 gap-y-1 sm:gap-x-6"
+          className="nav-bar__nav flex flex-wrap gap-x-6 gap-y-1"
         >
           {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="label-reg whitespace-nowrap text-muted transition-colors duration-150 ease-out hover:text-ink"
-            >
+            <Link key={link.href} href={link.href} className={lien}>
               {link.label}
             </Link>
           ))}
         </nav>
 
         {/*
-          Le sélecteur de langue a sa propre zone de grille : il termine la
-          ligne de titre sur grand écran et la ligne de navigation sur petit,
-          sans être rendu deux fois. Voir `.nav-bar` dans globals.css.
-        */}
-        <div className="nav-bar__lang">
-          <LocaleSwitcher className="w-[6.75rem]" />
-        </div>
-
-        {/*
-          `flex-wrap` : « Se connecter » se dit plus long en portugais qu'en
+          `flex-wrap` : « Mon compte » se dit plus long en portugais qu'en
           français, et les huit langues ne tiennent pas toutes dans la même
           largeur. Sans repli, le groupe passait sous le bord arrondi de la
           barre au lieu de descendre d'une ligne.
         */}
-        <div className="nav-bar__tools flex flex-wrap items-center justify-end gap-x-4 gap-y-1 sm:gap-x-5">
+        <div className="nav-bar__tools flex flex-wrap items-center justify-end gap-x-5 gap-y-1 sm:gap-x-6">
           {services.map((service) => (
             <Link
               key={service.href}
               href={service.href}
-              className="label-reg inline-flex items-center gap-1.5 whitespace-nowrap text-muted transition-colors duration-150 ease-out hover:text-ink"
+              className={`${lien} inline-flex items-center gap-1.5`}
             >
               {service.label}
               {/*

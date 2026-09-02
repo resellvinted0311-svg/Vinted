@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { SITE, LEGAL } from '@/lib/config/site'
+import { LocaleSwitcher } from './locale-switcher'
 
 export async function SiteFooter() {
   const t = await getTranslations('footer')
@@ -46,6 +47,23 @@ export async function SiteFooter() {
             <p className="data mt-2 text-xs text-muted">
               {LEGAL.companyName || null}
             </p>
+
+            {/*
+              Le choix de langue descend ici, lui aussi.
+
+              Il occupait une case de quarante-quatre pixels de haut dans la
+              barre flottante, sur toutes les pages, pour un réglage qu'on fait
+              une fois en arrivant — et jamais ensuite, puisque la langue vit
+              dans l'adresse et suit donc le favori, l'historique et le lien
+              partagé. Le colophon est l'endroit où un ouvrage indique son
+              édition.
+
+              Rendu à UN seul endroit du document : deux exemplaires
+              donneraient deux commandes portant l'intitulé « Langue ».
+            */}
+            <div className="mt-5">
+              <LocaleSwitcher />
+            </div>
           </div>
 
           <nav aria-label={t('about')}>

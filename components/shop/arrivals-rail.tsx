@@ -29,7 +29,7 @@ export async function ArrivalsRail({
   if (articles.length === 0) return null
 
   return (
-    <section className="py-16 sm:py-24">
+    <section className="py-16 sm:py-24 lg:py-8">
       <div className="mx-auto max-w-[80rem] px-4 sm:px-6">
         <Reveal>
           <div className="ruled-signature flex flex-wrap items-end justify-between gap-4 pb-4">
@@ -52,21 +52,29 @@ export async function ArrivalsRail({
         Le rembourrage de fin redonne de l'air à la dernière fiche.
       */}
       <Reveal from="right">
-        <ul className="rail bleed-right mt-6 flex gap-4 overflow-x-auto lg:gap-6">
+        <ul className="rail bleed-right mt-5 flex gap-4 overflow-x-auto lg:mt-4 lg:gap-5">
           {articles.map((article, index) => (
             <li
               key={article.id}
               className={[
-                'w-[70vw] shrink-0 sm:w-[42vw] lg:w-[23rem]',
+                /*
+                  Vingt-trois rem par fiche sur grand écran, c'était une
+                  vignette de catalogue agrandie : trois pièces et demie
+                  tenaient à l'écran, et la section dépassait la fenêtre d'un
+                  bon tiers. À seize, on en voit cinq d'un coup — un rail se
+                  lit au nombre de pièces qu'il montre, pas à leur taille.
+                */
+                'w-[70vw] shrink-0 sm:w-[42vw] lg:w-[15rem]',
                 // Décalage vertical alterné : la ligne de base se brise, ce
-                // qu'une grille de catalogue ne fait jamais.
-                index % 2 === 1 ? 'lg:mt-14' : '',
+                // qu'une grille de catalogue ne fait jamais. Réduit d'autant
+                // que les fiches — il creusait à lui seul cinquante pixels.
+                index % 2 === 1 ? 'lg:mt-4' : '',
               ].join(' ')}
             >
               <ArticleCard
                 article={article}
                 locale={locale}
-                sizes="(min-width: 1024px) 23rem, (min-width: 640px) 42vw, 70vw"
+                sizes="(min-width: 1024px) 15rem, (min-width: 640px) 42vw, 70vw"
                 priority={index < 2}
               />
             </li>

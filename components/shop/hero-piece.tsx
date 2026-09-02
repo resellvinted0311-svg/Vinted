@@ -66,7 +66,15 @@ export async function HeroPiece({
           l'atmosphère du premier écran au lieu d'un quadrillage posé dessus. */}
       <div aria-hidden className="wash-page absolute inset-0" />
 
-      <div className="relative mx-auto max-w-[80rem] px-4 pb-14 pt-10 sm:px-6 sm:pb-20 sm:pt-14">
+      {/*
+        La respiration a été réduite sur grand écran, et seulement là.
+
+        Objectif tenu : la pièce du moment — visuel, nom, prix, relevé, appel —
+        se lit d'un seul coup d'œil sur un écran de bureau, sans défiler. Sur
+        téléphone, la composition se déroule de toute façon en pile : la
+        générosité d'origine y est conservée.
+      */}
+      <div className="relative mx-auto max-w-[80rem] px-4 pb-14 pt-10 sm:px-6 sm:pb-20 sm:pt-14 lg:pb-12 lg:pt-8">
         <Reveal>
           <p className="label-reg text-mark">{t('featured')}</p>
         </Reveal>
@@ -85,11 +93,22 @@ export async function HeroPiece({
           En dessous de lg, tout se remet en pile — superposer du texte sur
           une photo étroite le rendrait illisible.
         */}
-        <div className="mt-6 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-6">
+        <div className="mt-6 lg:mt-4 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-8">
           <Reveal
             from="left"
-            className="lg:col-span-6 lg:col-start-1 lg:row-start-1"
+            className="lg:col-span-4 lg:col-start-1 lg:row-start-1"
           >
+            {/*
+              Le cadre rétrécit en COLONNES, et garde son rapport 4:5.
+
+              Le plafonner en hauteur aurait été plus direct, et c'est le
+              premier essai : à cinq colonnes de large et vingt-six rem de
+              haut, le cadre devenait paysage. Or `object-cover` remplit le
+              cadre — un vêtement photographié debout s'y serait fait couper la
+              tête et les pieds pour n'en montrer que le milieu. Le rapport
+              d'un cadre produit n'est pas une variable de mise en page : c'est
+              la largeur qui cède.
+            */}
             <Link
               href={`/a/${article.slug}`}
               className="group block overflow-hidden rounded-card ruled bg-sand"
@@ -99,7 +118,10 @@ export async function HeroPiece({
                   {cover ? (
                     <ArticleImage
                       image={cover}
-                      sizes="(min-width: 1024px) 58vw, 100vw"
+                      // Quatre colonnes sur douze depuis le resserrement : la
+                      // valeur suit, sinon le navigateur télécharge une image
+                      // deux fois trop large sur la vue qui porte le LCP.
+                      sizes="(min-width: 1024px) 25rem, 100vw"
                       priority
                     />
                   ) : (
@@ -110,7 +132,13 @@ export async function HeroPiece({
             </Link>
           </Reveal>
 
-          <div className="relative z-10 mt-6 lg:col-span-7 lg:col-start-6 lg:row-start-1 lg:mt-28">
+          {/*
+            Sept colonnes et non neuf : le relevé est calé à droite de SA
+            colonne, donc une colonne plus large le repoussait vers le bord de
+            l'écran et creusait un vide au milieu de la composition. Il termine
+            maintenant à l'aplomb du titre.
+          */}
+          <div className="relative z-10 mt-6 lg:col-span-7 lg:col-start-4 lg:row-start-1 lg:mt-14">
             <Reveal delay={120}>
               <h1 className="type-hero font-display font-bold uppercase text-ink">
                 <Link
@@ -128,7 +156,7 @@ export async function HeroPiece({
                 déborde sur la photographie, et du texte fin sur un visuel ne
                 se lit pas.
               */}
-              <div className="mt-6 max-w-md rounded-card ruled bg-paper-raised p-5 lg:mt-8 lg:ml-auto">
+              <div className="mt-6 max-w-md rounded-card ruled bg-paper-raised p-5 lg:mt-6 lg:ml-auto lg:p-4">
                 {article.brand ? (
                   <p className="label-reg text-muted">{article.brand.name}</p>
                 ) : null}
@@ -143,11 +171,11 @@ export async function HeroPiece({
                   <Stamp>{tArticle('uniquePiece')}</Stamp>
                 </p>
 
-                <dl className="mt-5">
+                <dl className="mt-5 lg:mt-4">
                   {record.map((entry) => (
                     <div
                       key={entry.label}
-                      className="flex items-baseline justify-between gap-4 border-t border-sand py-2"
+                      className="flex items-baseline justify-between gap-4 border-t border-sand py-2 lg:py-1.5"
                     >
                       <dt className="label-reg text-muted">{entry.label}</dt>
                       <dd className="data text-base text-ink">{entry.value}</dd>
@@ -157,7 +185,7 @@ export async function HeroPiece({
 
                 <Link
                   href={`/a/${article.slug}`}
-                  className="lift mt-5 inline-flex min-h-[48px] items-center rounded-input border-[1.5px] border-stamp bg-stamp px-6 font-medium text-ink-inverse"
+                  className="lift mt-5 inline-flex min-h-[48px] items-center rounded-input border-[1.5px] border-stamp bg-stamp px-6 font-medium text-ink-inverse lg:mt-4"
                 >
                   {t('featuredCta')}
                 </Link>

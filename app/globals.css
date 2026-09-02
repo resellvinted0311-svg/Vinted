@@ -275,18 +275,18 @@
       atteinte, annoncée au lecteur d'écran, et invisible à l'écran. Le défaut
       ne se voit que chez qui navigue au clavier.
 
-      Les valeurs sont relevées sur la barre rendue : 128 px en dessous de
-      1024 px (trois registres, plus le décollement du bord), 86 px au-delà
-      (un seul registre). On arrondit au-dessus — une réserve trop courte
-      recouvre la cible, une réserve trop longue ne coûte qu'un peu de blanc.
+      Les valeurs sont relevées sur la barre rendue : deux registres en dessous
+      de 1024 px, un seul au-delà, décollement du bord compris. On arrondit
+      au-dessus — une réserve trop courte recouvre la cible, une réserve trop
+      longue ne coûte qu'un peu de blanc.
     */
-    scroll-padding-top: 8.5rem;
+    scroll-padding-top: 7.5rem;
   }
 
   @media (min-width: 1024px) {
     html {
       /* Un seul registre au-delà de 1024px : la réserve suit. */
-      scroll-padding-top: 6rem;
+      scroll-padding-top: 5.5rem;
     }
   }
 
@@ -478,9 +478,30 @@
   .nav-float {
     position: relative;
     background-color: var(--paper-raised);
-    border: var(--rule-width) solid var(--rule);
-    border-radius: var(--r-card);
-    box-shadow: 3px 3px 0 var(--rule);
+
+    /*
+      Le filet est un CHEVEU, pas un contour.
+
+      Un contour plein noir refermé sur un rectangle arrondi, avec l'ombre
+      décalée de la charte par-dessus, donnait à la barre l'allure d'un
+      panneau d'interface de jeu : une pastille appliquée sur la page plutôt
+      qu'un élément qui lui appartient. Le filet plein reste ce qui délimite
+      une FICHE — un objet qu'on prend — et la barre n'en est pas une.
+    */
+    border: 1px solid color-mix(in oklab, var(--ink) 11%, transparent);
+    border-radius: 1rem;
+
+    /*
+      La seule ombre floue de tout le site, et c'est assumé.
+
+      La charte proscrit le flou parce qu'il simule une profondeur que rien ne
+      justifie. Ici la profondeur est RÉELLE : la barre est le seul élément qui
+      passe devant le contenu pendant tout le défilement. L'ombre dure la
+      faisait sauter d'un cran ; celle-ci la pose, à peine.
+    */
+    box-shadow:
+      0 1px 2px color-mix(in oklab, var(--ink) 6%, transparent),
+      0 12px 32px -20px color-mix(in oklab, var(--ink) 55%, transparent);
   }
 
   /*
@@ -506,22 +527,15 @@
   }
 
   /*
-    Le filet de signature, à l'intérieur du bord bas.
+    Pas de filet de couleur sous la barre.
 
-    Rentré de la valeur du rayon pour ne pas dépasser des angles arrondis : un
-    trait qui sort de la fiche de deux pixels se voit tout de suite, et il se
-    voit sur chaque page du site.
+    Il y en avait un : deux pixels de dégradé rose → cuivre, tendus d'un bout à
+    l'autre. C'est exactement la forme d'une jauge, et une jauge posée en haut
+    de l'écran en permanence se lit comme un indicateur de progression — la
+    barre semblait mesurer quelque chose. La teinte porte des surfaces
+    ailleurs ; ici, le seul rappel est le filet sous la signature, qui n'a
+    qu'un centimètre de long et appartient au nom.
   */
-  .nav-float::after {
-    content: '';
-    position: absolute;
-    left: var(--r-card);
-    right: var(--r-card);
-    bottom: 0;
-    height: 2px;
-    border-radius: 2px;
-    background-image: var(--gradient-hairline);
-  }
 
   /*
     Le gabarit de la barre.
@@ -549,30 +563,24 @@
     grid-template-columns: minmax(0, 1fr) auto;
 
     /*
-      Trois registres sur téléphone, et le choix se justifie par une mesure.
+      Deux registres sur téléphone, et la mesure commande la répartition.
 
-      Sur un écran de 412 px, la barre doit loger la signature (101 px), trois
-      entrées (250 px), trois services (233 px) et le sélecteur de langue
-      (108 px) : sept cents pixels de contenu. Aucune disposition à deux lignes
-      n'y arrive.
+      La colonne `auto` prend la largeur de son plus large occupant — les trois
+      services. Tout ce qui partagerait leur ligne se retrouverait dans un peu
+      plus de cent pixels : les entrées du catalogue y tombaient sur trois
+      lignes. Elles occupent donc toute la largeur, sur leur propre registre.
 
-      La contrainte décisive est que la colonne `auto` prend la largeur du plus
-      large de ses occupants — les services. Tout ce qui partage leur ligne se
-      retrouve dans un peu plus de cent pixels : les entrées de catalogue y
-      tombaient sur trois lignes. Elles occupent donc TOUTE la largeur, et les
-      services descendent sur leur propre registre.
-
-      La barre y fait environ 115 px de haut, contre près du double pour
-      l'en-tête statique qu'elle remplace — lequel portait en plus le champ de
-      recherche, parti dans le catalogue.
+      La barre était à trois registres tant qu'elle portait aussi le sélecteur
+      de langue et le bouton de déconnexion. Ils sont descendus, l'un dans le
+      colophon, l'autre dans l'espace compte : deux registres suffisent, et la
+      barre a perdu un quart de sa hauteur.
     */
     grid-template-areas:
-      'mark lang'
-      'nav nav'
-      'tools tools';
+      'mark tools'
+      'nav nav';
     align-items: center;
     column-gap: 1.25rem;
-    row-gap: 0.5rem;
+    row-gap: 0.625rem;
   }
 
   .nav-bar__mark {
@@ -581,11 +589,6 @@
 
   .nav-bar__nav {
     grid-area: nav;
-  }
-
-  .nav-bar__lang {
-    grid-area: lang;
-    justify-self: end;
   }
 
   .nav-bar__tools {
@@ -597,14 +600,10 @@
      de titre, et la barre retrouve la hauteur d'un bandeau. */
   @media (min-width: 1024px) {
     .nav-bar {
-      grid-template-columns: auto minmax(0, 1fr) auto auto;
-      grid-template-areas: 'mark nav lang tools';
-      column-gap: 2rem;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas: 'mark nav tools';
+      column-gap: 2.5rem;
       row-gap: 0;
-    }
-
-    .nav-bar__lang {
-      justify-self: auto;
     }
   }
 
@@ -825,18 +824,30 @@
     calé pour que le mot le plus long tienne dans sa colonne — au-delà, il
     débordait du cadre et se faisait rogner par l'écran.
   */
+  /*
+    Les deux échelles ont été RESSERRÉES, et c'est une décision de lecture, pas
+    de goût.
+
+    À 7,5 rem, le nom de la pièce faisait deux lignes de cent vingt pixels : la
+    vitrine ne tenait plus dans un écran de bureau, et il fallait faire défiler
+    pour découvrir qu'il y avait un prix. Une vitrine qui ne se voit pas d'un
+    coup d'œil n'est plus une vitrine — c'est le début d'une page.
+
+    Les bornes basses ne bougent pas : sur téléphone, la composition tenait
+    déjà, et la rabaisser n'aurait fait que rendre le titre timide.
+  */
   .type-hero {
-    font-size: clamp(2.5rem, 8vw, 7.5rem);
-    line-height: 0.86;
-    letter-spacing: -0.05em;
+    font-size: clamp(2.5rem, 5.2vw, 4.5rem);
+    line-height: 0.9;
+    letter-spacing: -0.045em;
     overflow-wrap: break-word;
     hyphens: auto;
   }
 
   .type-section {
-    font-size: clamp(1.75rem, 5.5vw, 3.75rem);
-    line-height: 0.9;
-    letter-spacing: -0.045em;
+    font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
   }
 
   /* Chiffre en contour : un graphisme fait de type, pas une image. */
@@ -1008,8 +1019,7 @@
     color: #000000 !important;
   }
 
-  .ruled-signature::after,
-  .nav-float::after {
+  .ruled-signature::after {
     background-image: none !important;
     background-color: #000000;
   }

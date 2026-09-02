@@ -253,10 +253,15 @@ describe('la barre flottante', () => {
     // qu'on veut séparer.
     const declaration = CSS.slice(debut, CSS.indexOf('}', debut))
 
-    expect(declaration).toContain('background-color: var(--paper-raised)')
+    // On lit LE fond, pas le bloc entier : le filet et l'ombre de la barre
+    // sont eux-mêmes translucides, et c'est normal — chercher le mot
+    // « transparent » n'importe où ferait échouer le test sur des règles qui
+    // n'ont rien à voir avec la lisibilité des libellés.
+    const fond = /background-color:\s*([^;]+);/.exec(declaration)?.[1]
+
     expect(
-      declaration,
-      'le fond de base de la barre doit être opaque',
-    ).not.toContain('transparent')
+      fond,
+      'le fond de base de la barre doit être une couleur pleine',
+    ).toBe('var(--paper-raised)')
   })
 })
