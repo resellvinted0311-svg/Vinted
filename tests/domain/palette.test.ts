@@ -221,10 +221,15 @@ describe('les lavis', () => {
   })
 
   it('a un repli sous lui', () => {
-    const bloc = CSS.slice(
-      CSS.indexOf('.wash-accent {'),
-      CSS.indexOf('.wash-page {'),
-    )
+    // Borné par sa PROPRE accolade fermante. La borne précédente était le
+    // sélecteur suivant, `.wash-page` — supprimé depuis que le dégradé est
+    // monté sur `body`. `indexOf` renvoyait alors -1, la tranche prenait
+    // presque tout le fichier, et l'assertion passait sur une déclaration
+    // trouvée ailleurs. Un test devenu vrai par accident.
+    const debut = CSS.indexOf('.wash-accent {')
+    expect(debut, '.wash-accent introuvable').toBeGreaterThan(-1)
+
+    const bloc = CSS.slice(debut, CSS.indexOf('}', debut))
     expect(bloc).toContain('background-color: var(--sand)')
   })
 })

@@ -77,6 +77,114 @@ test.describe('Accueil', () => {
   })
 })
 
+/**
+ * Luminance relative et rapport de contraste, tels que les définissent les WCAG.
+ *
+ * Recopiés ici plutôt qu'importés de `tests/domain/palette.test.ts` : ce
+ * fichier-là calcule à partir des JETONS déclarés, celui-ci à partir des
+ * couleurs RÉELLEMENT PEINTES. Les deux doivent pouvoir diverger — c'est
+ * justement l'écart entre les deux qu'on cherche.
+ */
+function luminance(rgb: number[]): number {
+  const [r, g, b] = rgb.map((octet) => {
+    const canal = octet / 255
+    return canal <= 0.03928
+      ? canal / 12.92
+      : Math.pow((canal + 0.055) / 1.055, 2.4)
+  }) as [number, number, number]
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+function contraste(a: number[], b: number[]): number {
+  const [clair, sombre] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [
+    number,
+    number,
+  ]
+  return (clair + 0.05) / (sombre + 0.05)
+}
+
+test.describe('Le fond de page reste lisible', () => {
+  for (const theme of ['light', 'dark'] as const) {
+    test(`les mentions secondaires tiennent le seuil AA en thème ${theme}`, async ({
+      page,
+    }) => {
+      /**
+       * Ce que ce test empêche, et il l'a déjà empêché une fois.
+       *
+       * Le fond du site est passé d'un crème uni à un dégradé teinté. Le
+       * premier essai reprenait tel quel le lavis des cadres de fiche : mesure
+       * faite, `--muted` y tombait à 4,30:1, sous le seuil AA de 4,5 imposé par
+       * le cahier des charges. Rien ne l'aurait signalé — la page reste jolie,
+       * le texte reste visible pour qui a une bonne vue, et le défaut ne se
+       * découvre qu'à l'audit d'accessibilité.
+       *
+       * Le calcul par jetons ne pouvait pas l'attraper : le fond n'est pas une
+       * couleur déclarée mais un `color-mix` résolu par le navigateur. On
+       * mesure donc la couleur PEINTE, aux deux extrémités du dégradé, dans les
+       * deux thèmes — le thème sombre mélange une teinte claire dans un fond
+       * sombre, il ÉCLAIRCIT le papier, et c'est l'inverse du thème clair.
+       */
+      await page.emulateMedia({ colorScheme: theme })
+      await page.goto('/fr')
+
+      const mesures = await page.evaluate(() => {
+        // Le canvas sert de convertisseur : `getComputedStyle` rend un
+        // `oklab(...)` que rien ne sait lire en octets, alors qu'un pixel
+        // peint est toujours en sRGB.
+        const toile = document.createElement('canvas')
+        toile.width = 1
+        toile.height = 1
+        const pinceau = toile.getContext('2d')
+        if (!pinceau) throw new Error('canvas 2d indisponible')
+
+        const sonde = document.createElement('div')
+        document.body.appendChild(sonde)
+
+        const peindre = (valeur: string): number[] => {
+          sonde.style.backgroundColor = valeur
+          pinceau.clearRect(0, 0, 1, 1)
+          pinceau.fillStyle = getComputedStyle(sonde).backgroundColor
+          pinceau.fillRect(0, 0, 1, 1)
+          const octets = pinceau.getImageData(0, 0, 1, 1).data
+          return [octets[0] ?? 0, octets[1] ?? 0, octets[2] ?? 0]
+        }
+
+        const resultat = {
+          // Les deux extrémités de `--gradient-page`, telles qu'elles sont
+          // déclarées dans globals.css.
+          depart: peindre(
+            'color-mix(in oklab, var(--stamp) 16%, var(--paper-raised))',
+          ),
+          arrivee: peindre(
+            'color-mix(in oklab, var(--mark) 14%, var(--paper-raised))',
+          ),
+          muted: peindre('var(--muted)'),
+          ink: peindre('var(--ink)'),
+        }
+
+        sonde.remove()
+        return resultat
+      })
+
+      const AA = 4.5
+      const paires: [string, number[], number[]][] = [
+        ['les mentions secondaires au départ du fond', mesures.muted, mesures.depart],
+        ['les mentions secondaires à son arrivée', mesures.muted, mesures.arrivee],
+        ['le texte courant au départ du fond', mesures.ink, mesures.depart],
+        ['le texte courant à son arrivée', mesures.ink, mesures.arrivee],
+      ]
+
+      for (const [role, devant, derriere] of paires) {
+        const rapport = contraste(devant, derriere)
+        expect(
+          rapport,
+          `${role} : ${rapport.toFixed(2)}:1, il en faut ${AA}`,
+        ).toBeGreaterThanOrEqual(AA)
+      }
+    })
+  }
+})
+
 test.describe('Barre de navigation', () => {
   test('flotte : elle reste à l’écran quand la page défile', async ({
     page,

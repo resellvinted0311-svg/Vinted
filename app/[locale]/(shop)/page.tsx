@@ -4,10 +4,7 @@ import {
   getLatestArticles,
   countListedArticles,
 } from '@/lib/db/queries/articles'
-import {
-  listCategoriesWithCounts,
-  listBrandsWithCounts,
-} from '@/lib/db/queries/taxonomy'
+import { listBrandsWithCounts } from '@/lib/db/queries/taxonomy'
 import { HeroPiece } from '@/components/shop/hero-piece'
 import { ArrivalsRail } from '@/components/shop/arrivals-rail'
 import { TypeIndex } from '@/components/shop/type-index'
@@ -48,9 +45,16 @@ export default async function HomePage({
   const tSite = await getTranslations('site')
   const tNav = await getTranslations('nav')
 
-  const [latest, categories, brands, total] = await Promise.all([
+  /*
+    L'index des catégories a été retiré, et sa requête avec lui.
+
+    Une section supprimée dont la requête reste dans le `Promise.all` continue
+    de coûter un aller en base à chaque régénération de la page, pour un
+    résultat que personne n'affiche. Ces requêtes-là sont invisibles : rien
+    n'échoue, la page est simplement un peu plus lente pour rien.
+  */
+  const [latest, brands, total] = await Promise.all([
     getLatestArticles(locale, 9),
-    listCategoriesWithCounts(locale),
     listBrandsWithCounts(),
     countListedArticles(),
   ])
@@ -105,7 +109,9 @@ export default async function HomePage({
           trait, derrière le texte. Elle ne descend jamais dans un contrôle
           (voir engraving.tsx).
           -------------------------------------------------------------------- */}
-      <section className="relative overflow-hidden ruled-t ruled-b bg-paper-raised">
+      {/* Pas de fond propre : les filets suffisent à séparer la section, et le
+          dégradé de page la traverse sans couture. */}
+      <section className="relative overflow-hidden ruled-t ruled-b">
         {/* Plus effacée et plus repoussée sur petit écran : la colonne y est
             unique, la gravure traverserait le texte des étapes. */}
         <SeedHeadPlate className="pointer-events-none absolute -left-28 top-0 h-full w-auto select-none text-engraving opacity-[0.18] sm:-left-10 sm:opacity-30" />
@@ -147,23 +153,26 @@ export default async function HomePage({
       </section>
 
       {/* --------------------------------------------------------------------
-          Index.
+          Index des marques.
 
-          Les entrées du catalogue en composition pleine largeur plutôt qu'en
-          pastilles : le compteur cesse d'être une décoration et dit où le
-          catalogue est fourni.
+          Les entrées en composition pleine largeur plutôt qu'en pastilles : le
+          compteur cesse d'être une décoration et dit où le catalogue est
+          fourni.
+
+          L'index des CATÉGORIES a été retiré d'ici. Il doublait la barre de
+          navigation sans rien ajouter, et la descente de la page contenait
+          alors deux listes verticales côte à côte — le seul endroit du site où
+          l'on demandait de choisir entre deux façons de choisir. L'accès par
+          catégorie reste entier : la barre le porte, et le panneau de filtres
+          du catalogue aussi.
           -------------------------------------------------------------------- */}
       <section className="mx-auto max-w-[80rem] px-4 py-16 sm:px-6 sm:py-24">
-        <div className="grid gap-14 lg:grid-cols-2 lg:gap-20">
-          <TypeIndex
-            title={t('indexCategories')}
-            entries={categories.map((category) => ({
-              href: `/c/${category.path}`,
-              label: category.name,
-              count: category.articleCount,
-            }))}
-          />
-
+        {/* Pleine largeur depuis qu'il est seul : à demi-largeur, l'index
+            gardait la colonne de gauche d'une grille dont la droite était
+            vide. Les lignes portent leur compteur à l'extrémité, comme une
+            table des matières — c'est cette longueur qui les fait lire comme
+            un relevé plutôt que comme une liste de liens. */}
+        <div>
           <TypeIndex
             title={t('indexBrands')}
             entries={brands.map((brand) => ({

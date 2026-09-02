@@ -83,8 +83,8 @@
   --focus-ring: #c2255c;
 
   /* --- Dégradés ----------------------------------------------------------
-     UN parcours de teintes — rose vers cuivre — décliné en quatre intensités,
-     et pas un de plus. Ce qui change d'une déclinaison à l'autre, c'est la
+     UN parcours de teintes — rose vers cuivre — décliné en cinq intensités, et
+     pas une de plus. Ce qui change d'une déclinaison à l'autre, c'est la
      force, jamais la route : deux dégradés qui ne suivent pas le même chemin
      se lisent comme deux identités.
 
@@ -100,7 +100,12 @@
      habille ce qui doit rester un support et non un accent : le cadre d'une
      pièce encore sans photographie, qui occupe pourtant la moitié de la
      hauteur d'une vignette. Une teinte pleine à cet endroit ferait passer un
-     cadre vide pour la pièce la plus mise en avant de la grille. */
+     cadre vide pour la pièce la plus mise en avant de la grille.
+
+     `--gradient-page` est le fond du site lui-même — le même lavis, encore
+     éclairci parce qu'il porte du texte sur toute sa surface. Voir sa
+     déclaration : l'écart de dilution est une mesure de contraste, pas un
+     réglage à l'œil. */
   --gradient-accent: linear-gradient(
     135deg,
     var(--stamp) 0%,
@@ -121,6 +126,29 @@
     148deg,
     color-mix(in oklab, var(--stamp) 24%, var(--paper-raised)) 0%,
     color-mix(in oklab, var(--mark) 20%, var(--paper-raised)) 100%
+  );
+
+  /*
+    Le même lavis, en PLUS CLAIR, pour le fond de page.
+
+    Et l'écart n'est pas une question de goût : il est mesuré. Le lavis de
+    fiche, posé tel quel sur toute la page, fait tomber les mentions
+    secondaires — `--muted` — à 4,30:1 sur son extrémité rose. Le seuil AA pour
+    du texte courant est 4,5:1, et le cahier des charges l'impose. À seize pour
+    cent, le même parcours de teintes donne 4,82:1, soit une marge réelle
+    plutôt qu'une valeur posée sur le seuil.
+
+    Un cadre de fiche peut se permettre d'être plus soutenu : il ne porte pas
+    de texte. Le fond de page en porte partout, et c'est toute la différence.
+
+    Vérifié en continu par `tests/e2e/phase0.spec.ts`, qui mesure les couleurs
+    RÉELLEMENT peintes dans les deux thèmes — une valeur recopiée ici serait
+    fausse dès le prochain réglage de palette.
+  */
+  --gradient-page: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--stamp) 16%, var(--paper-raised)) 0%,
+    color-mix(in oklab, var(--mark) 14%, var(--paper-raised)) 100%
   );
 
   /* --- Typographie -------------------------------------------------------
@@ -291,7 +319,28 @@
   }
 
   body {
+    /*
+      Le fond du site EST le dégradé, et non plus un crème uni.
+
+      C'est le même parcours rose → cuivre que les cadres de fiche, à la même
+      dilution : la teinte cesse d'être un accent posé par endroits pour devenir
+      la matière du papier. Les sections n'ont donc plus de fond propre — elles
+      laissent passer celui-ci, et ce sont les filets qui les séparent. C'est ce
+      qui a fait disparaître la ligne horizontale qu'on voyait sous la barre de
+      navigation : elle n'était pas un trait, mais la couture entre deux fonds
+      légèrement différents.
+
+      La couleur de fond RESTE déclarée sous l'image : si le dégradé ne peint
+      pas — impression, contraste élevé, moteur ancien — la page garde un
+      papier, pas un blanc d'écran.
+
+      Le dégradé s'étend sur toute la HAUTEUR DU DOCUMENT, pas sur la fenêtre.
+      Il se traverse donc en descendant : rose en haut, cuivre en bas. Le fixer
+      à la fenêtre (`background-attachment: fixed`) aurait figé la même image à
+      chaque écran, au prix d'un repeint à chaque défilement sur mobile.
+    */
     background-color: var(--paper);
+    background-image: var(--gradient-page);
     color: var(--ink);
 
     /*
@@ -960,30 +1009,12 @@
   }
 
   /*
-    Halo de page : la teinte devient une atmosphère, pas un objet.
-
-    Deux foyers très étalés, l'un cuivre en haut à droite, l'autre rose en bas
-    à gauche, qui s'éteignent bien avant de se rencontrer. Ils colorent le fond
-    de la vitrine sans jamais former de bord — un dégradé qui montre son bord
-    se lit comme un bandeau, et il faudrait alors lui trouver une raison d'être
-    là.
-
-    Les valeurs restent basses parce que du texte courant passe dessus : le
-    fond doit rester un fond, et l'encre garder son contraste.
+    Il y avait ici un `.wash-page` : deux foyers radiaux qui coloraient le fond
+    de la seule vitrine. Il a disparu quand le dégradé est monté sur `body` —
+    deux fonds superposés se voyaient l'un l'autre, et leur couture était la
+    ligne horizontale qu'on cherchait à faire disparaître. Un fond de page se
+    déclare à UN endroit.
   */
-  .wash-page {
-    background-image:
-      radial-gradient(
-        118% 88% at 88% 0%,
-        color-mix(in oklab, var(--mark) 15%, transparent) 0%,
-        transparent 62%
-      ),
-      radial-gradient(
-        96% 78% at 2% 100%,
-        color-mix(in oklab, var(--stamp) 17%, transparent) 0%,
-        transparent 58%
-      );
-  }
 
   /*
     Aligné à gauche sur la colonne de texte, libre de déborder à droite.
@@ -1103,9 +1134,10 @@
 
   /* Les lavis sont des atmosphères d'écran. Sur papier, ils deviennent un
      aplat de couleur derrière du texte noir : de l'encre dépensée pour rien,
-     et un contraste dégradé sur la seule page qu'on imprime vraiment. */
-  .wash-accent,
-  .wash-page {
+     et un contraste dégradé sur la seule page qu'on imprime vraiment. Le fond
+     de page en fait partie depuis qu'il porte le dégradé. */
+  body,
+  .wash-accent {
     background-image: none !important;
     background-color: #ffffff !important;
   }

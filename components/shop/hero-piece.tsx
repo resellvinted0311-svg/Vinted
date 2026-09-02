@@ -84,11 +84,17 @@ export async function HeroPiece({
   ]
 
   return (
-    <section className="relative overflow-hidden ruled-b bg-paper">
-      {/* Le halo remplace la trame de carreaux : la teinte du site devient
-          l'atmosphère du premier écran au lieu d'un quadrillage posé dessus. */}
-      <div aria-hidden className="wash-page absolute inset-0" />
+    /*
+      Aucun fond propre : la vitrine laisse passer celui de la page.
 
+      Elle en avait un — un crème uni doublé d'un halo — et c'est ce qui
+      dessinait une ligne horizontale nette sous la barre de navigation : la
+      bande occupée par l'en-tête montrait le fond du document, la vitrine
+      montrait le sien, et la couture entre les deux se lisait comme un trait
+      tiré en travers de la page. Il n'y avait rien à effacer : il fallait
+      supprimer l'un des deux fonds.
+    */
+    <section className="relative overflow-hidden ruled-b">
       {/*
         La gravure occupe la droite de la vitrine.
 
@@ -100,8 +106,13 @@ export async function HeroPiece({
 
         Masqué en dessous de 1024 px : la composition s'y met en pile et le
         trait traverserait le relevé.
+
+        Le haut n'est plus débordé : la gravure partait seize pixels au-dessus
+        de la section, donc `overflow-hidden` la tranchait net au ras du bord
+        supérieur — un second trait horizontal, exactement là où on venait d'en
+        supprimer un. Elle commence maintenant à l'intérieur.
       */}
-      <SeedHeadPlate className="pointer-events-none absolute -right-24 -top-16 hidden h-[135%] w-auto select-none text-engraving opacity-25 lg:block" />
+      <SeedHeadPlate className="pointer-events-none absolute -right-24 top-0 hidden h-[125%] w-auto select-none text-engraving opacity-25 lg:block" />
 
       {/*
         La respiration a été réduite sur grand écran, et seulement là.

@@ -227,10 +227,14 @@ export interface CategoryEntry {
 /**
  * Catégories terminales et leur nombre de pièces en ligne.
  *
- * L'accueil les présente en index typographique plutôt qu'en pastilles : le
- * compteur y devient une donnée lisible, qui dit où le catalogue est fourni.
  * Seules les feuilles sont retenues — une pièce est toujours rangée dans une
  * feuille, un parent n'apporterait qu'un doublon.
+ *
+ * SANS APPELANT pour l'instant, et c'est assumé : l'accueil les présentait en
+ * index typographique, cette section a été retirée. La fonction reste parce
+ * que la place des catégories sur l'accueil est en cours d'arbitrage — la
+ * supprimer pour la réécrire à l'identique dans quelques jours serait du
+ * mouvement, pas du ménage. Si l'arbitrage conclut autrement, elle part.
  */
 export async function listCategoriesWithCounts(
   locale: string,
