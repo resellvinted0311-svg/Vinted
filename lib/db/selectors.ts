@@ -121,6 +121,17 @@ export const publicArticleCardSelect = {
   status: true,
   publishedAt: true,
   soldAt: true,
+  /**
+   * Une description écrite à la main et une description fabriquée ne se
+   * présentent pas pareil.
+   *
+   * Le drapeau descend au niveau de la VIGNETTE parce que la vitrine cite
+   * désormais les premières lignes de la description sous le nom de la pièce.
+   * Citer sans pouvoir dire d'où vient le texte reviendrait à faire passer une
+   * description générée pour une description rédigée — la fiche, elle, l'a
+   * toujours dit, et une mention vraie ici et absente là s'use vite.
+   */
+  descriptionIsGenerated: true,
   // Rend l'affichage d'une réservation indépendant du balayage : voir
   // `isReservationLive`. L'échéance est un fait, pas un compteur d'urgence —
   // elle n'est jamais affichée telle quelle.

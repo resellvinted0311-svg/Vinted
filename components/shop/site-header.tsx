@@ -51,6 +51,26 @@ import { CartCountBadge } from './cart-count-badge'
 export async function SiteHeader() {
   const t = await getTranslations('nav')
 
+  /*
+    Trois chemins, et il a failli y en avoir quatre.
+
+    « Contact » avait sa place ici — on écrit avant d'acheter, dans une
+    boutique où chaque pièce est unique. Il a été retiré parce que la cible
+    N'EXISTE PAS : `/contact` n'est routé nulle part. Le colophon pointe
+    dessus depuis le début, et c'est un lien mort, en production, depuis le
+    début aussi.
+
+    Le défaut s'est révélé de façon détournée, et c'est ce qui le rend
+    intéressant : le lien ajouté ici a déclenché le préchargement que Next
+    lance au survol d'un `Link`, la réponse d'un chemin sans route ne s'est
+    jamais terminée, et un test du tunnel d'achat — qui attend le corps de
+    toutes les réponses — s'est mis à expirer. Un lien mort ne fait rien
+    échouer par lui-même : il faut qu'un test tire sur le fil.
+
+    Signalé, pas rafistolé : une page de contact demande une adresse, un
+    formulaire, une politique de conservation. Ce n'est pas une ligne de
+    navigation.
+  */
   const links = [
     { href: '/catalogue', label: t('catalogue') },
     { href: '/marques', label: t('brands') },

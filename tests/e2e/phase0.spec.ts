@@ -190,6 +190,19 @@ test.describe('La vitrine tient dans un écran', () => {
     await page.goto('/fr')
     await page.waitForLoadState('load')
 
+    /*
+      Attendre les FONTES, et pas seulement le chargement.
+
+      Sans cette attente, le test mesurait une page composée dans la fonte de
+      repli. Le nom de la pièce y est plus large, il passait sur deux lignes,
+      et la section gagnait soixante-dix pixels qui n'existent pas une fois la
+      grotesque arrivée. Le test échouait alors une fois sur dix — uniquement
+      dans la passe complète, quand la machine est chargée et que la fonte
+      traîne. C'est le pire des cas : un échec qui ne se reproduit pas quand on
+      relance le test seul, et qu'on finit par mettre sur le compte du hasard.
+    */
+    await page.evaluate(() => document.fonts.ready)
+
     const mesures = await page.evaluate(() => {
       const barre = document
         .querySelector('header .nav-float')!

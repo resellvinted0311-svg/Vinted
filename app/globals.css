@@ -293,6 +293,31 @@
   body {
     background-color: var(--paper);
     color: var(--ink);
+
+    /*
+      Pas de `overflow-x` ici, et c'est une décision, pas un oubli.
+
+      Le rail d'arrivage entre en glissant depuis la droite : son état escamoté
+      le décale de vingt-six pixels hors du cadre, et `document.scrollWidth`
+      annonce donc 1306 pour 1280. On a cru y voir un défilement horizontal
+      parasite, et posé `overflow-x: clip` pour le couper.
+
+      Vérification faite en cassant le remède : la page ne bouge pas d'un pixel
+      dans un cas comme dans l'autre — `window.scrollX` reste à zéro après une
+      tentative de défilement, avec ou sans la règle. Chromium n'expose pas ce
+      débordement au défilement. La règle ne corrigeait donc rien, et le test
+      écrit pour la garder passait aussi bien sans elle.
+
+      Les deux ont été retirés. Une protection qu'aucune mesure ne distingue de
+      son absence, commentée comme si elle réparait quelque chose, se
+      transmet ensuite comme un fait.
+
+      Si le défaut se manifeste un jour sur un moteur réel, le remède est
+      `overflow-x: clip` et surtout PAS `hidden` : `hidden` ferait de `body` un
+      conteneur de défilement, et la barre en `position: sticky` s'y
+      accrocherait au lieu de la fenêtre — elle cesserait de flotter sans
+      qu'aucune règle ne devienne invalide.
+    */
     font-family: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
     font-size: var(--fs-base);
     line-height: 1.55;
@@ -502,6 +527,22 @@
     box-shadow:
       0 1px 2px color-mix(in oklab, var(--ink) 6%, transparent),
       0 12px 32px -20px color-mix(in oklab, var(--ink) 55%, transparent);
+
+    /*
+      Un souffle de teinte dans le fond, rose d'un côté, cuivre de l'autre.
+
+      Sept et six pour cent : à peine nommable, et pourtant c'est ce qui fait
+      la différence entre une plaque de crème posée là et un objet qui
+      appartient au site. La valeur reste sous le seuil où elle commencerait à
+      concurrencer les libellés — l'encre garde tout son contraste, la barre
+      cesse d'être un aplat.
+    */
+    background-image: linear-gradient(
+      100deg,
+      color-mix(in oklab, var(--stamp) 7%, transparent) 0%,
+      transparent 45%,
+      color-mix(in oklab, var(--mark) 6%, transparent) 100%
+    );
   }
 
   /*
@@ -596,14 +637,41 @@
     justify-self: end;
   }
 
-  /* Un seul registre dès que la largeur le permet : tout revient sur la ligne
-     de titre, et la barre retrouve la hauteur d'un bandeau. */
+  /*
+    Un seul registre dès que la largeur le permet — et la barre se referme sur
+    son contenu.
+
+    Tendue sur les quatre-vingts rem de la page, elle logeait sept cents pixels
+    de libellés dans mille deux cent soixante : un vide de cinq cents pixels
+    s'ouvrait au milieu, et la barre avait l'air d'attendre quelque chose qui
+    n'arrivait jamais. Les pistes passent donc de `1fr` à `auto` et la barre à
+    `fit-content` : elle fait exactement la largeur de ce qu'elle porte, et se
+    centre. Une barre flottante n'a pas à s'aligner sur la colonne de texte —
+    c'est précisément ce qui la distingue d'un en-tête.
+
+    `max-width` la borne toujours : sur un écran étroit, `fit-content` cède et
+    les groupes se replient comme avant.
+  */
   @media (min-width: 1024px) {
     .nav-bar {
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-columns: auto auto auto;
       grid-template-areas: 'mark nav tools';
-      column-gap: 2.5rem;
+      column-gap: 2.25rem;
       row-gap: 0;
+      width: fit-content;
+      margin-inline: auto;
+    }
+
+    /*
+      Deux filets verticaux encadrent les entrées.
+
+      Ils font ce que le vide faisait mal : séparer la signature, les chemins
+      et les services. Filet SABLE et non filet plein — ils séparent à
+      l'intérieur d'un objet, ils ne délimitent pas un objet.
+    */
+    .nav-bar__nav {
+      border-inline: 1px solid var(--sand-strong);
+      padding-inline: 2.25rem;
     }
   }
 
@@ -836,8 +904,17 @@
     Les bornes basses ne bougent pas : sur téléphone, la composition tenait
     déjà, et la rabaisser n'aurait fait que rendre le titre timide.
   */
+  /*
+    L'échelle est calée sur un titre de DEUX lignes, pas d'une.
+
+    « Jean Burberry » tient sur une ligne ; « Manteau Ralph Lauren » non, et
+    c'est un nom de pièce parfaitement ordinaire. Une vitrine réglée au plus
+    juste sur le nom court se met à dépasser dès que la pièce du jour a trois
+    mots — un défaut qui n'apparaît donc pas à la relecture, mais un matin, en
+    production, sans que rien n'ait changé dans le code.
+  */
   .type-hero {
-    font-size: clamp(2.5rem, 5.2vw, 4.5rem);
+    font-size: clamp(2.5rem, 4.6vw, 4rem);
     line-height: 0.9;
     letter-spacing: -0.045em;
     overflow-wrap: break-word;

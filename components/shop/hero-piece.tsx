@@ -5,6 +5,7 @@ import type { PublicArticleCard } from '@/lib/db/selectors'
 import { ArticleImage } from './article-image'
 import { pickTranslation } from './article-card'
 import { Stamp } from '@/components/ui/stamp'
+import { SeedHeadPlate } from '@/components/shop/engraving'
 import { Reveal } from '@/components/motion/reveal'
 import { PointerDrift } from '@/components/motion/pointer-drift'
 
@@ -30,13 +31,35 @@ export async function HeroPiece({
   const t = await getTranslations('home')
   const tArticle = await getTranslations('article')
   const tCat = await getTranslations('catalogue')
+  const tCondition = await getTranslations('condition')
 
   const translation = pickTranslation(article.translations, locale)
   const title = translation?.title ?? article.sku
   const cover = article.images[0]
 
+  /**
+   * Les premières lignes de la description, s'il y en a une.
+   *
+   * Le nom d'une pièce d'occasion tient en trois mots ; la vitrine restait
+   * donc muette entre le titre et le relevé. Ces deux lignes disent ce qu'une
+   * ligne de données ne dit pas — la coupe, l'époque, le défaut assumé.
+   *
+   * `null` plutôt qu'un texte de remplacement : une pièce sans description
+   * n'en reçoit pas d'inventée, la composition se referme simplement.
+   */
+  const excerpt = translation?.description?.trim() || null
+
   const record: { label: string; value: string }[] = [
     { label: tArticle('reference'), value: article.sku },
+    /*
+      L'état, qui manquait.
+
+      C'est la première chose qu'on veut savoir d'un vêtement d'occasion, avant
+      la matière et bien avant le poids d'expédition — et le relevé de la
+      vitrine était le seul endroit du site à ne pas le donner. Il est
+      volontairement placé haut, juste après la référence.
+    */
+    { label: tArticle('condition'), value: tCondition(`${article.condition}.label`) },
     { label: tArticle('size'), value: article.sizeLabel },
     ...(article.material
       ? [
@@ -67,6 +90,20 @@ export async function HeroPiece({
       <div aria-hidden className="wash-page absolute inset-0" />
 
       {/*
+        La gravure occupe la droite de la vitrine.
+
+        La composition est décentrée par construction — la pièce et son relevé
+        tiennent la gauche et le centre — ce qui laissait un quart d'écran de
+        crème inoccupé à droite. Le végétal au trait est le motif éditorial de
+        la charte : il remplit ce quart sans rien y ajouter à lire, là où un
+        bloc de texte y aurait fabriqué du discours pour meubler.
+
+        Masqué en dessous de 1024 px : la composition s'y met en pile et le
+        trait traverserait le relevé.
+      */}
+      <SeedHeadPlate className="pointer-events-none absolute -right-24 -top-16 hidden h-[135%] w-auto select-none text-engraving opacity-25 lg:block" />
+
+      {/*
         La respiration a été réduite sur grand écran, et seulement là.
 
         Objectif tenu : la pièce du moment — visuel, nom, prix, relevé, appel —
@@ -74,7 +111,7 @@ export async function HeroPiece({
         téléphone, la composition se déroule de toute façon en pile : la
         générosité d'origine y est conservée.
       */}
-      <div className="relative mx-auto max-w-[80rem] px-4 pb-14 pt-10 sm:px-6 sm:pb-20 sm:pt-14 lg:pb-12 lg:pt-8">
+      <div className="relative mx-auto max-w-[80rem] px-4 pb-14 pt-10 sm:px-6 sm:pb-20 sm:pt-14 lg:pb-8 lg:pt-6">
         <Reveal>
           <p className="label-reg text-mark">{t('featured')}</p>
         </Reveal>
@@ -138,7 +175,7 @@ export async function HeroPiece({
             l'écran et creusait un vide au milieu de la composition. Il termine
             maintenant à l'aplomb du titre.
           */}
-          <div className="relative z-10 mt-6 lg:col-span-7 lg:col-start-4 lg:row-start-1 lg:mt-14">
+          <div className="relative z-10 mt-6 lg:col-span-7 lg:col-start-4 lg:row-start-1 lg:mt-6">
             <Reveal delay={120}>
               <h1 className="type-hero font-display font-bold uppercase text-ink">
                 <Link
@@ -150,13 +187,41 @@ export async function HeroPiece({
               </h1>
             </Reveal>
 
+            {excerpt ? (
+              <Reveal delay={160}>
+                {/*
+                  Deux lignes au plus, coupées par le navigateur : la vitrine
+                  cite, elle ne recopie pas la fiche. Une description de dix
+                  lignes rendrait au premier écran le défaut qu'on vient d'en
+                  chasser.
+                */}
+                <p className="mt-4 line-clamp-2 max-w-xl text-lg text-muted">
+                  {excerpt}
+                </p>
+
+                {/*
+                  La même mention que sur la fiche, au même endroit du texte.
+
+                  Citer une description fabriquée sans le dire la ferait passer
+                  pour une description rédigée. C'est le genre de fausse
+                  impression qui use la confiance dans toutes les autres
+                  mentions du site — et la vitrine est la page la plus lue.
+                */}
+                {article.descriptionIsGenerated ? (
+                  <p className="mt-1.5 text-xs text-muted">
+                    {tArticle('generatedDescription')}
+                  </p>
+                ) : null}
+              </Reveal>
+            ) : null}
+
             <Reveal delay={200}>
               {/*
                 Le relevé est posé sur une fiche opaque : à cet endroit il
                 déborde sur la photographie, et du texte fin sur un visuel ne
                 se lit pas.
               */}
-              <div className="mt-6 max-w-md rounded-card ruled bg-paper-raised p-5 lg:mt-6 lg:ml-auto lg:p-4">
+              <div className="mt-6 max-w-md rounded-card ruled bg-paper-raised p-5 lg:mt-5 lg:ml-auto lg:p-4">
                 {article.brand ? (
                   <p className="label-reg text-muted">{article.brand.name}</p>
                 ) : null}
@@ -175,7 +240,7 @@ export async function HeroPiece({
                   {record.map((entry) => (
                     <div
                       key={entry.label}
-                      className="flex items-baseline justify-between gap-4 border-t border-sand py-2 lg:py-1.5"
+                      className="flex items-baseline justify-between gap-4 border-t border-sand py-2 lg:py-1"
                     >
                       <dt className="label-reg text-muted">{entry.label}</dt>
                       <dd className="data text-base text-ink">{entry.value}</dd>
