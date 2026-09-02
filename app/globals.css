@@ -1,13 +1,18 @@
 @import 'tailwindcss';
 
 /* ===========================================================================
-   Nina & Diego — jetons de design « Registre »
+   Nina & Diego — jetons de design « Registre », teinte Rose & Cuivre
 
    Chaque pièce est unique : le site l'assume et se tient comme un registre
-   d'atelier plutôt que comme une vitrine. Fond de toile écrue, filets pleins,
-   numéro d'inventaire visible, données composées en chasse fixe — et des
-   fiches aux angles adoucis, qui empêchent le registre de virer au formulaire
-   administratif.
+   d'atelier plutôt que comme une vitrine. Filets pleins, numéro d'inventaire
+   visible, données composées en chasse fixe — et des fiches aux angles
+   adoucis, qui empêchent le registre de virer au formulaire administratif.
+
+   La structure n'a pas bougé ; la TEINTE, si. Le crème écru et l'encre de
+   régie bleue ont laissé la place à un crème rosé, un rose profond en action
+   principale et un cuivre en marqueur, reliés par un dégradé. Ce qui portait
+   la charte — le contour plein, la donnée affichée, le mouvement sobre — est
+   inchangé : une charte tient à sa grammaire, pas à sa gamme.
 
    L'écologie ne passe pas par le symbole mais par la traçabilité : référence,
    matière, poids, date d'entrée sont affichés parce qu'ils sont réels.
@@ -17,43 +22,92 @@
    uniquement (accueil, à propos). Il ne descend jamais dans un contrôle : pas
    de feuille dans un bouton, pas de pictogramme de recyclage, pas de dégradé
    vert. Voir components/shop/engraving.tsx.
+
+   Le dégradé rose-cuivre ne contredit pas cet amendement : ce qu'il interdit,
+   c'est le vert et le vocabulaire écologique de façade. La gravure, elle, a
+   quitté le vert pour une terre rosée — un végétal vert au milieu d'une
+   palette rose et cuivre était le seul élément qui n'appartenait à rien.
    =========================================================================== */
 
 :root {
   /* --- Fonds et encres ---------------------------------------------------
-     Le crème est chaud (jaune plutôt que gris) : c'est ce qui empêche la
-     direction « archive » de virer au froid administratif. */
-  --paper: #f3f0e7;
-  --paper-raised: #faf7f0;
+     Le crème penche vers le ROSE, pas vers le jaune. Un neutre parfaitement
+     gris à côté d'accents rose et cuivre se lit comme un fond par défaut ;
+     incliné d'un souffle vers l'accent, il se lit comme un fond choisi. C'est
+     un écart minuscule en valeur et décisif à l'œil.
+
+     L'encre suit le même raisonnement : un noir légèrement prune, jamais un
+     noir pur, qui trancherait avec la chaleur de tout le reste. */
+  --paper: #fbf3f0;
+  --paper-raised: #fefaf9;
   --surface: #ffffff;
-  --ink: #171510;
-  --muted: #6b6558;
+  --ink: #1c1315;
+  --muted: #6f5b60;
 
   /* --- Filets ------------------------------------------------------------
      Deux régimes distincts, et c'est la grammaire du design : le filet PLEIN
      (encre, 1,5px) délimite un objet — une fiche, un cadre photo, une
      section ; le filet SABLE sépare à l'intérieur d'un objet. Les confondre
      fait perdre la lecture. */
-  --sand: #ded7c6;
-  --sand-strong: #c6bda6;
-  --rule: #171510;
+  --sand: #eeddd7;
+  --sand-strong: #d9beb6;
+  --rule: #1c1315;
 
   /* --- Accents -----------------------------------------------------------
-     Encre de régie pour l'action principale, tampon rouge-brique pour ce qui
-     marque une pièce (remise, exemplaire unique). Aucun vert dans l'interface :
-     il est réservé à la gravure éditoriale. */
-  --stamp: #26357a;
-  --stamp-hover: #1a2659;
-  --mark: #9b3226;
-  --mark-hover: #7c2820;
-  --sage: #7d9273;
+     ROSE en principal, CUIVRE en secondaire, et le dégradé qui va de l'un à
+     l'autre.
 
-  --success: #3b6e4f;
-  --warning: #92631f;
-  --danger: #9b3226;
+     Les deux valeurs ne sont pas choisies à l'œil : elles sont choisies pour
+     leur CONTRASTE. Le rose porte du texte blanc sur les boutons, le cuivre
+     porte du texte sur le fond crème — deux exigences différentes, deux
+     valeurs différentes. Un rose plus clair serait plus joli et illisible en
+     bouton ; un cuivre plus vif ne passerait pas les 4,5:1 exigés d'un
+     libellé.
 
-  --ink-inverse: #faf7f0;
-  --focus-ring: #26357a;
+     Vérifiées par `tests/domain/palette.test.ts`, qui recalcule les rapports à
+     partir de ce fichier — pas à partir d'une note prise au moment du choix. */
+  --stamp: #c2255c;
+  --stamp-hover: #a01546;
+  --mark: #b03a08;
+  --mark-hover: #8d2e05;
+
+  /* Teinte de la gravure botanique éditoriale. Terre rosée : elle appartient à
+     la famille, là où le vert d'origine devenait un corps étranger. */
+  --engraving: #c98a76;
+
+  --success: #2f6b4d;
+  --warning: #8c5a12;
+  --danger: #b3261e;
+
+  --ink-inverse: #fff8f6;
+  --focus-ring: #c2255c;
+
+  /* --- Dégradés ----------------------------------------------------------
+     UN dégradé, décliné en deux intensités, et pas un de plus.
+
+     `--gradient-accent` est plein : il n'habille que l'action principale et la
+     signature du site. Le poser aussi sur les fiches, les filets et les
+     en-têtes ferait un site qui crie, où plus rien ne ressort — un accent qui
+     est partout n'est plus un accent.
+
+     `--gradient-hairline` est le même parcours de teintes réduit à un filet :
+     il souligne une section sans jamais devenir une surface. */
+  --gradient-accent: linear-gradient(
+    135deg,
+    var(--stamp) 0%,
+    var(--mark) 100%
+  );
+  --gradient-accent-hover: linear-gradient(
+    135deg,
+    var(--stamp-hover) 0%,
+    var(--mark-hover) 100%
+  );
+  --gradient-hairline: linear-gradient(
+    90deg,
+    var(--stamp) 0%,
+    var(--mark) 60%,
+    transparent 100%
+  );
 
   /* --- Typographie -------------------------------------------------------
      Échelle modulaire ratio 1,25. Le préfixe `fs-` évite la collision avec
@@ -90,54 +144,60 @@
    au crème. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --paper: #14130f;
-    --paper-raised: #1b1a15;
-    --surface: #211f1a;
-    --ink: #f2eee3;
-    --muted: #a09a8b;
+    --paper: #17100f;
+    --paper-raised: #1f1618;
+    --surface: #271b1e;
+    --ink: #f7ece9;
+    --muted: #b39ba0;
 
-    --sand: #34322b;
-    --sand-strong: #4d4a40;
-    --rule: #f2eee3;
+    --sand: #3a2a2e;
+    --sand-strong: #543c43;
+    --rule: #f7ece9;
 
-    --stamp: #9db0f0;
-    --stamp-hover: #bccaf7;
-    --mark: #dd8a7c;
-    --mark-hover: #eaa79b;
-    --sage: #90a686;
+    /* Les accents CHANGENT de valeur, pas de teinte : le rose et le cuivre du
+       thème clair porteraient du texte illisible sur une encre sombre. Ce sont
+       les mêmes couleurs, remontées jusqu'à repasser les seuils — et le texte
+       qu'ils portent devient sombre, d'où `--ink-inverse`. */
+    --stamp: #ff8fb4;
+    --stamp-hover: #ffb0c9;
+    --mark: #ff9d5e;
+    --mark-hover: #ffb783;
 
-    --success: #74a888;
-    --warning: #cfa25c;
-    --danger: #dd8a7c;
+    --engraving: #d59a86;
 
-    --ink-inverse: #14130f;
-    --focus-ring: #9db0f0;
+    --success: #6fb28c;
+    --warning: #d9a45e;
+    --danger: #ef8c82;
+
+    --ink-inverse: #17100f;
+    --focus-ring: #ff8fb4;
   }
 }
 
 :root[data-theme='dark'] {
-  --paper: #14130f;
-  --paper-raised: #1b1a15;
-  --surface: #211f1a;
-  --ink: #f2eee3;
-  --muted: #a09a8b;
+  --paper: #17100f;
+  --paper-raised: #1f1618;
+  --surface: #271b1e;
+  --ink: #f7ece9;
+  --muted: #b39ba0;
 
-  --sand: #34322b;
-  --sand-strong: #4d4a40;
-  --rule: #f2eee3;
+  --sand: #3a2a2e;
+  --sand-strong: #543c43;
+  --rule: #f7ece9;
 
-  --stamp: #9db0f0;
-  --stamp-hover: #bccaf7;
-  --mark: #dd8a7c;
-  --mark-hover: #eaa79b;
-  --sage: #90a686;
+  --stamp: #ff8fb4;
+  --stamp-hover: #ffb0c9;
+  --mark: #ff9d5e;
+  --mark-hover: #ffb783;
 
-  --success: #74a888;
-  --warning: #cfa25c;
-  --danger: #dd8a7c;
+  --engraving: #d59a86;
 
-  --ink-inverse: #14130f;
-  --focus-ring: #9db0f0;
+  --success: #6fb28c;
+  --warning: #d9a45e;
+  --danger: #ef8c82;
+
+  --ink-inverse: #17100f;
+  --focus-ring: #ff8fb4;
 }
 
 /* `inline` fait émettre var(--x) plutôt que la valeur littérale : c'est ce qui
@@ -156,7 +216,7 @@
   --color-stamp-hover: var(--stamp-hover);
   --color-mark: var(--mark);
   --color-mark-hover: var(--mark-hover);
-  --color-sage: var(--sage);
+  --color-engraving: var(--engraving);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
@@ -281,6 +341,73 @@
 
   .ruled-t {
     border-top: var(--rule-width) solid var(--rule);
+  }
+
+  /*
+    Le filet de SIGNATURE : celui qui souligne un titre de section.
+
+    Il remplace le filet plein UNIQUEMENT sous les en-têtes de section, là où
+    l'œil cherche déjà un repère. Partout ailleurs le filet reste noir : c'est
+    lui qui délimite les objets, et un dégradé qui délimiterait tout ne
+    délimiterait plus rien.
+
+    Deux pixels, en dégradé qui s'éteint vers la droite — la couleur marque le
+    départ de la ligne, pas toute sa longueur. Un trait coloré de bord à bord
+    se lirait comme une barre de progression.
+  */
+  .ruled-signature {
+    border-bottom: 0;
+    position: relative;
+  }
+
+  .ruled-signature::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 2px;
+    background-image: var(--gradient-hairline);
+  }
+
+  /*
+    L'action principale, et la signature du site.
+
+    Le seul endroit où le dégradé devient une SURFACE. `background-image` et
+    non `background`, pour que la couleur de fond reste sous lui : c'est elle
+    qui s'affiche si le dégradé ne peint pas — et surtout ce qui garantit que
+    le texte blanc reste lisible quoi qu'il arrive.
+  */
+  .gradient-accent {
+    background-color: var(--stamp);
+    background-image: var(--gradient-accent);
+  }
+
+  @media (hover: hover) {
+    .gradient-accent:hover:not(:disabled):not([aria-disabled='true']) {
+      background-color: var(--stamp-hover);
+      background-image: var(--gradient-accent-hover);
+    }
+  }
+
+  /*
+    Un titre qui porte le dégradé dans ses lettres.
+
+    Réservé à la signature du site. `background-clip: text` retire la couleur
+    du texte : si le dégradé ne peint pas — impression, mode contraste élevé,
+    navigateur ancien — il ne resterait RIEN à lire. D'où le repli explicite
+    posé avant, et la règle d'impression plus bas.
+  */
+  .text-gradient {
+    color: var(--stamp);
+  }
+
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    .text-gradient {
+      background-image: var(--gradient-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
   }
 
   /*
@@ -458,6 +585,26 @@
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     overscroll-behavior-x: contain;
+
+    /*
+      De l'air AU-DESSUS et AU-DESSOUS, sinon la fiche survolée est rognée.
+      -----------------------------------------------------------------------
+      `overflow-x: auto` ne clippe pas que l'horizontale : dès qu'un axe cesse
+      d'être `visible`, l'autre le devient aussi — c'est la règle CSS, pas un
+      bogue de navigateur. Le rail découpait donc tout ce qui dépassait en
+      hauteur.
+
+      Or une fiche survolée dépasse : elle pivote d'un demi-degré, ce qui fait
+      sortir ses angles de sa boîte, monte de trois pixels, et pose une ombre
+      décalée de quatre. Le haut de la fiche et son ombre étaient tranchés net
+      au ras du conteneur — un défaut qui ne se voit qu'au survol, donc jamais
+      sur une capture d'écran.
+
+      Le rembourrage est en `rem` et généreux : il doit couvrir la rotation
+      d'une fiche de vingt-trois rem de large, dont l'angle s'élève avec la
+      largeur.
+    */
+    padding-block: 0.75rem 1.25rem;
   }
 
   .rail::-webkit-scrollbar {
@@ -619,6 +766,23 @@
      papier, elles deviennent un aplat gris sans signification. */
   * {
     box-shadow: none !important;
+  }
+
+  /* Les dégradés non plus n'ont rien à faire sur une facture.
+
+     Le titre en dégradé est le cas qui compte : `background-clip: text` rend le
+     texte transparent, et beaucoup de navigateurs n'impriment pas les images de
+     fond. Sans ce retour à l'encre, le nom de la boutique disparaîtrait
+     purement et simplement de la page imprimée. */
+  .gradient-accent,
+  .text-gradient {
+    background-image: none !important;
+    color: #000000 !important;
+  }
+
+  .ruled-signature::after {
+    background-image: none !important;
+    background-color: #000000;
   }
 
   /* Une facture ne doit pas se couper au milieu d'un total. */

@@ -39,7 +39,10 @@ export function Wordmark({
       <span
         aria-hidden
         className={cn(
-          'mt-1.5 block bg-rule transition-[width] duration-200 ease-out',
+          // Le filet de la signature porte le dégradé rose → cuivre. C'est le
+          // seul trait du site qui le fasse : la signature est l'endroit où
+          // une identité a le droit de se déclarer, une bordure de fiche non.
+          'gradient-accent mt-1.5 block transition-[width] duration-200 ease-out',
           size === 'lg' ? 'h-[2px] w-16' : 'h-[1.5px] w-9',
           'group-hover:w-full',
         )}

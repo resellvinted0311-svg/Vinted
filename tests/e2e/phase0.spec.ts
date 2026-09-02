@@ -49,21 +49,31 @@ test.describe('Accueil', () => {
   test('applique les jetons de couleur du thème', async ({ page }) => {
     await page.goto('/fr')
 
-    // Valeur épinglée volontairement : c'est le garde-fou qui signale qu'une
-    // refonte a touché la palette. Charte « Registre » — toile écrue chaude.
+    /**
+     * Valeur épinglée volontairement : c'est le garde-fou qui signale qu'une
+     * refonte a touché la palette.
+     *
+     * Il a fait son travail au passage à la teinte « Rose & Cuivre » : le crème
+     * écru (#f3f0e7) a laissé la place à un crème rosé. La valeur est mise à
+     * jour ici EN MÊME TEMPS que la feuille de style, jamais après coup — un
+     * garde-fou qu'on desserre pour faire passer un test ne garde plus rien.
+     *
+     * Les rapports de contraste de la nouvelle palette, eux, sont vérifiés par
+     * `tests/domain/palette.test.ts`, qui les recalcule depuis `globals.css`.
+     */
     const paper = await page.evaluate(() =>
       getComputedStyle(document.documentElement)
         .getPropertyValue('--paper')
         .trim(),
     )
-    expect(paper.toLowerCase()).toBe('#f3f0e7')
+    expect(paper.toLowerCase()).toBe('#fbf3f0')
 
     // Le jeton doit aussi être réellement peint : déclaré sans être appliqué,
     // il passerait le contrôle ci-dessus tout en laissant la page blanche.
     const background = await page.evaluate(
       () => getComputedStyle(document.body).backgroundColor,
     )
-    expect(background).toBe('rgb(243, 240, 231)')
+    expect(background).toBe('rgb(251, 243, 240)')
   })
 })
 

@@ -116,6 +116,45 @@ test.describe('Catalogue', () => {
   })
 })
 
+test.describe('Rail d’arrivage', () => {
+  test('la fiche survolée n’est PAS rognée par le rail', async ({ page }) => {
+    /**
+     * `overflow-x: auto` ne clippe pas que l'horizontale : dès qu'un axe cesse
+     * d'être `visible`, l'autre le devient aussi — c'est la règle CSS, pas un
+     * bogue. Le rail découpait donc tout ce qui dépassait en hauteur.
+     *
+     * Or une fiche survolée dépasse : elle pivote d'un demi-degré, ce qui sort
+     * ses angles de sa boîte, monte de trois pixels, et pose une ombre décalée
+     * de quatre. Le haut de la fiche était tranché net au ras du conteneur.
+     *
+     * Le défaut ne se voit qu'au survol — donc jamais sur une capture, et
+     * jamais sur un test qui ne survole pas.
+     */
+    await page.goto('/fr')
+
+    const rail = page.locator('ul.rail').first()
+    await expect(rail).toBeVisible()
+
+    const fiche = rail.locator('li article').first()
+    await fiche.hover()
+
+    // On laisse la transition s'achever : mesurer pendant qu'elle court
+    // donnerait une position intermédiaire, et le test passerait par hasard.
+    await page.waitForTimeout(400)
+
+    const [hautRail, hautFiche] = await Promise.all([
+      rail.evaluate((el) => el.getBoundingClientRect().top),
+      fiche.evaluate((el) => el.getBoundingClientRect().top),
+    ])
+
+    // La fiche commence SOUS le bord du rail : ce qui est au-dessus est rogné.
+    expect(
+      hautFiche,
+      `la fiche survolée commence ${(hautRail - hautFiche).toFixed(1)} px au-dessus du rail, donc elle est coupée`,
+    ).toBeGreaterThanOrEqual(hautRail)
+  })
+})
+
 test.describe('Catalogue — « Voir la suite » sans JavaScript', () => {
   test.use({ javaScriptEnabled: false })
 

@@ -32,7 +32,7 @@ export async function ArrivalsRail({
     <section className="py-16 sm:py-24">
       <div className="mx-auto max-w-[80rem] px-4 sm:px-6">
         <Reveal>
-          <div className="flex flex-wrap items-end justify-between gap-4 ruled-b pb-4">
+          <div className="ruled-signature flex flex-wrap items-end justify-between gap-4 pb-4">
             <h2 className="type-section font-display font-bold uppercase text-ink">
               {t('arrivals')}
             </h2>
@@ -52,7 +52,7 @@ export async function ArrivalsRail({
         Le rembourrage de fin redonne de l'air à la dernière fiche.
       */}
       <Reveal from="right">
-        <ul className="rail bleed-right mt-8 flex gap-4 overflow-x-auto pb-4 lg:gap-6">
+        <ul className="rail bleed-right mt-6 flex gap-4 overflow-x-auto lg:gap-6">
           {articles.map((article, index) => (
             <li
               key={article.id}

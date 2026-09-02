@@ -11,8 +11,15 @@ type Size = 'sm' | 'md' | 'lg'
  * superposés, pas une lueur. Le geste vit dans `.lift` (globals.css).
  */
 const variants: Record<Variant, string> = {
-  // Encre de régie — action principale.
-  primary: 'bg-stamp text-ink-inverse border-stamp hover:bg-stamp-hover',
+  /*
+    Action principale : le dégradé rose → cuivre.
+
+    La bordure reste le rose SEUL, et non un dégradé de bordure. Un contour
+    dégradé demanderait une seconde couche peinte, et le bouton porte déjà
+    l'ombre décalée de la charte : trois épaisseurs superposées pour un gain
+    invisible. Le rose suffit à fermer la forme.
+  */
+  primary: 'gradient-accent text-ink-inverse border-stamp',
   // Tampon — ce qui marque une pièce : remise, mise en avant.
   secondary: 'bg-mark text-ink-inverse border-mark hover:bg-mark-hover',
   // Contour plein encre : l'objet est délimité, pas rempli.

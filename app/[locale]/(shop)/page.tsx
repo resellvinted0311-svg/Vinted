@@ -108,7 +108,7 @@ export default async function HomePage({
       <section className="relative overflow-hidden ruled-t ruled-b bg-paper-raised">
         {/* Plus effacée et plus repoussée sur petit écran : la colonne y est
             unique, la gravure traverserait le texte des étapes. */}
-        <SeedHeadPlate className="pointer-events-none absolute -left-28 top-0 h-full w-auto select-none text-sage opacity-[0.18] sm:-left-10 sm:opacity-30" />
+        <SeedHeadPlate className="pointer-events-none absolute -left-28 top-0 h-full w-auto select-none text-engraving opacity-[0.18] sm:-left-10 sm:opacity-30" />
 
         <div className="relative mx-auto max-w-[80rem] px-4 py-16 sm:px-6 sm:py-24">
           <Reveal>
@@ -185,11 +185,11 @@ export default async function HomePage({
           une destination qu'on choisit, pas la porte d'entrée.
           -------------------------------------------------------------------- */}
       <section className="relative overflow-hidden ruled-t bg-ink text-paper">
-        <BranchPlate className="pointer-events-none absolute -right-10 -top-16 h-[150%] w-auto select-none text-sage opacity-25" />
+        <BranchPlate className="pointer-events-none absolute -right-10 -top-16 h-[150%] w-auto select-none text-engraving opacity-25" />
 
         <div className="relative mx-auto max-w-[80rem] px-4 py-20 sm:px-6 sm:py-28">
           <Reveal>
-            <p className="label-reg text-sage">{tSite('tagline')}</p>
+            <p className="label-reg text-engraving">{tSite('tagline')}</p>
 
             <h2 className="type-section mt-5 max-w-3xl font-display font-bold uppercase">
               {t('browseTitle')}

@@ -101,7 +101,7 @@ export async function CatalogueView({
       {/* En-tête de registre : le titre, puis le décompte détaché sous un
           filet plein. Le nombre est une donnée d'inventaire, il est donc
           composé comme telle et non comme un argument. */}
-      <header className="flex flex-col gap-3 ruled-b pb-4">
+      <header className="ruled-signature flex flex-col gap-3 pb-4">
         <h1 className="text-2xl">{heading}</h1>
         {intro ? <p className="max-w-2xl text-base text-muted">{intro}</p> : null}
         <p className="data label-reg text-muted">
