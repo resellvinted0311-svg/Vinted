@@ -64,9 +64,10 @@ export async function ArticleCard({
         {cover ? (
           <ArticleImage image={cover} sizes={sizes} priority={priority} />
         ) : (
-          // Sans photo, la trame de registre occupe le cadre : le vide est
-          // habité, et il annonce déjà la langue visuelle du site.
-          <div className="grid-reg h-full w-full" aria-hidden />
+          // Sans photo, un lavis rose → cuivre occupe le cadre. Le vide est
+          // habité et il porte la teinte du site, là où le quadrillage qu'il
+          // remplace disait « image cassée ».
+          <div className="wash-accent h-full w-full" aria-hidden />
         )}
 
         {/* Mention honnête : la réservation est réelle et temporaire. Ce n'est

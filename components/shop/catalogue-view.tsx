@@ -13,6 +13,7 @@ import {
 import { CatalogueFiltersPanel } from './catalogue-filters'
 import { LoadMore } from './load-more'
 import { ActiveFilterChips } from './active-filter-chips'
+import { SearchBox } from './search-box'
 
 /**
  * Vue catalogue partagée.
@@ -101,12 +102,31 @@ export async function CatalogueView({
       {/* En-tête de registre : le titre, puis le décompte détaché sous un
           filet plein. Le nombre est une donnée d'inventaire, il est donc
           composé comme telle et non comme un argument. */}
-      <header className="ruled-signature flex flex-col gap-3 pb-4">
-        <h1 className="text-2xl">{heading}</h1>
+      <header className="ruled-signature flex flex-col gap-3 pb-5">
+        <h1 className="text-gradient text-2xl">{heading}</h1>
         {intro ? <p className="max-w-2xl text-base text-muted">{intro}</p> : null}
         <p className="data label-reg text-muted">
           {t('results', { count: page.totalCount })}
         </p>
+
+        {/*
+          La recherche vit ICI, et nulle part ailleurs sur le site.
+
+          Elle était dans l'en-tête, donc sur toutes les pages : sur la
+          vitrine, sur une fiche article, dans le tunnel de paiement. Un champ
+          de recherche affiché là où l'on ne cherche pas encombre sans servir,
+          et il ouvrait la vitrine sur un formulaire alors que la page a été
+          écrite pour ouvrir sur une pièce.
+
+          `key` force un nouveau champ quand la requête change : l'état du
+          champ est local, et sans cela une navigation côté client laisserait
+          l'ancienne requête affichée au-dessus des nouveaux résultats.
+        */}
+        <SearchBox
+          key={filters.query ?? ''}
+          valeurInitiale={filters.query ?? ''}
+          className="w-full max-w-md"
+        />
       </header>
 
       <div className="mt-6 lg:grid lg:grid-cols-[16rem_1fr] lg:gap-10">
@@ -166,7 +186,7 @@ export async function CatalogueView({
           />
 
           {page.items.length === 0 ? (
-            <div className="grid-reg mt-8 rounded-card ruled bg-surface p-8">
+            <div className="mt-8 rounded-card ruled bg-surface p-8">
               <p className="text-base text-ink">{t('noResults')}</p>
               <p className="mt-1 text-xs text-muted">{t('noResultsHint')}</p>
             </div>

@@ -13,9 +13,19 @@ import { cn } from '@/lib/utils/cn'
  */
 export function Wordmark({
   size = 'md',
+  tagline = true,
   className,
 }: {
-  size?: 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg'
+  /**
+   * Affiche la baseline sous le nom.
+   *
+   * Retirée dans la barre de navigation, où elle ajoutait une troisième ligne
+   * à un élément qui reste à l'écran en permanence. La baseline n'est pas
+   * perdue pour autant : elle ouvre la vitrine et ferme le colophon, deux
+   * endroits où on la lit une fois, en entier.
+   */
+  tagline?: boolean
   className?: string
 }) {
   const t = useTranslations('site')
@@ -27,10 +37,17 @@ export function Wordmark({
     >
       <span
         className={cn(
-          'font-display font-bold uppercase text-ink',
-          size === 'lg'
-            ? 'text-3xl tracking-[-0.045em] sm:text-4xl'
-            : 'text-xl tracking-[-0.04em]',
+          // `whitespace-nowrap` n'est pas un détail : posé dans une colonne
+          // étroite — la barre de navigation sur téléphone — le nom se coupait
+          // en deux lignes, « Nina & » au-dessus de « Diego ». Une signature
+          // qui se plie n'est plus une signature.
+          'whitespace-nowrap font-display font-bold uppercase text-ink',
+          size === 'lg' && 'text-3xl tracking-[-0.045em] sm:text-4xl',
+          size === 'md' && 'text-xl tracking-[-0.04em]',
+          // Le pas de la barre flottante : assez grand pour rester la
+          // signature, assez court pour laisser la place au panier et au
+          // compte sur la même ligne.
+          size === 'sm' && 'text-lg tracking-[-0.04em] sm:text-xl',
         )}
       >
         {SITE.name}
@@ -39,23 +56,26 @@ export function Wordmark({
       <span
         aria-hidden
         className={cn(
-          // Le filet de la signature porte le dégradé rose → cuivre. C'est le
-          // seul trait du site qui le fasse : la signature est l'endroit où
-          // une identité a le droit de se déclarer, une bordure de fiche non.
+          // Le filet de la signature porte le dégradé rose → cuivre, comme les
+          // filets qui ouvrent une section. Ce qui reste noir, c'est le filet
+          // qui DÉLIMITE — contour de fiche, cadre photo : un trait coloré
+          // partout ne délimiterait plus rien.
           'gradient-accent mt-1.5 block transition-[width] duration-200 ease-out',
           size === 'lg' ? 'h-[2px] w-16' : 'h-[1.5px] w-9',
           'group-hover:w-full',
         )}
       />
 
-      <span
-        className={cn(
-          'label-reg mt-1.5 text-muted',
-          size === 'lg' && 'text-xs tracking-[0.18em]',
-        )}
-      >
-        {t('tagline')}
-      </span>
+      {tagline ? (
+        <span
+          className={cn(
+            'label-reg mt-1.5 text-muted',
+            size === 'lg' && 'text-xs tracking-[0.18em]',
+          )}
+        >
+          {t('tagline')}
+        </span>
+      ) : null}
     </Link>
   )
 }

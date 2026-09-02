@@ -4,6 +4,7 @@ import { SITE, LEGAL } from '@/lib/config/site'
 
 export async function SiteFooter() {
   const t = await getTranslations('footer')
+  const tSite = await getTranslations('site')
 
   const legalLinks = [
     { href: '/pages/mentions-legales', label: t('legalNotice') },
@@ -32,8 +33,16 @@ export async function SiteFooter() {
             </p>
             <span
               aria-hidden
-              className="mt-2 block h-[1.5px] w-10 bg-rule"
+              className="gradient-accent mt-2 block h-[1.5px] w-10"
             />
+            {/*
+              La baseline descend ici depuis la barre de navigation, qui l'a
+              perdue en devenant flottante. Le colophon est sa place naturelle :
+              c'est l'endroit d'un ouvrage imprimé où l'on dit ce qu'il est, et
+              on le lit une fois, en entier — pas à chaque coup d'œil vers le
+              haut de l'écran.
+            */}
+            <p className="label-reg mt-2 text-muted">{tSite('tagline')}</p>
             <p className="data mt-2 text-xs text-muted">
               {LEGAL.companyName || null}
             </p>

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { usePathname, useRouter } from '@/lib/i18n/navigation'
 import { locales, localeNames, type Locale } from '@/lib/i18n/routing'
 import { Select } from '@/components/ui/select'
+import { cn } from '@/lib/utils/cn'
 
 /**
  * Sélecteur de langue.
@@ -19,7 +20,7 @@ import { Select } from '@/components/ui/select'
  * n'ait été fait, et faisait basculer le site du côté des sites qui doivent
  * afficher un bandeau. Voir `lib/i18n/routing.ts` pour l'arbitrage complet.
  */
-export function LocaleSwitcher() {
+export function LocaleSwitcher({ className }: { className?: string }) {
   const locale = useLocale()
   const t = useTranslations('nav')
   const router = useRouter()
@@ -45,9 +46,10 @@ export function LocaleSwitcher() {
           router.replace(pathname, { locale: next as Locale })
         })
       }}
-      // Compact : le sélecteur partage la ligne de titre avec la recherche et
-      // le compte. À 9rem il poussait « Se connecter » à la ligne suivante.
-      className="w-[7.5rem] shrink-0 px-2.5"
+      // Compact : le sélecteur partage sa ligne avec le compte et le panier.
+      // À 9rem il poussait « Se connecter » à la ligne suivante. La largeur
+      // reste réglable par l'appelant — la barre flottante la resserre encore.
+      className={cn('w-[7.5rem] shrink-0 px-2.5', className)}
     />
   )
 }

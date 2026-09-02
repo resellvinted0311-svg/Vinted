@@ -33,7 +33,7 @@ export async function ArrivalsRail({
       <div className="mx-auto max-w-[80rem] px-4 sm:px-6">
         <Reveal>
           <div className="ruled-signature flex flex-wrap items-end justify-between gap-4 pb-4">
-            <h2 className="type-section font-display font-bold uppercase text-ink">
+            <h2 className="text-gradient type-section font-display font-bold uppercase">
               {t('arrivals')}
             </h2>
             <Link

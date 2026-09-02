@@ -32,7 +32,9 @@ export function TypeIndex({
   return (
     <div>
       <Reveal>
-        <h2 className="label-reg ruled-b pb-3 text-muted">{title}</h2>
+        {/* Filet de signature plutôt que filet plein : l'index ouvre une
+            section, et c'est le repère que l'œil cherche en descendant. */}
+        <h2 className="label-reg ruled-signature pb-3 text-muted">{title}</h2>
       </Reveal>
 
       <ul>

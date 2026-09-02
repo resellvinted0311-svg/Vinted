@@ -106,13 +106,35 @@ const PAIRES: ReadonlyArray<readonly [string, string, string]> = [
   ['--ink', '--surface', 'le texte d’une fiche'],
   ['--muted', '--paper', 'les mentions secondaires — les plus fragiles'],
   ['--muted', '--surface', 'les mentions secondaires d’une fiche'],
-  ['--ink-inverse', '--stamp', 'le libellé du bouton principal'],
   ['--mark', '--paper', 'le tampon, qui est du texte et non un aplat'],
   ['--stamp', '--paper', 'le rose quand il porte un libellé'],
   ['--danger', '--paper', 'un refus'],
   ['--danger', '--surface', 'un refus dans une fiche'],
   ['--success', '--paper', 'une confirmation'],
   ['--warning', '--paper', 'un avertissement'],
+
+  /*
+    Les DEUX extrémités du dégradé, maintenant qu'il porte des surfaces.
+
+    Le bandeau de faits et la section d'entrée du catalogue sont peints avec
+    `--gradient-accent`, et du texte les traverse de bout en bout. Vérifier
+    `--ink-inverse` sur `--stamp` seul ne prouvait la lisibilité qu'au DÉPART
+    du dégradé : le libellé aurait pu s'éteindre en cours de route, du côté
+    cuivre, sans qu'aucun test ne bronche.
+  */
+  ['--ink-inverse', '--stamp', 'le libellé au départ du dégradé'],
+  ['--ink-inverse', '--mark', 'le même libellé à son arrivée'],
+
+  /*
+    Les titres de section portent désormais le dégradé dans leurs lettres, et
+    ces sections sont posées sur `--paper-raised`, pas sur `--paper`.
+
+    Ce n'est pas un détail en thème sombre : `--paper-raised` y est plus CLAIR
+    que `--paper`, donc le contraste avec un accent clair y est plus faible.
+    C'est le fond le plus exigeant des deux, et c'était le seul non couvert.
+  */
+  ['--stamp', '--paper-raised', 'un titre de section, au départ du dégradé'],
+  ['--mark', '--paper-raised', 'le même titre, à son arrivée'],
 ]
 
 describe.each([
@@ -171,5 +193,70 @@ describe('le dégradé', () => {
       CSS.indexOf('.text-gradient {'),
     )
     expect(bloc).toContain('background-color: var(--stamp)')
+  })
+})
+
+describe('les lavis', () => {
+  it('restent dilués dans le fond de fiche', () => {
+    /**
+     * Le lavis habille les cadres SANS PHOTOGRAPHIE, qui sont aujourd'hui la
+     * majorité du catalogue. S'il cessait d'être mélangé au fond pour devenir
+     * un accent plein, les pièces sans visuel ressortiraient plus que celles
+     * qui en ont un — exactement l'inverse de ce qu'on veut d'une boutique.
+     *
+     * La dilution se lit dans la présence de `--paper-raised` comme base du
+     * mélange : c'est elle qui distingue un lavis d'un aplat.
+     */
+    const bloc = CSS.slice(
+      CSS.indexOf('--gradient-wash:'),
+      CSS.indexOf('--fs-xs:'),
+    )
+
+    expect(bloc).toContain('var(--stamp)')
+    expect(bloc).toContain('var(--mark)')
+    expect(bloc).toContain('var(--paper-raised)')
+    // Comme pour le dégradé plein : une couleur littérale échapperait au
+    // thème sombre et laisserait un cadre clair au milieu d'une page sombre.
+    expect(bloc).not.toMatch(/#[0-9a-fA-F]{3,8}/)
+  })
+
+  it('a un repli sous lui', () => {
+    const bloc = CSS.slice(
+      CSS.indexOf('.wash-accent {'),
+      CSS.indexOf('.wash-page {'),
+    )
+    expect(bloc).toContain('background-color: var(--sand)')
+  })
+})
+
+describe('la barre flottante', () => {
+  it('n’est translucide que si le flou l’accompagne', () => {
+    /**
+     * Ce que ce test empêche, précisément.
+     *
+     * La barre reste à l'écran pendant tout le défilement. Translucide SANS
+     * flou, elle laisse passer le contenu de la page en clair : au moment où
+     * une photographie sombre glisse dessous, « Catalogue » et « Panier »
+     * deviennent illisibles — puis redeviennent lisibles, sans que rien
+     * n'échoue et sans qu'aucune capture d'écran ne le montre.
+     *
+     * La règle de base doit donc rester OPAQUE, et la transparence vivre
+     * uniquement dans la requête de fonctionnalité. Déplacer la ligne d'un
+     * bloc à l'autre est une modification d'une seconde ; ce test est ce qui
+     * la rattrape.
+     */
+    const debut = CSS.indexOf('.nav-float {')
+    expect(debut, '.nav-float introuvable').toBeGreaterThan(-1)
+
+    // Le bloc de BASE seulement : jusqu'à sa propre accolade fermante, donc
+    // sans la requête de fonctionnalité qui le suit — c'est justement ce
+    // qu'on veut séparer.
+    const declaration = CSS.slice(debut, CSS.indexOf('}', debut))
+
+    expect(declaration).toContain('background-color: var(--paper-raised)')
+    expect(
+      declaration,
+      'le fond de base de la barre doit être opaque',
+    ).not.toContain('transparent')
   })
 })

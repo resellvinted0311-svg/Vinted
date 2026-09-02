@@ -103,7 +103,7 @@ export default async function CartPage({
       <div className="mx-auto max-w-[48rem] px-4 pb-24 pt-12 sm:px-6">
         <h1 className="text-2xl">{t('title')}</h1>
         {reason ? <ReturnNotice reason={reason} /> : null}
-        <div className="grid-reg mt-8 rounded-card ruled bg-surface p-8">
+        <div className="mt-8 rounded-card ruled bg-surface p-8">
           <p className="text-base text-ink">{t('empty')}</p>
           <p className="mt-1 text-xs text-muted">{t('emptyHint')}</p>
           <Button asChild variant="outline" className="mt-6">

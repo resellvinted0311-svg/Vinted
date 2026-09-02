@@ -68,7 +68,7 @@ export default async function AdminOffersPage({
       <p className="mt-3 max-w-prose text-sm text-muted">{t('offersIntro')}</p>
 
       {offers.length === 0 ? (
-        <div className="grid-reg mt-8 rounded-card ruled bg-surface p-8">
+        <div className="mt-8 rounded-card ruled bg-surface p-8">
           <p className="text-base text-ink">{t('noPendingOffers')}</p>
           <p className="mt-1 text-xs text-muted">{t('noPendingOffersHint')}</p>
         </div>

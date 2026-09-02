@@ -56,7 +56,7 @@ export default async function FavoritesPage({
       </p>
 
       {articles.length === 0 ? (
-        <div className="grid-reg mt-8 rounded-card ruled bg-surface p-8">
+        <div className="mt-8 rounded-card ruled bg-surface p-8">
           <p className="text-base text-ink">{t('empty')}</p>
           <p className="mt-1 text-xs text-muted">{t('emptyHint')}</p>
         </div>

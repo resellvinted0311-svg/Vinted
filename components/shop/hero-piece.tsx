@@ -62,7 +62,9 @@ export async function HeroPiece({
 
   return (
     <section className="relative overflow-hidden ruled-b bg-paper">
-      <div aria-hidden className="grid-reg absolute inset-0" />
+      {/* Le halo remplace la trame de carreaux : la teinte du site devient
+          l'atmosphère du premier écran au lieu d'un quadrillage posé dessus. */}
+      <div aria-hidden className="wash-page absolute inset-0" />
 
       <div className="relative mx-auto max-w-[80rem] px-4 pb-14 pt-10 sm:px-6 sm:pb-20 sm:pt-14">
         <Reveal>
@@ -101,7 +103,7 @@ export async function HeroPiece({
                       priority
                     />
                   ) : (
-                    <div className="grid-reg h-full w-full" aria-hidden />
+                    <div className="wash-accent h-full w-full" aria-hidden />
                   )}
                 </div>
               </PointerDrift>

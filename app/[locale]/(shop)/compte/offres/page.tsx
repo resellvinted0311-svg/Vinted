@@ -74,7 +74,7 @@ export default async function AccountOffersPage({
       <p className="mt-3 max-w-prose text-sm text-muted">{t('registerIntro')}</p>
 
       {ordered.length === 0 ? (
-        <div className="grid-reg mt-8 rounded-card ruled bg-surface p-8">
+        <div className="mt-8 rounded-card ruled bg-surface p-8">
           <p className="text-base text-ink">{t('emptyRegister')}</p>
           <p className="mt-1 text-xs text-muted">{t('emptyRegisterHint')}</p>
           <Button asChild variant="outline" className="mt-6">

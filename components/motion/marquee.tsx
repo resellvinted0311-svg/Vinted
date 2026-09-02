@@ -32,7 +32,9 @@ export function Marquee({
       {items.map((item, index) => (
         <li key={`${item}-${index}`} className="flex items-center">
           <span className="px-6">{item}</span>
-          <span aria-hidden className="text-mark">
+          {/* Le séparateur reprend l'encre du bandeau, atténuée. Il était en
+              cuivre : sur un fond qui EST devenu cuivre, il disparaissait. */}
+          <span aria-hidden className="opacity-60">
             ✳
           </span>
         </li>
@@ -43,7 +45,15 @@ export function Marquee({
   return (
     <div
       className={cn(
-        'marquee ruled-t ruled-b overflow-hidden bg-ink py-2.5 text-paper',
+        // Le bandeau est l'une des trois grandes surfaces d'accent de la
+        // boutique. Il coupe la page sur toute sa largeur, juste sous la pièce
+        // du moment : c'est là que la teinte se voit, pas sur un liseré.
+        //
+        // Le libellé passe à `--ink-inverse` et reste à pleine opacité d'un
+        // bout à l'autre du dégradé. Une hiérarchie posée en transparence
+        // aurait fait tomber le contraste sous le seuil AA à l'extrémité
+        // cuivre, où le fond est le plus clair.
+        'marquee gradient-accent ruled-t ruled-b overflow-hidden py-2.5 text-ink-inverse',
         className,
       )}
     >

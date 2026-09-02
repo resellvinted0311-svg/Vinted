@@ -21,14 +21,33 @@ interface Suggestion {
  *
  * Le motif ARIA est celui d'une combobox : la liste est annoncée, les flèches
  * la parcourent, Échap la referme.
+ *
+ * Le champ vit dans la vue catalogue, et nulle part ailleurs — voir
+ * `catalogue-view.tsx`. Il ne doit exister qu'à UN endroit du document : deux
+ * exemplaires produiraient deux combobox portant le même intitulé, donc deux
+ * fois la même commande annoncée aux lecteurs d'écran.
  */
-export function SearchBox({ className }: { className?: string }) {
+export function SearchBox({
+  className,
+  /**
+   * La requête déjà appliquée aux résultats affichés.
+   *
+   * Sans elle, le champ se rouvre vide au-dessus d'une grille filtrée : on lit
+   * « Résultats pour chemise » et on ne peut plus corriger « chemise » sans le
+   * retaper en entier. Le champ doit dire ce qui est cherché, pas seulement
+   * servir à chercher.
+   */
+  valeurInitiale = '',
+}: {
+  className?: string
+  valeurInitiale?: string
+}) {
   const t = useTranslations('search')
   const locale = useLocale()
   const router = useRouter()
 
   const listId = useId()
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(valeurInitiale)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
@@ -36,7 +55,14 @@ export function SearchBox({ className }: { className?: string }) {
 
   useEffect(() => {
     const trimmed = query.trim()
-    if (trimmed.length < 2) {
+
+    // `open` fait partie de la condition, et pas seulement de l'affichage.
+    //
+    // Le champ s'ouvre désormais prérempli de la requête en cours : sans ce
+    // garde, chaque affichage de /catalogue?q=… déclencherait une recherche
+    // plein texte au montage, pour une liste que personne n'a demandé à voir.
+    // C'est la page la plus visitée du site.
+    if (!open || trimmed.length < 2) {
       setSuggestions([])
       return
     }
@@ -63,7 +89,7 @@ export function SearchBox({ className }: { className?: string }) {
       clearTimeout(timer)
       controller.abort()
     }
-  }, [query, locale])
+  }, [query, locale, open])
 
   // Ferme la liste au clic à l'extérieur.
   useEffect(() => {

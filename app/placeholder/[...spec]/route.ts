@@ -10,13 +10,20 @@ import { NextResponse } from 'next/server'
  * Format : /placeholder/{graine}/{largeur}/{hauteur}
  */
 
-/** Teintes sourdes tirées de la palette, jamais saturées. */
+/**
+ * Teintes sourdes tirées de la palette, jamais saturées.
+ *
+ * Elles ont suivi la charte quand celle-ci est passée du crème écru au crème
+ * rosé : ces beiges verdâtres étaient les seules surfaces du jeu d'essai à
+ * n'appartenir à aucune palette, et elles faussaient chaque relecture visuelle
+ * en local — on croyait juger la teinte du site, on jugeait un reste.
+ */
 const TONES = [
-  { bg: '#E5DFD4', fg: '#6B6960' },
-  { bg: '#DCD5C7', fg: '#5D5B52' },
-  { bg: '#E8E3DA', fg: '#6B6960' },
-  { bg: '#D6CFC1', fg: '#54524A' },
-  { bg: '#EDE8DF', fg: '#78766C' },
+  { bg: '#EFE1DC', fg: '#6F5B60' },
+  { bg: '#E7D3CD', fg: '#63505A' },
+  { bg: '#F4E8E4', fg: '#6F5B60' },
+  { bg: '#DFC9C3', fg: '#584750' },
+  { bg: '#F7EFEC', fg: '#7A666B' },
 ] as const
 
 function hashString(value: string): number {

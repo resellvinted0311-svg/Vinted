@@ -69,7 +69,7 @@ export default async function AdminOrdersPage({
       <p className="mt-3 max-w-prose text-sm text-muted">{t('ordersIntro')}</p>
 
       {orders.length === 0 ? (
-        <div className="grid-reg mt-8 rounded-card ruled bg-surface p-8">
+        <div className="mt-8 rounded-card ruled bg-surface p-8">
           <p className="text-base text-ink">{t('noPendingOrders')}</p>
           <p className="mt-1 text-xs text-muted">{t('noPendingOrdersHint')}</p>
         </div>

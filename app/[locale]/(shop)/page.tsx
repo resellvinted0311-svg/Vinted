@@ -75,7 +75,7 @@ export default async function HomePage({
   if (!featured) {
     return (
       <section className="mx-auto max-w-[80rem] px-4 py-24 sm:px-6">
-        <div className="grid-reg rounded-card ruled bg-surface p-10">
+        <div className="rounded-card ruled bg-surface p-10">
           <h1 className="type-section font-display font-bold uppercase">
             {tSite('tagline')}
           </h1>
@@ -112,7 +112,12 @@ export default async function HomePage({
 
         <div className="relative mx-auto max-w-[80rem] px-4 py-16 sm:px-6 sm:py-24">
           <Reveal>
-            <h2 className="type-section max-w-3xl font-display font-bold uppercase text-ink">
+            {/* Le dégradé descend dans les TITRES DE SECTION. Il ne tenait
+                jusqu'ici que le bouton principal et deux filets : la teinte du
+                site ne se voyait qu'en la cherchant. Un titre de section fait
+                trois à six centimètres de haut — c'est une surface, et la
+                lettre y garde tout son contraste. */}
+            <h2 className="text-gradient type-section max-w-3xl font-display font-bold uppercase">
               {t('howItWorks.title')}
             </h2>
           </Reveal>
@@ -184,20 +189,31 @@ export default async function HomePage({
           Elle vit en bas de page, et c'est le choix structurant : le rayon est
           une destination qu'on choisit, pas la porte d'entrée.
           -------------------------------------------------------------------- */}
-      <section className="relative overflow-hidden ruled-t bg-ink text-paper">
-        <BranchPlate className="pointer-events-none absolute -right-10 -top-16 h-[150%] w-auto select-none text-engraving opacity-25" />
+      {/*
+        La plus grande surface d'accent du site.
+
+        Elle était en encre pleine, et c'était le dernier endroit où le rose et
+        le cuivre auraient dû se voir sans se voir. Le fond devient le dégradé
+        lui-même : sur la descente de la page, la teinte ouvre (le bandeau de
+        faits) et referme (ici), et la vitrine tient entre les deux.
+
+        Tout ce qui est posé dessus passe à `--ink-inverse`, à PLEINE opacité.
+        La hiérarchie se fait au corps et à la graisse, pas à la transparence :
+        un texte à 60 % sur l'extrémité cuivre du dégradé tomberait à 3,3:1,
+        sous le seuil AA, alors qu'il le passe largement à pleine encre.
+      */}
+      <section className="gradient-accent relative overflow-hidden ruled-t text-ink-inverse">
+        <BranchPlate className="pointer-events-none absolute -right-10 -top-16 h-[150%] w-auto select-none text-ink-inverse opacity-20" />
 
         <div className="relative mx-auto max-w-[80rem] px-4 py-20 sm:px-6 sm:py-28">
           <Reveal>
-            <p className="label-reg text-engraving">{tSite('tagline')}</p>
+            <p className="label-reg">{tSite('tagline')}</p>
 
             <h2 className="type-section mt-5 max-w-3xl font-display font-bold uppercase">
               {t('browseTitle')}
             </h2>
 
-            <p className="mt-6 max-w-xl text-lg text-paper/75">
-              {t('browseBody')}
-            </p>
+            <p className="mt-6 max-w-xl text-lg">{t('browseBody')}</p>
 
             <div className="mt-10 flex flex-wrap items-center gap-6">
               <Link
@@ -207,7 +223,7 @@ export default async function HomePage({
                 {t('browseCta')}
               </Link>
 
-              <p className="data label-reg text-paper/60">
+              <p className="data label-reg">
                 {t('registerCount', { count: total })}
               </p>
             </div>

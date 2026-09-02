@@ -77,6 +77,50 @@ test.describe('Accueil', () => {
   })
 })
 
+test.describe('Barre de navigation', () => {
+  test('flotte : elle reste à l’écran quand la page défile', async ({
+    page,
+  }) => {
+    /**
+     * C'est LA propriété demandée, et la seule que le rendu statique ne
+     * montre pas : une barre posée en haut du document et une barre flottante
+     * sont identiques tant qu'on n'a pas défilé. Le jour où quelqu'un retire
+     * `sticky` d'une classe utilitaire, ou pose un `overflow: hidden` sur un
+     * ancêtre — ce qui suffit à désactiver `position: sticky` sans qu'aucune
+     * règle ne devienne invalide — la barre repart avec le contenu et rien ne
+     * le signale.
+     */
+    await page.goto('/fr')
+
+    const barre = page.locator('header .nav-float')
+    await expect(barre).toBeVisible()
+
+    await page.evaluate(() => {
+      // Le défilement doux de la charte animerait le saut : on le neutralise
+      // pour cette mesure, sinon on mesure une position intermédiaire.
+      document.documentElement.style.scrollBehavior = 'auto'
+      window.scrollTo(0, 4000)
+    })
+    await page.waitForFunction(() => window.scrollY > 600)
+
+    const boite = await barre.boundingBox()
+    expect(boite, 'la barre a disparu de la page').not.toBeNull()
+
+    // Relatif à la fenêtre : une barre emportée par le défilement donne une
+    // ordonnée franchement négative.
+    expect(
+      boite!.y,
+      `la barre est remontée à ${boite!.y}px : elle a suivi le défilement`,
+    ).toBeGreaterThanOrEqual(0)
+    expect(boite!.y).toBeLessThan(48)
+
+    // Et elle reste utilisable, pas seulement présente.
+    await expect(
+      page.getByRole('link', { name: 'Catalogue' }).first(),
+    ).toBeVisible()
+  })
+})
+
 test.describe('Connexion', () => {
   test('une page protégée renvoie vers la connexion', async ({ page }) => {
     await page.goto('/fr/compte')

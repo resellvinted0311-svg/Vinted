@@ -83,15 +83,24 @@
   --focus-ring: #c2255c;
 
   /* --- Dégradés ----------------------------------------------------------
-     UN dégradé, décliné en deux intensités, et pas un de plus.
+     UN parcours de teintes — rose vers cuivre — décliné en quatre intensités,
+     et pas un de plus. Ce qui change d'une déclinaison à l'autre, c'est la
+     force, jamais la route : deux dégradés qui ne suivent pas le même chemin
+     se lisent comme deux identités.
 
-     `--gradient-accent` est plein : il n'habille que l'action principale et la
-     signature du site. Le poser aussi sur les fiches, les filets et les
-     en-têtes ferait un site qui crie, où plus rien ne ressort — un accent qui
-     est partout n'est plus un accent.
+     `--gradient-accent` est plein. Il porte les grandes surfaces d'accent : le
+     bouton principal, le bandeau de faits, la section d'entrée du catalogue.
+     Elles sont peu nombreuses et volontairement espacées — la teinte ne
+     ressort que si la page respire entre deux occurrences.
 
-     `--gradient-hairline` est le même parcours de teintes réduit à un filet :
-     il souligne une section sans jamais devenir une surface. */
+     `--gradient-hairline` est le même parcours réduit à un filet : il souligne
+     une section ou ferme une barre, sans devenir une surface.
+
+     `--gradient-wash` est ce même parcours DILUÉ dans le fond de fiche. Il
+     habille ce qui doit rester un support et non un accent : le cadre d'une
+     pièce encore sans photographie, qui occupe pourtant la moitié de la
+     hauteur d'une vignette. Une teinte pleine à cet endroit ferait passer un
+     cadre vide pour la pièce la plus mise en avant de la grille. */
   --gradient-accent: linear-gradient(
     135deg,
     var(--stamp) 0%,
@@ -107,6 +116,11 @@
     var(--stamp) 0%,
     var(--mark) 60%,
     transparent 100%
+  );
+  --gradient-wash: linear-gradient(
+    148deg,
+    color-mix(in oklab, var(--stamp) 24%, var(--paper-raised)) 0%,
+    color-mix(in oklab, var(--mark) 20%, var(--paper-raised)) 100%
   );
 
   /* --- Typographie -------------------------------------------------------
@@ -253,6 +267,27 @@
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+
+    /*
+      La barre de navigation flotte AU-DESSUS du contenu, donc elle en recouvre
+      le haut. Sans cette réserve, tout saut d'ancre — le lien d'évitement
+      « aller au contenu » en premier — dépose la cible SOUS la barre : elle est
+      atteinte, annoncée au lecteur d'écran, et invisible à l'écran. Le défaut
+      ne se voit que chez qui navigue au clavier.
+
+      Les valeurs sont relevées sur la barre rendue : 128 px en dessous de
+      1024 px (trois registres, plus le décollement du bord), 86 px au-delà
+      (un seul registre). On arrondit au-dessus — une réserve trop courte
+      recouvre la cible, une réserve trop longue ne coûte qu'un peu de blanc.
+    */
+    scroll-padding-top: 8.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    html {
+      /* Un seul registre au-delà de 1024px : la réserve suit. */
+      scroll-padding-top: 6rem;
+    }
   }
 
   body {
@@ -392,13 +427,34 @@
   /*
     Un titre qui porte le dégradé dans ses lettres.
 
-    Réservé à la signature du site. `background-clip: text` retire la couleur
-    du texte : si le dégradé ne peint pas — impression, mode contraste élevé,
-    navigateur ancien — il ne resterait RIEN à lire. D'où le repli explicite
-    posé avant, et la règle d'impression plus bas.
+    Réservé aux TITRES DE SECTION et à la signature — jamais à du texte
+    courant. Une lettre en dégradé se lit bien à trois centimètres de haut et
+    mal à trois millimètres : le parcours de teintes traverse alors une seule
+    lettre, et le mot paraît sali plutôt que coloré.
+
+    `background-clip: text` retire la couleur du texte : si le dégradé ne peint
+    pas — impression, mode contraste élevé, navigateur ancien — il ne resterait
+    RIEN à lire. D'où le repli explicite posé avant, et la règle d'impression
+    plus bas.
   */
   .text-gradient {
     color: var(--stamp);
+
+    /*
+      Sans cette ligne, le dégradé ne se voit pas — et c'est le piège du
+      procédé.
+
+      `background-clip: text` découpe le fond du BLOC, pas des lettres. Un
+      titre de bloc occupe toute la largeur disponible : « Catalogue » y tient
+      sur quinze pour cent, et l'on ne voit donc que les quinze premiers pour
+      cent du dégradé — un rose plat. Le défaut est invisible à la relecture du
+      code : la règle est bien appliquée, la couleur est bien la bonne, il
+      manque juste tout le reste du parcours.
+
+      La boîte se referme donc sur le texte. Une largeur maximale posée par
+      ailleurs continue de gouverner le retour à la ligne.
+    */
+    width: fit-content;
   }
 
   @supports (background-clip: text) or (-webkit-background-clip: text) {
@@ -407,6 +463,148 @@
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
+    }
+  }
+
+  /*
+    -------------------------------------------------------------------------
+    La barre de navigation flottante
+    -------------------------------------------------------------------------
+    Une fiche posée sur la page, pas un bandeau collé au bord : elle garde ses
+    quatre côtés, son contour plein et l'ombre décalée de la charte. C'est ce
+    décollement qui la fait lire comme flottante — une barre pleine largeur
+    accrochée en haut redevient un en-tête ordinaire.
+  */
+  .nav-float {
+    position: relative;
+    background-color: var(--paper-raised);
+    border: var(--rule-width) solid var(--rule);
+    border-radius: var(--r-card);
+    box-shadow: 3px 3px 0 var(--rule);
+  }
+
+  /*
+    Le fond translucide n'est posé QUE si le flou l'accompagne.
+
+    Sans `backdrop-filter`, une barre à 86 % d'opacité laisse défiler le
+    contenu de la page en clair derrière ses libellés : sur une photographie
+    sombre, « Catalogue » devient illisible pendant tout le défilement — un
+    défaut qui n'apparaît jamais en haut de page, donc jamais sur une capture.
+    La requête de fonctionnalité fait donc du fond OPAQUE le cas par défaut, et
+    de la transparence l'exception vérifiée.
+  */
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .nav-float {
+      background-color: color-mix(
+        in oklab,
+        var(--paper-raised) 86%,
+        transparent
+      );
+      -webkit-backdrop-filter: blur(14px) saturate(1.2);
+      backdrop-filter: blur(14px) saturate(1.2);
+    }
+  }
+
+  /*
+    Le filet de signature, à l'intérieur du bord bas.
+
+    Rentré de la valeur du rayon pour ne pas dépasser des angles arrondis : un
+    trait qui sort de la fiche de deux pixels se voit tout de suite, et il se
+    voit sur chaque page du site.
+  */
+  .nav-float::after {
+    content: '';
+    position: absolute;
+    left: var(--r-card);
+    right: var(--r-card);
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px;
+    background-image: var(--gradient-hairline);
+  }
+
+  /*
+    Le gabarit de la barre.
+
+    Écrit en zones de grille plutôt qu'en classes utilitaires parce qu'un
+    élément doit CHANGER DE PLACE entre les deux tailles : le sélecteur de
+    langue termine la ligne de titre sur grand écran et la ligne de navigation
+    sur petit. Les zones déplacent le même élément ; deux jeux de classes
+    auraient exigé de le rendre deux fois, donc deux listes déroulantes portant
+    l'intitulé « Langue » — deux fois la même commande annoncée aux lecteurs
+    d'écran, et un test qui ne sait plus laquelle actionner.
+  */
+  .nav-bar {
+    display: grid;
+
+    /*
+      `minmax(0, 1fr)` et non `1fr`.
+
+      Une piste `1fr` a pour taille minimale le contenu de ses éléments : la
+      colonne refusait de descendre sous la largeur du nom de la boutique, et
+      la barre débordait de son propre contour sur téléphone — mesuré, les
+      entrées passaient sous le bord arrondi. `minmax(0, …)` autorise la piste
+      à rétrécir, et ce sont alors les éléments qui se replient.
+    */
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    /*
+      Trois registres sur téléphone, et le choix se justifie par une mesure.
+
+      Sur un écran de 412 px, la barre doit loger la signature (101 px), trois
+      entrées (250 px), trois services (233 px) et le sélecteur de langue
+      (108 px) : sept cents pixels de contenu. Aucune disposition à deux lignes
+      n'y arrive.
+
+      La contrainte décisive est que la colonne `auto` prend la largeur du plus
+      large de ses occupants — les services. Tout ce qui partage leur ligne se
+      retrouve dans un peu plus de cent pixels : les entrées de catalogue y
+      tombaient sur trois lignes. Elles occupent donc TOUTE la largeur, et les
+      services descendent sur leur propre registre.
+
+      La barre y fait environ 115 px de haut, contre près du double pour
+      l'en-tête statique qu'elle remplace — lequel portait en plus le champ de
+      recherche, parti dans le catalogue.
+    */
+    grid-template-areas:
+      'mark lang'
+      'nav nav'
+      'tools tools';
+    align-items: center;
+    column-gap: 1.25rem;
+    row-gap: 0.5rem;
+  }
+
+  .nav-bar__mark {
+    grid-area: mark;
+  }
+
+  .nav-bar__nav {
+    grid-area: nav;
+  }
+
+  .nav-bar__lang {
+    grid-area: lang;
+    justify-self: end;
+  }
+
+  .nav-bar__tools {
+    grid-area: tools;
+    justify-self: end;
+  }
+
+  /* Un seul registre dès que la largeur le permet : tout revient sur la ligne
+     de titre, et la barre retrouve la hauteur d'un bandeau. */
+  @media (min-width: 1024px) {
+    .nav-bar {
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      grid-template-areas: 'mark nav lang tools';
+      column-gap: 2rem;
+      row-gap: 0;
+    }
+
+    .nav-bar__lang {
+      justify-self: auto;
     }
   }
 
@@ -648,25 +846,55 @@
   }
 
   /*
-    Trame de registre.
+    Lavis d'accent : le cadre d'une pièce qui n'a pas encore sa photographie.
 
-    Réservée aux surfaces éditoriales — jamais posée par-dessus une photo de
-    vêtement : la photo est ce que la cliente vient regarder, on ne la
-    quadrille pas.
+    ---------------------------------------------------------------------------
+    Ce qu'il remplace
+    ---------------------------------------------------------------------------
+    Une trame de carreaux occupait ces cadres. Elle avait deux défauts. Le
+    premier est de langage : un quadrillage gris signifie « image manquante »
+    dans tous les logiciels de retouche depuis vingt ans, donc il annonçait une
+    panne là où il n'y a qu'un travail photo en attente. Le second est de
+    proportion : l'inventaire est encore majoritairement sans visuel, la trame
+    couvrait donc la moitié de la hauteur de presque chaque vignette, et c'est
+    elle qu'on voyait en arrivant sur le catalogue — pas les pièces.
+
+    Le lavis dit autre chose : le cadre appartient à la boutique, il est tenu,
+    la photographie viendra. Et il est DILUÉ dans le fond de fiche, jamais
+    saturé : un aplat rose plein ferait ressortir les pièces sans photo plus
+    que celles qui en ont une, ce qui est exactement l'inverse de ce qu'on veut.
   */
-  .grid-reg {
+  .wash-accent {
+    /* Repli sous le dégradé : si l'image de fond ne peint pas, le cadre reste
+       une surface tenue et non un trou blanc au milieu d'une fiche. */
+    background-color: var(--sand);
+    background-image: var(--gradient-wash);
+  }
+
+  /*
+    Halo de page : la teinte devient une atmosphère, pas un objet.
+
+    Deux foyers très étalés, l'un cuivre en haut à droite, l'autre rose en bas
+    à gauche, qui s'éteignent bien avant de se rencontrer. Ils colorent le fond
+    de la vitrine sans jamais former de bord — un dégradé qui montre son bord
+    se lit comme un bandeau, et il faudrait alors lui trouver une raison d'être
+    là.
+
+    Les valeurs restent basses parce que du texte courant passe dessus : le
+    fond doit rester un fond, et l'encre garder son contraste.
+  */
+  .wash-page {
     background-image:
-      linear-gradient(
-        to right,
-        color-mix(in oklab, var(--ink) 5%, transparent) 1px,
-        transparent 1px
+      radial-gradient(
+        118% 88% at 88% 0%,
+        color-mix(in oklab, var(--mark) 15%, transparent) 0%,
+        transparent 62%
       ),
-      linear-gradient(
-        to bottom,
-        color-mix(in oklab, var(--ink) 5%, transparent) 1px,
-        transparent 1px
+      radial-gradient(
+        96% 78% at 2% 100%,
+        color-mix(in oklab, var(--stamp) 17%, transparent) 0%,
+        transparent 58%
       );
-    background-size: 24px 24px;
   }
 
   /*
@@ -780,9 +1008,19 @@
     color: #000000 !important;
   }
 
-  .ruled-signature::after {
+  .ruled-signature::after,
+  .nav-float::after {
     background-image: none !important;
     background-color: #000000;
+  }
+
+  /* Les lavis sont des atmosphères d'écran. Sur papier, ils deviennent un
+     aplat de couleur derrière du texte noir : de l'encre dépensée pour rien,
+     et un contraste dégradé sur la seule page qu'on imprime vraiment. */
+  .wash-accent,
+  .wash-page {
+    background-image: none !important;
+    background-color: #ffffff !important;
   }
 
   /* Une facture ne doit pas se couper au milieu d'un total. */

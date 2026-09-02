@@ -60,7 +60,7 @@ export function ArticleGallery({
   }, [images.length])
 
   if (images.length === 0) {
-    return <div className="grid-reg aspect-[3/4] w-full rounded-card ruled bg-sand" />
+    return <div className="wash-accent aspect-[3/4] w-full rounded-card ruled" />
   }
 
   return (

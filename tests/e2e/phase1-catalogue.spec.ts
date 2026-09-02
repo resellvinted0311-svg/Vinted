@@ -280,7 +280,7 @@ test.describe('Fiche article', () => {
 
 test.describe('Recherche', () => {
   test('propose des suggestions et y navigue', async ({ page }) => {
-    await page.goto('/fr')
+    await page.goto('/fr/catalogue')
 
     const input = page.getByRole('combobox', { name: 'Rechercher un article' })
     await input.fill('chemise')
@@ -296,6 +296,51 @@ test.describe('Recherche', () => {
     await page.goto('/fr/catalogue?q=chemise')
     await expect(page.getByText(/Résultats pour/)).toBeVisible()
     expect(await resultCount(page)).toBeGreaterThan(0)
+  })
+
+  test('le champ rouvre sur la requête en cours', async ({ page }) => {
+    /*
+      Le défaut visé : le champ se rouvrait vide au-dessus d'une grille
+      filtrée. On lisait « Résultats pour chemise » et il fallait retaper
+      « chemise » en entier pour la corriger d'une lettre.
+    */
+    await page.goto('/fr/catalogue?q=chemise')
+
+    await expect(
+      page.getByRole('combobox', { name: 'Rechercher un article' }),
+    ).toHaveValue('chemise')
+  })
+
+  test('la vitrine ne porte AUCUN champ de recherche', async ({ page }) => {
+    /*
+      La recherche a quitté l'en-tête, donc toutes les pages où l'on ne
+      cherche pas. C'est un choix de composition — la vitrine ouvre sur une
+      pièce, pas sur un formulaire — et il se défait en une ligne : il suffit
+      que quelqu'un remette <SearchBox /> dans site-header.tsx pour qu'elle
+      revienne partout d'un coup, y compris ici.
+
+      On vérifie sur la vitrine ET sur une fiche article : ce sont les deux
+      pages où le champ n'a rien à faire et où on ne le remarquerait pas tout
+      de suite.
+    */
+    await page.goto('/fr')
+    await expect(page.getByRole('search')).toHaveCount(0)
+
+    const href = await page
+      .locator('article h3 a')
+      .first()
+      .getAttribute('href')
+    expect(href, 'la vitrine doit lister au moins une pièce').toBeTruthy()
+
+    await page.goto(href!)
+    await expect(page.getByRole('search')).toHaveCount(0)
+  })
+
+  test('le catalogue, lui, la porte', async ({ page }) => {
+    // Le pendant du test précédent : sans lui, supprimer purement et
+    // simplement la recherche du site ferait passer les deux.
+    await page.goto('/fr/catalogue')
+    await expect(page.getByRole('search')).toHaveCount(1)
   })
 })
 
