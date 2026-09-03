@@ -47,7 +47,13 @@
     "indexBrands": "Indice dei marchi",
     "claimUnique": "Un esemplare di ogni capo",
     "claimMeasured": "Misure reali su ogni scheda",
-    "claimShipped": "Spedizione entro 48 ore lavorative"
+    "claimShipped": "Spedizione entro 48 ore lavorative",
+    "heroTitle": "Abbigliamento di seconda mano, scelto pezzo per pezzo",
+    "heroSubtitle": "Ogni capo è lavato, controllato e misurato. Spedizione entro 48 ore lavorative dalla Francia, reso entro 14 giorni.",
+    "heroCta": "Vedi i capi disponibili",
+    "claimReturn": "Reso entro 14 giorni",
+    "shopBySize": "Per taglia",
+    "pieceCount": "{count, plural, =0 {nessun capo} one {# capo} other {# capi}}"
   },
   "catalogue": {
     "title": "Catalogo",
@@ -619,7 +625,8 @@
         "shipping": "Spedizione",
         "drop": "Ribasso automatico",
         "offers": "Trattativa",
-        "checkout": "Cassa"
+        "checkout": "Cassa",
+        "content": "Vetrina"
       },
       "errors": {
         "rateLimited": "Troppi salvataggi di seguito. Riprovi tra poco.",
@@ -695,6 +702,10 @@
         "reservationTtlMinutes": {
           "label": "Prenotazione nel carrello (minuti)",
           "hint": "Per quanto tempo un capo resta bloccato durante il pagamento."
+        },
+        "homeHeroImageUrl": {
+          "label": "Immagine principale della home page",
+          "hint": "Indirizzo Cloudinary della foto orizzontale mostrata all’arrivo. Lascia vuoto finché non c’è una fotografia: lo spazio resta sobrio, senza immagini rotte."
         }
       }
     },

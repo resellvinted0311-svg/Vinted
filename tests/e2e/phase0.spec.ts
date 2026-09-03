@@ -275,77 +275,67 @@ test.describe('Barre de navigation', () => {
   })
 })
 
-test.describe('La vitrine tient dans un écran', () => {
-  // Un portable courant. La barre flottante recouvre le haut de la fenêtre :
-  // c'est ce qui reste EN DESSOUS qui décide de ce qu'on voit d'un coup d'œil.
-  test.use({ viewport: { width: 1280, height: 800 } })
+test.describe('Le visuel d’arrivée', () => {
+  for (const [nom, viewport, plafond] of [
+    ['bureau', { width: 1280, height: 800 }, 0.8],
+    ['téléphone', { width: 390, height: 844 }, 0.62],
+  ] as const) {
+    test(`occupe la bonne part de l’écran en ${nom}`, async ({ page }) => {
+      /**
+       * Ce que ce test tient, et pourquoi les deux bornes sont différentes.
+       *
+       * En BUREAU, le propriétaire a demandé les trois quarts de la hauteur
+       * d’écran. La borne haute est à 80 % : elle laisse la marge d’un titre
+       * qui passe sur trois lignes — ce qui arrive en allemand avant d’arriver
+       * en français — tout en interdisant la dérive vers le plein écran. Un
+       * bandeau qui remplit la fenêtre ne montre aucune pièce, et un visiteur
+       * qui ne voit pas de produit s’en va.
+       *
+       * En TÉLÉPHONE, la borne descend à 62 % pour la même raison, en plus
+       * pressant : c’est l’écran par lequel la boutique est réellement
+       * découverte, depuis un lien social. La première rangée du catalogue doit
+       * dépasser sous le pli.
+       *
+       * On mesure la hauteur RENDUE, jamais la valeur CSS : la borne vient
+       * d’un `min-height`, donc le contenu peut la dépasser, et c’est
+       * précisément le dépassement qu’on surveille.
+       */
+      await page.setViewportSize(viewport)
+      await page.goto('/fr')
+      await page.waitForLoadState('load')
+      await page.evaluate(() => document.fonts.ready)
 
-  test('la pièce du moment et l’arrivage se lisent sans défiler', async ({
-    page,
-  }) => {
-    /**
-     * Ce que ce test protège.
-     *
-     * Les deux premières sections avaient grandi jusqu'à dépasser la fenêtre :
-     * il fallait faire défiler pour découvrir qu'une pièce avait un prix. Rien
-     * ne cassait pour autant, et la régression est facile à réintroduire — il
-     * suffit d'agrandir une échelle typographique ou une fiche du rail de deux
-     * ou trois rem, chacune étant un réglage qui paraît anodin pris isolément.
-     *
-     * On mesure donc la hauteur réelle rendue, pas les valeurs qui la
-     * produisent : c'est la seule façon d'attraper la somme.
-     */
-    await page.goto('/fr')
-    await page.waitForLoadState('load')
+      const banniere = page.locator('main section').first()
+      const boite = await banniere.boundingBox()
+      expect(boite, 'le visuel d’arrivée est introuvable').not.toBeNull()
 
-    /*
-      Attendre les FONTES, et pas seulement le chargement.
-
-      Sans cette attente, le test mesurait une page composée dans la fonte de
-      repli. Le nom de la pièce y est plus large, il passait sur deux lignes,
-      et la section gagnait soixante-dix pixels qui n'existent pas une fois la
-      grotesque arrivée. Le test échouait alors une fois sur dix — uniquement
-      dans la passe complète, quand la machine est chargée et que la fonte
-      traîne. C'est le pire des cas : un échec qui ne se reproduit pas quand on
-      relance le test seul, et qu'on finit par mettre sur le compte du hasard.
-    */
-    await page.evaluate(() => document.fonts.ready)
-
-    const mesures = await page.evaluate(() => {
-      const barre = document
-        .querySelector('header .nav-float')!
-        .getBoundingClientRect()
-
-      // La barre flotte au-dessus du contenu : sa hauteur, plus son
-      // décollement du bord, est autant de fenêtre en moins.
-      const dispo = window.innerHeight - (barre.height + 16)
-
-      return Array.from(document.querySelectorAll('main section'))
-        .slice(0, 2)
-        .map((section) => ({
-          titre: (section.querySelector('h1, h2')?.textContent ?? '?')
-            .trim()
-            .slice(0, 30),
-          hauteur: Math.round(section.getBoundingClientRect().height),
-          dispo: Math.round(dispo),
-        }))
-    })
-
-    expect(mesures).toHaveLength(2)
-
-    // Garde-fou sur la sélection elle-même : si l'ordre des sections change,
-    // le test doit le dire plutôt que de mesurer autre chose en silence.
-    expect(
-      mesures[1]!.titre,
-      'la deuxième section de l’accueil n’est plus l’arrivage',
-    ).toContain('vient d')
-
-    for (const mesure of mesures) {
+      const part = boite!.height / viewport.height
       expect(
-        mesure.hauteur,
-        `« ${mesure.titre} » occupe ${mesure.hauteur} px pour ${mesure.dispo} px de fenêtre sous la barre : il faut défiler pour la voir en entier`,
-      ).toBeLessThanOrEqual(mesure.dispo)
-    }
+        part,
+        `le visuel occupe ${Math.round(part * 100)} % de la fenêtre, le plafond est ${Math.round(plafond * 100)} %`,
+      ).toBeLessThanOrEqual(plafond)
+
+      // Et il occupe vraiment la place demandée : un bandeau qui s’effondre à
+      // deux cents pixels passerait la borne haute sans rien montrer.
+      expect(
+        part,
+        `le visuel n’occupe que ${Math.round(part * 100)} % de la fenêtre`,
+      ).toBeGreaterThan(0.45)
+    })
+  }
+
+  test('porte un titre, une promesse et UN seul appel', async ({ page }) => {
+    // Deux boutons concurrents dans un premier écran font arbitrer au lieu
+    // d’avancer. La règle est facile à défaire — on ajoute « en savoir plus »
+    // à côté — et rien ne la rappelle.
+    await page.goto('/fr')
+
+    const banniere = page.locator('main section').first()
+    await expect(banniere.getByRole('heading', { level: 1 })).toBeVisible()
+    await expect(banniere.getByRole('link')).toHaveCount(1)
+    await expect(
+      banniere.getByRole('link', { name: 'Voir les pièces disponibles' }),
+    ).toBeVisible()
   })
 })
 

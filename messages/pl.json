@@ -47,7 +47,13 @@
     "indexBrands": "Indeks marek",
     "claimUnique": "Jeden egzemplarz każdej sztuki",
     "claimMeasured": "Rzeczywiste wymiary przy każdym produkcie",
-    "claimShipped": "Wysyłka w ciągu 48 godzin roboczych"
+    "claimShipped": "Wysyłka w ciągu 48 godzin roboczych",
+    "heroTitle": "Odzież z drugiej ręki, wybierana sztuka po sztuce",
+    "heroSubtitle": "Każda sztuka jest prana, sprawdzana i mierzona. Wysyłka w ciągu 48 godzin roboczych z Francji, zwrot w ciągu 14 dni.",
+    "heroCta": "Zobacz dostępne sztuki",
+    "claimReturn": "Zwrot w ciągu 14 dni",
+    "shopBySize": "Według rozmiaru",
+    "pieceCount": "{count, plural, =0 {brak sztuk} one {# sztuka} few {# sztuki} many {# sztuk} other {# sztuki}}"
   },
   "catalogue": {
     "title": "Katalog",
@@ -619,7 +625,8 @@
         "shipping": "Wysyłka",
         "drop": "Automatyczna obniżka",
         "offers": "Negocjacje",
-        "checkout": "Kasa"
+        "checkout": "Kasa",
+        "content": "Witryna"
       },
       "errors": {
         "rateLimited": "Zbyt wiele zapisów pod rząd. Spróbuj za chwilę.",
@@ -695,6 +702,10 @@
         "reservationTtlMinutes": {
           "label": "Rezerwacja w koszyku (minuty)",
           "hint": "Jak długo sztuka pozostaje zablokowana na czas płatności."
+        },
+        "homeHeroImageUrl": {
+          "label": "Duża grafika strony głównej",
+          "hint": "Adres Cloudinary zdjęcia poziomego pokazywanego po wejściu. Zostaw puste, dopóki nie ma zdjęcia: miejsce pozostanie proste, bez zepsutego obrazu."
         }
       }
     },

@@ -47,7 +47,13 @@
     "indexBrands": "Brand index",
     "claimUnique": "One copy of every piece",
     "claimMeasured": "Real measurements on every listing",
-    "claimShipped": "Shipped within 48 working hours"
+    "claimShipped": "Shipped within 48 working hours",
+    "heroTitle": "Second-hand clothes, sourced piece by piece",
+    "heroSubtitle": "Every piece is washed, checked and measured. Shipped within 48 working hours from France, 14-day returns.",
+    "heroCta": "See available pieces",
+    "claimReturn": "14-day returns",
+    "shopBySize": "By size",
+    "pieceCount": "{count, plural, =0 {no pieces} one {# piece} other {# pieces}}"
   },
   "catalogue": {
     "title": "Catalogue",
@@ -619,7 +625,8 @@
         "shipping": "Shipping",
         "drop": "Automatic markdown",
         "offers": "Negotiation",
-        "checkout": "Checkout"
+        "checkout": "Checkout",
+        "content": "Storefront"
       },
       "errors": {
         "rateLimited": "Too many saves in a row. Try again in a moment.",
@@ -695,6 +702,10 @@
         "reservationTtlMinutes": {
           "label": "Cart reservation (minutes)",
           "hint": "How long a piece stays held while payment goes through."
+        },
+        "homeHeroImageUrl": {
+          "label": "Home page banner image",
+          "hint": "Cloudinary address of the landscape photo shown on arrival. Leave empty until a photograph exists: the slot then stays plain, with no broken image."
         }
       }
     },

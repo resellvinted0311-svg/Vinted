@@ -47,7 +47,13 @@
     "indexBrands": "Markenverzeichnis",
     "claimUnique": "Ein Exemplar von jedem Stück",
     "claimMeasured": "Echte Maße auf jeder Produktseite",
-    "claimShipped": "Versand innerhalb von 48 Werkstunden"
+    "claimShipped": "Versand innerhalb von 48 Werkstunden",
+    "heroTitle": "Secondhand-Kleidung, Stück für Stück ausgesucht",
+    "heroSubtitle": "Jedes Stück wird gewaschen, geprüft und vermessen. Versand innerhalb von 48 Werkstunden aus Frankreich, Rückgabe innerhalb von 14 Tagen.",
+    "heroCta": "Verfügbare Stücke ansehen",
+    "claimReturn": "Rückgabe innerhalb von 14 Tagen",
+    "shopBySize": "Nach Größe",
+    "pieceCount": "{count, plural, =0 {keine Stücke} one {# Stück} other {# Stücke}}"
   },
   "catalogue": {
     "title": "Katalog",
@@ -619,7 +625,8 @@
         "shipping": "Versand",
         "drop": "Automatische Reduzierung",
         "offers": "Verhandlung",
-        "checkout": "Kasse"
+        "checkout": "Kasse",
+        "content": "Schaufenster"
       },
       "errors": {
         "rateLimited": "Zu viele Speichervorgänge hintereinander. Bitte gleich noch einmal versuchen.",
@@ -695,6 +702,10 @@
         "reservationTtlMinutes": {
           "label": "Reservierung im Warenkorb (Minuten)",
           "hint": "Wie lange ein Stück während der Zahlung blockiert bleibt."
+        },
+        "homeHeroImageUrl": {
+          "label": "Großes Bild der Startseite",
+          "hint": "Cloudinary-Adresse des Querformatfotos, das beim Ankommen erscheint. Leer lassen, solange es kein Foto gibt: Der Platz bleibt dann schlicht, ohne defektes Bild."
         }
       }
     },

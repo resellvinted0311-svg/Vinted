@@ -188,6 +188,56 @@ const SCHEMAS = {
    * et c'est un réglage, pas une constante écrite dans le code.
    */
   floorShippingZoneCode: z.string().min(1).max(32),
+
+  /**
+   * Le grand visuel paysage de la page d'accueil.
+   *
+   * -------------------------------------------------------------------------
+   * Pourquoi un réglage et pas une constante
+   * -------------------------------------------------------------------------
+   * C'est un choix éditorial qui changera au rythme des saisons de chine, pas
+   * une propriété du code. Le poser en réglage, c'est pouvoir le remplacer
+   * depuis la régie, sans redéploiement — et pouvoir ouvrir la boutique
+   * AUJOURD'HUI, sans photographie, l'emplacement restant vide jusqu'à ce
+   * qu'une adresse soit saisie.
+   *
+   * -------------------------------------------------------------------------
+   * Pourquoi l'adresse est contrainte, et pas seulement « une URL »
+   * -------------------------------------------------------------------------
+   * `next/image` n'optimise QUE les hôtes déclarés dans `next.config.ts`, et
+   * cette déclaration est restreinte au compte Cloudinary de la boutique. Une
+   * adresse acceptée ici mais refusée là-bas ne produirait pas d'erreur
+   * visible : le composant répondrait 400, la page d'accueil s'afficherait
+   * avec un trou, et la régie afficherait le réglage comme correctement
+   * enregistré. Le contrôle est donc posé à l'ÉCRITURE, là où quelqu'un peut
+   * encore comprendre ce qu'on lui refuse.
+   *
+   * `null` est une valeur, pas une absence : c'est « pas encore de
+   * photographie », et c'est l'état normal au lancement.
+   */
+  homeHeroImageUrl: z
+    .string()
+    .trim()
+    .url()
+    .max(2048)
+    .refine(
+      (value) => {
+        let url: URL
+        try {
+          url = new URL(value)
+        } catch {
+          return false
+        }
+        if (url.protocol !== 'https:') return false
+        if (url.hostname !== 'res.cloudinary.com') return false
+        return url.pathname.includes('/image/upload/')
+      },
+      {
+        message:
+          'l’adresse doit être une image Cloudinary de la boutique (https://res.cloudinary.com/…/image/upload/…)',
+      },
+    )
+    .nullable(),
   cgvVersion: z.string().min(1),
   withdrawalPeriodDays: positiveInt,
   returnShippingPaidByCustomer: z.boolean(),
@@ -281,6 +331,55 @@ export async function getSettings<K extends SettingKey>(
  * Ne lève pas : c'est un diagnostic, et il doit rester lisible précisément
  * quand la configuration est en défaut.
  */
+/**
+ * Le visuel de la vitrine, ou rien — sans jamais lever.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi CE réglage se lit autrement que tous les autres
+ * ---------------------------------------------------------------------------
+ * `getSettings` lève quand une ligne manque, et c'est la bonne règle pour les
+ * réglages qui décident d'un PRIX : mieux vaut une page en erreur qu'une marge
+ * inventée. Ici la règle s'inverse. Le réglage vient d'être créé, la ligne
+ * n'existe donc dans aucune base déployée — « une migration crée des tables,
+ * jamais des lignes » — et une lecture qui lève ferait tomber LA PAGE
+ * D'ACCUEIL, en huit langues, pour dire qu'il n'y a pas encore de photo.
+ *
+ * L'absence est justement l'état attendu au lancement. Elle se lit donc comme
+ * `null`, c'est-à-dire « emplacement vide », qui est exactement ce que la
+ * vitrine sait afficher.
+ *
+ * Une valeur MAL FORMÉE est traitée pareil, et pour la même raison : une
+ * adresse qui ne passe plus la validation — l'hôte Cloudinary a changé, la
+ * ligne a été éditée à la main — ne doit pas casser la vitrine. Elle est
+ * ignorée, la page s'affiche sans image, et la régie la refusera à la
+ * prochaine tentative d'enregistrement en expliquant pourquoi.
+ */
+export async function getHomeHeroImageUrl(
+  client: Reader = prisma,
+): Promise<string | null> {
+  const row = await client.setting.findUnique({
+    where: { key: 'homeHeroImageUrl' },
+    select: { value: true },
+  })
+
+  if (!row) return null
+
+  const parsed = SCHEMAS.homeHeroImageUrl.safeParse(row.value)
+  return parsed.success ? parsed.data : null
+}
+
+/**
+ * Réglages dont l'ABSENCE est un état normal, et non une configuration
+ * incomplète.
+ *
+ * La bannière « lignes absentes » de la régie sert à expliquer pourquoi la
+ * boutique refuse de calculer un prix. Y faire figurer un réglage qui n'est
+ * pas censé être rempli au lancement — l'image de la vitrine — apprendrait à
+ * la lire comme du bruit, et le jour où elle signalera une vraie ligne
+ * manquante, personne ne la lira plus.
+ */
+const OPTIONAL_SETTINGS: readonly SettingKey[] = ['homeHeroImageUrl']
+
 export async function findMissingSettings(
   client: Reader = prisma,
 ): Promise<SettingKey[]> {
@@ -292,7 +391,8 @@ export async function findMissingSettings(
   })
 
   const present = new Set(rows.map((row) => row.key))
-  return keys.filter((key) => !present.has(key))
+  const optional = new Set<SettingKey>(OPTIONAL_SETTINGS)
+  return keys.filter((key) => !present.has(key) && !optional.has(key))
 }
 
 // ---------------------------------------------------------------------------
@@ -320,11 +420,19 @@ export type SettingFieldKind =
    * LA BASE — jamais saisi librement. Voir `floorShippingZoneCode`.
    */
   | 'zoneCode'
+  /**
+   * Une adresse d'image, ou rien.
+   *
+   * Le champ vide vaut `null` et non chaîne vide : « pas de photographie » est
+   * un état, et une chaîne vide passerait la validation d'URL en la faisant
+   * échouer pour la mauvaise raison.
+   */
+  | 'imageUrl'
 
 export interface EditableSetting {
   key: SettingKey
   kind: SettingFieldKind
-  group: 'economy' | 'shipping' | 'drop' | 'offers' | 'checkout'
+  group: 'economy' | 'shipping' | 'drop' | 'offers' | 'checkout' | 'content'
 }
 
 /**
@@ -397,6 +505,14 @@ export const EDITABLE_SETTINGS: readonly EditableSetting[] = [
   { key: 'autoAcceptThresholdPercent', kind: 'nullablePercent', group: 'offers' },
 
   { key: 'reservationTtlMinutes', kind: 'integer', group: 'checkout' },
+
+  /**
+   * Éditable, et sans risque : c'est le seul réglage de la liste qui ne touche
+   * ni à l'argent, ni au stock, ni à un engagement juridique. Le pire qu'une
+   * mauvaise saisie puisse produire est une page d'accueil sans photographie —
+   * exactement l'état de départ.
+   */
+  { key: 'homeHeroImageUrl', kind: 'imageUrl', group: 'content' },
 ] as const
 
 const EDITABLE_BY_KEY = new Map(
@@ -446,6 +562,15 @@ export function parseSettingInput(key: string, raw: string): SettingParse {
       // a le client, juste avant d'écrire.
       if (trimmed === '') return { ok: false, reason: 'malformed' }
       if (trimmed.length > 32) return { ok: false, reason: 'malformed' }
+      return { ok: true, value: trimmed }
+    }
+
+    case 'imageUrl': {
+      // Vide = « pas encore de photographie », qui est l'état de lancement.
+      // La FORME de l'adresse, elle, est vérifiée par le schéma Zod du
+      // réglage : c'est lui qui exige l'hôte Cloudinary de la boutique, et
+      // c'est lui qui produira le message d'erreur montré à la régie.
+      if (trimmed === '') return { ok: true, value: null }
       return { ok: true, value: trimmed }
     }
 

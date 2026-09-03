@@ -864,29 +864,24 @@
   }
 
   /*
-    Bandeau défilant.
+    Il y avait ici un BANDEAU DÉFILANT, et il a été supprimé — le composant
+    avec.
 
-    La séquence est rendue deux fois et la piste translate de moitié : le
-    raccord tombe exactement sur le début du second exemplaire, la boucle est
-    donc sans saut. Une durée longue — le bandeau accompagne, il ne réclame
-    pas l'attention.
+    Il portait les trois faits de la boutique en boucle infinie, sur
+    quarante-six secondes, et sa seule commande de pause était le survol de la
+    souris : rien au clavier, rien au tactile, aucun contrôle visible. Le
+    critère WCAG 2.2.2 impose de pouvoir mettre en pause, arrêter ou masquer
+    tout mouvement automatique de plus de cinq secondes. C'est un critère de
+    niveau A — donc en deçà du niveau AA que la boutique s'est engagée à tenir,
+    et le défaut était en ligne.
+
+    Il aurait pu être réparé par un bouton de pause. Il ne l'a pas été, parce
+    que le mouvement ne servait à rien : trois faits courts tiennent sur une
+    ligne fixe. Voir `components/shop/reassurance-band.tsx`.
+
+    L'animation est supprimée ICI plutôt que laissée inerte : une règle CSS
+    sans appelant se retrouve réutilisée, et le défaut revient avec elle.
   */
-  .marquee__track {
-    animation: nd-marquee 46s linear infinite;
-  }
-
-  .marquee:hover .marquee__track {
-    animation-play-state: paused;
-  }
-
-  @keyframes nd-marquee {
-    from {
-      transform: translate3d(0, 0, 0);
-    }
-    to {
-      transform: translate3d(-50%, 0, 0);
-    }
-  }
 
   /*
     Rail d'arrivage : défilement horizontal natif, avec accrochage.

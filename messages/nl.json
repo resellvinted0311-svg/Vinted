@@ -47,7 +47,13 @@
     "indexBrands": "Merkenindex",
     "claimUnique": "Eén exemplaar van elk stuk",
     "claimMeasured": "Echte maten op elke productpagina",
-    "claimShipped": "Verzonden binnen 48 werkuren"
+    "claimShipped": "Verzonden binnen 48 werkuren",
+    "heroTitle": "Tweedehands kleding, stuk voor stuk uitgezocht",
+    "heroSubtitle": "Elk stuk wordt gewassen, gecontroleerd en opgemeten. Verzending binnen 48 werkuren vanuit Frankrijk, retour binnen 14 dagen.",
+    "heroCta": "Bekijk de beschikbare stukken",
+    "claimReturn": "Retour binnen 14 dagen",
+    "shopBySize": "Op maat",
+    "pieceCount": "{count, plural, =0 {geen stuks} one {# stuk} other {# stuks}}"
   },
   "catalogue": {
     "title": "Collectie",
@@ -619,7 +625,8 @@
         "shipping": "Verzending",
         "drop": "Automatische afprijzing",
         "offers": "Onderhandeling",
-        "checkout": "Afrekenen"
+        "checkout": "Afrekenen",
+        "content": "Etalage"
       },
       "errors": {
         "rateLimited": "Te vaak achter elkaar opgeslagen. Probeer het zo opnieuw.",
@@ -695,6 +702,10 @@
         "reservationTtlMinutes": {
           "label": "Reservering in het winkelmandje (minuten)",
           "hint": "Hoe lang een stuk vastgehouden blijft tijdens de betaling."
+        },
+        "homeHeroImageUrl": {
+          "label": "Grote afbeelding op de startpagina",
+          "hint": "Cloudinary-adres van de liggende foto die bij aankomst wordt getoond. Laat leeg zolang er geen foto is: de plek blijft dan sober, zonder gebroken afbeelding."
         }
       }
     },

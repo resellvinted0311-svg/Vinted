@@ -184,6 +184,25 @@ function SettingField({
     )
   }
 
+  if (field.kind === 'imageUrl') {
+    return (
+      <Field hint={hint} className="sm:col-span-2">
+        {/* Facultatif au sens plein : vide vaut « pas encore de
+            photographie », et c'est l'état de lancement de la boutique. */}
+        <FieldLabel optional>{label}</FieldLabel>
+        <Input
+          name={field.key}
+          defaultValue={value}
+          type="url"
+          inputMode="url"
+          autoComplete="off"
+          spellCheck={false}
+          placeholder="https://res.cloudinary.com/…/image/upload/…"
+        />
+      </Field>
+    )
+  }
+
   return (
     <Field hint={hint}>
       {/* Un seuil vide vaut « aucun seuil » : c'est le seul champ numérique

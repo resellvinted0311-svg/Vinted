@@ -4,26 +4,38 @@ import {
   getLatestArticles,
   countListedArticles,
 } from '@/lib/db/queries/articles'
+import { getFacets } from '@/lib/db/queries/articles'
 import { listBrandsWithCounts } from '@/lib/db/queries/taxonomy'
-import { HeroPiece } from '@/components/shop/hero-piece'
+import { EMPTY_FILTERS } from '@/lib/domain/catalogue'
+import { getHomeHeroImageUrl } from '@/lib/config/settings'
+import { HeroBanner } from '@/components/shop/hero-banner'
+import { ReassuranceBand } from '@/components/shop/reassurance-band'
+import { ShortcutGrid } from '@/components/shop/shortcut-grid'
 import { ArrivalsRail } from '@/components/shop/arrivals-rail'
 import { TypeIndex } from '@/components/shop/type-index'
 import { BranchPlate, SeedHeadPlate } from '@/components/shop/engraving'
-import { Marquee } from '@/components/motion/marquee'
 import { Reveal } from '@/components/motion/reveal'
 
 /**
- * Vitrine, pas rayon.
+ * Vitrine.
  *
- * L'accueil n'ouvre PAS sur une grille filtrable : c'est la structure de tous
- * les sites de vêtements, et c'est précisément ce dont la boutique doit se
- * distinguer. Il ouvre sur une pièce, en grand, avec son relevé — ce qu'une
- * boutique où chaque article est unique peut montrer et qu'un catalogue de
- * tailles multiples ne peut pas. Le catalogue devient une destination qu'on
- * choisit, annoncée en bas de page.
+ * ---------------------------------------------------------------------------
+ * Ce qui a changé, et pourquoi
+ * ---------------------------------------------------------------------------
+ * L'accueil ouvrait sur UNE pièce, en grand, avec son relevé. C'était un parti
+ * pris défendable — montrer ce qu'une boutique de pièces uniques peut montrer
+ * et qu'un catalogue de tailles multiples ne peut pas — et il a été remplacé
+ * sur décision du propriétaire, au profit du patron d'arrivée dominant : un
+ * grand visuel paysage, puis les raccourcis vers le stock.
  *
- * La descente est écrite comme une séquence : la pièce, l'arrivage, la
- * méthode, l'index, l'entrée. Chaque section a sa propre respiration.
+ * La séquence suit la spécification de conversion : le visuel, les trois faits,
+ * ce qui vient d'entrer, l'entrée par taille, l'entrée par catégorie, la
+ * méthode, les marques, le catalogue.
+ *
+ * Deux raccourcis — taille et catégorie — plutôt qu'un seul, et c'est le point
+ * de cette page : sur un stock chiné, le visiteur n'a pas une envie de produit,
+ * il a une taille. Le raccourci par taille mène directement à ce qu'il peut
+ * acheter ; le raccourci par catégorie à ce qu'il cherchait.
  *
  * Rendu statique régénéré toutes les 60 secondes. L'accueil porte le
  * référencement et la cible LCP : il reste prérendu. En Phase 2, la
@@ -53,13 +65,20 @@ export default async function HomePage({
     résultat que personne n'affiche. Ces requêtes-là sont invisibles : rien
     n'échoue, la page est simplement un peu plus lente pour rien.
   */
-  const [latest, brands, total] = await Promise.all([
-    getLatestArticles(locale, 9),
+  const [latest, brands, total, facets, heroImageUrl] = await Promise.all([
+    // Huit pièces, et plus neuf : la vitrine ne prélève plus la première pour
+    // en faire la pièce du moment. « Ajouté cette semaine » en montre huit.
+    getLatestArticles(locale, 8),
     listBrandsWithCounts(),
     countListedArticles(),
+    // Les facettes du catalogue SANS filtre : elles donnent les tailles et les
+    // catégories avec leurs effectifs réels, en une seule série de requêtes.
+    // Les recompter ici avec des requêtes maison ferait diverger les nombres
+    // de l'accueil de ceux du catalogue, et c'est le genre d'écart qu'on ne
+    // remarque jamais soi-même.
+    getFacets(EMPTY_FILTERS, locale),
+    getHomeHeroImageUrl(),
   ])
-
-  const [featured, ...arrivals] = latest
 
   // Les trois étapes forment une vraie séquence — on chine, on prépare, on
   // expédie — donc la numérotation porte une information. Ailleurs, un numéro
@@ -76,7 +95,7 @@ export default async function HomePage({
     },
   ]
 
-  if (!featured) {
+  if (latest.length === 0) {
     return (
       <section className="mx-auto max-w-[80rem] px-4 py-24 sm:px-6">
         <div className="rounded-card ruled bg-surface p-10">
@@ -92,15 +111,38 @@ export default async function HomePage({
 
   return (
     <>
-      <HeroPiece article={featured} locale={locale} />
+      <HeroBanner imageUrl={heroImageUrl} />
 
-      {/* Trois faits vérifiables, jamais une promesse invérifiable : un
-          bandeau qui défile attire l'œil, il ne doit pas servir de réclame. */}
-      <Marquee
-        items={[t('claimUnique'), t('claimMeasured'), t('claimShipped')]}
+      <ReassuranceBand />
+
+      <ArrivalsRail articles={latest} locale={locale} />
+
+      {/* --------------------------------------------------------------------
+          Les deux raccourcis vers le stock.
+
+          Ils viennent juste après l'arrivage parce que c'est là que le
+          visiteur décide s'il reste : il a vu ce qui est entré, il veut
+          maintenant ce qui LUI va. La taille passe avant la catégorie — sur
+          un stock chiné, une catégorie sans sa taille ne mène à rien
+          d'achetable.
+
+          Les effectifs viennent des mêmes facettes que le catalogue, donc les
+          nombres ne peuvent pas diverger. Une valeur à zéro n'apparaît pas :
+          la facette ne la renvoie pas.
+          -------------------------------------------------------------------- */}
+      <ShortcutGrid
+        title={t('shopBySize')}
+        param="taille"
+        entries={facets.sizes}
+        limit={8}
       />
 
-      <ArrivalsRail articles={arrivals} locale={locale} />
+      <ShortcutGrid
+        title={t('shopByCategory')}
+        param="cat"
+        entries={facets.categories}
+        limit={6}
+      />
 
       {/* --------------------------------------------------------------------
           La méthode.

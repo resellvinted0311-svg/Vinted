@@ -47,7 +47,13 @@
     "indexBrands": "Index des marques",
     "claimUnique": "Un exemplaire de chaque pièce",
     "claimMeasured": "Mesures réelles sur chaque fiche",
-    "claimShipped": "Expédition sous 48 heures ouvrées"
+    "claimShipped": "Expédition sous 48 heures ouvrées",
+    "heroTitle": "Vêtements d’occasion, chinés pièce par pièce",
+    "heroSubtitle": "Chaque pièce est lavée, contrôlée et mesurée. Expédition sous 48 heures ouvrées depuis la France, retour sous 14 jours.",
+    "heroCta": "Voir les pièces disponibles",
+    "claimReturn": "Retour sous 14 jours",
+    "shopBySize": "Par taille",
+    "pieceCount": "{count, plural, =0 {aucune pièce} one {# pièce} other {# pièces}}"
   },
   "catalogue": {
     "title": "Catalogue",
@@ -619,7 +625,8 @@
         "shipping": "Expédition",
         "drop": "Baisse automatique",
         "offers": "Négociation",
-        "checkout": "Caisse"
+        "checkout": "Caisse",
+        "content": "Vitrine"
       },
       "errors": {
         "rateLimited": "Trop d’enregistrements coup sur coup. Réessayez dans un moment.",
@@ -695,6 +702,10 @@
         "reservationTtlMinutes": {
           "label": "Réservation au panier (minutes)",
           "hint": "Durée pendant laquelle une pièce reste bloquée le temps du paiement."
+        },
+        "homeHeroImageUrl": {
+          "label": "Grand visuel de la page d’accueil",
+          "hint": "Adresse Cloudinary de la photo paysage affichée en arrivant. Laisser vide tant qu’il n’y a pas de photographie : l’emplacement reste alors sobre, sans image cassée."
         }
       }
     },
