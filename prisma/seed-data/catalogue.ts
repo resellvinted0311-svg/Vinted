@@ -85,7 +85,7 @@ export const CATEGORIES: CategorySeed[] = [
     parentSlug: 'bas',
     position: 1,
     defaultWeightGrams: 700,
-    measurementKeys: ['waist', 'hips', 'inseam', 'length'],
+    measurementKeys: ['waist', 'hips', 'inseam', 'thigh', 'legOpening', 'length'],
     names: {
       fr: 'Jeans et pantalons', en: 'Jeans and trousers', es: 'Vaqueros y pantalones',
       it: 'Jeans e pantaloni', nl: 'Jeans en broeken', de: 'Jeans und Hosen',
@@ -221,7 +221,7 @@ export const CATEGORIES: CategorySeed[] = [
     parentSlug: 'bas',
     position: 3,
     defaultWeightGrams: 250,
-    measurementKeys: ['waist', 'hips', 'inseam', 'length'],
+    measurementKeys: ['waist', 'hips', 'inseam', 'thigh', 'legOpening', 'length'],
     names: {
       fr: 'Shorts et bermudas', en: 'Shorts', es: 'Pantalones cortos',
       it: 'Shorts e bermuda', nl: "Shorts en bermuda's",
@@ -268,7 +268,7 @@ export const CATEGORIES: CategorySeed[] = [
     slug: 'combinaisons',
     position: 11,
     defaultWeightGrams: 500,
-    measurementKeys: ['shoulders', 'chest', 'waist', 'hips', 'length'],
+    measurementKeys: ['shoulders', 'chest', 'waist', 'hips', 'inseam', 'legOpening', 'length'],
     names: {
       fr: 'Combinaisons', en: 'Jumpsuits', es: 'Monos', it: 'Tute',
       nl: 'Jumpsuits', de: 'Overalls', pt: 'Macacões', pl: 'Kombinezony',

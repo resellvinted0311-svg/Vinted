@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { PIECE_NEGOCIABLE, PIECE_VENDUE } from './pieces-demo'
 
 /**
  * Phase 3 : proposer un prix, depuis la fiche article.
@@ -11,14 +12,17 @@ import { test, expect, type Page } from '@playwright/test'
 /**
  * Une pièce du jeu de données dont les offres sont ouvertes.
  *
- * Le seed pose `offersOpenAt` à la publication plus sept jours, et les pièces
+ * Le semis pose `offersOpenAt` à la publication plus sept jours ; les pièces
  * de la première vague sont publiées assez anciennement pour que la fenêtre
- * soit ouverte. Celle-ci en fait partie.
+ * soit ouverte. Son adresse vit dans `pieces-demo.ts` et ses propriétés sont
+ * vérifiées par `tests/integration/pieces-demo.test.ts` — un semis qui bouge
+ * y échoue en une seconde, au lieu de faire tomber ce fichier en huit minutes
+ * de délais d'attente.
  */
-const SLUG = 'accessoires-uniqlo-l-7'
+const SLUG = PIECE_NEGOCIABLE
 
 /** Une pièce déjà partie : sa page reste consultable, elle ne se négocie plus. */
-const SOLD_SLUG = 't-shirts-adidas-m-43'
+const SOLD_SLUG = PIECE_VENDUE
 
 /** Le contenu de la page, sans le flux RSC que Next inscrit dans un script. */
 function main(page: Page) {
@@ -94,9 +98,11 @@ test.describe('Le formulaire d’offre', () => {
     await freshVisitor(page)
     await page.goto(`/fr/a/${SLUG}`)
 
-    // 30,00 € sur une pièce affichée 37,61 € : sous le prix demandé, et
-    // au-dessus du seuil de refus automatique de cette pièce du jeu de
-    // données. La proposition doit donc ATTENDRE une réponse.
+    // 30,00 € sur une pièce affichée 39,21 €, plancher à 24,40 € : sous le
+    // prix demandé, et au-dessus du refus automatique. La proposition doit
+    // donc ATTENDRE une réponse — ni acceptée, ni refusée sur-le-champ. Ces
+    // trois montants sont vérifiés ensemble par le test d'intégration des
+    // pièces de démonstration.
     await offerForm(page).getByLabel('Votre proposition').fill('30,00')
     await offerForm(page)
       .getByLabel('Adresse e-mail')

@@ -140,16 +140,18 @@
   },
   "measurement": {
     "title": "Misure",
-    "help": "Misure prese a capo disteso e chiuso. Confrontale con un capo che indossi già.",
+    "help": "Tutte le misure sono prese in piano, capo chiuso, senza tendere: una larghezza torace di 52 cm corrisponde a una circonferenza di 104 cm. Le confronti con un capo che indossa già.",
     "keys": {
-      "shoulders": "Spalle",
-      "chest": "Petto",
-      "waist": "Vita",
-      "hips": "Fianchi",
+      "shoulders": "Larghezza spalle",
+      "chest": "Larghezza torace",
+      "waist": "Larghezza vita",
+      "hips": "Larghezza fianchi",
       "length": "Lunghezza",
-      "sleeve": "Manica",
-      "inseam": "Cavallo interno",
-      "footLength": "Lunghezza del piede"
+      "sleeve": "Lunghezza manica",
+      "inseam": "Cavallo",
+      "thigh": "Larghezza coscia",
+      "legOpening": "Fondo gamba",
+      "footLength": "Lunghezza piede"
     }
   },
   "article": {
@@ -738,7 +740,7 @@
       "save": "Salva",
       "floorPrice": "Current floor price: {amount}. The sale price cannot go below it.",
       "costAndFloor": "cost {cost} · floor {floor}",
-      "measurementsHint": "In centimetres. Measurements left empty are not shown.",
+      "measurementsHint": "In centimetri, prese in piano, capo chiuso, senza tendere: si inseriscono LARGHEZZE, mai circonferenze. Le misure lasciate vuote non vengono mostrate.",
       "privateHint": "Neither of these two fields appears on any public page.",
       "none": "—",
       "publish": "Metti in vendita",

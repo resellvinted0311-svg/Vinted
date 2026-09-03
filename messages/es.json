@@ -140,15 +140,17 @@
   },
   "measurement": {
     "title": "Medidas",
-    "help": "Medidas tomadas en plano, con la prenda cerrada. Compáralas con una pieza que ya uses.",
+    "help": "Todas las medidas se toman en plano, con la prenda cerrada y sin estirar: un ancho de pecho de 52 cm equivale a un contorno de 104 cm. Compárelas con una prenda que ya use.",
     "keys": {
-      "shoulders": "Hombros",
-      "chest": "Pecho",
-      "waist": "Cintura",
-      "hips": "Cadera",
+      "shoulders": "Ancho de hombros",
+      "chest": "Ancho de pecho",
+      "waist": "Ancho de cintura",
+      "hips": "Ancho de cadera",
       "length": "Largo",
-      "sleeve": "Manga",
-      "inseam": "Tiro interior",
+      "sleeve": "Largo de manga",
+      "inseam": "Entrepierna",
+      "thigh": "Ancho de muslo",
+      "legOpening": "Bajo de pierna",
       "footLength": "Largo del pie"
     }
   },
@@ -738,7 +740,7 @@
       "save": "Guardar",
       "floorPrice": "Current floor price: {amount}. The sale price cannot go below it.",
       "costAndFloor": "cost {cost} · floor {floor}",
-      "measurementsHint": "In centimetres. Measurements left empty are not shown.",
+      "measurementsHint": "En centímetros, tomadas en plano, con la prenda cerrada y sin estirar: se introducen ANCHOS, nunca contornos. Las medidas en blanco no se muestran.",
       "privateHint": "Neither of these two fields appears on any public page.",
       "none": "—",
       "publish": "Poner a la venta",

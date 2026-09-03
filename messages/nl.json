@@ -140,15 +140,17 @@
   },
   "measurement": {
     "title": "Maten",
-    "help": "Plat gemeten, kledingstuk gesloten. Vergelijk ze met een stuk dat u al draagt.",
+    "help": "Alle maten zijn plat gemeten, kledingstuk gesloten, zonder uitrekken: een borstbreedte van 52 cm komt overeen met een omtrek van 104 cm. Vergelijk ze met een stuk dat u al draagt.",
     "keys": {
-      "shoulders": "Schouders",
-      "chest": "Borst",
-      "waist": "Taille",
-      "hips": "Heupen",
+      "shoulders": "Schouderbreedte",
+      "chest": "Borstbreedte",
+      "waist": "Taillebreedte",
+      "hips": "Heupbreedte",
       "length": "Lengte",
-      "sleeve": "Mouw",
+      "sleeve": "Mouwlengte",
       "inseam": "Binnenbeenlengte",
+      "thigh": "Dijbreedte",
+      "legOpening": "Broekspijpwijdte",
       "footLength": "Voetlengte"
     }
   },
@@ -738,7 +740,7 @@
       "save": "Opslaan",
       "floorPrice": "Current floor price: {amount}. The sale price cannot go below it.",
       "costAndFloor": "cost {cost} · floor {floor}",
-      "measurementsHint": "In centimetres. Measurements left empty are not shown.",
+      "measurementsHint": "In centimeters, plat gemeten, kledingstuk gesloten, zonder uitrekken: voer BREEDTES in, nooit omtrekken. Lege maten worden niet getoond.",
       "privateHint": "Neither of these two fields appears on any public page.",
       "none": "—",
       "publish": "Te koop zetten",

@@ -140,15 +140,17 @@
   },
   "measurement": {
     "title": "Mesures",
-    "help": "Mesures prises à plat, vêtement fermé. Comparez-les à une pièce que vous portez déjà.",
+    "help": "Toutes les mesures sont prises à plat, vêtement fermé, sans étirer : une largeur de poitrine de 52 cm correspond à un tour de 104 cm. Comparez-les à une pièce que vous portez déjà.",
     "keys": {
-      "shoulders": "Épaules",
-      "chest": "Poitrine",
-      "waist": "Taille",
-      "hips": "Hanches",
+      "shoulders": "Largeur d’épaules",
+      "chest": "Largeur de poitrine",
+      "waist": "Largeur de taille",
+      "hips": "Largeur de hanches",
       "length": "Longueur",
-      "sleeve": "Manches",
+      "sleeve": "Longueur de manche",
       "inseam": "Entrejambe",
+      "thigh": "Largeur de cuisse",
+      "legOpening": "Bas de jambe",
       "footLength": "Longueur du pied"
     }
   },
@@ -738,7 +740,7 @@
       "save": "Enregistrer",
       "floorPrice": "Prix plancher actuel : {amount}. Le prix de vente ne peut pas descendre en dessous.",
       "costAndFloor": "achat {cost} · plancher {floor}",
-      "measurementsHint": "En centimètres. Les mesures laissées vides ne sont pas affichées.",
+      "measurementsHint": "En centimètres, prises à plat, vêtement fermé, sans étirer : on saisit des LARGEURS, jamais des tours. Les mesures laissées vides ne sont pas affichées.",
       "privateHint": "Ces deux champs ne sortent dans aucune page publique.",
       "none": "—",
       "publish": "Mettre en vente",

@@ -48,13 +48,51 @@ export const ARTICLE_MATERIALS = [
 export const ARTICLE_FITS = ['droite', 'ajustee', 'ample', 'oversize'] as const
 
 /**
- * Clés de mesure, en centimètres.
+ * Clés de mesure, en centimètres, DANS L'ORDRE OÙ ELLES S'AFFICHENT.
  *
  * `Category.measurementKeys` dit lesquelles sont PERTINENTES pour une famille
  * — un pantalon n'a pas d'épaules. Cette liste-ci dit lesquelles EXISTENT.
  * Les deux sont utiles et ne se confondent pas : une mesure pertinente mais
  * absente est une fiche incomplète, une mesure inconnue est une erreur de
  * saisie.
+ *
+ * ---------------------------------------------------------------------------
+ * Toutes ces mesures sont prises À PLAT. C'est une contrainte, pas un conseil
+ * ---------------------------------------------------------------------------
+ * « Mesures prises à plat » n'existait que dans une phrase d'aide sous le
+ * tableau. Le modèle, lui, ne distinguait rien : une largeur de poitrine de
+ * 52 cm et un tour de poitrine de 104 cm se rangeaient sous la même clé
+ * `chest`, avec la même unité, et rien ne permettait de savoir laquelle des
+ * deux on lisait.
+ *
+ * Deux fiches saisies selon deux conventions étaient donc indiscernables — y
+ * compris pour la personne qui les a saisies, six mois plus tard. Et la
+ * cliente qui compare deux pièces du même catalogue comparait parfois un
+ * simple au double.
+ *
+ * La convention est désormais unique et elle est DITE dans les libellés :
+ * « largeur de poitrine », pas « poitrine ». Un libellé qui nomme la mesure ne
+ * peut pas être mal compris, là où une note en petits caractères sous un
+ * tableau se lit une fois sur dix.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi seulement deux clés nouvelles
+ * ---------------------------------------------------------------------------
+ * La spécification en demandait cinq : `pitToPit`, `waistFlat`, `totalLength`,
+ * `thigh`, `legOpening`. Sous une convention unique, les trois premières font
+ * doublon avec ce qui existe — une mesure « d'aisselle à aisselle » EST la
+ * largeur de poitrine, et une « longueur totale » est la longueur. Les créer
+ * aurait rouvert exactement l'ambiguïté qu'on vient de fermer : deux clés pour
+ * une mesure, et personne pour dire laquelle remplir.
+ *
+ * Restent `thigh` et `legOpening`, qui décrivent des endroits qu'aucune clé ne
+ * couvrait — et que l'on demande précisément sur un jean d'occasion, parce
+ * qu'une taille étiquetée ne dit rien de la coupe.
+ *
+ * L'ORDRE de cette liste est celui du tableau de la fiche : de haut en bas du
+ * corps. Le tableau le lisait autrefois dans sa propre copie, et une clé
+ * ajoutée ici sans y être répercutée se retrouvait silencieusement rangée en
+ * dernier.
  */
 export const MEASUREMENT_KEYS = [
   'shoulders',
@@ -64,6 +102,8 @@ export const MEASUREMENT_KEYS = [
   'length',
   'sleeve',
   'inseam',
+  'thigh',
+  'legOpening',
   'footLength',
 ] as const
 

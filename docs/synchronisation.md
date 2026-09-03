@@ -131,12 +131,26 @@ ressort **jamais** dans une réponse publique de la boutique.
 | `color` | chaîne | `ecru`, `marine`, `kaki`, `noir`, `bordeaux`, `gris`, `camel` |
 | `material` | chaîne | `coton`, `laine`, `lin`, `denim`, `cuir`, `velours` |
 | `fit` | chaîne | `droite`, `ajustee`, `ample`, `oversize` |
-| `measurements` | objet | clés parmi `shoulders`, `chest`, `waist`, `hips`, `length`, `sleeve`, `inseam`, `footLength`. Valeurs en **centimètres** |
+| `measurements` | objet | clés parmi `shoulders`, `chest`, `waist`, `hips`, `length`, `sleeve`, `inseam`, `thigh`, `legOpening`, `footLength`. Valeurs en **centimètres**, prises **à plat** — voir ci-dessous |
 | `status` | chaîne | `AVAILABLE` (défaut) ou `ARCHIVED` pour retirer de la vente |
 
 Une valeur hors liste pour `color`, `material` ou `fit` est **rejetée**, pas
 ignorée : ces valeurs sont traduites en huit langues, une valeur inconnue
 n'aurait pas de libellé.
+
+#### Les mesures sont prises à plat, et c'est une contrainte
+
+Vêtement posé à plat, fermé, sans étirer. La boutique affiche des LARGEURS :
+« largeur de poitrine : 52 cm », et non « tour de poitrine : 104 cm ».
+
+Envoyer un tour là où une largeur est attendue ne déclenche aucune erreur —
+104 est une valeur parfaitement acceptable pour la validation. La fiche
+annoncera simplement une pièce deux fois trop grande, et la cliente s'en
+apercevra à la livraison. C'est le seul champ de ce contrat où une donnée
+fausse traverse toutes les vérifications sans être vue : la convention n'est
+pas un détail de présentation.
+
+`thigh` se mesure à plat sous l'entrejambe, `legOpening` en bas d'une jambe.
 
 ### 2.4 Catégories acceptées
 

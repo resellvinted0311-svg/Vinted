@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { formatCm } from '@/lib/utils/format'
+import { MEASUREMENT_KEYS } from '@/lib/domain/vocabulary'
 
 /**
  * Mesures réelles, en centimètres.
@@ -9,18 +10,20 @@ import { formatCm } from '@/lib/utils/format'
  * réduction des retours. Le tableau est donc mis en avant, pas replié dans un
  * accordéon.
  *
- * L'ordre est celui du corps, de haut en bas, pas l'ordre alphabétique.
+ * ---------------------------------------------------------------------------
+ * L'ordre vient du vocabulaire, il n'est plus recopié ici
+ * ---------------------------------------------------------------------------
+ * Ce fichier portait sa propre liste, identique à `MEASUREMENT_KEYS`. Deux
+ * listes qui disent la même chose finissent toujours par diverger, et la
+ * divergence était ici parfaitement silencieuse : une clé ajoutée au
+ * vocabulaire mais absente de celle-ci recevait l'indice `-1`, remplacé par
+ * `99` — elle s'affichait donc en DERNIER, après la longueur du pied, sans
+ * qu'aucun test ni aucun type ne s'en aperçoive.
+ *
+ * L'ordre est celui du corps, de haut en bas, et il est maintenant décidé à
+ * un seul endroit.
  */
-const ORDER = [
-  'shoulders',
-  'chest',
-  'waist',
-  'hips',
-  'length',
-  'sleeve',
-  'inseam',
-  'footLength',
-] as const
+const ORDER = MEASUREMENT_KEYS
 
 export async function MeasurementsTable({
   measurements,

@@ -140,15 +140,17 @@
   },
   "measurement": {
     "title": "Measurements",
-    "help": "Measured flat, garment fastened. Compare them with a piece you already wear.",
+    "help": "All measurements are taken flat, garment fastened, without stretching: a 52 cm chest width equals a 104 cm circumference. Compare them with a piece you already wear.",
     "keys": {
-      "shoulders": "Shoulders",
-      "chest": "Chest",
-      "waist": "Waist",
-      "hips": "Hips",
+      "shoulders": "Shoulder width",
+      "chest": "Chest width",
+      "waist": "Waist width",
+      "hips": "Hip width",
       "length": "Length",
-      "sleeve": "Sleeve",
-      "inseam": "Inside leg",
+      "sleeve": "Sleeve length",
+      "inseam": "Inseam",
+      "thigh": "Thigh width",
+      "legOpening": "Leg opening",
       "footLength": "Foot length"
     }
   },
@@ -738,7 +740,7 @@
       "save": "Save",
       "floorPrice": "Current floor price: {amount}. The sale price cannot go below it.",
       "costAndFloor": "cost {cost} · floor {floor}",
-      "measurementsHint": "In centimetres. Measurements left empty are not shown.",
+      "measurementsHint": "In centimetres, taken flat, garment fastened, without stretching: enter WIDTHS, never circumferences. Measurements left blank are not shown.",
       "privateHint": "Neither of these two fields appears on any public page.",
       "none": "—",
       "publish": "List for sale",

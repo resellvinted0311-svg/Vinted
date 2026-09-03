@@ -216,6 +216,6 @@ describe('vocabulaire des attributs', () => {
     expect(ARTICLE_MATERIALS.length).toBeGreaterThan(3)
     expect(ARTICLE_FITS.length).toBeGreaterThan(3)
     expect(ARTICLE_CONDITIONS.length).toBe(6)
-    expect(MEASUREMENT_KEYS.length).toBe(8)
+    expect(MEASUREMENT_KEYS.length).toBe(10)
   })
 })

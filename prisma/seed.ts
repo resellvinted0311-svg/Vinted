@@ -54,6 +54,43 @@ function randInt(min: number, max: number): number {
   return Math.floor(rand() * (max - min + 1)) + min
 }
 
+/**
+ * Un tirage qui ne touche PAS au flux commun.
+ *
+ * ---------------------------------------------------------------------------
+ * Le piège qu'il désamorce
+ * ---------------------------------------------------------------------------
+ * Toutes les valeurs du jeu de démonstration sortent d'un seul générateur
+ * pseudo-aléatoire, semé une fois. C'est ce qui rend le semis reproductible —
+ * et c'est aussi ce qui le rend FRAGILE : chaque tirage avance le flux, donc
+ * ajouter un tirage quelque part décale tout ce qui vient après.
+ *
+ * Les mesures étaient tirées de ce flux commun, une par clé de mesure de la
+ * catégorie. Ajouter deux clés de mesure aux pantalons a donc changé la
+ * marque, la taille et le prix de tous les articles suivants — et fait
+ * disparaître trois pièces que les tests de navigateur désignent par leur
+ * adresse. Seize tests sont tombés, en huit minutes de délais d'attente, sans
+ * qu'aucun ne parle de mesures.
+ *
+ * Une mesure est maintenant tirée d'un flux PROPRE à l'article, semé sur son
+ * numéro d'inventaire et sur le nom de la mesure. Elle reste parfaitement
+ * reproductible, mais elle n'avance plus rien : le vocabulaire de mensurations
+ * peut désormais grandir sans déplacer une seule pièce du catalogue.
+ */
+function empreinte(texte: string): number {
+  let valeur = 2166136261
+  for (let i = 0; i < texte.length; i += 1) {
+    valeur ^= texte.charCodeAt(i)
+    valeur = Math.imul(valeur, 16777619)
+  }
+  return valeur >>> 0
+}
+
+function randIntStable(graine: string, min: number, max: number): number {
+  const tirage = mulberry32(empreinte(graine))()
+  return Math.floor(tirage * (max - min + 1)) + min
+}
+
 function daysAgo(days: number): Date {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 }
@@ -290,6 +327,14 @@ const SIZES_BY_SLUG: Record<string, string[]> = {
   sacs: ['TU'],
 }
 
+/**
+ * Fourchettes de mesures du jeu de démonstration, en centimètres À PLAT.
+ *
+ * Elles l'étaient déjà : une « poitrine » de 46 à 62 cm n'est un tour pour
+ * aucun vêtement adulte. Le semis suivait donc la convention à plat avant
+ * qu'elle ne soit écrite nulle part — ce qui la confirme plutôt qu'il ne la
+ * contredit, et c'est une raison de plus de l'avoir fixée dans les libellés.
+ */
 const MEASUREMENT_RANGES: Record<string, [number, number]> = {
   shoulders: [38, 52],
   chest: [46, 62],
@@ -298,6 +343,12 @@ const MEASUREMENT_RANGES: Record<string, [number, number]> = {
   length: [58, 96],
   sleeve: [55, 68],
   inseam: [72, 86],
+  // À plat, sous l'entrejambe, et en bas d'une jambe. Les deux repères
+  // ajoutés avec la convention « à plat » : ce sont les questions qu'on pose
+  // sur un jean d'occasion, parce qu'une taille étiquetée ne dit rien de la
+  // coupe.
+  thigh: [26, 36],
+  legOpening: [16, 26],
   footLength: [24, 29],
 }
 
@@ -528,7 +579,9 @@ async function seedArticles(
     for (const key of category.measurementKeys ?? []) {
       const range = MEASUREMENT_RANGES[key]
       if (!range) continue
-      const valueCm = randInt(range[0], range[1])
+      // Tirage stable, hors du flux commun : voir `randIntStable`. Une clé de
+      // mesure ajoutée ne doit plus déplacer le reste du catalogue.
+      const valueCm = randIntStable(`${sku}:${key}`, range[0], range[1])
       await prisma.articleMeasurement.upsert({
         where: { articleId_key: { articleId: article.id, key } },
         create: { articleId: article.id, key, valueCm },

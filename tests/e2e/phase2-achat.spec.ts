@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { PIECE_ACHETABLE } from './pieces-demo'
 
 /**
  * Livrable de Phase 2 : du catalogue au bon de commande.
@@ -17,8 +18,13 @@ import { test, expect, type Page } from '@playwright/test'
  * précisément ce que le dernier bloc vérifie.
  */
 
-/** Une pièce du jeu de données, disponible et publiée. */
-const SLUG = 'accessoires-levis-s-2'
+/**
+ * Une pièce du jeu de données, disponible et publiée.
+ *
+ * Son adresse vit dans `pieces-demo.ts`, avec les deux autres dont la suite
+ * dépend : un semis qui bouge ne demande alors de corriger qu'un endroit.
+ */
+const SLUG = PIECE_ACHETABLE
 
 /**
  * Le contenu RENDU, à l'exclusion de la charge utile RSC.

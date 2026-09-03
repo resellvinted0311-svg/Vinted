@@ -140,15 +140,17 @@
   },
   "measurement": {
     "title": "Medidas",
-    "help": "Medidas tiradas em plano, com a peça fechada. Compare-as com uma peça que já use.",
+    "help": "Todas as medidas são tiradas a plano, com a peça fechada e sem esticar: uma largura de peito de 52 cm corresponde a um perímetro de 104 cm. Compare-as com uma peça que já use.",
     "keys": {
-      "shoulders": "Ombros",
-      "chest": "Peito",
-      "waist": "Cintura",
-      "hips": "Ancas",
+      "shoulders": "Largura dos ombros",
+      "chest": "Largura do peito",
+      "waist": "Largura da cintura",
+      "hips": "Largura da anca",
       "length": "Comprimento",
-      "sleeve": "Manga",
+      "sleeve": "Comprimento da manga",
       "inseam": "Entrepernas",
+      "thigh": "Largura da coxa",
+      "legOpening": "Baixo da perna",
       "footLength": "Comprimento do pé"
     }
   },
@@ -738,7 +740,7 @@
       "save": "Guardar",
       "floorPrice": "Current floor price: {amount}. The sale price cannot go below it.",
       "costAndFloor": "cost {cost} · floor {floor}",
-      "measurementsHint": "In centimetres. Measurements left empty are not shown.",
+      "measurementsHint": "Em centímetros, tiradas a plano, com a peça fechada e sem esticar: introduzem-se LARGURAS, nunca perímetros. As medidas deixadas em branco não são apresentadas.",
       "privateHint": "Neither of these two fields appears on any public page.",
       "none": "—",
       "publish": "Pôr à venda",
