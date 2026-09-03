@@ -339,7 +339,47 @@ export interface NormalizedImage {
   contentType: string
   width: number
   height: number
+  /**
+   * Miniature en `data:` URL, à afficher pendant le chargement du visuel.
+   *
+   * -------------------------------------------------------------------------
+   * Le code mort que ce champ ranime
+   * -------------------------------------------------------------------------
+   * `ArticleImage.blurhash` était LU par le composant image — il alimente
+   * `placeholder="blur"` et `blurDataURL` — et n'était écrit nulle part. La
+   * colonne était donc toujours nulle, `placeholder` retombait sur `empty`, et
+   * chaque vignette apparaissait d'un coup sur un aplat de couleur.
+   *
+   * -------------------------------------------------------------------------
+   * Une image, pas un condensé
+   * -------------------------------------------------------------------------
+   * Le nom de la colonne dit « blurhash », mais `blurDataURL` attend une
+   * ADRESSE `data:`, pas une chaîne BlurHash — y ranger un vrai condensé
+   * BlurHash produirait une adresse invalide, et le navigateur afficherait un
+   * cadre cassé pendant tout le chargement.
+   *
+   * On y range donc ce que Next attend : une image minuscule, encodée en
+   * base64. La colonne garde son nom pour ne pas mêler une reprise de schéma à
+   * une correction de comportement ; ce commentaire est là pour que personne
+   * ne se fie au nom.
+   */
+  placeholder: string
 }
+
+/**
+ * Largeur de la miniature d'attente.
+ *
+ * Seize pixels. Elle est INLINÉE dans le HTML de chaque vignette : une grille
+ * de trente pièces en porte trente. À seize pixels de large, une miniature
+ * WebP pèse quelques centaines d'octets une fois encodée en base64 ; à
+ * soixante-quatre, elle en pèserait dix fois plus et alourdirait la page
+ * qu'elle est censée rendre plus agréable.
+ *
+ * Elle est de toute façon affichée floue et étirée sur toute la vignette : sa
+ * définition n'a pas à être lisible, seulement ses couleurs et leur
+ * répartition.
+ */
+const PLACEHOLDER_WIDTH = 16
 
 /**
  * Décode, redresse, ré-encode.
@@ -410,11 +450,32 @@ export async function normalizeImage(buffer: Buffer): Promise<NormalizedImage> {
     .webp({ quality: 90, effort: 4 })
     .toBuffer({ resolveWithObject: true })
 
+  /*
+    La miniature est dérivée de la sortie NORMALISÉE, pas de l'entrée.
+
+    Trois raisons, et la première suffit : l'orientation a déjà été appliquée.
+    Repartir de l'original produirait une miniature couchée sous une photo
+    debout — un défaut d'autant plus déroutant qu'il ne dure qu'un instant, et
+    qu'il ne se voit donc pas sur une capture d'écran.
+
+    Ensuite, le tampon est déjà en mémoire et déjà décodé une fois : le
+    relire coûte quelques millisecondes sur une image de seize pixels.
+
+    Enfin, `limitInputPixels` n'a plus lieu de s'appliquer — cette entrée-ci
+    est une image que NOUS venons d'écrire, dont les dimensions ont été
+    vérifiées juste au-dessus.
+  */
+  const miniature = await sharp(data)
+    .resize({ width: PLACEHOLDER_WIDTH, withoutEnlargement: true })
+    .webp({ quality: 40, effort: 6 })
+    .toBuffer()
+
   return {
     data,
     contentType: 'image/webp',
     width: info.width,
     height: info.height,
+    placeholder: `data:image/webp;base64,${miniature.toString('base64')}`,
   }
 }
 
@@ -502,7 +563,17 @@ export async function fetchArticleImages(
       sku: true,
       images: {
         orderBy: { position: 'asc' },
-        select: { url: true, sourceUrl: true, width: true, height: true },
+        // `blurhash` est relu pour être RECOPIÉ sur la ligne réécrite : les
+        // lignes sont supprimées puis recréées à chaque passage, et un visuel
+        // réutilisé — donc jamais retéléchargé — perdrait sinon sa miniature
+        // d'attente à la première resynchronisation.
+        select: {
+          url: true,
+          sourceUrl: true,
+          width: true,
+          height: true,
+          blurhash: true,
+        },
       },
       translations: {
         where: { locale: 'fr' },
@@ -554,6 +625,7 @@ export async function fetchArticleImages(
     sourceUrl: string
     width: number
     height: number
+    placeholder: string | null
   }[] = []
   let downloaded = 0
   let failed = 0
@@ -567,6 +639,7 @@ export async function fetchArticleImages(
         sourceUrl: url,
         width: reusable.width,
         height: reusable.height,
+        placeholder: reusable.blurhash,
       })
       continue
     }
@@ -591,6 +664,7 @@ export async function fetchArticleImages(
         sourceUrl: url,
         width: result.width,
         height: result.height,
+        placeholder: normalized.placeholder,
       })
       downloaded += 1
     } catch (error) {
@@ -625,6 +699,7 @@ export async function fetchArticleImages(
           sourceUrl: image.sourceUrl,
           width: image.width,
           height: image.height,
+          blurhash: image.placeholder,
           position,
           alt,
         },

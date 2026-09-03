@@ -248,3 +248,74 @@ describe('normalisation', () => {
     await expect(normalizeImage(svg)).rejects.toThrow(/Format non accepté/)
   })
 })
+
+// ---------------------------------------------------------------------------
+// 4. La miniature d'attente
+// ---------------------------------------------------------------------------
+
+describe('miniature d’attente', () => {
+  /**
+   * `ArticleImage.blurhash` était LU et jamais ÉCRIT.
+   *
+   * Le composant image alimente `placeholder="blur"` et `blurDataURL` avec
+   * cette colonne. Elle était nulle sur toutes les lignes, donc `placeholder`
+   * retombait sur `empty` : du code mort, et chaque vignette qui apparaît d'un
+   * coup sur un aplat de couleur.
+   *
+   * Le nom de la colonne dit « blurhash », mais `blurDataURL` attend une
+   * ADRESSE `data:`. Y ranger un vrai condensé BlurHash produirait une adresse
+   * invalide, et le navigateur afficherait un cadre cassé pendant tout le
+   * chargement. Ces tests vérifient donc la FORME autant que la présence.
+   */
+  it('est une adresse `data:` que le navigateur sait afficher', async () => {
+    const normalized = await normalizeImage(await jpeg(1200, 1600))
+
+    expect(normalized.placeholder).toMatch(/^data:image\/webp;base64,[A-Za-z0-9+/=]+$/)
+
+    // Et elle décode bien en une image : une chaîne base64 valide qui ne
+    // serait pas une image passerait l'expression régulière ci-dessus.
+    const octets = Buffer.from(
+      normalized.placeholder.split(',')[1] as string,
+      'base64',
+    )
+    const meta = await sharp(octets).metadata()
+    expect(meta.format).toBe('webp')
+    expect(meta.width).toBe(16)
+  })
+
+  it('reste assez légère pour être inlinée trente fois dans une page', async () => {
+    /**
+     * Elle voyage DANS le HTML, une fois par vignette. Une grille de catalogue
+     * en porte trente ; la vitrine, huit de plus.
+     *
+     * La borne est large — mille cinq cents caractères — parce qu'elle ne sert
+     * pas à optimiser mais à attraper une erreur d'ordre de grandeur : une
+     * miniature produite à cent-vingt-huit pixels au lieu de seize, ou en PNG
+     * au lieu de WebP, pèserait dix fois plus et alourdirait de plusieurs
+     * dizaines de kilo-octets la page qu'elle est censée rendre plus agréable.
+     */
+    const normalized = await normalizeImage(await jpeg(2400, 3200))
+    expect(normalized.placeholder.length).toBeLessThan(1500)
+  })
+
+  it('suit l’orientation de la photo, comme le visuel lui-même', async () => {
+    // Elle est dérivée de la sortie NORMALISÉE, donc déjà redressée. Dérivée
+    // de l'original, elle serait couchée sous une photo debout — un défaut qui
+    // ne dure qu'un instant, et qui ne se voit donc pas sur une capture.
+    const source = await canvas(1200, 900)
+      .withMetadata({ orientation: 6 })
+      .jpeg()
+      .toBuffer()
+
+    const normalized = await normalizeImage(source)
+    const octets = Buffer.from(
+      normalized.placeholder.split(',')[1] as string,
+      'base64',
+    )
+    const meta = await sharp(octets).metadata()
+
+    // La photo redressée est en portrait : la miniature aussi.
+    expect(meta.width).toBe(16)
+    expect(meta.height).toBeGreaterThan(meta.width!)
+  })
+})

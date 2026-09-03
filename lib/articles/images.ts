@@ -112,6 +112,10 @@ export async function addArticleImage(
         url: stored.url,
         width: stored.width,
         height: stored.height,
+        // Miniature d'attente, produite au ré-encodage. Sans elle, la colonne
+        // reste nulle et `placeholder="blur"` retombe silencieusement sur
+        // `empty` : la vignette apparaît d'un coup sur un aplat de couleur.
+        blurhash: normalized.placeholder,
         position,
       },
     })
