@@ -204,11 +204,36 @@ export function filtersToSearchParams(
   appendAll('couleur', filters.colors)
   appendAll('matiere', filters.materials)
 
+  /*
+    En EUROS, comme la lecture les attend.
+
+    -------------------------------------------------------------------------
+    Le défaut que ces deux lignes ont causé
+    -------------------------------------------------------------------------
+    Cette fonction réécrit l'adresse à chaque lien régénéré : le bouton « voir
+    la suite », le retrait d'une pastille de filtre, le lot suivant chargé par
+    l'action serveur. Elle recopiait les CENTIMES tels quels, alors que
+    `parseCatalogueSearchParams` relit des EUROS et multiplie par cent.
+
+    Un filtre « moins de 20 € » s'écrivait donc `prix_max=2000`, relu deux
+    mille euros. Le filtre ne disparaissait pas — il devenait si large qu'il ne
+    filtrait plus rien, et des pièces à 80 € apparaissaient dans une recherche
+    à moins de vingt dès le deuxième lot. Chaque clic supplémentaire multipliait
+    encore par cent.
+
+    Aucune des deux fonctions n'était fautive prise seule : c'est leur ACCORD
+    qui manquait. `tests/domain/catalogue-url.test.ts` le vérifie désormais par
+    aller-retour, ce qu'aucun test de fonction isolée ne pouvait faire.
+
+    La division ne perd rien : les bornes viennent de prix entiers en centimes,
+    donc au plus deux décimales, et la lecture applique `Math.round` après
+    multiplication.
+  */
   if (filters.minPriceCents !== null) {
-    params.set('prix_min', String(filters.minPriceCents))
+    params.set('prix_min', String(filters.minPriceCents / 100))
   }
   if (filters.maxPriceCents !== null) {
-    params.set('prix_max', String(filters.maxPriceCents))
+    params.set('prix_max', String(filters.maxPriceCents / 100))
   }
   if (filters.query) params.set('q', filters.query)
   if (sort !== DEFAULT_SORT) params.set('tri', sort)

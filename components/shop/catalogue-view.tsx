@@ -75,8 +75,13 @@ export async function CatalogueView({
     labels[entry.value] = tc(`${entry.value}.label`)
   }
 
-  // Les dimensions imposées par la page sont retirées des pastilles : sur
-  // /marque/levis, « Levi's » n'est pas un filtre qu'on enlève, c'est la page.
+  /**
+   * Les filtres tels qu'on les AFFICHE en pastilles — pas ceux qu'on interroge.
+   *
+   * Les dimensions imposées par la page en sont retirées : sur /marque/levis,
+   * « Levi's » n'est pas un filtre qu'on enlève, c'est la page. Une pastille
+   * qui proposerait de le retirer mènerait hors de la page qui la porte.
+   */
   const chipFilters: CatalogueFilters = { ...filters }
   for (const dimension of lockedDimensions) {
     const value = chipFilters[dimension]
@@ -92,9 +97,28 @@ export async function CatalogueView({
    * vient d'ici. L'action serveur, elle, ne reçoit et ne renvoie QUE des
    * chaînes de requête : aucun chemin ne transite par le navigateur, donc
    * aucun ne peut être détourné.
+   *
+   * -------------------------------------------------------------------------
+   * Construite sur `filters`, et surtout PAS sur `chipFilters`
+   * -------------------------------------------------------------------------
+   * Les deux objets ne diffèrent que par les dimensions imposées, et c'est
+   * précisément là que se jouait le défaut : la requête du lot suivant était
+   * bâtie sur les filtres d'AFFICHAGE, donc amputée de la marque ou de la
+   * catégorie qui définit la page.
+   *
+   * Sur /marque/levis, le premier lot montrait bien des Levi's ; « voir la
+   * suite » servait ensuite des pièces du catalogue entier, ajoutées sous les
+   * premières comme si elles en faisaient partie. Pire, le curseur avait été
+   * calculé sur la liste FILTRÉE : appliqué à la liste complète, il sautait des
+   * pièces et en répétait d'autres.
+   *
+   * Rien ne le signalait — la page se remplissait, les fiches étaient
+   * valides — et il fallait reconnaître une marque étrangère au milieu du
+   * second lot pour le voir. Un même objet servait deux besoins opposés :
+   * montrer ce qui est retirable, et interroger ce qui est demandé.
    */
   const requeteSuivante = page.nextCursor
-    ? filtersToSearchParams(chipFilters, sort, page.nextCursor).toString()
+    ? filtersToSearchParams(filters, sort, page.nextCursor).toString()
     : null
 
   return (

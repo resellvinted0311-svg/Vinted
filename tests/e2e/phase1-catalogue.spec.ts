@@ -114,6 +114,57 @@ test.describe('Catalogue', () => {
     // celle-ci. Un rechargement ne doit pas ramener le visiteur au lot 2 seul.
     await expect(page).not.toHaveURL(/apres=/)
   })
+
+  test('sur une page de marque, le lot suivant reste dans la marque', async ({
+    page,
+  }) => {
+    /**
+     * Le défaut que ce test attrape, et pourquoi il ne se voyait pas.
+     *
+     * La requête du lot suivant était bâtie sur les filtres d'AFFICHAGE — ceux
+     * dont on a retiré la dimension imposée par la page, pour ne pas proposer
+     * une pastille « retirer Levi's » sur la page Levi's. Le second lot partait
+     * donc sans marque, et servait des pièces du catalogue entier, ajoutées
+     * sous les premières comme si elles en faisaient partie.
+     *
+     * Rien ne le signalait : la page se remplissait, les fiches étaient
+     * valides, l'adresse ne bougeait pas. Il fallait reconnaître une marque
+     * étrangère au milieu du second lot pour s'en apercevoir.
+     *
+     * On vérifie donc l'appartenance de CHAQUE fiche ajoutée, pas seulement
+     * qu'il y en a de nouvelles.
+     */
+    const marque = page.locator('article p', { hasText: /^Levi's$/ })
+
+    await page.goto('/fr/marque/levis?tri=prix_asc')
+
+    const fiches = () => page.locator('article').count()
+    const avant = await fiches()
+    expect(avant, 'la page de marque doit lister des pièces').toBeGreaterThan(0)
+
+    // Toutes les fiches du premier lot portent bien la marque.
+    expect(await marque.count()).toBe(avant)
+
+    const more = page.getByRole('link', { name: 'Voir la suite' })
+    if ((await more.count()) === 0) {
+      // Le jeu d'essai ne dépasse pas un lot pour cette marque : le défaut ne
+      // peut pas se produire, et le dire vaut mieux qu'un test vert muet.
+      test.skip(true, 'moins d’un lot de pièces pour cette marque')
+      return
+    }
+
+    await more.click()
+    await expect.poll(fiches).toBeGreaterThan(avant)
+
+    // LE point : aucune pièce d'une autre marque ne s'est glissée dans la
+    // grille. Un décompte global suffirait à masquer le défaut si le second
+    // lot était vide ; on compare donc au nombre total de fiches.
+    const apres = await fiches()
+    expect(
+      await marque.count(),
+      'des pièces d’une autre marque ont été ajoutées sous celles de Levi’s',
+    ).toBe(apres)
+  })
 })
 
 test.describe('Rail d’arrivage', () => {
