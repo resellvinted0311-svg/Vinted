@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { SeedHeadPlate } from '@/components/shop/engraving'
+import { deliveryUrl } from '@/lib/providers/storage/delivery'
 
 /**
  * Le grand visuel d'arrivée.
@@ -66,7 +67,11 @@ export async function HeroBanner({ imageUrl }: { imageUrl: string | null }) {
 
         {imageUrl ? (
           <Image
-            src={imageUrl}
+            // Borne la largeur de la SOURCE : sans elle, l'optimiseur
+            // retélécharge l'original — jusqu'à six mille pixels — pour chaque
+            // largeur et chaque format qu'il fabrique, sur la vue qui porte
+            // justement le LCP.
+            src={deliveryUrl(imageUrl)}
             alt=""
             fill
             priority

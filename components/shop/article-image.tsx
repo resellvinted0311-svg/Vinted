@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { cn } from '@/lib/utils/cn'
+import { deliveryUrl } from '@/lib/providers/storage/delivery'
 
 export interface ArticleImageData {
   url: string
@@ -50,9 +51,22 @@ export function ArticleImage({
     )
   }
 
+  /*
+    L'adresse SERVIE, dérivée de l'adresse rangée.
+
+    La base garde le lien vers l'original — jusqu'à six mille pixels de large,
+    puisque l'ingestion ré-encode mais ne redimensionne pas. L'optimiseur de
+    Next fabrique ensuite une variante par largeur et par format, et
+    retélécharge cet original à chaque fois : une fiche à dix visuels demandait
+    plusieurs dizaines de téléchargements de plusieurs mégaoctets.
+
+    `deliveryUrl` borne la largeur de la SOURCE. Elle laisse intacte une
+    adresse qui n'est pas servie par l'hébergeur d'images — les visuels de
+    démonstration, notamment — et une adresse déjà transformée.
+  */
   return (
     <Image
-      src={image.url}
+      src={deliveryUrl(image.url)}
       alt={alt}
       width={image.width}
       height={image.height}

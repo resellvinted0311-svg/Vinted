@@ -66,6 +66,43 @@ const nextConfig: NextConfig = {
 
   images: {
     formats: ['image/avif', 'image/webp'],
+
+    /**
+     * Les largeurs que l'optimiseur a le droit de fabriquer.
+     *
+     * ---------------------------------------------------------------------------
+     * Pourquoi les restreindre
+     * ---------------------------------------------------------------------------
+     * Par défaut, Next propose huit largeurs d'appareil (jusqu'à 3 840 px) et
+     * huit largeurs d'image, soit seize variantes possibles PAR visuel et par
+     * format. Chacune est calculée à la première demande, mise en cache, et
+     * facturée en temps de calcul.
+     *
+     * Cette boutique n'a que trois grilles — deux, trois et quatre colonnes —
+     * une galerie de fiche et un bandeau pleine largeur. Les largeurs
+     * ci-dessous couvrent ces cinq cas, densité double comprise. Au-delà de
+     * 2 048 px, on servirait plus de pixels que le grand côté de la source ne
+     * peut en fournir : l'optimiseur agrandirait, ce qui coûte du poids sans
+     * rien ajouter à l'image.
+     *
+     * `deviceSizes` sert aux images en `sizes` relatif à la fenêtre ;
+     * `imageSizes`, à celles dont la largeur est fixe — les vignettes de
+     * navigation de la galerie, notamment.
+     */
+    deviceSizes: [640, 828, 1080, 1280, 1600, 2048],
+    imageSizes: [64, 128, 256, 384],
+
+    /**
+     * Un mois de cache sur la variante calculée.
+     *
+     * Le défaut est de soixante secondes : passé ce délai, l'optimiseur
+     * revalide, et un visuel de catalogue est alors recalculé indéfiniment
+     * alors qu'il ne change JAMAIS — une image rangée chez l'hébergeur reçoit
+     * une adresse versionnée, et une nouvelle version est une nouvelle
+     * adresse. Il n'y a donc rien à revalider.
+     */
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+
     remotePatterns: [
       {
         protocol: 'https',

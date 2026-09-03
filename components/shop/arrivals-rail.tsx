@@ -75,7 +75,22 @@ export async function ArrivalsRail({
                 article={article}
                 locale={locale}
                 sizes="(min-width: 1024px) 15rem, (min-width: 640px) 42vw, 70vw"
-                priority={index < 2}
+                /*
+                  AUCUNE fiche en priorité haute, et c'est une correction.
+
+                  Les deux premières l'étaient. Additionnées au visuel
+                  d'arrivée, cela faisait trois images réclamées en
+                  `fetchpriority="high"` sur la même page — et une priorité
+                  que trois images se partagent n'en est plus une : le
+                  navigateur répartit la bande passante entre elles, donc le
+                  visuel d'arrivée, qui porte le LCP, arrive PLUS TARD qu'il
+                  ne serait arrivé seul.
+
+                  Le rail commence sous le pli : le bandeau occupe les trois
+                  quarts de la hauteur d'écran, la bande de réassurance
+                  suit. Ses fiches sont chargées paresseusement, comme le
+                  reste de ce qu'on ne voit pas encore.
+                */
               />
             </li>
           ))}
