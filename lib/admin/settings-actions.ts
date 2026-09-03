@@ -145,11 +145,41 @@ export async function updateSettingsAction(
   })
   const previousByKey = new Map(before.map((row) => [row.key, row.value]))
 
+  /**
+   * Une ligne ABSENTE vaut `null`, pas « autre chose que null ».
+   *
+   * ---------------------------------------------------------------------------
+   * Le défaut que cette normalisation corrige
+   * ---------------------------------------------------------------------------
+   * `homeHeroImageUrl` est le seul réglage facultatif : son absence est l'état
+   * de départ, et c'est écrit ainsi (`OPTIONAL_SETTINGS`). Une migration crée
+   * des tables, jamais des lignes — sur toute base déployée, la ligne n'existe
+   * pas tant que personne n'a posé de photo d'arrivée.
+   *
+   * L'écran renvoie pourtant TOUS les champs à chaque enregistrement, celui-là
+   * compris et vide. La comparaison lisait alors `undefined` d'un côté — ligne
+   * absente — et `null` de l'autre — champ vide — et concluait à un changement.
+   * `JSON.stringify(undefined)` ne vaut d'ailleurs pas `"null"` mais
+   * `undefined` : les deux ne pouvaient jamais être égaux.
+   *
+   * La première sauvegarde annonçait donc un réglage de plus que ce qui avait
+   * été touché, et surtout inscrivait à la piste d'audit une modification que
+   * personne n'avait faite. Cette piste sert à reconstituer un geste six mois
+   * plus tard ; une entrée fantôme y est pire qu'une entrée manquante, parce
+   * qu'on lui fait confiance.
+   *
+   * `has` plutôt que le seul `get` : un réglage peut légitimement porter la
+   * valeur `null` en base, et il ne faut pas confondre « rangé à vide » avec
+   * « jamais rangé » ailleurs que dans cette comparaison-ci.
+   */
+  const valeurPrecedente = (key: string): unknown =>
+    previousByKey.has(key) ? (previousByKey.get(key) ?? null) : null
+
   const changedKeys = entries
     .filter(
       (entry) =>
-        JSON.stringify(previousByKey.get(entry.key)) !==
-        JSON.stringify(entry.value),
+        JSON.stringify(valeurPrecedente(entry.key)) !==
+        JSON.stringify(entry.value ?? null),
     )
     .map((entry) => entry.key)
 

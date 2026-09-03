@@ -229,6 +229,57 @@ describe('l’enregistrement', () => {
     expect(after.minMarginCents).toBe(654)
   })
 
+  it('ne compte PAS comme modifié un réglage facultatif resté vide', async () => {
+    /**
+     * Le cas de la première sauvegarde sur une base déployée.
+     *
+     * -------------------------------------------------------------------------
+     * Le défaut que ce test a attrapé
+     * -------------------------------------------------------------------------
+     * `homeHeroImageUrl` — l'adresse du visuel d'arrivée — est le seul réglage
+     * FACULTATIF : son absence est l'état de départ normal, et c'est écrit
+     * ainsi (`OPTIONAL_SETTINGS`). Une migration crée des tables, jamais des
+     * lignes : sur toute base déployée, cette ligne n'existe pas tant que
+     * personne n'a posé de photo.
+     *
+     * L'écran de réglages renvoie pourtant TOUS les champs à chaque
+     * enregistrement, celui-là compris, vide. La comparaison lisait alors
+     * `undefined` d'un côté — ligne absente — et `null` de l'autre — champ vide
+     * — et concluait à un changement.
+     *
+     * Conséquence : la première sauvegarde annonçait un réglage de plus que ce
+     * qui avait été touché, et surtout inscrivait à la PISTE D'AUDIT une
+     * modification de `homeHeroImageUrl` que personne n'avait faite. Cette
+     * piste existe pour reconstituer un geste six mois plus tard, quand une
+     * commande paraît anormale ; une entrée fantôme y est pire qu'une entrée
+     * manquante, parce qu'on lui fait confiance.
+     *
+     * Il n'a été vu ni en développement ni en recette : les deux tournent sur
+     * une base où la ligne a fini par exister. Il fallait une base FRAÎCHE —
+     * c'est l'intégration continue, le jour de sa mise en place, qui l'a
+     * signalé.
+     */
+    await prisma.setting.deleteMany({ where: { key: 'homeHeroImageUrl' } })
+
+    const form = await currentForm()
+    form.set('minMarginCents', '911')
+
+    const state = await updateSettingsAction({ status: 'idle' }, form)
+    expect(
+      state,
+      'un réglage facultatif laissé vide ne doit pas compter comme modifié',
+    ).toEqual({ status: 'done', changed: 1 })
+
+    // Et rien n'est consigné à son sujet.
+    const journal = await prisma.auditLog.findMany({
+      where: { actorId: admin.id, entity: 'Setting' },
+      select: { entityId: true },
+    })
+    expect(journal.map((entree) => entree.entityId)).not.toContain(
+      'homeHeroImageUrl',
+    )
+  })
+
   it('REFUSE une zone de plancher qui n’existe pas en base', async () => {
     /**
      * La liste déroulante est construite à partir des zones réelles, mais une
