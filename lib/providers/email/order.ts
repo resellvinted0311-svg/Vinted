@@ -259,6 +259,22 @@ export interface ShipmentEmailData {
  * ---------------------------------------------------------------------------
  * Toutes les expéditions n'en ont pas. Passer la ligne sous silence laisserait
  * croire à un oubli et provoquerait la question ; l'écrire ferme le sujet.
+ *
+ * ---------------------------------------------------------------------------
+ * La signature portait le nom de sa clé
+ * ---------------------------------------------------------------------------
+ * `t('signature')` était appelé sans `{shop}`, alors que les huit catalogues
+ * écrivent « À bientôt, {shop} ». Une variable de message non fournie ne fait
+ * pas échouer le rendu : `createTranslator` remplace la phrase entière par le
+ * CHEMIN de la clé. L'acheteuse recevait donc son avis d'expédition signé
+ * « orderEmail.signature ».
+ *
+ * Le défaut a survécu parce que ce gabarit était le seul de la maison à
+ * n'être construit par aucun test : il part de la file de travaux, dans la
+ * transaction qui passe la commande à « expédiée », aucune page ne l'affiche
+ * et la boutique n'en reçoit pas de copie. Une seule personne le voyait, une
+ * seule fois. `tests/domain/order-email.test.ts` le construit désormais et
+ * refuse tout message où subsiste un chemin de clé.
  */
 export async function buildShipmentNotice(
   data: ShipmentEmailData,
@@ -283,14 +299,48 @@ export async function buildShipmentNotice(
     `${t('deliveryTo')} :`,
     ...address,
     '',
-    t('signature'),
+    t('signature', { shop: SITE.name }),
   ].join('\n')
+
+  /*
+    Des paragraphes, et non un bloc `<pre>`.
+
+    Le `<pre>` recopiait la version texte telle quelle : police à chasse fixe,
+    aucun retour à la ligne automatique, et une URL de suivi qui débordait de
+    l'écran sur téléphone sans être cliquable. Un lien de suivi qu'il faut
+    recopier à la main est précisément ce qu'on demande de ne pas faire.
+
+    Le lien est sûr : `trackingUrlSchema` (lib/validation/admin.ts) n'accepte
+    que `http:` et `https:` — un `javascript:` recopié par mégarde est refusé
+    à la saisie, pas ici. L'échappement reste appliqué, la contrainte amont
+    pouvant changer sans que ce fichier soit relu.
+  */
+  const html = [
+    `<p>${escapeHtml(t('greeting'))}</p>`,
+    `<p>${escapeHtml(t('shipped.intro', { orderNumber: data.orderNumber }))}</p>`,
+    data.trackingNumber
+      ? `<p>${escapeHtml(t('shipped.tracking', { number: data.trackingNumber }))}${
+          data.trackingUrl
+            ? `<br><a href="${escapeHtml(data.trackingUrl)}">${escapeHtml(
+                data.trackingUrl,
+              )}</a>`
+            : ''
+        }</p>`
+      : `<p>${escapeHtml(t('shipped.noTracking'))}</p>`,
+    `<p>${escapeHtml(t('deliveryTo'))} :<br>${address
+      .map(escapeHtml)
+      .join('<br>')}</p>`,
+    `<p>${escapeHtml(t('signature', { shop: SITE.name }))}</p>`,
+  ].join('')
 
   return {
     to: data.email,
     subject: t('shipped.subject', { orderNumber: data.orderNumber }),
     text,
-    html: `<pre>${escapeHtml(text)}</pre>`,
+    html,
+    // « Où en est mon colis ? » est LA réponse attendue à ce message. Sans
+    // cette ligne elle part vers l'adresse d'envoi, que personne ne lit.
+    ...(LEGAL.email ? { replyTo: LEGAL.email } : {}),
   }
 }
 

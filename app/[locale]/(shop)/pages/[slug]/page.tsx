@@ -20,6 +20,22 @@ import { PrivacyRegister } from '@/components/shop/privacy-register'
  * plausible — un faux SIRET est pire que pas de SIRET.
  */
 
+/*
+  `contact` est arrivé ici, et non sous `/contact`.
+
+  Le pied de page annonçait « Contact » vers `/contact` depuis le premier jour.
+  La route n'a jamais existé : le lien tombait en 404, dans les huit langues, à
+  chaque page du site. C'est le lien le plus visible du colophon, et c'est
+  aussi celui que la page de confidentialité et le formulaire de rétractation
+  désignent implicitement comme la voie pour écrire à la boutique.
+
+  Le rattacher à cette route plutôt que d'en créer une nouvelle donne
+  gratuitement ce qu'elle porte déjà : URL canonique, hreflang sur les huit
+  langues, prérendu, et surtout la même règle qu'ailleurs — aucune coordonnée
+  n'est inventée tant que l'identité de l'entreprise n'est pas renseignée.
+
+  Aucune adresse n'est perdue au passage, puisque `/contact` ne répondait pas.
+*/
 const SLUGS = [
   'mentions-legales',
   'cgv',
@@ -27,6 +43,7 @@ const SLUGS = [
   'cookies',
   'livraison',
   'retours',
+  'contact',
   'a-propos',
 ] as const
 
@@ -51,6 +68,7 @@ const TITLE_KEY: Record<PageSlug, string> = {
   cookies: 'cookies',
   livraison: 'shipping',
   retours: 'returns',
+  contact: 'contact',
   'a-propos': 'about',
 }
 
@@ -199,6 +217,41 @@ export default async function StaticPage({ params }: { params: Params }) {
               </p>
             )}
           </>
+        ) : null}
+
+        {slug === 'contact' ? (
+          hasLegalIdentity() ? (
+            <>
+              <p>{t('contactIntro')}</p>
+
+              {/* `<address>` porte la sémantique attendue : ce bloc EST les
+                  coordonnées de l'éditeur, pas un paragraphe qui en parle.
+                  Le lien `mailto:` évite la recopie à la main — c'est
+                  exactement la même adresse que celle des mentions légales et
+                  du formulaire de rétractation, jamais une seconde. */}
+              <address className="not-italic">
+                <span className="text-muted">{t('contactEmailLabel')}</span>
+                <br />
+                <a
+                  href={`mailto:${LEGAL.email}`}
+                  className="underline underline-offset-4"
+                >
+                  {LEGAL.email}
+                </a>
+                <br />
+                <br />
+                <span className="text-muted">{t('contactAddressLabel')}</span>
+                <br />
+                {LEGAL.companyName}
+                <br />
+                {LEGAL.address}
+              </address>
+            </>
+          ) : (
+            <p className="rounded-card border-[1.5px] border-warning bg-paper-raised p-4 text-muted">
+              {t('contactMissing')}
+            </p>
+          )
         ) : null}
 
         {slug === 'confidentialite' ? <PrivacyRegister locale={locale} /> : null}

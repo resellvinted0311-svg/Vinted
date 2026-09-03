@@ -26,7 +26,7 @@ import {
 } from '@/lib/utils/format'
 import { locales, localeTags } from '@/lib/i18n/routing'
 import { SITE } from '@/lib/config/site'
-import { serializeJsonLd } from '@/lib/utils/json-ld'
+import { serializeJsonLd, absoluteImageUrl } from '@/lib/utils/json-ld'
 
 type Params = Promise<{ locale: string; slug: string }>
 
@@ -150,7 +150,11 @@ export default async function ArticlePage({ params }: { params: Params }) {
     // n'est pas « pas de photo », c'est une donnée structurée invalide, et
     // l'outil de test la signale comme une erreur sur la fiche entière.
     ...(article.images.length > 0
-      ? { image: article.images.map((image) => `${SITE.url}${image.url}`) }
+      ? {
+          image: article.images.map((image) =>
+            absoluteImageUrl(image.url, SITE.url),
+          ),
+        }
       : {}),
     itemCondition:
       article.condition === 'NEW_WITH_TAGS' ||

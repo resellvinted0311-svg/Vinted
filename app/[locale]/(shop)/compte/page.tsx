@@ -49,14 +49,39 @@ export default async function AccountPage({
   const tp = await getTranslations('privacy')
   const tAuth = await getTranslations('auth')
 
+  /*
+    Uniquement les rubriques qui EXISTENT.
+
+    ---------------------------------------------------------------------------
+    Le défaut que ce retrait corrige
+    ---------------------------------------------------------------------------
+    Cette liste en comptait huit ; quatre d'entre elles n'ont jamais eu de
+    route. `/compte/messages`, `/compte/retours`, `/compte/alertes` et
+    `/compte/parametres` renvoyaient une 404 — dans les huit langues, depuis le
+    premier écran que voit une personne qui vient de se connecter.
+
+    La moitié d'un menu qui ne mène nulle part ne se lit pas comme un chantier
+    en cours : elle se lit comme un site cassé, et à cet endroit précis, chez
+    quelqu'un qui vient de confier un mot de passe.
+
+    ---------------------------------------------------------------------------
+    Ce qui n'est pas perdu
+    ---------------------------------------------------------------------------
+    Les libellés restent dans les huit catalogues : `account.messages`,
+    `account.returns`, `account.alerts`, `account.settings`. Ce ne sont pas des
+    clés orphelines à nettoyer, ce sont les rubriques à construire — le suivi
+    des retours dépend du modèle `ReturnRequest`, qui existe au schéma et n'est
+    encore jamais écrit ; les alertes de taille dépendent de `SizeAlert`, de
+    même. Le jour où la route existe, la ligne revient ici et le libellé est
+    déjà traduit.
+
+    `/favoris` reste dans la liste : la route existe, hors du dossier `compte`
+    parce que les favoris fonctionnent aussi sans compte.
+  */
   const sections = [
     { href: '/compte/commandes', label: t('orders') },
     { href: '/compte/offres', label: t('offers') },
     { href: '/favoris', label: t('favorites') },
-    { href: '/compte/messages', label: t('messages') },
-    { href: '/compte/retours', label: t('returns') },
-    { href: '/compte/alertes', label: t('alerts') },
-    { href: '/compte/parametres', label: t('settings') },
     { href: '/compte/donnees', label: tp('myData.title') },
   ] as const
 

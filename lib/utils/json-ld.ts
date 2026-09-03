@@ -58,3 +58,37 @@ export function serializeJsonLd(data: unknown): string {
     return `\\u${point.toString(16).padStart(4, '0')}`
   })
 }
+
+/**
+ * Rend une adresse d'image absolue — si elle ne l'est pas déjà.
+ *
+ * ---------------------------------------------------------------------------
+ * Le défaut que cette fonction remplace
+ * ---------------------------------------------------------------------------
+ * La fiche article composait `` `${SITE.url}${image.url}` `` sans condition.
+ * Or `ArticleImage.url` porte deux formes selon l'origine de la pièce : une
+ * adresse RELATIVE pour les visuels nés ici (jeu de démonstration, SVG servis
+ * en local), et le `secure_url` ABSOLU de Cloudinary pour tout ce qui vient de
+ * la synchronisation — c'est-à-dire la totalité de la production.
+ *
+ * La concaténation produisait donc, en ligne :
+ *   https://boutique.frhttps://res.cloudinary.com/…
+ *
+ * Une adresse d'image invalide dans un bloc Product invalide le RÉSULTAT
+ * ENRICHI entier : la fiche perd sa vignette dans les résultats de recherche,
+ * son prix et sa disponibilité. Et le défaut était structurellement invisible
+ * en test, puisque le jeu de démonstration est le seul cas où la
+ * concaténation donnait le bon résultat.
+ *
+ * `components/shop/article-image.tsx` et `lib/shop/checkout.ts` faisaient déjà
+ * cette distinction, chacun dans son coin. C'est ici qu'elle est désormais
+ * écrite une fois et vérifiée.
+ *
+ * Le préfixe n'est PAS appliqué à une adresse déjà absolue, quel que soit son
+ * hôte : `next.config.ts` verrouille les hôtes autorisés au rendu, et
+ * réécrire une adresse étrangère en la faisant passer pour la nôtre serait
+ * plus grave que de la publier telle quelle.
+ */
+export function absoluteImageUrl(url: string, siteUrl: string): string {
+  return /^https?:\/\//i.test(url) ? url : `${siteUrl}${url}`
+}

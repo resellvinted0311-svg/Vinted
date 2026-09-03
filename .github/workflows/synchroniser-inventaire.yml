@@ -54,15 +54,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ---------------------------------------------------------------------
+      # pnpm, et non npm
+      #
+      # Ce fichier a été écrit avec `cache: npm` et `npm ci`. Le dépôt n'a
+      # jamais eu de `package-lock.json` : il est géré par pnpm et ne porte
+      # qu'un `pnpm-lock.yaml`.
+      #
+      # Les deux étapes échouaient donc, la première d'entre elles avant même
+      # l'installation — `setup-node` s'arrête sur « Dependencies lock file is
+      # not found » quand le cache demandé ne trouve pas son fichier. La
+      # synchronisation annoncée « toutes les trois heures » n'a jamais tourné
+      # une seule fois, et rien ne le signalait : une tâche planifiée qui
+      # échoue ne prévient personne, elle apparaît en rouge dans un onglet
+      # qu'on ne consulte que lorsqu'on attend un résultat.
+      # ---------------------------------------------------------------------
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       # `--ignore-scripts` : le script d'import ne touche pas la base de la
       # boutique et n'a donc pas besoin du client Prisma. L'éviter retire une
       # minute d'installation à chaque passage.
-      - run: npm ci --ignore-scripts
+      - run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Importer l’inventaire
         env:

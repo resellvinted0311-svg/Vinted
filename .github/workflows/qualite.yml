@@ -1,0 +1,184 @@
+# Vérification automatique à chaque poussée.
+#
+# ---------------------------------------------------------------------------
+# Pourquoi ce fichier n'existait pas, et ce que cela coûtait
+# ---------------------------------------------------------------------------
+# Le dépôt porte plus de mille tests unitaires et d'intégration, deux cents
+# tests de navigateur, une vérification de types stricte et des garde-fous de
+# sécurité écrits exprès — la liste des fichiers qui importent Stripe, la
+# parité des huit catalogues de messages, les contrastes de la palette.
+#
+# Aucun de ces garde-fous ne se déclenchait tout seul. Le seul fichier de ce
+# dossier était une tâche planifiée d'import, et elle ne pouvait même pas
+# s'installer. Autrement dit : la totalité de la couverture reposait sur le
+# fait qu'une personne pense à lancer les commandes à la main, avant chaque
+# poussée, sur une machine correctement configurée.
+#
+# Un test qu'on peut oublier de lancer ne protège que les jours où l'on y
+# pense.
+#
+# ---------------------------------------------------------------------------
+# Aucun secret n'est nécessaire, et c'est délibéré
+# ---------------------------------------------------------------------------
+# Les deux secrets dont la suite a besoin — la clé de signature des sessions et
+# le mot de passe des comptes de démonstration — sont TIRÉS AU HASARD à chaque
+# passage, vivent le temps du travail, et ne sont écrits nulle part. Aucun
+# secret d'Actions n'est lu ici.
+#
+# Stripe, Resend, Cloudinary et Upstash restent aux valeurs vides de
+# `.env.example` : les tests qui les concernent remplacent ces modules par des
+# doublures. Une intégration continue qui exigerait de vraies clés serait une
+# raison de plus de ne pas la brancher, et un endroit de plus où un secret peut
+# fuiter.
+name: Qualité
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+# Une poussée qui en suit une autre annule la vérification devenue inutile :
+# c'est le dernier état de la branche qui compte.
+concurrency:
+  group: qualite-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verifier:
+    name: Types, style, tests et build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # Les tests d'intégration parlent à une VRAIE base : verrous consultatifs,
+    # transactions, contraintes d'unicité, horloge du serveur. Une doublure ne
+    # dirait rien de ce que ces tests vérifient.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nina_diego
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Composer l’environnement de test
+        # `.env.example` porte déjà l'adresse de la base locale, qui est
+        # exactement celle du service ci-dessus. Les deux seuls secrets sont
+        # tirés ici et disparaissent avec la machine.
+        run: |
+          cp .env.example .env
+          {
+            echo "AUTH_SECRET=$(openssl rand -base64 32)"
+            echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)"
+            echo "SEED_ADMIN_PASSWORD=$(openssl rand -base64 24)"
+          } >> .env
+
+      # Le client Prisma est un fichier GÉNÉRÉ : sans lui, la vérification de
+      # types échoue sur des imports introuvables, avant d'avoir rien vérifié.
+      - run: pnpm db:generate
+
+      - run: pnpm db:deploy
+
+      - run: pnpm db:seed
+
+      - run: pnpm lint
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      # En dernier, et pas en premier : un build réussi ne dit rien d'un test
+      # cassé, alors qu'un type faux fait échouer le build. Cet ordre donne le
+      # diagnostic le plus précis en cas de rouge.
+      - run: pnpm build
+
+  navigateur:
+    name: Parcours réels
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nina_diego
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Composer l’environnement de test
+        run: |
+          cp .env.example .env
+          {
+            echo "AUTH_SECRET=$(openssl rand -base64 32)"
+            echo "NEXTAUTH_SECRET=$(openssl rand -base64 32)"
+            echo "SEED_ADMIN_PASSWORD=$(openssl rand -base64 24)"
+          } >> .env
+
+      - run: pnpm db:generate
+
+      - run: pnpm db:deploy
+
+      - run: pnpm db:seed
+
+      # Chromium seul : les deux profils de test — bureau et mobile — sont
+      # tous deux des Chromium. Installer les trois moteurs tripleraient le
+      # téléchargement sans rien couvrir de plus.
+      - run: pnpm exec playwright install --with-deps chromium
+
+      # `playwright.config.ts` démarre `pnpm start`, qui sert le BUILD. Sans
+      # cette étape, la suite mesurerait un build absent ou périmé — c'est un
+      # piège dans lequel ce projet est déjà tombé à la main.
+      - run: pnpm build
+
+      - run: pnpm test:e2e
+
+      # Les traces des tests échoués, et rien d'autre : elles contiennent les
+      # captures d'écran et le réseau du parcours fautif, ce qu'aucun message
+      # d'erreur ne remplace.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: traces-playwright
+          path: test-results/
+          retention-days: 7

@@ -18,7 +18,10 @@ export async function SiteFooter() {
     { href: '/pages/livraison', label: t('shipping') },
     { href: '/pages/retours', label: t('returns') },
     { href: '/pages/a-propos', label: t('about') },
-    { href: '/contact', label: t('contact') },
+    // `/pages/contact` et non `/contact` : la seconde adresse n'a jamais eu de
+    // route. Le lien le plus visible du colophon tombait en 404 dans les huit
+    // langues, sur toutes les pages du site.
+    { href: '/pages/contact', label: t('contact') },
   ] as const
 
   return (

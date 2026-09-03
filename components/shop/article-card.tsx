@@ -43,9 +43,42 @@ export async function ArticleCard({
   priority?: boolean
 }) {
   const t = await getTranslations('catalogue')
+  /*
+    Le mot « Vendu » vient du même endroit que sur la fiche.
+
+    `article.sold` est déjà traduit dans les huit catalogues et déjà affiché
+    sur la page de la pièce. Écrire ici une seconde clé au même sens aurait
+    créé deux vocabulaires pour un seul fait, qui divergent à la première
+    relecture d'une des deux.
+  */
+  const ta = await getTranslations('article')
   const translation = pickTranslation(article.translations, locale)
   const cover = article.images[0]
   const discount = discountPercent(article.priceCents, article.comparePriceCents)
+
+  /*
+    ---------------------------------------------------------------------------
+    Le défaut que cette mention corrige
+    ---------------------------------------------------------------------------
+    Rien ne distinguait une pièce vendue dans une grille. Le catalogue n'en
+    montre pas — `LISTED_STATUSES` les exclut — mais les FAVORIS, si : c'est
+    une décision écrite, et elle est bonne, parce qu'une pièce qui disparaît
+    des favoris sans explication se lit comme une perte de données.
+
+    Sauf que le commentaire de `favoris/page.tsx` promettait « marqué
+    “Vendu” » et que la vignette ne portait rien de tel. La pièce s'affichait
+    avec son prix, son bouton favori et son lien — indiscernable des autres.
+    La seule façon de l'apprendre était d'ouvrir la fiche.
+
+    Un prix affiché sur ce qu'on ne peut plus acheter est une promesse qu'on ne
+    tient pas ; c'est exactement le défaut que `lib/db/visibility.ts` a été
+    écrit pour clore, et il subsistait un cran plus loin, dans le rendu.
+
+    La mention occupe le coin haut gauche, celui de la réservation : les deux
+    états s'excluent — une pièce vendue n'est plus réservée — donc ils ne
+    peuvent pas se superposer.
+  */
+  const estVendu = article.status === 'SOLD'
 
   // Ligne de régie : ce qu'on veut savoir d'une pièce d'occasion avant même de
   // cliquer. Uniquement des champs réellement renseignés — pas de tiret pour
@@ -73,7 +106,11 @@ export async function ArticleCard({
         {/* Mention honnête : la réservation est réelle et temporaire. Ce n'est
             pas un compteur d'urgence inventé — et elle disparaît à l'échéance,
             sans attendre que le balayage soit passé. */}
-        {isReservationLive(article) ? (
+        {estVendu ? (
+          <span className="label-reg absolute left-2 top-2 rounded-input border-[1.5px] border-ink bg-ink px-1.5 py-0.5 text-ink-inverse">
+            {ta('sold')}
+          </span>
+        ) : isReservationLive(article) ? (
           <span className="label-reg absolute left-2 top-2 rounded-input border-[1.5px] border-rule bg-paper px-1.5 py-0.5 text-ink">
             {t('beingPurchased')}
           </span>
