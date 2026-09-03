@@ -2,7 +2,12 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { LEGAL, SITE, hasLegalIdentity, hasMediator } from '@/lib/config/site'
-import { isPlaceholderPage } from '@/lib/config/pages'
+import {
+  isPlaceholderPage,
+  isPageSlug,
+  PAGE_SLUGS,
+  type PageSlug,
+} from '@/lib/config/pages'
 import { locales, localeTags } from '@/lib/i18n/routing'
 import { PrivacyRegister } from '@/components/shop/privacy-register'
 
@@ -20,44 +25,11 @@ import { PrivacyRegister } from '@/components/shop/privacy-register'
  * plausible — un faux SIRET est pire que pas de SIRET.
  */
 
-/*
-  `contact` est arrivé ici, et non sous `/contact`.
-
-  Le pied de page annonçait « Contact » vers `/contact` depuis le premier jour.
-  La route n'a jamais existé : le lien tombait en 404, dans les huit langues, à
-  chaque page du site. C'est le lien le plus visible du colophon, et c'est
-  aussi celui que la page de confidentialité et le formulaire de rétractation
-  désignent implicitement comme la voie pour écrire à la boutique.
-
-  Le rattacher à cette route plutôt que d'en créer une nouvelle donne
-  gratuitement ce qu'elle porte déjà : URL canonique, hreflang sur les huit
-  langues, prérendu, et surtout la même règle qu'ailleurs — aucune coordonnée
-  n'est inventée tant que l'identité de l'entreprise n'est pas renseignée.
-
-  Aucune adresse n'est perdue au passage, puisque `/contact` ne répondait pas.
-*/
-const SLUGS = [
-  'mentions-legales',
-  'cgv',
-  'confidentialite',
-  'cookies',
-  'livraison',
-  'retours',
-  'contact',
-  'a-propos',
-] as const
-
-type PageSlug = (typeof SLUGS)[number]
-
-function isPageSlug(value: string): value is PageSlug {
-  return (SLUGS as readonly string[]).includes(value)
-}
-
 type Params = Promise<{ locale: string; slug: string }>
 
 export function generateStaticParams() {
   return locales.flatMap((locale) =>
-    SLUGS.map((slug) => ({ locale, slug })),
+    PAGE_SLUGS.map((slug) => ({ locale, slug })),
   )
 }
 

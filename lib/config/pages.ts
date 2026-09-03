@@ -27,6 +27,45 @@
  * disparaît et la preuve commence à être constituée, sans qu'on puisse faire
  * l'un sans l'autre.
  */
+/**
+ * Les pages éditoriales et légales servies par `/pages/[slug]`.
+ *
+ * Déplacée ici depuis la route elle-même le jour où le plan de site a eu
+ * besoin de la même liste. Deux listes de slugs auraient divergé au premier
+ * ajout, et la divergence aurait été silencieuse : une page servie mais jamais
+ * annoncée, ou annoncée et introuvable.
+ *
+ * ---------------------------------------------------------------------------
+ * `contact` est un slug d'ici, et non une route `/contact`
+ * ---------------------------------------------------------------------------
+ * Le pied de page annonçait « Contact » vers `/contact` depuis le premier
+ * jour. La route n'a jamais existé : le lien tombait en 404, dans les huit
+ * langues, à chaque page du site. C'est aussi la voie que la page de
+ * confidentialité et le formulaire de rétractation désignent pour écrire à la
+ * boutique.
+ *
+ * Le rattacher à cette liste plutôt que d'ouvrir une route à part donne
+ * gratuitement ce qu'elle porte déjà : URL canonique, hreflang sur les huit
+ * langues, prérendu, et surtout la même règle qu'ailleurs — aucune coordonnée
+ * n'est inventée tant que l'identité de l'entreprise n'est pas renseignée.
+ */
+export const PAGE_SLUGS = [
+  'mentions-legales',
+  'cgv',
+  'confidentialite',
+  'cookies',
+  'livraison',
+  'retours',
+  'contact',
+  'a-propos',
+] as const
+
+export type PageSlug = (typeof PAGE_SLUGS)[number]
+
+export function isPageSlug(value: string): value is PageSlug {
+  return (PAGE_SLUGS as readonly string[]).includes(value)
+}
+
 export const PLACEHOLDER_PAGES = ['cgv', 'cookies', 'livraison'] as const
 
 export function isPlaceholderPage(slug: string): boolean {

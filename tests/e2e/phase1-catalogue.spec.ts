@@ -453,3 +453,54 @@ test.describe('Étanchéité', () => {
     }
   })
 })
+
+test.describe('Ce que les moteurs lisent', () => {
+  /**
+   * Le plan de site et robots.txt sont servis, et par le bon chemin.
+   *
+   * ---------------------------------------------------------------------------
+   * Pourquoi un test de navigateur, alors que le contenu est déjà couvert
+   * ---------------------------------------------------------------------------
+   * `tests/integration/sitemap.test.ts` vérifie ce que le plan CONTIENT, en
+   * appelant la fonction. Il ne peut rien dire de sa LIVRAISON.
+   *
+   * Or ces deux adresses passent à côté du middleware, et uniquement parce que
+   * son filtre exclut les chemins en `.xml` et `.txt`. Une retouche de cette
+   * expression régulière — pour ajouter une exception, pour couvrir une
+   * nouvelle route — les ferait rediriger vers `/fr/sitemap.xml`, qui n'existe
+   * pas. Le plan disparaîtrait sans qu'aucune page du site ne change.
+   */
+  test('robots.txt est servi et désigne le plan de site', async ({ request }) => {
+    const reponse = await request.get('/robots.txt')
+    expect(reponse.status()).toBe(200)
+
+    const texte = await reponse.text()
+    expect(texte).toContain('Sitemap:')
+    expect(texte).toContain('/sitemap.xml')
+    // Le panier n'y est PAS interdit : sa page porte déjà « ne pas indexer »,
+    // et un robot doit pouvoir la charger pour le lire.
+    expect(texte).not.toContain('/panier')
+  })
+
+  test('le plan de site est servi, et ses adresses répondent', async ({ request }) => {
+    const reponse = await request.get('/sitemap.xml')
+    expect(reponse.status()).toBe(200)
+
+    const xml = await reponse.text()
+    expect(xml).toContain('<urlset')
+    expect(xml).toContain('hreflang="x-default"')
+
+    const adresses = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]!)
+    expect(adresses.length).toBeGreaterThan(10)
+
+    // Un échantillon suffit : le contenu est couvert ailleurs, ce qu'on
+    // vérifie ici est qu'une adresse annoncée mène quelque part. Les trois
+    // premières sont l'accueil, le catalogue et les marques ; la dernière est
+    // une fiche article.
+    const echantillon = [...adresses.slice(0, 3), adresses.at(-1)!]
+    for (const adresse of echantillon) {
+      const page = await request.get(adresse)
+      expect(page.status(), `${adresse} est annoncée mais ne répond pas`).toBe(200)
+    }
+  })
+})
