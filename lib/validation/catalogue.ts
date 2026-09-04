@@ -90,6 +90,7 @@ export const catalogueSearchParamsSchema = z.object({
   etat: multi(conditionSchema),
   couleur: multi(attributeSchema),
   matiere: multi(attributeSchema),
+  univers: multi(attributeSchema),
   prix_min: optionalNumber(priceSchema),
   prix_max: optionalNumber(priceSchema),
   q: z
@@ -140,6 +141,7 @@ export function parseCatalogueSearchParams(
         conditions: [],
         colors: [],
         materials: [],
+        audiences: [],
         minPriceCents: null,
         maxPriceCents: null,
         query: null,
@@ -166,6 +168,7 @@ export function parseCatalogueSearchParams(
       conditions: data.etat,
       colors: data.couleur,
       materials: data.matiere,
+      audiences: data.univers,
       minPriceCents,
       maxPriceCents,
       query: data.q,

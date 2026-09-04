@@ -53,6 +53,7 @@
     "heroCta": "Bekijk de beschikbare stukken",
     "claimReturn": "Retour binnen 14 dagen",
     "shopBySize": "Op maat",
+    "chooseUniverse": "Kies een afdeling",
     "pieceCount": "{count, plural, =0 {geen stuks} one {# stuk} other {# stuks}}"
   },
   "catalogue": {
@@ -77,6 +78,7 @@
       "condition": "Staat",
       "color": "Kleur",
       "material": "Materiaal",
+      "audience": "Afdeling",
       "price": "Prijs",
       "priceMin": "Minimum",
       "priceMax": "Maximum"
@@ -104,6 +106,11 @@
       "denim": "Denim",
       "cuir": "Leer",
       "velours": "Corduroy"
+    },
+    "audiences": {
+      "femme": "Dames",
+      "homme": "Heren",
+      "mixte": "Uniseks"
     },
     "fits": {
       "droite": "Rechte pasvorm",
@@ -708,6 +715,14 @@
         "homeHeroImageUrl": {
           "label": "Grote afbeelding op de startpagina",
           "hint": "Cloudinary-adres van de liggende foto die bij aankomst wordt getoond. Laat leeg zolang er geen foto is: de plek blijft dan sober, zonder gebroken afbeelding."
+        },
+        "universeImageFemmeUrl": {
+          "label": "Beeld van de kaart ‘Dames’",
+          "hint": "Cloudinary-adres van de foto op de kaart Dames van de startpagina. Laat leeg zolang er geen foto is: de kaart blijft sober, zonder gebroken afbeelding."
+        },
+        "universeImageHommeUrl": {
+          "label": "Beeld van de kaart ‘Heren’",
+          "hint": "Cloudinary-adres van de foto op de kaart Heren van de startpagina. Laat leeg zolang er geen foto is: de kaart blijft sober, zonder gebroken afbeelding."
         }
       }
     },
@@ -797,6 +812,10 @@
         "fit": {
           "label": "Fit",
           "hint": "Used by the catalogue filter."
+        },
+        "audience": {
+          "label": "Afdeling",
+          "hint": "Bepaalt in welke etalage het stuk verschijnt. ‘Uniseks’ zet het in beide. Leeg blijft het in de catalogus maar in geen enkele etalage."
         },
         "description": {
           "label": "Description",

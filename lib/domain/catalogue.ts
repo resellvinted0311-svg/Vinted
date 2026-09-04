@@ -31,6 +31,8 @@ export interface CatalogueFilters {
   conditions: string[]
   colors: string[]
   materials: string[]
+  /** Univers : « femme », « homme », « mixte ». Voir lib/domain/vocabulary.ts. */
+  audiences: string[]
   minPriceCents: number | null
   maxPriceCents: number | null
   query: string | null
@@ -43,6 +45,7 @@ export const EMPTY_FILTERS: CatalogueFilters = {
   conditions: [],
   colors: [],
   materials: [],
+  audiences: [],
   minPriceCents: null,
   maxPriceCents: null,
   query: null,
@@ -56,6 +59,7 @@ export function hasActiveFilters(filters: CatalogueFilters): boolean {
     filters.conditions.length > 0 ||
     filters.colors.length > 0 ||
     filters.materials.length > 0 ||
+    filters.audiences.length > 0 ||
     filters.minPriceCents !== null ||
     filters.maxPriceCents !== null ||
     (filters.query !== null && filters.query.length > 0)
@@ -203,6 +207,7 @@ export function filtersToSearchParams(
   appendAll('etat', filters.conditions)
   appendAll('couleur', filters.colors)
   appendAll('matiere', filters.materials)
+  appendAll('univers', filters.audiences)
 
   /*
     En EUROS, comme la lecture les attend.

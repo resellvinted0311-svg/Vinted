@@ -58,18 +58,33 @@ export async function CatalogueView({
     getFacets(filters, locale),
   ])
 
-  // Libellés lisibles pour les pastilles de filtres actifs : les facettes les
-  // portent déjà, inutile de réinterroger la base.
+  /*
+    Libellés lisibles pour les pastilles de filtres actifs.
+
+    Les catégories, marques et tailles portent DÉJÀ leur libellé traduit : il
+    vient d'une jointure sur la table de traductions, ou c'est la valeur
+    elle-même dans le cas d'une taille.
+
+    Les vocabulaires fermés — couleur, matière, état, univers — non. Leur
+    facette renvoie la valeur brute comme libellé, parce qu'ils n'ont pas de
+    table de traductions : ils sont traduits dans les fichiers de messages. Les
+    reprendre telles quelles affichait la pastille « ecru » là où le panneau de
+    filtres, lui, écrit bien « Écru » — deux mots pour un même filtre, sur le
+    même écran. Ils sont donc traduits ici aussi.
+  */
   const labels: Record<string, string> = {}
-  for (const group of [
-    facets.categories,
-    facets.brands,
-    facets.sizes,
-    facets.colors,
-    facets.materials,
-  ]) {
+  for (const group of [facets.categories, facets.brands, facets.sizes]) {
     for (const entry of group) labels[entry.value] = entry.label
   }
+
+  for (const entry of facets.colors) labels[entry.value] = t(`colors.${entry.value}`)
+  for (const entry of facets.materials) {
+    labels[entry.value] = t(`materials.${entry.value}`)
+  }
+  for (const entry of facets.audiences) {
+    labels[entry.value] = t(`audiences.${entry.value}`)
+  }
+
   const tc = await getTranslations('condition')
   for (const entry of facets.conditions) {
     labels[entry.value] = tc(`${entry.value}.label`)

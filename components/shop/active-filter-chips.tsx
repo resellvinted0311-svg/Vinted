@@ -65,6 +65,7 @@ export async function ActiveFilterChips({
   addAll('conditions', filters.conditions)
   addAll('colors', filters.colors)
   addAll('materials', filters.materials)
+  addAll('audiences', filters.audiences)
 
   if (filters.minPriceCents !== null || filters.maxPriceCents !== null) {
     const from =

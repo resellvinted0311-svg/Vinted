@@ -169,6 +169,7 @@ function attributeFields(input: ArticleWriteInput, categoryId: string) {
     color: input.color ?? null,
     material: input.material ?? null,
     fit: input.fit ?? null,
+    audience: input.audience ?? null,
     priceCents: input.priceCents,
     costCents: input.costCents,
     weightGrams: input.weightGrams,

@@ -83,6 +83,29 @@ function entree(
   }
 }
 
+/**
+ * Les pages d'ENTRÉE du site, celles dont le contenu bouge tous les jours.
+ *
+ * Les pages fixes restantes — mentions légales, à propos, contact — ne
+ * changent pas d'un mois à l'autre : annoncer le contraire apprend au robot à
+ * ne plus croire ce que le plan lui dit.
+ */
+const ENTREES = new Set(['', '/catalogue', '/femme', '/homme'])
+
+/**
+ * La priorité est RELATIVE aux autres pages du même site, jamais aux pages
+ * d'un autre. Elle dit simplement, ici, dans quel ordre parcourir en cas de
+ * budget d'exploration limité : l'accueil, puis les deux univers, puis le
+ * catalogue, puis le reste.
+ */
+const PRIORITES: Record<string, number> = {
+  '': 1,
+  '/femme': 0.9,
+  '/homme': 0.9,
+  '/catalogue': 0.9,
+  '/marques': 0.6,
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const maintenant = new Date()
 
@@ -103,6 +126,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const fixes: SitemapResource[] = [
     { path: '', lastModified: maintenant },
     { path: '/catalogue', lastModified: maintenant },
+    // Les deux univers. Ce sont, avec l'accueil, les pages d'entrée du site :
+    // elles portent un intitulé que les gens tapent réellement dans un moteur,
+    // là où « catalogue » n'est le mot de personne.
+    { path: '/femme', lastModified: maintenant },
+    { path: '/homme', lastModified: maintenant },
     { path: '/marques', lastModified: maintenant },
     ...PAGE_SLUGS.filter((slug) => !isPlaceholderPage(slug)).map((slug) => ({
       path: `/pages/${slug}`,
@@ -111,17 +139,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   return [
-    // L'accueil et le catalogue en tête, avec la priorité la plus haute : ce
-    // sont les deux portes d'entrée, et la priorité est relative aux autres
-    // pages du même site, jamais aux pages d'un autre.
     ...fixes.map((resource) =>
       entree(resource, {
-        changeFrequency:
-          resource.path === '' || resource.path === '/catalogue'
-            ? 'daily'
-            : 'monthly',
-        priority:
-          resource.path === '' ? 1 : resource.path === '/catalogue' ? 0.9 : 0.4,
+        changeFrequency: ENTREES.has(resource.path) ? 'daily' : 'monthly',
+        priority: PRIORITES[resource.path] ?? 0.4,
       }),
     ),
     ...categories.map((resource) =>

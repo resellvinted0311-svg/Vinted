@@ -53,6 +53,7 @@
     "heroCta": "Voir les pièces disponibles",
     "claimReturn": "Retour sous 14 jours",
     "shopBySize": "Par taille",
+    "chooseUniverse": "Choisir un univers",
     "pieceCount": "{count, plural, =0 {aucune pièce} one {# pièce} other {# pièces}}"
   },
   "catalogue": {
@@ -77,6 +78,7 @@
       "condition": "État",
       "color": "Couleur",
       "material": "Matière",
+      "audience": "Univers",
       "price": "Prix",
       "priceMin": "Minimum",
       "priceMax": "Maximum"
@@ -104,6 +106,11 @@
       "denim": "Denim",
       "cuir": "Cuir",
       "velours": "Velours côtelé"
+    },
+    "audiences": {
+      "femme": "Femme",
+      "homme": "Homme",
+      "mixte": "Mixte"
     },
     "fits": {
       "droite": "Coupe droite",
@@ -708,6 +715,14 @@
         "homeHeroImageUrl": {
           "label": "Grand visuel de la page d’accueil",
           "hint": "Adresse Cloudinary de la photo paysage affichée en arrivant. Laisser vide tant qu’il n’y a pas de photographie : l’emplacement reste alors sobre, sans image cassée."
+        },
+        "universeImageFemmeUrl": {
+          "label": "Visuel de la carte « Femme »",
+          "hint": "Adresse Cloudinary de la photo affichée sur la carte Femme de la page d’accueil. Laisser vide tant qu’il n’y a pas de photographie : la carte reste sobre, sans image cassée."
+        },
+        "universeImageHommeUrl": {
+          "label": "Visuel de la carte « Homme »",
+          "hint": "Adresse Cloudinary de la photo affichée sur la carte Homme de la page d’accueil. Laisser vide tant qu’il n’y a pas de photographie : la carte reste sobre, sans image cassée."
         }
       }
     },
@@ -797,6 +812,10 @@
         "fit": {
           "label": "Coupe",
           "hint": "Sert au filtre du catalogue."
+        },
+        "audience": {
+          "label": "Univers",
+          "hint": "Décide dans quelle vitrine la pièce apparaît. « Mixte » la met dans les deux. Sans valeur, elle reste au catalogue mais dans aucune vitrine."
         },
         "description": {
           "label": "Description",

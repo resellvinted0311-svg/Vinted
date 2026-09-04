@@ -64,6 +64,26 @@ export async function CatalogueFiltersPanel({
         </select>
       </fieldset>
 
+      {/*
+        L'univers en tête, et il n'y a pas de contradiction avec l'ordre
+        arbitré des six autres.
+
+        Cet ordre-là — catégorie, marque, taille, état, couleur, matière —
+        n'est pas touché. L'univers est simplement la dimension la PLUS large :
+        il découpe le stock avant que la catégorie ne le découpe. Le placer
+        après « matière » demanderait de faire défiler tout le panneau pour
+        atteindre le filtre qui restreint le plus.
+      */}
+      <FacetGroup
+        legend={t('facets.audience')}
+        name="univers"
+        entries={facets.audiences.map((entry) => ({
+          ...entry,
+          label: t(`audiences.${entry.value}`),
+        }))}
+        selected={filters.audiences}
+      />
+
       <FacetGroup
         legend={t('facets.category')}
         name="cat"

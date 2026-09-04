@@ -53,6 +53,7 @@
     "heroCta": "Zobacz dostępne sztuki",
     "claimReturn": "Zwrot w ciągu 14 dni",
     "shopBySize": "Według rozmiaru",
+    "chooseUniverse": "Wybierz dział",
     "pieceCount": "{count, plural, =0 {brak sztuk} one {# sztuka} few {# sztuki} many {# sztuk} other {# sztuki}}"
   },
   "catalogue": {
@@ -77,6 +78,7 @@
       "condition": "Stan",
       "color": "Kolor",
       "material": "Materiał",
+      "audience": "Dział",
       "price": "Cena",
       "priceMin": "Minimum",
       "priceMax": "Maksimum"
@@ -104,6 +106,11 @@
       "denim": "Denim",
       "cuir": "Skóra",
       "velours": "Sztruks"
+    },
+    "audiences": {
+      "femme": "Kobieta",
+      "homme": "Mężczyzna",
+      "mixte": "Uniseks"
     },
     "fits": {
       "droite": "Prosty krój",
@@ -708,6 +715,14 @@
         "homeHeroImageUrl": {
           "label": "Duża grafika strony głównej",
           "hint": "Adres Cloudinary zdjęcia poziomego pokazywanego po wejściu. Zostaw puste, dopóki nie ma zdjęcia: miejsce pozostanie proste, bez zepsutego obrazu."
+        },
+        "universeImageFemmeUrl": {
+          "label": "Zdjęcie kafla „Kobieta”",
+          "hint": "Adres Cloudinary zdjęcia pokazywanego na kaflu Kobieta na stronie głównej. Zostaw puste, dopóki nie ma zdjęcia: kafel pozostaje prosty, bez zepsutego obrazka."
+        },
+        "universeImageHommeUrl": {
+          "label": "Zdjęcie kafla „Mężczyzna”",
+          "hint": "Adres Cloudinary zdjęcia pokazywanego na kaflu Mężczyzna na stronie głównej. Zostaw puste, dopóki nie ma zdjęcia: kafel pozostaje prosty, bez zepsutego obrazka."
         }
       }
     },
@@ -797,6 +812,10 @@
         "fit": {
           "label": "Fit",
           "hint": "Used by the catalogue filter."
+        },
+        "audience": {
+          "label": "Dział",
+          "hint": "Decyduje, w której witrynie pojawia się rzecz. „Uniseks” umieszcza ją w obu. Bez wartości pozostaje w katalogu, ale w żadnej witrynie."
         },
         "description": {
           "label": "Description",

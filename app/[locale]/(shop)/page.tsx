@@ -7,10 +7,14 @@ import {
 import { getFacets } from '@/lib/db/queries/articles'
 import { listBrandsWithCounts } from '@/lib/db/queries/taxonomy'
 import { EMPTY_FILTERS } from '@/lib/domain/catalogue'
-import { getHomeHeroImageUrl } from '@/lib/config/settings'
+import {
+  getHomeHeroImageUrl,
+  getUniverseImageUrls,
+} from '@/lib/config/settings'
 import { HeroBanner } from '@/components/shop/hero-banner'
 import { ReassuranceBand } from '@/components/shop/reassurance-band'
 import { ShortcutGrid } from '@/components/shop/shortcut-grid'
+import { UniverseCards } from '@/components/shop/universe-cards'
 import { ArrivalsRail } from '@/components/shop/arrivals-rail'
 import { TypeIndex } from '@/components/shop/type-index'
 import { BranchPlate, SeedHeadPlate } from '@/components/shop/engraving'
@@ -65,7 +69,8 @@ export default async function HomePage({
     résultat que personne n'affiche. Ces requêtes-là sont invisibles : rien
     n'échoue, la page est simplement un peu plus lente pour rien.
   */
-  const [latest, brands, total, facets, heroImageUrl] = await Promise.all([
+  const [latest, brands, total, facets, heroImageUrl, universeImages] =
+    await Promise.all([
     // Huit pièces, et plus neuf : la vitrine ne prélève plus la première pour
     // en faire la pièce du moment. « Ajouté cette semaine » en montre huit.
     getLatestArticles(locale, 8),
@@ -78,6 +83,7 @@ export default async function HomePage({
     // remarque jamais soi-même.
     getFacets(EMPTY_FILTERS, locale),
     getHomeHeroImageUrl(),
+    getUniverseImageUrls(),
   ])
 
   // Les trois étapes forment une vraie séquence — on chine, on prépare, on
@@ -114,6 +120,20 @@ export default async function HomePage({
       <HeroBanner imageUrl={heroImageUrl} />
 
       <ReassuranceBand />
+
+      {/* --------------------------------------------------------------------
+          Les deux univers, juste sous le visuel.
+
+          C'est la première question de quelqu'un qui arrive sur une boutique
+          de seconde main, avant même « qu'est-ce qui est nouveau » : est-ce
+          que ce magasin a quelque chose pour moi. Y répondre en deux cartes
+          évite de faire défiler un arrivage dont la moitié ne le concerne pas.
+
+          La section disparaît d'elle-même tant qu'un des deux univers est
+          vide : une carte qui mène à une grille vide est pire que pas de
+          carte.
+          -------------------------------------------------------------------- */}
+      <UniverseCards audiences={facets.audiences} images={universeImages} />
 
       <ArrivalsRail articles={latest} locale={locale} />
 

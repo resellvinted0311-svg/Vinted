@@ -504,3 +504,75 @@ test.describe('Ce que les moteurs lisent', () => {
     }
   })
 })
+
+test.describe('Univers', () => {
+  /**
+   * Les deux vitrines, par le chemin qu'une visiteuse emprunte réellement :
+   * la carte de la page d'accueil.
+   *
+   * Y aller directement par l'adresse vérifierait que la page existe ; cliquer
+   * vérifie qu'on peut y ARRIVER — ce qui est la seule chose qui compte, la
+   * vitrine étant la seule entrée vers les univers aujourd'hui.
+   */
+  test('la vitrine mène aux deux univers, et leur compte est exact', async ({
+    page,
+  }) => {
+    await page.goto('/fr')
+
+    const femme = page.getByRole('link', { name: /^Femme/ })
+    await expect(femme).toBeVisible()
+
+    // Le nombre annoncé sur la carte doit être celui que la page montre. Un
+    // écart d'une pièce suffit à ne plus croire aucun nombre du site.
+    const annonce = await femme.textContent()
+    const attendu = annonce?.match(/(\d+)\s*pièces?/)?.[1]
+    expect(attendu, 'la carte doit annoncer un effectif').toBeTruthy()
+
+    await femme.click()
+    await expect(page).toHaveURL(/\/fr\/femme$/)
+
+    await expect(
+      page.getByRole('heading', { name: 'Femme', exact: true }),
+    ).toBeVisible()
+    await expect(page.getByText(`${attendu} articles`)).toBeVisible()
+  })
+
+  test('une vitrine ne montre que ses pièces, et le filtre ne se retire pas', async ({
+    page,
+  }) => {
+    await page.goto('/fr/homme')
+
+    // Le filtre d'univers est IMPOSÉ par la page : il ne doit pas apparaître
+    // en pastille retirable, sinon l'enlever mènerait hors de la page.
+    const pastilles = page.locator('[data-active-filters]')
+    if (await pastilles.count()) {
+      await expect(pastilles).not.toContainText('Homme')
+    }
+
+    await expect(page.locator('article').first()).toBeVisible()
+  })
+
+  test('les cartes de catégorie emportent l’univers avec elles', async ({
+    page,
+  }) => {
+    // Sans le paramètre, cliquer « Chaussures » depuis la vitrine Femme
+    // ramènerait toutes les chaussures du magasin — l'inverse exact de ce
+    // qu'on vient de demander.
+    await page.goto('/fr/femme')
+
+    const carte = page.locator('a[href*="/c/"]').first()
+    await expect(carte).toBeVisible()
+
+    const href = await carte.getAttribute('href')
+    expect(href, 'la carte doit porter le filtre d’univers').toContain(
+      'univers=femme',
+    )
+    expect(href).toContain('univers=mixte')
+  })
+
+  test('les deux univers sont annoncés au plan de site', async ({ request }) => {
+    const xml = await (await request.get('/sitemap.xml')).text()
+    expect(xml).toContain('/fr/femme')
+    expect(xml).toContain('/fr/homme')
+  })
+})

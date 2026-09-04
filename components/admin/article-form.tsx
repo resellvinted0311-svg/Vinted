@@ -16,6 +16,7 @@ import {
 import {
   ARTICLE_COLORS,
   ARTICLE_MATERIALS,
+  ARTICLE_AUDIENCES,
   ARTICLE_FITS,
   ARTICLE_CONDITIONS,
   MEASUREMENT_KEYS,
@@ -53,6 +54,7 @@ export interface ArticleFormValues {
   color: string
   material: string
   fit: string
+  audience: string
   title: string
   description: string
   priceEuros: string
@@ -73,6 +75,7 @@ export const EMPTY_ARTICLE: ArticleFormValues = {
   color: '',
   material: '',
   fit: '',
+  audience: '',
   title: '',
   description: '',
   priceEuros: '',
@@ -230,6 +233,28 @@ export function ArticleForm({
               options={ARTICLE_FITS.map((f) => ({
                 value: f,
                 label: tCatalogue(`fits.${f}`),
+              }))}
+            />
+          </Field>
+
+          {/*
+            L'univers, saisi ici et nulle part ailleurs.
+
+            Facultatif comme ses voisins, et pour une raison de plus : les
+            pièces déjà en ligne n'en ont pas, et l'application de gestion ne
+            l'envoie pas. Une pièce non qualifiée reste au catalogue ; elle
+            n'apparaît simplement dans aucun des deux univers.
+          */}
+          <Field hint={t('fields.audience.hint')}>
+            <FieldLabel optional>{t('fields.audience.label')}</FieldLabel>
+            <NativeSelect
+              name="audience"
+              value={values.audience}
+              allowEmpty
+              placeholder={t('none')}
+              options={ARTICLE_AUDIENCES.map((a) => ({
+                value: a,
+                label: tCatalogue(`audiences.${a}`),
               }))}
             />
           </Field>

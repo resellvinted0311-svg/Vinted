@@ -48,6 +48,61 @@ export const ARTICLE_MATERIALS = [
 export const ARTICLE_FITS = ['droite', 'ajustee', 'ample', 'oversize'] as const
 
 /**
+ * L'univers d'une pièce : pour qui elle est coupée.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi une valeur SUR LA PIÈCE, et non un niveau dans l'arbre
+ * ---------------------------------------------------------------------------
+ * L'autre forme possible était d'ajouter « Femme » et « Homme » au-dessus des
+ * types de vêtements, dans l'arbre des catégories. Elle a été écartée pour
+ * trois raisons vérifiées dans le dépôt.
+ *
+ * `Category.slug` est unique GLOBALEMENT — il n'y a pas d'unicité composite
+ * sur (parent, slug). Dupliquer l'arbre imposerait donc des identifiants
+ * comme « pantalons-femme » et « pantalons-homme », qui se retrouveraient
+ * tels quels dans les adresses publiques.
+ *
+ * Ensuite, chaque fiche article résout son fil d'Ariane en remontant l'arbre
+ * par une requête PAR NIVEAU. Un niveau de plus, c'est une requête de plus
+ * sur les deux pages les plus servies du site.
+ *
+ * Enfin, une pièce mixte n'a pas de place dans un arbre : il faudrait la
+ * ranger deux fois, ou inventer une troisième branche.
+ *
+ * ---------------------------------------------------------------------------
+ * « mixte » n'est pas un troisième univers, c'est une pièce qui va aux deux
+ * ---------------------------------------------------------------------------
+ * La page « Femme » montre les pièces « femme » ET les pièces « mixte ». Idem
+ * côté homme. Une chemise oversize ou une paire de baskets n'a pas à être
+ * saisie deux fois, ni à disparaître des deux vitrines parce qu'elle
+ * n'appartient franchement à aucune.
+ *
+ * ---------------------------------------------------------------------------
+ * Une pièce SANS univers n'est pas un défaut de saisie, c'est l'état initial
+ * ---------------------------------------------------------------------------
+ * Le champ est facultatif. Les pièces déjà en base n'en ont pas — une
+ * migration crée des tables, jamais des lignes — et l'application de gestion
+ * n'envoie pas cette information. Une pièce non qualifiée reste dans le
+ * catalogue et dans les recherches ; elle n'apparaît simplement dans aucun des
+ * deux univers. C'est honnête, et c'est visible : l'écran d'inventaire compte
+ * celles qui restent à qualifier.
+ */
+export const ARTICLE_AUDIENCES = ['femme', 'homme', 'mixte'] as const
+
+/**
+ * Les univers qu'une page d'univers doit interroger.
+ *
+ * « Femme » demande `['femme', 'mixte']`, jamais `['femme']` seul. La règle
+ * est ici, en un seul endroit, parce qu'elle est appliquée à trois endroits
+ * différents — la page, son plan de site, et le compte affiché sur la carte de
+ * la vitrine — et que trois écritures d'une même règle finiraient par
+ * diverger.
+ */
+export function audiencesFor(universe: 'femme' | 'homme'): string[] {
+  return [universe, 'mixte']
+}
+
+/**
  * Clés de mesure, en centimètres, DANS L'ORDRE OÙ ELLES S'AFFICHENT.
  *
  * `Category.measurementKeys` dit lesquelles sont PERTINENTES pour une famille
@@ -127,6 +182,7 @@ export type ArticleCondition = (typeof ARTICLE_CONDITIONS)[number]
 export type ArticleColor = (typeof ARTICLE_COLORS)[number]
 export type ArticleMaterial = (typeof ARTICLE_MATERIALS)[number]
 export type ArticleFit = (typeof ARTICLE_FITS)[number]
+export type ArticleAudience = (typeof ARTICLE_AUDIENCES)[number]
 export type MeasurementKey = (typeof MEASUREMENT_KEYS)[number]
 
 /**

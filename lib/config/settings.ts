@@ -82,6 +82,63 @@ const positiveInt = z.number().int().positive()
 const nonNegativeInt = z.number().int().nonnegative()
 
 /**
+ * Un visuel éditorial de la vitrine : une adresse d'image, ou rien.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi un réglage et pas une constante
+ * ---------------------------------------------------------------------------
+ * C'est un choix éditorial qui changera au rythme des saisons de chine, pas
+ * une propriété du code. Le poser en réglage, c'est pouvoir le remplacer
+ * depuis la régie, sans redéploiement — et pouvoir ouvrir la boutique
+ * AUJOURD'HUI, sans photographie, l'emplacement restant vide jusqu'à ce
+ * qu'une adresse soit saisie.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi l'adresse est contrainte, et pas seulement « une URL »
+ * ---------------------------------------------------------------------------
+ * `next/image` n'optimise QUE les hôtes déclarés dans `next.config.ts`, et
+ * cette déclaration est restreinte au compte Cloudinary de la boutique. Une
+ * adresse acceptée ici mais refusée là-bas ne produirait pas d'erreur
+ * visible : le composant répondrait 400, la page s'afficherait avec un trou,
+ * et la régie afficherait le réglage comme correctement enregistré. Le
+ * contrôle est donc posé à l'ÉCRITURE, là où quelqu'un peut encore comprendre
+ * ce qu'on lui refuse.
+ *
+ * `null` est une valeur, pas une absence : c'est « pas encore de
+ * photographie », et c'est l'état normal au lancement.
+ *
+ * ---------------------------------------------------------------------------
+ * Un seul schéma pour les trois visuels
+ * ---------------------------------------------------------------------------
+ * Le visuel d'arrivée et les deux cartes d'univers obéissent aux mêmes règles,
+ * au mot près. Trois copies d'un même contrôle de quarante lignes, ce sont
+ * trois occasions d'en corriger deux.
+ */
+const imageUrlSetting = z
+  .string()
+  .trim()
+  .url()
+  .max(2048)
+  .refine(
+    (value) => {
+      let url: URL
+      try {
+        url = new URL(value)
+      } catch {
+        return false
+      }
+      if (url.protocol !== 'https:') return false
+      if (url.hostname !== 'res.cloudinary.com') return false
+      return url.pathname.includes('/image/upload/')
+    },
+    {
+      message:
+        'l’adresse doit être une image Cloudinary de la boutique (https://res.cloudinary.com/…/image/upload/…)',
+    },
+  )
+  .nullable()
+
+/**
  * Réglages connus et leur forme attendue.
  *
  * Déclarés ici plutôt qu'au point d'appel : la forme d'un réglage est une
@@ -189,55 +246,17 @@ const SCHEMAS = {
    */
   floorShippingZoneCode: z.string().min(1).max(32),
 
+  /** Les trois visuels éditoriaux de la vitrine. Voir `imageUrlSetting`. */
+  homeHeroImageUrl: imageUrlSetting,
   /**
-   * Le grand visuel paysage de la page d'accueil.
+   * Les visuels des deux cartes d'univers, sur la vitrine.
    *
-   * -------------------------------------------------------------------------
-   * Pourquoi un réglage et pas une constante
-   * -------------------------------------------------------------------------
-   * C'est un choix éditorial qui changera au rythme des saisons de chine, pas
-   * une propriété du code. Le poser en réglage, c'est pouvoir le remplacer
-   * depuis la régie, sans redéploiement — et pouvoir ouvrir la boutique
-   * AUJOURD'HUI, sans photographie, l'emplacement restant vide jusqu'à ce
-   * qu'une adresse soit saisie.
-   *
-   * -------------------------------------------------------------------------
-   * Pourquoi l'adresse est contrainte, et pas seulement « une URL »
-   * -------------------------------------------------------------------------
-   * `next/image` n'optimise QUE les hôtes déclarés dans `next.config.ts`, et
-   * cette déclaration est restreinte au compte Cloudinary de la boutique. Une
-   * adresse acceptée ici mais refusée là-bas ne produirait pas d'erreur
-   * visible : le composant répondrait 400, la page d'accueil s'afficherait
-   * avec un trou, et la régie afficherait le réglage comme correctement
-   * enregistré. Le contrôle est donc posé à l'ÉCRITURE, là où quelqu'un peut
-   * encore comprendre ce qu'on lui refuse.
-   *
-   * `null` est une valeur, pas une absence : c'est « pas encore de
-   * photographie », et c'est l'état normal au lancement.
+   * Mêmes règles que le visuel d'arrivée, au mot près — d'où le schéma
+   * partagé plutôt que trois copies d'un même contrôle de quarante lignes.
+   * Trois copies, c'est trois occasions d'en corriger deux.
    */
-  homeHeroImageUrl: z
-    .string()
-    .trim()
-    .url()
-    .max(2048)
-    .refine(
-      (value) => {
-        let url: URL
-        try {
-          url = new URL(value)
-        } catch {
-          return false
-        }
-        if (url.protocol !== 'https:') return false
-        if (url.hostname !== 'res.cloudinary.com') return false
-        return url.pathname.includes('/image/upload/')
-      },
-      {
-        message:
-          'l’adresse doit être une image Cloudinary de la boutique (https://res.cloudinary.com/…/image/upload/…)',
-      },
-    )
-    .nullable(),
+  universeImageFemmeUrl: imageUrlSetting,
+  universeImageHommeUrl: imageUrlSetting,
   cgvVersion: z.string().min(1),
   withdrawalPeriodDays: positiveInt,
   returnShippingPaidByCustomer: z.boolean(),
@@ -354,18 +373,42 @@ export async function getSettings<K extends SettingKey>(
  * ignorée, la page s'affiche sans image, et la régie la refusera à la
  * prochaine tentative d'enregistrement en expliquant pourquoi.
  */
-export async function getHomeHeroImageUrl(
-  client: Reader = prisma,
+async function readImageSetting(
+  key: 'homeHeroImageUrl' | 'universeImageFemmeUrl' | 'universeImageHommeUrl',
+  client: Reader,
 ): Promise<string | null> {
   const row = await client.setting.findUnique({
-    where: { key: 'homeHeroImageUrl' },
+    where: { key },
     select: { value: true },
   })
 
   if (!row) return null
 
-  const parsed = SCHEMAS.homeHeroImageUrl.safeParse(row.value)
+  const parsed = SCHEMAS[key].safeParse(row.value)
   return parsed.success ? parsed.data : null
+}
+
+export async function getHomeHeroImageUrl(
+  client: Reader = prisma,
+): Promise<string | null> {
+  return readImageSetting('homeHeroImageUrl', client)
+}
+
+/**
+ * Les visuels des deux cartes d'univers, lus ensemble.
+ *
+ * Ensemble, et non l'un après l'autre : ils sont affichés côte à côte, dans la
+ * même section, et deux lectures séparées coûtent deux allers-retours pour un
+ * seul rendu.
+ */
+export async function getUniverseImageUrls(
+  client: Reader = prisma,
+): Promise<{ femme: string | null; homme: string | null }> {
+  const [femme, homme] = await Promise.all([
+    readImageSetting('universeImageFemmeUrl', client),
+    readImageSetting('universeImageHommeUrl', client),
+  ])
+  return { femme, homme }
 }
 
 /**
@@ -378,7 +421,11 @@ export async function getHomeHeroImageUrl(
  * la lire comme du bruit, et le jour où elle signalera une vraie ligne
  * manquante, personne ne la lira plus.
  */
-const OPTIONAL_SETTINGS: readonly SettingKey[] = ['homeHeroImageUrl']
+const OPTIONAL_SETTINGS: readonly SettingKey[] = [
+  'homeHeroImageUrl',
+  'universeImageFemmeUrl',
+  'universeImageHommeUrl',
+]
 
 export async function findMissingSettings(
   client: Reader = prisma,
@@ -513,6 +560,8 @@ export const EDITABLE_SETTINGS: readonly EditableSetting[] = [
    * exactement l'état de départ.
    */
   { key: 'homeHeroImageUrl', kind: 'imageUrl', group: 'content' },
+  { key: 'universeImageFemmeUrl', kind: 'imageUrl', group: 'content' },
+  { key: 'universeImageHommeUrl', kind: 'imageUrl', group: 'content' },
 ] as const
 
 const EDITABLE_BY_KEY = new Map(

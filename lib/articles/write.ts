@@ -11,6 +11,7 @@ import {
   type MeasurementKey,
   type ArticleColor,
   type ArticleMaterial,
+  type ArticleAudience,
   type ArticleFit,
 } from '@/lib/domain/vocabulary'
 
@@ -45,6 +46,8 @@ export interface ArticleContentInput {
   color?: ArticleColor | null | undefined
   material?: ArticleMaterial | null | undefined
   fit?: ArticleFit | null | undefined
+  /** Univers de la pièce, saisi à la boutique. Voir lib/domain/vocabulary.ts. */
+  audience?: ArticleAudience | null | undefined
   measurements?: Partial<Record<MeasurementKey, number>> | undefined
 }
 

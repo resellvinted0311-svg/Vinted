@@ -162,6 +162,7 @@ export default async function AdminArticlePage({
               color: article.color ?? '',
               material: article.material ?? '',
               fit: article.fit ?? '',
+              audience: article.audience ?? '',
               title: article.title,
               description: article.description,
               priceEuros: toEuroText(article.priceCents),

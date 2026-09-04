@@ -314,6 +314,39 @@ const LEAF_SLUGS = [
   'robes', 'vestes-legeres', 'manteaux', 'chaussures', 'accessoires', 'sacs',
 ] as const
 
+/**
+ * L'univers du jeu de démonstration, dérivé de la catégorie et du numéro.
+ *
+ * ---------------------------------------------------------------------------
+ * Tirage STABLE, hors du flux commun
+ * ---------------------------------------------------------------------------
+ * Comme les mesures, et pour la même raison : un tirage pris au générateur
+ * partagé décalerait la marque, la taille et le prix de tous les articles
+ * suivants, donc leurs adresses — et ferait tomber les tests de navigateur qui
+ * désignent trois pièces par la leur. On l'a déjà payé une fois.
+ *
+ * ---------------------------------------------------------------------------
+ * Une pièce sur sept reste NON QUALIFIÉE, et c'est délibéré
+ * ---------------------------------------------------------------------------
+ * C'est l'état réel du stock au lendemain de la migration : la colonne existe,
+ * aucune ligne ne la porte, et l'application de gestion ne l'envoie pas. Un
+ * jeu de démonstration où tout serait qualifié cacherait précisément le cas
+ * qu'il faut voir — une pièce présente au catalogue et absente des deux
+ * vitrines.
+ */
+function demoAudience(sku: string, categorySlug: string): string | null {
+  // Une robe est une robe. Les catégories dont le genre ne fait pas de doute
+  // ne sont pas tirées au sort : ce serait fabriquer une donnée fausse pour
+  // rien.
+  if (categorySlug === 'robes') return 'femme'
+
+  const tirage = randIntStable(`${sku}:audience`, 0, 6)
+  if (tirage === 0) return null
+  if (tirage <= 3) return 'femme'
+  if (tirage <= 5) return 'homme'
+  return 'mixte'
+}
+
 const SIZES_BY_SLUG: Record<string, string[]> = {
   't-shirts': ['XS', 'S', 'M', 'L', 'XL'],
   chemises: ['XS', 'S', 'M', 'L', 'XL'],
@@ -401,8 +434,34 @@ function planArticles(): PlannedArticle[] {
 async function seedArticles(
   categoryIdBySlug: Map<string, string>,
 ): Promise<void> {
+  /*
+    `orderBy` n'est pas décoratif : sans lui, le semis n'est PAS déterministe.
+
+    ---------------------------------------------------------------------------
+    Le défaut, et comment il a fini par se montrer
+    ---------------------------------------------------------------------------
+    Cette lecture n'ordonnait rien. PostgreSQL rend alors les lignes dans
+    l'ordre physique de la table, qui n'est garanti par rien : il change après
+    une mise à jour, après un passage de l'autovacuum, après l'ajout d'une
+    colonne. `pick(brandRecords)` tirait donc la marque dans une liste dont
+    l'ORDRE variait d'un semis à l'autre — pour une graine identique et une
+    séquence de tirages identique.
+
+    Autrement dit : le catalogue de démonstration changeait de marques tout
+    seul, sans qu'une ligne de code bouge. Le commentaire trois lignes plus
+    bas se donne pourtant du mal pour que « la séquence du générateur soit
+    identique que la ligne existe déjà ou non » — cette précaution-là était
+    entièrement annulée par cette lecture-ci.
+
+    Le symptôme était rare et incompréhensible : un test qui échoue une fois
+    sur dix, sur une pièce désignée par son adresse, et qui repasse au
+    rejeu. Il a fallu qu'une migration réorganise la table pour que deux
+    adresses changent d'un coup et que le garde-fou des pièces de
+    démonstration le nomme en une seconde.
+  */
   const brandRecords = await prisma.brand.findMany({
     select: { id: true, slug: true, name: true },
+    orderBy: { slug: 'asc' },
   })
   const categoryBySlug = new Map(
     CATEGORIES.map((category) => [category.slug, category]),
@@ -494,6 +553,7 @@ async function seedArticles(
       color: colorKey,
       material: materialKey,
       fit: fitKey,
+      audience: demoAudience(sku, categorySlug),
       priceCents,
       costCents,
       floorPriceCents,

@@ -336,6 +336,25 @@ model Article {
   color          String?
   material       String?
   fit            String?
+  /// Univers : « femme », « homme » ou « mixte ». Vocabulaire fermé tenu dans
+  /// lib/domain/vocabulary.ts, comme color, material et fit.
+  ///
+  /// SAISI À LA BOUTIQUE, JAMAIS REÇU DE L'APPLICATION DE GESTION — et ce
+  /// n'est pas un provisoire, c'est une protection.
+  ///
+  /// Ajouter ce champ au contrat d'import changerait l'empreinte de
+  /// synchronisation de TOUTES les pièces d'un coup, puisque l'empreinte est
+  /// le condensé de l'entrée entière. Le passage suivant les verrait donc
+  /// toutes « modifiées » et les réécrirait — `priceCents` compris, avec le
+  /// prix de l'application. Autrement dit : toutes les baisses automatiques en
+  /// cours seraient annulées, en silence, en une nuit. C'est très exactement
+  /// le défaut que `syncFingerprint` a été créé pour empêcher (voir son
+  /// commentaire plus bas).
+  ///
+  /// Le champ est donc absent de `attributeFields` (lib/sync/articles.ts) :
+  /// une resynchronisation ne l'écrase pas. Une valeur posée au back-office
+  /// survit à tous les passages suivants.
+  audience       String?
 
   priceCents        Int
   /// Prix barré, renseigné lors d'une baisse automatique.
@@ -442,6 +461,10 @@ model Article {
   // Chemin chaud du catalogue : filtrage par statut + catégorie, tri par prix.
   @@index([status, categoryId, priceCents])
   @@index([status, publishedAt])
+  // Les deux pages d'univers sont, avec l'accueil, les entrées les plus
+  // servies du site : elles filtrent sur le statut ET l'univers, puis trient
+  // par date de publication.
+  @@index([status, audience, publishedAt])
 }
 
 model ArticleTranslation {

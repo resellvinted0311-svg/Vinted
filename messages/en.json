@@ -53,6 +53,7 @@
     "heroCta": "See available pieces",
     "claimReturn": "14-day returns",
     "shopBySize": "By size",
+    "chooseUniverse": "Choose a department",
     "pieceCount": "{count, plural, =0 {no pieces} one {# piece} other {# pieces}}"
   },
   "catalogue": {
@@ -77,6 +78,7 @@
       "condition": "Condition",
       "color": "Colour",
       "material": "Material",
+      "audience": "Department",
       "price": "Price",
       "priceMin": "Minimum",
       "priceMax": "Maximum"
@@ -104,6 +106,11 @@
       "denim": "Denim",
       "cuir": "Leather",
       "velours": "Corduroy"
+    },
+    "audiences": {
+      "femme": "Women",
+      "homme": "Men",
+      "mixte": "Unisex"
     },
     "fits": {
       "droite": "Straight fit",
@@ -708,6 +715,14 @@
         "homeHeroImageUrl": {
           "label": "Home page banner image",
           "hint": "Cloudinary address of the landscape photo shown on arrival. Leave empty until a photograph exists: the slot then stays plain, with no broken image."
+        },
+        "universeImageFemmeUrl": {
+          "label": "“Women” card image",
+          "hint": "Cloudinary address of the photo shown on the Women card of the home page. Leave empty until there is a photograph: the card stays plain, with no broken image."
+        },
+        "universeImageHommeUrl": {
+          "label": "“Men” card image",
+          "hint": "Cloudinary address of the photo shown on the Men card of the home page. Leave empty until there is a photograph: the card stays plain, with no broken image."
         }
       }
     },
@@ -797,6 +812,10 @@
         "fit": {
           "label": "Fit",
           "hint": "Used by the catalogue filter."
+        },
+        "audience": {
+          "label": "Department",
+          "hint": "Decides which storefront the piece appears in. “Unisex” puts it in both. Left empty, it stays in the catalogue but in neither storefront."
         },
         "description": {
           "label": "Description",

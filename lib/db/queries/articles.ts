@@ -119,6 +119,13 @@ function whereClauses(
     clauses.push(Prisma.sql`a.material = ANY(${filters.materials}::text[])`)
   }
 
+  // Une pièce sans univers n'appartient à aucun des deux : `= ANY` sur NULL
+  // ne renvoie pas vrai, et c'est exactement ce qu'on veut. Elle reste
+  // trouvable au catalogue, elle n'entre simplement dans aucune vitrine.
+  if (filters.audiences.length > 0 && skipDimension !== 'audiences') {
+    clauses.push(Prisma.sql`a.audience = ANY(${filters.audiences}::text[])`)
+  }
+
   if (filters.minPriceCents !== null) {
     clauses.push(Prisma.sql`a."priceCents" >= ${filters.minPriceCents}`)
   }
@@ -255,6 +262,7 @@ export interface Facets {
   conditions: FacetEntry[]
   colors: FacetEntry[]
   materials: FacetEntry[]
+  audiences: FacetEntry[]
   priceRange: { minCents: number; maxCents: number } | null
 }
 
@@ -306,7 +314,7 @@ export async function getFacets(
   filters: CatalogueFilters,
   locale: string,
 ): Promise<Facets> {
-  const [categories, brands, sizes, conditions, colors, materials, price] =
+  const [categories, brands, sizes, conditions, colors, materials, audiences, price] =
     await Promise.all([
       facetCount(filters, locale, 'categorySlugs', Prisma.sql`c.slug`, Prisma.sql`ct.name`),
       facetCount(filters, locale, 'brandSlugs', Prisma.sql`b.slug`, Prisma.sql`b.name`),
@@ -314,6 +322,7 @@ export async function getFacets(
       facetCount(filters, locale, 'conditions', Prisma.sql`a.condition::text`, Prisma.sql`a.condition::text`),
       facetCount(filters, locale, 'colors', Prisma.sql`a.color`, Prisma.sql`a.color`),
       facetCount(filters, locale, 'materials', Prisma.sql`a.material`, Prisma.sql`a.material`),
+      facetCount(filters, locale, 'audiences', Prisma.sql`a.audience`, Prisma.sql`a.audience`),
       prisma.$queryRaw<{ min: number | null; max: number | null }[]>`
         ${categoryCte(filters.categorySlugs)}
         SELECT min(a."priceCents")::int AS min, max(a."priceCents")::int AS max
@@ -334,6 +343,7 @@ export async function getFacets(
     conditions,
     colors,
     materials,
+    audiences,
     priceRange:
       bounds?.min != null && bounds.max != null
         ? { minCents: bounds.min, maxCents: bounds.max }
@@ -447,6 +457,7 @@ export async function getLatestArticles(
       conditions: [],
       colors: [],
       materials: [],
+      audiences: [],
       minPriceCents: null,
       maxPriceCents: null,
       query: null,
@@ -456,4 +467,63 @@ export async function getLatestArticles(
     locale,
     limit: take,
   }).then((page) => page.items)
+}
+
+/**
+ * Une photographie par catégorie, pour illustrer les cartes d'entrée.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi la pièce la plus récente, et pas un visuel choisi
+ * ---------------------------------------------------------------------------
+ * Une image choisie par catégorie supposerait une colonne sur `Category` et un
+ * écran pour la remplir. Or il n'existe AUCUN écran d'administration des
+ * catégories : l'arbre ne se modifie que par le semis. La colonne serait donc
+ * ajoutée, jamais remplie, et les cartes resteraient vides pour toujours.
+ *
+ * La dernière pièce entrée dans la catégorie est un choix qui se tient mieux
+ * qu'un pis-aller : elle montre ce que la boutique a VRAIMENT, elle change
+ * toute seule au rythme de la chine, et elle ne demande aucun travail. Le jour
+ * où un visuel choisi devient souhaitable, il se posera par-dessus.
+ *
+ * ---------------------------------------------------------------------------
+ * `DISTINCT ON` plutôt qu'une requête par catégorie
+ * ---------------------------------------------------------------------------
+ * Douze catégories, ce serait douze allers-retours pour douze images. La
+ * clause propre à PostgreSQL retient une ligne par catégorie en un seul
+ * passage — celle qui vient en tête de l'ordre demandé, donc la plus
+ * récemment publiée.
+ */
+export async function getCategoryCovers(
+  audiences: readonly string[],
+): Promise<Map<string, { url: string; width: number; height: number }>> {
+  const rows = await prisma.$queryRaw<
+    { slug: string; url: string; width: number; height: number }[]
+  >`
+    SELECT DISTINCT ON (c.slug)
+           c.slug  AS slug,
+           i.url   AS url,
+           i.width AS width,
+           i.height AS height
+    FROM "Article" a
+    JOIN "Category" c ON c.id = a."categoryId"
+    JOIN LATERAL (
+      SELECT url, width, height
+      FROM "ArticleImage"
+      WHERE "articleId" = a.id
+      ORDER BY position ASC
+      LIMIT 1
+    ) i ON true
+    WHERE a.status = ANY(${[...LISTED_STATUSES]}::"ArticleStatus"[])
+      AND a."publishedAt" IS NOT NULL
+      AND a."publishedAt" <= now()
+      AND a.audience = ANY(${[...audiences]}::text[])
+    ORDER BY c.slug, a."publishedAt" DESC
+  `
+
+  return new Map(
+    rows.map((row) => [
+      row.slug,
+      { url: row.url, width: row.width, height: row.height },
+    ]),
+  )
 }

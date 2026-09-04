@@ -53,6 +53,7 @@
     "heroCta": "Ver as peças disponíveis",
     "claimReturn": "Devolução em 14 dias",
     "shopBySize": "Por tamanho",
+    "chooseUniverse": "Escolher uma secção",
     "pieceCount": "{count, plural, =0 {nenhuma peça} one {# peça} other {# peças}}"
   },
   "catalogue": {
@@ -77,6 +78,7 @@
       "condition": "Estado",
       "color": "Cor",
       "material": "Material",
+      "audience": "Secção",
       "price": "Preço",
       "priceMin": "Mínimo",
       "priceMax": "Máximo"
@@ -104,6 +106,11 @@
       "denim": "Ganga",
       "cuir": "Couro",
       "velours": "Bombazina"
+    },
+    "audiences": {
+      "femme": "Mulher",
+      "homme": "Homem",
+      "mixte": "Unissexo"
     },
     "fits": {
       "droite": "Corte direito",
@@ -708,6 +715,14 @@
         "homeHeroImageUrl": {
           "label": "Imagem principal da página inicial",
           "hint": "Endereço Cloudinary da fotografia horizontal mostrada à chegada. Deixe vazio enquanto não houver fotografia: o espaço fica sóbrio, sem imagem quebrada."
+        },
+        "universeImageFemmeUrl": {
+          "label": "Imagem do cartão «Mulher»",
+          "hint": "Endereço Cloudinary da fotografia apresentada no cartão Mulher da página inicial. Deixe vazio enquanto não houver fotografia: o cartão fica sóbrio, sem imagem partida."
+        },
+        "universeImageHommeUrl": {
+          "label": "Imagem do cartão «Homem»",
+          "hint": "Endereço Cloudinary da fotografia apresentada no cartão Homem da página inicial. Deixe vazio enquanto não houver fotografia: o cartão fica sóbrio, sem imagem partida."
         }
       }
     },
@@ -797,6 +812,10 @@
         "fit": {
           "label": "Fit",
           "hint": "Used by the catalogue filter."
+        },
+        "audience": {
+          "label": "Secção",
+          "hint": "Decide em que montra a peça aparece. «Unissexo» coloca-a nas duas. Sem valor, permanece no catálogo mas em nenhuma montra."
         },
         "description": {
           "label": "Description",

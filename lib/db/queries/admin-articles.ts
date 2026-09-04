@@ -124,6 +124,7 @@ export interface AdminArticleDetail extends AdminArticleRow {
   color: string | null
   material: string | null
   fit: string | null
+  audience: string | null
   description: string
   descriptionIsGenerated: boolean
   weightGrams: number
@@ -156,6 +157,7 @@ export async function getOwnArticle(
       color: true,
       material: true,
       fit: true,
+      audience: true,
       priceCents: true,
       comparePriceCents: true,
       costCents: true,
@@ -210,6 +212,7 @@ export async function getOwnArticle(
     color: row.color,
     material: row.material,
     fit: row.fit,
+    audience: row.audience,
     priceCents: row.priceCents,
     comparePriceCents: row.comparePriceCents,
     costCents: row.costCents,

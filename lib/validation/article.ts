@@ -3,6 +3,7 @@ import { z } from 'zod'
 import {
   ARTICLE_COLORS,
   ARTICLE_MATERIALS,
+  ARTICLE_AUDIENCES,
   ARTICLE_FITS,
   ARTICLE_CONDITIONS,
   MEASUREMENT_KEYS,
@@ -104,6 +105,10 @@ const articleFields = {
   color: z.enum(ARTICLE_COLORS).optional(),
   material: z.enum(ARTICLE_MATERIALS).optional(),
   fit: z.enum(ARTICLE_FITS).optional(),
+  /* L'univers est saisi ICI et nulle part ailleurs : il n'entre pas dans le
+     contrat d'import, pour ne pas déplacer l'empreinte de synchronisation de
+     tout le stock (voir le commentaire du champ dans prisma/schema.prisma). */
+  audience: z.enum(ARTICLE_AUDIENCES).optional(),
 
   title: z.string().trim().min(3).max(140),
 

@@ -87,6 +87,7 @@ function readFields(formData: FormData) {
     color: optional(formData.get('color')),
     material: optional(formData.get('material')),
     fit: optional(formData.get('fit')),
+    audience: optional(formData.get('audience')),
     title: formData.get('title'),
     description: optional(formData.get('description')),
     priceEuros: formData.get('priceEuros'),
@@ -118,6 +119,7 @@ function toWriteInput(
     color?: ArticleWriteInput['color']
     material?: ArticleWriteInput['material']
     fit?: ArticleWriteInput['fit']
+    audience?: ArticleWriteInput['audience']
     title: string
     description?: string | undefined
     priceEuros: string
@@ -154,6 +156,7 @@ function toWriteInput(
     color: parsed.color,
     material: parsed.material,
     fit: parsed.fit,
+    audience: parsed.audience,
     title: parsed.title,
     description: parsed.description,
     priceCents,
