@@ -83,6 +83,10 @@ export default async function AdminLayout({
     // Juste après les pièces : c'est de là que viennent la plupart d'entre
     // elles, et c'est là qu'on va quand le catalogue paraît incomplet.
     { href: '/admin/inventaire', label: t('inventory.title') },
+    // Juste après l'inventaire : une pièce importée arrive sans univers, et
+    // tant qu'elle n'en a pas elle n'entre dans aucune des deux vitrines.
+    // C'est donc le geste qui suit immédiatement une synchronisation.
+    { href: '/admin/univers', label: t('audiences.title') },
     { href: '/admin/commandes', label: t('orders') },
     { href: '/admin/offres', label: t('offers') },
     { href: '/admin/reglages', label: t('settings.title') },

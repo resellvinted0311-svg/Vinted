@@ -902,6 +902,31 @@
         "notConfigured": "A loja não tem acesso à aplicação de gestão. Falta, nas suas variáveis de ambiente: {missing}. Acrescente-as e volte a publicar.",
         "failed": "A sincronização falhou. Consulte os registos de execução da loja."
       }
+    },
+    "audiences": {
+      "title": "Universos",
+      "intro": "Cada peça pertence a um universo: mulher, homem ou misto quando serve a ambos. É esta arrumação que preenche os dois cartões da montra na página inicial e as grelhas de subcategorias.",
+      "whyItMatters": "Enquanto um dos dois universos não tiver nenhuma peça, os cartões Mulher e Homem não aparecem de todo na página inicial: um cartão que leva a uma grelha vazia vale menos do que nenhum cartão.",
+      "remaining": "{count, plural, =0 {está tudo arrumado} one {# peça por arrumar} other {# peças por arrumar}}",
+      "filterLabel": "Filtrar por categoria",
+      "allCategories": "Todas as categorias",
+      "includeUnlisted": "Mostrar também os rascunhos e as peças retiradas",
+      "onlyListed": "Mostrar apenas as peças à venda",
+      "selectAll": "Selecionar tudo",
+      "selectNone": "Limpar seleção",
+      "selectedCount": "{count, plural, =0 {nenhuma peça selecionada} one {# peça selecionada} other {# peças selecionadas}}",
+      "done": "{count, plural, =0 {Nenhuma peça mudou.} one {# peça arrumada.} other {# peças arrumadas.}}",
+      "alreadyDone": "{count, plural, one {# peça já tinha universo e não foi tocada.} other {# peças já tinham universo e não foram tocadas.}}",
+      "noPhoto": "Sem fotografia",
+      "imported": "Importada",
+      "empty": "Não há nada para arrumar aqui.",
+      "emptyHint": "Todas as peças desta seleção já têm universo. Uma peça mal arrumada corrige-se na sua ficha.",
+      "errors": {
+        "invalidRequest": "O pedido está incompleto. Recarregue a página e tente de novo.",
+        "rateLimited": "Demasiados envios seguidos. Tente de novo daqui a pouco.",
+        "tooMany": "Demasiadas peças de uma vez. Selecione no máximo duzentas por envio.",
+        "empty": "Selecione pelo menos uma peça."
+      }
     }
   },
   "orderEmail": {

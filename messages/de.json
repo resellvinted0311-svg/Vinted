@@ -902,6 +902,31 @@
         "notConfigured": "Der Laden hat keinen Zugang zur Verwaltungs-App. In seinen Umgebungsvariablen fehlt: {missing}. Ergänzen Sie sie und deployen Sie erneut.",
         "failed": "Die Synchronisation ist fehlgeschlagen. Sehen Sie in den Laufzeitprotokollen des Ladens nach."
       }
+    },
+    "audiences": {
+      "title": "Bereiche",
+      "intro": "Jedes Stück gehört zu einem Bereich: Damen, Herren oder Unisex, wenn es zu beiden passt. Diese Zuordnung füllt die beiden Schaufensterkarten auf der Startseite und die Raster der Unterkategorien.",
+      "whyItMatters": "Solange einer der beiden Bereiche kein Stück enthält, erscheinen die Karten Damen und Herren gar nicht auf der Startseite: Eine Karte, die zu einem leeren Raster führt, ist schlechter als keine Karte.",
+      "remaining": "{count, plural, =0 {alles ist zugeordnet} one {# Stück zuzuordnen} other {# Stücke zuzuordnen}}",
+      "filterLabel": "Nach Kategorie filtern",
+      "allCategories": "Alle Kategorien",
+      "includeUnlisted": "Auch Entwürfe und zurückgezogene Stücke anzeigen",
+      "onlyListed": "Nur Stücke im Verkauf anzeigen",
+      "selectAll": "Alle auswählen",
+      "selectNone": "Auswahl aufheben",
+      "selectedCount": "{count, plural, =0 {kein Stück ausgewählt} one {# Stück ausgewählt} other {# Stücke ausgewählt}}",
+      "done": "{count, plural, =0 {Kein Stück wurde geändert.} one {# Stück zugeordnet.} other {# Stücke zugeordnet.}}",
+      "alreadyDone": "{count, plural, one {# Stück hatte bereits einen Bereich und blieb unverändert.} other {# Stücke hatten bereits einen Bereich und blieben unverändert.}}",
+      "noPhoto": "Ohne Foto",
+      "imported": "Importiert",
+      "empty": "Hier gibt es nichts zuzuordnen.",
+      "emptyHint": "Alle Stücke dieser Auswahl haben bereits einen Bereich. Ein falsch zugeordnetes Stück wird auf seiner eigenen Seite korrigiert.",
+      "errors": {
+        "invalidRequest": "Die Anfrage ist unvollständig. Laden Sie die Seite neu und versuchen Sie es erneut.",
+        "rateLimited": "Zu viele Übermittlungen hintereinander. Versuchen Sie es gleich noch einmal.",
+        "tooMany": "Zu viele Stücke auf einmal. Wählen Sie höchstens zweihundert pro Übermittlung.",
+        "empty": "Wählen Sie mindestens ein Stück aus."
+      }
     }
   },
   "orderEmail": {

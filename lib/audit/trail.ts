@@ -74,6 +74,21 @@ export type AuditAction =
    * rien apprendre que le catalogue ne dise déjà.
    */
   | 'inventory.pulled'
+  /**
+   * Des pièces rangées dans un univers — Femme, Homme, Mixte — depuis la régie.
+   *
+   * Consigné parce que ce geste écrit en masse et décide de la VISIBILITÉ :
+   * une pièce sans univers n'apparaît dans aucune des deux vitrines, une pièce
+   * mal rangée apparaît dans la mauvaise. Le jour où une vitrine paraîtra
+   * s'être vidée toute seule, il faudra pouvoir dire qui a passé quel lot.
+   *
+   * Une entrée par LOT, `entityId` valant `batch`, comme pour l'inventaire :
+   * la charge utile dit l'univers posé et le nombre de pièces touchées, jamais
+   * la liste des identifiants — quelques centaines de lignes recopiées dans
+   * une table conservée longtemps n'apprendraient rien que le catalogue ne
+   * dise déjà.
+   */
+  | 'articles.qualified'
 
 /** Ce qu'une charge utile d'audit a le droit de contenir. */
 export type AuditValue = string | number | boolean | null

@@ -902,6 +902,31 @@
         "notConfigured": "De winkel heeft geen toegang tot de beheer-app. Ontbreekt in haar omgevingsvariabelen: {missing}. Voeg ze toe en deploy opnieuw.",
         "failed": "De synchronisatie is mislukt. Raadpleeg de uitvoeringslogboeken van de winkel."
       }
+    },
+    "audiences": {
+      "title": "Werelden",
+      "intro": "Elk stuk hoort bij een wereld: dames, heren of unisex wanneer het bij beide past. Deze indeling vult de twee etalagekaarten op de startpagina en de rasters met subcategorieën.",
+      "whyItMatters": "Zolang een van beide werelden geen enkel stuk bevat, verschijnen de kaarten Dames en Heren helemaal niet op de startpagina: een kaart die naar een leeg raster leidt, is minder waard dan geen kaart.",
+      "remaining": "{count, plural, =0 {alles is ingedeeld} one {# stuk in te delen} other {# stukken in te delen}}",
+      "filterLabel": "Filteren op categorie",
+      "allCategories": "Alle categorieën",
+      "includeUnlisted": "Toon ook concepten en teruggetrokken stukken",
+      "onlyListed": "Toon alleen stukken die te koop staan",
+      "selectAll": "Alles selecteren",
+      "selectNone": "Selectie wissen",
+      "selectedCount": "{count, plural, =0 {geen stuk geselecteerd} one {# stuk geselecteerd} other {# stukken geselecteerd}}",
+      "done": "{count, plural, =0 {Er is niets gewijzigd.} one {# stuk ingedeeld.} other {# stukken ingedeeld.}}",
+      "alreadyDone": "{count, plural, one {# stuk had al een wereld en is ongemoeid gelaten.} other {# stukken hadden al een wereld en zijn ongemoeid gelaten.}}",
+      "noPhoto": "Zonder foto",
+      "imported": "Geïmporteerd",
+      "empty": "Hier valt niets in te delen.",
+      "emptyHint": "Alle stukken in deze selectie hebben al een wereld. Een verkeerd ingedeeld stuk corrigeert u op zijn eigen pagina.",
+      "errors": {
+        "invalidRequest": "Het verzoek is onvolledig. Herlaad de pagina en probeer het opnieuw.",
+        "rateLimited": "Te veel verzendingen achter elkaar. Probeer het zo meteen opnieuw.",
+        "tooMany": "Te veel stukken tegelijk. Selecteer er hoogstens tweehonderd per verzending.",
+        "empty": "Selecteer minstens één stuk."
+      }
     }
   },
   "orderEmail": {

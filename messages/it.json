@@ -902,6 +902,31 @@
         "notConfigured": "La boutique non ha accesso all’applicazione di gestione. Manca, nelle sue variabili d’ambiente: {missing}. Le aggiunga, poi rilanci il deploy.",
         "failed": "La sincronizzazione non è riuscita. Consulti i registri di esecuzione della boutique."
       }
+    },
+    "audiences": {
+      "title": "Universi",
+      "intro": "Ogni pezzo appartiene a un universo: donna, uomo o misto quando va bene per entrambi. È questa classificazione a riempire le due schede della vetrina in home page e le griglie delle sottocategorie.",
+      "whyItMatters": "Finché uno dei due universi non ha nessun pezzo, le schede Donna e Uomo non compaiono affatto in home page: una scheda che porta a una griglia vuota vale meno di nessuna scheda.",
+      "remaining": "{count, plural, =0 {è tutto classificato} one {# pezzo da classificare} other {# pezzi da classificare}}",
+      "filterLabel": "Filtra per categoria",
+      "allCategories": "Tutte le categorie",
+      "includeUnlisted": "Mostra anche le bozze e i pezzi ritirati",
+      "onlyListed": "Mostra solo i pezzi in vendita",
+      "selectAll": "Seleziona tutto",
+      "selectNone": "Deseleziona tutto",
+      "selectedCount": "{count, plural, =0 {nessun pezzo selezionato} one {# pezzo selezionato} other {# pezzi selezionati}}",
+      "done": "{count, plural, =0 {Nessun pezzo è cambiato.} one {# pezzo classificato.} other {# pezzi classificati.}}",
+      "alreadyDone": "{count, plural, one {# pezzo aveva già un universo ed è rimasto invariato.} other {# pezzi avevano già un universo e sono rimasti invariati.}}",
+      "noPhoto": "Senza foto",
+      "imported": "Importato",
+      "empty": "Non c’è nulla da classificare qui.",
+      "emptyHint": "Tutti i pezzi di questa selezione hanno già un universo. Un pezzo classificato male si corregge nella sua scheda.",
+      "errors": {
+        "invalidRequest": "La richiesta è incompleta. Ricarica la pagina e riprova.",
+        "rateLimited": "Troppi invii di seguito. Riprova tra poco.",
+        "tooMany": "Troppi pezzi in una volta. Selezionane al massimo duecento per invio.",
+        "empty": "Seleziona almeno un pezzo."
+      }
     }
   },
   "orderEmail": {

@@ -222,3 +222,31 @@ export const imageActionSchema = z
     action: z.enum(['remove', 'up', 'down']),
   })
   .strict()
+
+/**
+ * Ranger un lot de pièces dans un univers.
+ *
+ * ---------------------------------------------------------------------------
+ * Le plafond de 200 est une borne de SÉCURITÉ, pas une commodité d'écran
+ * ---------------------------------------------------------------------------
+ * Une action serveur est une adresse HTTP : rien n'oblige l'appelant à venir
+ * du formulaire. Sans borne, un seul envoi peut porter cent mille identifiants,
+ * ouvrir une transaction qui les tient tous, et immobiliser la connexion que
+ * la production accorde à l'instance — le reste du site avec.
+ *
+ * La même borne est reposée dans `qualifyArticles`, et ce n'est pas une
+ * redondance inutile : le schéma garde l'entrée du formulaire, la fonction
+ * garde le domaine contre tout autre appelant à venir.
+ *
+ * `audience` est validé par la même énumération que la fiche article — une
+ * valeur libre créerait une facette fantôme qu'aucune vitrine ne sait ouvrir.
+ */
+export const qualifyAudienceSchema = z
+  .object({
+    audience: z.enum(ARTICLE_AUDIENCES),
+    articleIds: z
+      .array(z.string().trim().min(1).max(64))
+      .min(1)
+      .max(200),
+  })
+  .strict()

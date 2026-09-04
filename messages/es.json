@@ -902,6 +902,31 @@
         "notConfigured": "La tienda no tiene acceso a la aplicación de gestión. Falta, en sus variables de entorno: {missing}. Añádalas y vuelva a desplegar.",
         "failed": "La sincronización ha fallado. Consulte los registros de ejecución de la tienda."
       }
+    },
+    "audiences": {
+      "title": "Universos",
+      "intro": "Cada pieza pertenece a un universo: mujer, hombre o mixto cuando sirve para ambos. Es esta clasificación la que llena las dos tarjetas del escaparate en la portada y las cuadrículas de subcategorías.",
+      "whyItMatters": "Mientras uno de los dos universos no tenga ninguna pieza, las tarjetas Mujer y Hombre no aparecen en la portada: una tarjeta que lleva a una cuadrícula vacía vale menos que ninguna tarjeta.",
+      "remaining": "{count, plural, =0 {todo está clasificado} one {# pieza por clasificar} other {# piezas por clasificar}}",
+      "filterLabel": "Filtrar por categoría",
+      "allCategories": "Todas las categorías",
+      "includeUnlisted": "Mostrar también borradores y piezas retiradas",
+      "onlyListed": "Mostrar solo las piezas a la venta",
+      "selectAll": "Marcar todo",
+      "selectNone": "Desmarcar todo",
+      "selectedCount": "{count, plural, =0 {ninguna pieza marcada} one {# pieza marcada} other {# piezas marcadas}}",
+      "done": "{count, plural, =0 {No ha cambiado ninguna pieza.} one {# pieza clasificada.} other {# piezas clasificadas.}}",
+      "alreadyDone": "{count, plural, one {# pieza ya tenía universo y no se ha tocado.} other {# piezas ya tenían universo y no se han tocado.}}",
+      "noPhoto": "Sin foto",
+      "imported": "Importada",
+      "empty": "Nada que clasificar aquí.",
+      "emptyHint": "Todas las piezas de esta selección ya tienen universo. Una pieza mal clasificada se corrige en su ficha.",
+      "errors": {
+        "invalidRequest": "La solicitud está incompleta. Recargue la página e inténtelo de nuevo.",
+        "rateLimited": "Demasiados envíos seguidos. Inténtelo de nuevo en un momento.",
+        "tooMany": "Demasiadas piezas a la vez. Marque como máximo doscientas por envío.",
+        "empty": "Marque al menos una pieza."
+      }
     }
   },
   "orderEmail": {

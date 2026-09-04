@@ -902,6 +902,31 @@
         "notConfigured": "Sklep nie ma dostępu do aplikacji zarządzającej. W jego zmiennych środowiskowych brakuje: {missing}. Proszę je dodać i wdrożyć ponownie.",
         "failed": "Synchronizacja nie powiodła się. Proszę sprawdzić dzienniki wykonania sklepu."
       }
+    },
+    "audiences": {
+      "title": "Działy",
+      "intro": "Każda rzecz należy do działu: damskiego, męskiego lub uniwersalnego, gdy pasuje do obu. To właśnie ten podział wypełnia dwie karty witryny na stronie głównej oraz siatki podkategorii.",
+      "whyItMatters": "Dopóki jeden z dwóch działów nie ma żadnej rzeczy, karty Damskie i Męskie w ogóle nie pojawiają się na stronie głównej: karta prowadząca do pustej siatki jest gorsza niż jej brak.",
+      "remaining": "{count, plural, =0 {wszystko jest przypisane} one {# rzecz do przypisania} few {# rzeczy do przypisania} many {# rzeczy do przypisania} other {# rzeczy do przypisania}}",
+      "filterLabel": "Filtruj według kategorii",
+      "allCategories": "Wszystkie kategorie",
+      "includeUnlisted": "Pokaż także szkice i rzeczy wycofane",
+      "onlyListed": "Pokaż tylko rzeczy w sprzedaży",
+      "selectAll": "Zaznacz wszystko",
+      "selectNone": "Odznacz wszystko",
+      "selectedCount": "{count, plural, =0 {nie zaznaczono żadnej rzeczy} one {zaznaczono # rzecz} few {zaznaczono # rzeczy} many {zaznaczono # rzeczy} other {zaznaczono # rzeczy}}",
+      "done": "{count, plural, =0 {Nic się nie zmieniło.} one {Przypisano # rzecz.} few {Przypisano # rzeczy.} many {Przypisano # rzeczy.} other {Przypisano # rzeczy.}}",
+      "alreadyDone": "{count, plural, one {# rzecz miała już dział i pozostała bez zmian.} few {# rzeczy miały już dział i pozostały bez zmian.} many {# rzeczy miało już dział i pozostało bez zmian.} other {# rzeczy miało już dział i pozostało bez zmian.}}",
+      "noPhoto": "Bez zdjęcia",
+      "imported": "Zaimportowana",
+      "empty": "Nie ma tu nic do przypisania.",
+      "emptyHint": "Wszystkie rzeczy w tym wyborze mają już dział. Źle przypisaną rzecz poprawia się na jej własnej stronie.",
+      "errors": {
+        "invalidRequest": "Żądanie jest niekompletne. Odśwież stronę i spróbuj ponownie.",
+        "rateLimited": "Zbyt wiele wysłań pod rząd. Spróbuj ponownie za chwilę.",
+        "tooMany": "Zbyt wiele rzeczy naraz. Zaznacz najwyżej dwieście na jedno wysłanie.",
+        "empty": "Zaznacz przynajmniej jedną rzecz."
+      }
     }
   },
   "orderEmail": {

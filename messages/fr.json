@@ -902,6 +902,31 @@
         "notConfigured": "La boutique n’a pas les accès à l’application de gestion. Il manque, dans ses variables d’environnement : {missing}. Ajoutez-les, puis redéployez.",
         "failed": "La synchronisation a échoué. Consultez les journaux d’exécution de la boutique."
       }
+    },
+    "audiences": {
+      "title": "Univers",
+      "intro": "Chaque pièce appartient à un univers : femme, homme, ou mixte quand elle convient aux deux. C’est ce rangement qui remplit les deux vitrines de l’accueil et les grilles de sous-catégories.",
+      "whyItMatters": "Tant que l’un des deux univers n’a aucune pièce, les cartes Femme et Homme ne s’affichent pas du tout sur l’accueil : une carte qui mène à une grille vide vaut moins que pas de carte.",
+      "remaining": "{count, plural, =0 {tout est rangé} one {# pièce à ranger} other {# pièces à ranger}}",
+      "filterLabel": "Filtrer par catégorie",
+      "allCategories": "Toutes les catégories",
+      "includeUnlisted": "Afficher aussi les brouillons et les pièces retirées",
+      "onlyListed": "N’afficher que les pièces en vente",
+      "selectAll": "Tout cocher",
+      "selectNone": "Tout décocher",
+      "selectedCount": "{count, plural, =0 {aucune pièce cochée} one {# pièce cochée} other {# pièces cochées}}",
+      "done": "{count, plural, =0 {Aucune pièce n’a changé.} one {# pièce rangée.} other {# pièces rangées.}}",
+      "alreadyDone": "{count, plural, one {# pièce avait déjà un univers : elle n’a pas été touchée.} other {# pièces avaient déjà un univers : elles n’ont pas été touchées.}}",
+      "noPhoto": "Sans photo",
+      "imported": "Importée",
+      "empty": "Rien à ranger ici.",
+      "emptyHint": "Toutes les pièces de cette sélection ont déjà un univers. Une pièce mal rangée se corrige sur sa fiche.",
+      "errors": {
+        "invalidRequest": "La demande est incomplète. Rechargez la page et recommencez.",
+        "rateLimited": "Trop d’envois coup sur coup. Réessayez dans un moment.",
+        "tooMany": "Trop de pièces d’un coup. Cochez-en deux cents au plus par envoi.",
+        "empty": "Cochez au moins une pièce."
+      }
     }
   },
   "orderEmail": {
