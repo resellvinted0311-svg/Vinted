@@ -10,6 +10,8 @@ import {
   presentDatabaseEnvNames,
   wasUserinfoEncoded,
   withBuildParams,
+  BUILD_WORKERS,
+  BUILD_TOTAL_CONNECTIONS,
 } from '@/lib/db/database-url'
 
 /**
@@ -84,7 +86,7 @@ describe('profil de connexion du build', () => {
 
     const build = withBuildParams(runtime?.value ?? '')
     expect(build).not.toContain('connection_limit=1&')
-    expect(build).toContain('connection_limit=8')
+    expect(build).toContain('connection_limit=5')
     expect(build).toContain('pool_timeout=30')
   })
 
@@ -102,7 +104,7 @@ describe('profil de connexion du build', () => {
 
   it('pose les paramètres sur une URL qui n’en a aucun', () => {
     const build = withBuildParams(LOCAL.DATABASE_URL)
-    expect(build).toContain('connection_limit=8')
+    expect(build).toContain('connection_limit=5')
     expect(build).toContain('pool_timeout=30')
     expect(build).toContain('schema=public')
     expect(build).not.toContain('??')
@@ -399,5 +401,62 @@ describe('marqueur de mot de passe non remplacé', () => {
     expect(
       describeConnectionProblem(`postgresql://postgres.abc:Xk%5B92mQvz@${HOST}`),
     ).toBeNull()
+  })
+})
+
+describe('le budget de connexions du build', () => {
+  /**
+   * Ces deux nombres se multiplient, et leur produit a un plafond.
+   *
+   * ---------------------------------------------------------------------------
+   * Le build qui a échoué
+   * ---------------------------------------------------------------------------
+   * Next prérend sur un worker par cœur, chaque worker étant un processus
+   * distinct avec son propre client Prisma — donc son propre pool. Huit
+   * connexions par worker et deux cœurs, cela fait seize demandées ; le pooler
+   * Supabase en mode session en accorde quinze. Le prérendu s'est arrêté à la
+   * 67ᵉ page sur 269, avec « (EMAXCONNSESSION) max clients reached in session
+   * mode » — une erreur qui désigne la base alors que la base va très bien.
+   *
+   * Le réglage tenait tant que le site comptait moins de pages : les deux
+   * workers n'atteignaient jamais leur plafond en même temps. Seize pages de
+   * plus ont suffi. Ce n'était pas un seuil franchi, c'était un seuil qu'on
+   * frôlait depuis le début.
+   *
+   * ---------------------------------------------------------------------------
+   * Pourquoi ce test, et pas seulement un commentaire
+   * ---------------------------------------------------------------------------
+   * Le prochain build lent donnera envie de relever la limite par worker, ou
+   * le nombre de workers. Pris séparément, chacun paraît inoffensif : c'est
+   * leur PRODUIT qui casse, et il ne se lit dans aucun des deux fichiers.
+   *
+   * Le mode de panne, lui, ne ressemble pas à sa cause : le build échoue sur
+   * une page de marques, en parlant de la base.
+   */
+  const PLAFOND_POOLER = 15
+
+  it('reste sous le plafond du pooler, marge comprise', () => {
+    const build = withBuildParams('postgres://u:pw@hote:5432/db')
+    const limite = Number(/connection_limit=(\d+)/.exec(build)?.[1])
+
+    expect(limite, 'la limite par worker doit être lisible').toBeGreaterThan(0)
+    expect(
+      BUILD_WORKERS * limite,
+      `${BUILD_WORKERS} workers × ${limite} connexions dépasse le budget`,
+    ).toBeLessThanOrEqual(BUILD_TOTAL_CONNECTIONS)
+    expect(
+      BUILD_TOTAL_CONNECTIONS,
+      'le budget doit garder une marge sous le plafond du pooler',
+    ).toBeLessThan(PLAFOND_POOLER)
+  })
+
+  it('laisse assez de connexions à chaque worker pour ne pas mettre en file', () => {
+    // L'autre bord : à une seule connexion, les requêtes du prérendu font la
+    // queue et dépassent le délai du pool (Prisma P2024). C'est le défaut que
+    // ce profil de build a été créé pour corriger — le corriger dans l'autre
+    // sens serait le rouvrir.
+    const build = withBuildParams('postgres://u:pw@hote:5432/db')
+    const limite = Number(/connection_limit=(\d+)/.exec(build)?.[1])
+    expect(limite).toBeGreaterThanOrEqual(2)
   })
 })

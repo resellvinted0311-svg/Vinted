@@ -435,33 +435,56 @@ async function seedArticles(
   categoryIdBySlug: Map<string, string>,
 ): Promise<void> {
   /*
-    `orderBy` n'est pas décoratif : sans lui, le semis n'est PAS déterministe.
+    Les marques viennent du DÉPÔT, jamais de la base.
 
     ---------------------------------------------------------------------------
-    Le défaut, et comment il a fini par se montrer
+    Le défaut, et pourquoi il était si difficile à voir
     ---------------------------------------------------------------------------
-    Cette lecture n'ordonnait rien. PostgreSQL rend alors les lignes dans
-    l'ordre physique de la table, qui n'est garanti par rien : il change après
-    une mise à jour, après un passage de l'autovacuum, après l'ajout d'une
-    colonne. `pick(brandRecords)` tirait donc la marque dans une liste dont
-    l'ORDRE variait d'un semis à l'autre — pour une graine identique et une
-    séquence de tirages identique.
+    Cette liste était lue par un `findMany` sur la table des marques. Deux
+    choses en découlaient, et chacune suffisait à rendre le semis NON
+    déterministe.
 
-    Autrement dit : le catalogue de démonstration changeait de marques tout
-    seul, sans qu'une ligne de code bouge. Le commentaire trois lignes plus
-    bas se donne pourtant du mal pour que « la séquence du générateur soit
-    identique que la ligne existe déjà ou non » — cette précaution-là était
-    entièrement annulée par cette lecture-ci.
+    D'abord l'ordre : sans `orderBy`, PostgreSQL rend les lignes dans l'ordre
+    physique de la table, qui change après une mise à jour, un passage de
+    l'autovacuum ou l'ajout d'une colonne.
 
-    Le symptôme était rare et incompréhensible : un test qui échoue une fois
-    sur dix, sur une pièce désignée par son adresse, et qui repasse au
-    rejeu. Il a fallu qu'une migration réorganise la table pour que deux
-    adresses changent d'un coup et que le garde-fou des pièces de
-    démonstration le nomme en une seconde.
+    Ensuite, et c'est le pire : le NOMBRE de marques dépend de ce que les
+    tests ont laissé derrière eux. `tests/integration/admin-articles.test.ts`
+    crée une pièce dont la marque est saisie en texte libre — « Maison Test »
+    — et l'application crée alors la marque. La table en compte donc cinq sur
+    une base neuve, et six dès que la suite a tourné une fois.
+
+    Or `pick` traduit un tirage en INDICE : le même nombre aléatoire désigne
+    la deuxième marque sur cinq et la troisième sur six. Le catalogue de
+    démonstration changeait donc de marques selon qu'on avait ou non lancé les
+    tests sur cette base — sans qu'une ligne de code bouge, et sans que rien
+    ne le signale.
+
+    Le symptôme était rare et illisible : un test qui échoue une fois sur dix
+    sur une pièce désignée par son adresse, et qui repasse au rejeu. Il a
+    fallu comparer une base fraîche à une base de travail pour le voir.
+
+    `BRANDS` est une constante du dépôt : cinq entrées, dans un ordre écrit et
+    versionné. La base ne sert plus qu'à retrouver l'identifiant.
   */
-  const brandRecords = await prisma.brand.findMany({
-    select: { id: true, slug: true, name: true },
-    orderBy: { slug: 'asc' },
+  const brandIdBySlug = new Map(
+    (
+      await prisma.brand.findMany({
+        where: { slug: { in: BRANDS.map((brand) => brand.slug) } },
+        select: { id: true, slug: true },
+      })
+    ).map((row) => [row.slug, row.id]),
+  )
+
+  const brandRecords = BRANDS.map((brand) => {
+    const id = brandIdBySlug.get(brand.slug)
+    if (!id) {
+      throw new Error(
+        `Marque « ${brand.slug} » absente de la base : le semis des marques ` +
+          'doit passer avant celui des articles.',
+      )
+    }
+    return { id, slug: brand.slug, name: brand.name }
   })
   const categoryBySlug = new Map(
     CATEGORIES.map((category) => [category.slug, category]),

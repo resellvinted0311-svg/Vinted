@@ -24,16 +24,25 @@
  * ---------------------------------------------------------------------------
  * Le garde-fou a servi le lendemain, sur un défaut bien pire
  * ---------------------------------------------------------------------------
- * Le semis lisait les marques par un `findMany` SANS `orderBy`. PostgreSQL
- * rend alors les lignes dans leur ordre physique, qui change après une mise à
- * jour, un passage de l'autovacuum ou l'ajout d'une colonne. La marque de
- * chaque pièce était donc tirée dans une liste dont l'ordre variait d'un semis
- * à l'autre : le catalogue de démonstration changeait tout seul, sans qu'une
- * ligne de code bouge.
+ * Le semis tirait la marque de chaque pièce dans la TABLE des marques, et non
+ * dans la liste du dépôt. Deux conséquences, chacune suffisante.
  *
- * Le symptôme était rare et illisible — un test qui échoue une fois sur dix et
- * repasse au rejeu. Il a fallu qu'une migration réorganise la table pour que
- * deux adresses changent d'un coup et que ce fichier le nomme en une seconde.
+ * L'ordre d'abord : sans `orderBy`, PostgreSQL rend les lignes dans l'ordre
+ * physique de la table, qui change après une mise à jour ou l'ajout d'une
+ * colonne.
+ *
+ * Le nombre ensuite, et c'est le pire :
+ * `tests/integration/admin-articles.test.ts` crée une pièce dont la marque est
+ * saisie en texte libre — « Maison Test » — et l'application crée alors la
+ * marque. La table en compte cinq sur une base neuve, six dès que la suite a
+ * tourné une fois. Or un tirage se traduit en INDICE : le même nombre désigne
+ * la deuxième marque sur cinq et la troisième sur six.
+ *
+ * Le catalogue de démonstration changeait donc selon qu'on avait ou non lancé
+ * les tests sur cette base. C'est ce qui faisait échouer un test une fois sur
+ * dix en local — et échouer l'intégration continue à tous les coups, puisque
+ * sa base est toujours neuve. Les marques viennent désormais de `BRANDS`, une
+ * constante du dépôt ; la base ne sert plus qu'à retrouver l'identifiant.
  *
  * ---------------------------------------------------------------------------
  * Ce qui les vérifie
@@ -46,7 +55,7 @@
  */
 
 /** Disponible, légère, ajoutable au panier. Sert au parcours d'achat. */
-export const PIECE_ACHETABLE = 'accessoires-uniqlo-l-8'
+export const PIECE_ACHETABLE = 'accessoires-burberry-l-8'
 
 /**
  * Disponible, négociable, et sa fenêtre d'offres est OUVERTE.
@@ -56,7 +65,7 @@ export const PIECE_ACHETABLE = 'accessoires-uniqlo-l-8'
  * qu'exerce le test « enregistre une proposition » — l'offre doit attendre une
  * réponse, ni être acceptée, ni être refusée sur-le-champ.
  */
-export const PIECE_NEGOCIABLE = 'sacs-burberry-tu-12'
+export const PIECE_NEGOCIABLE = 'sacs-levis-tu-12'
 
 /** Déjà partie : sa page reste consultable, elle ne se négocie plus. */
-export const PIECE_VENDUE = 'robes-maison-test-36-43'
+export const PIECE_VENDUE = 'robes-uniqlo-36-43'

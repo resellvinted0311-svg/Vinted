@@ -1,6 +1,7 @@
 import createNextIntlPlugin from 'next-intl/plugin'
 import type { NextConfig } from 'next'
 import { buildCsp } from './lib/security/csp'
+import { BUILD_WORKERS } from './lib/db/database-url'
 
 const withNextIntl = createNextIntlPlugin('./lib/i18n/request.ts')
 
@@ -55,6 +56,28 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+
+  experimental: {
+    /**
+     * Combien de processus prérendent les pages, en même temps.
+     *
+     * Par défaut : un par cœur. Chacun porte son propre client Prisma, donc
+     * son propre pool de connexions — le nombre de connexions ouvertes vers
+     * la base est le PRODUIT des deux, et il se compare au plafond que la
+     * base impose.
+     *
+     * Un build a déjà échoué là-dessus : deux cœurs × huit connexions = seize
+     * demandées pour quinze disponibles chez le pooler, et le prérendu s'est
+     * arrêté à la 67ᵉ page sur 269 avec « max clients reached in session
+     * mode ». Laisser ce nombre suivre la machine, c'est accepter que le
+     * même code passe ou échoue selon l'endroit où on le construit.
+     *
+     * Le budget de connexions et son arithmétique vivent dans
+     * `lib/db/database-url.ts`, à côté de la limite par worker qui s'en
+     * déduit.
+     */
+    cpus: BUILD_WORKERS,
+  },
 
   typescript: {
     // Jamais de build qui passe malgré une erreur de type.

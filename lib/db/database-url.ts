@@ -356,14 +356,59 @@ function setParam(url: string, name: string, value: string): string {
 }
 
 /**
- * Nombre de connexions ouvertes pendant le build, et délai d'attente du pool.
+ * Combien de processus prérendent les pages, et combien de connexions chacun
+ * a le droit d'ouvrir.
  *
- * Volontairement à l'opposé du réglage applicatif. Next prérend les pages sur
- * un worker par cœur, et chaque worker rend plusieurs pages de front : une
- * seule page d'accueil déclenche déjà quatre requêtes en parallèle, une page
- * de catalogue une dizaine.
+ * ---------------------------------------------------------------------------
+ * Ces deux nombres se multiplient, et leur produit a un plafond
+ * ---------------------------------------------------------------------------
+ * Next prérend sur un worker PAR CŒUR, chaque worker étant un processus
+ * distinct avec son propre client Prisma — donc son propre pool. Le nombre de
+ * connexions ouvertes vers la base est le PRODUIT des deux, et il se compare à
+ * un plafond que la base impose.
+ *
+ * Chez Supabase, le pooler en mode session (port 5432) limite le nombre de
+ * clients à `pool_size`, soit quinze par défaut. Au-delà, la connexion suivante
+ * n'attend pas : elle est refusée, avec
+ * « (EMAXCONNSESSION) max clients reached in session mode ».
+ *
+ * ---------------------------------------------------------------------------
+ * Le build qui a échoué
+ * ---------------------------------------------------------------------------
+ * Huit connexions par worker, deux cœurs sur la machine de build : seize
+ * demandées pour quinze disponibles. Le prérendu s'arrêtait à la 67ᵉ page sur
+ * 269, sur `/pt/marques`, avec une erreur qui désigne la base alors que la
+ * base va parfaitement bien.
+ *
+ * Le réglage tenait tant que le site comptait moins de pages : les deux
+ * workers n'atteignaient jamais leur plafond en même temps. Seize pages de
+ * plus ont suffi. Autrement dit, ce n'était pas un seuil franchi, c'était un
+ * seuil qu'on frôlait depuis le début.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi épingler le nombre de workers
+ * ---------------------------------------------------------------------------
+ * Sans cela, le produit dépend de la machine qui construit : deux cœurs
+ * aujourd'hui, huit demain, et le plafond serait franchi de nouveau sans
+ * qu'une ligne de code ait bougé. `next.config.ts` impose donc ce nombre, et
+ * la limite par worker s'en déduit — l'arithmétique est écrite une fois, ici.
  */
-const BUILD_CONNECTION_LIMIT = 8
+export const BUILD_WORKERS = 2
+
+/**
+ * Plafond que le PRODUIT ne doit pas franchir.
+ *
+ * Dix, et non quinze : la marge couvre la connexion des migrations, qui vient
+ * de se fermer mais que le pooler peut encore compter, et les connexions que
+ * l'hébergeur se réserve. Un plafond calculé au ras du plafond réel n'est pas
+ * un plafond.
+ */
+export const BUILD_TOTAL_CONNECTIONS = 10
+
+const BUILD_CONNECTION_LIMIT = Math.max(
+  2,
+  Math.floor(BUILD_TOTAL_CONNECTIONS / BUILD_WORKERS),
+)
 const BUILD_POOL_TIMEOUT_SECONDS = 30
 
 /**
