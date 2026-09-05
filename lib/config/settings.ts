@@ -114,29 +114,52 @@ const nonNegativeInt = z.number().int().nonnegative()
  * au mot près. Trois copies d'un même contrôle de quarante lignes, ce sont
  * trois occasions d'en corriger deux.
  */
-const imageUrlSetting = z
-  .string()
-  .trim()
-  .url()
-  .max(2048)
-  .refine(
-    (value) => {
-      let url: URL
-      try {
-        url = new URL(value)
-      } catch {
-        return false
-      }
-      if (url.protocol !== 'https:') return false
-      if (url.hostname !== 'res.cloudinary.com') return false
-      return url.pathname.includes('/image/upload/')
-    },
-    {
-      message:
-        'l’adresse doit être une image Cloudinary de la boutique (https://res.cloudinary.com/…/image/upload/…)',
-    },
-  )
-  .nullable()
+function cloudinarySetting(
+  segments: readonly string[],
+  message: string,
+): z.ZodNullable<z.ZodString> {
+  return z
+    .string()
+    .trim()
+    .url()
+    .max(2048)
+    .refine(
+      (value) => {
+        let url: URL
+        try {
+          url = new URL(value)
+        } catch {
+          return false
+        }
+        if (url.protocol !== 'https:') return false
+        if (url.hostname !== 'res.cloudinary.com') return false
+        return segments.some((segment) => url.pathname.includes(segment))
+      },
+      { message },
+    )
+    .nullable() as z.ZodNullable<z.ZodString>
+}
+
+const imageUrlSetting = cloudinarySetting(
+  ['/image/upload/'],
+  'l’adresse doit être une image Cloudinary de la boutique (https://res.cloudinary.com/…/image/upload/…)',
+)
+
+/**
+ * Le visuel d'arrivée accepte une VIDÉO autant qu'une photographie.
+ *
+ * C'est ce qui a été demandé pour la vitrine : un grand cadre où l'on posera
+ * « une vidéo ou une photo ». La distinction se fait au segment de ressource
+ * Cloudinary, et la page choisit la balise en conséquence.
+ *
+ * Les cartes d'univers, elles, restent en image seule : trois vidéos qui se
+ * lancent ensemble sur une même page coûtent la bande passante d'un site
+ * entier, et personne ne les regarde.
+ */
+const heroMediaSetting = cloudinarySetting(
+  ['/image/upload/', '/video/upload/'],
+  'l’adresse doit être une image ou une vidéo Cloudinary de la boutique (https://res.cloudinary.com/…/image/upload/… ou …/video/upload/…)',
+)
 
 /**
  * Réglages connus et leur forme attendue.
@@ -247,7 +270,7 @@ const SCHEMAS = {
   floorShippingZoneCode: z.string().min(1).max(32),
 
   /** Les trois visuels éditoriaux de la vitrine. Voir `imageUrlSetting`. */
-  homeHeroImageUrl: imageUrlSetting,
+  homeHeroImageUrl: heroMediaSetting,
   /**
    * Les visuels des deux cartes d'univers, sur la vitrine.
    *

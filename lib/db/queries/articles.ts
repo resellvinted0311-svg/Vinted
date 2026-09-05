@@ -496,6 +496,20 @@ export async function getLatestArticles(
 export async function getCategoryCovers(
   audiences: readonly string[],
 ): Promise<Map<string, { url: string; width: number; height: number }>> {
+  /**
+   * Une liste d'univers VIDE veut dire « sans distinction », pas « aucune ».
+   *
+   * `a.audience = ANY('{}')` n'est vrai pour aucune ligne : passer un tableau
+   * vide ne relâchait pas la restriction, il rendait zéro visuel. Les cartes
+   * de rayon seraient alors restées au lavis pour toujours sur une boutique
+   * non triée — alors que les photographies existent et qu'on peut les
+   * montrer.
+   */
+  const restrictionUnivers =
+    audiences.length === 0
+      ? Prisma.empty
+      : Prisma.sql`AND a.audience = ANY(${[...audiences]}::text[])`
+
   const rows = await prisma.$queryRaw<
     { slug: string; url: string; width: number; height: number }[]
   >`
@@ -516,7 +530,7 @@ export async function getCategoryCovers(
     WHERE a.status = ANY(${[...LISTED_STATUSES]}::"ArticleStatus"[])
       AND a."publishedAt" IS NOT NULL
       AND a."publishedAt" <= now()
-      AND a.audience = ANY(${[...audiences]}::text[])
+      ${restrictionUnivers}
     ORDER BY c.slug, a."publishedAt" DESC
   `
 
@@ -526,4 +540,37 @@ export async function getCategoryCovers(
       { url: row.url, width: row.width, height: row.height },
     ]),
   )
+}
+
+/**
+ * Y a-t-il seulement quelque chose à trier dans cet univers ?
+ *
+ * ---------------------------------------------------------------------------
+ * Ce que cette question évite
+ * ---------------------------------------------------------------------------
+ * La page `/femme` impose son univers à tout ce qu'elle affiche. Tant qu'aucune
+ * pièce ne porte « femme » ni « mixte », cette contrainte ne restreint rien :
+ * elle VIDE. La boutique montrait donc « aucun article » sur une page dont
+ * chaque rayon était pourtant plein — un magasin qui affiche « fermé » parce
+ * que personne n'a encore posé les étiquettes de rayon.
+ *
+ * Un `COUNT` borné à un seul résultat suffit à trancher, et l'index
+ * `(status, audience, publishedAt)` le sert directement. On ne compte pas les
+ * pièces : on demande s'il en existe au moins une.
+ */
+export async function hasSortedAudiences(
+  audiences: readonly string[],
+  now = new Date(),
+): Promise<boolean> {
+  if (audiences.length === 0) return false
+
+  const found = await prisma.article.findFirst({
+    where: {
+      audience: { in: [...audiences] },
+      ...listedArticleWhere(now),
+    },
+    select: { id: true },
+  })
+
+  return found !== null
 }

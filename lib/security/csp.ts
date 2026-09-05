@@ -105,6 +105,19 @@ export function buildCsp({
     // `script-src` traite en amont.
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' blob: data: ${IMAGE_HOSTS}`,
+    /*
+      `media-src` : sans lui, `default-src 'self'` s'applique aux vidéos.
+
+      Le grand visuel d'arrivée accepte une vidéo aussi bien qu'une photo, et
+      les deux sont servies par le même hébergeur. Omettre cette directive ne
+      produit AUCUNE erreur visible — le cadre reste simplement vide, et le
+      refus n'apparaît que dans la console du navigateur. C'est exactement le
+      genre de panne muette qui fait chercher un défaut d'affichage pendant une
+      heure, et ce projet en a déjà connu deux.
+
+      Même liste d'hôtes que les images : on n'ouvre rien de plus.
+    */
+    `media-src 'self' blob: ${IMAGE_HOSTS}`,
     "font-src 'self' data:",
     // Aucun script tiers avant consentement : la liste reste minimale et
     // explicite. `*.supabase.co` a été retiré — aucun code navigateur ne

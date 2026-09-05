@@ -15,22 +15,28 @@ import { PictureCard } from './picture-card'
  * défiler un arrivage dont la moitié ne le concerne pas.
  *
  * ---------------------------------------------------------------------------
- * Le compte affiché est celui que la page D'ARRIVÉE montrera
+ * Ces deux cartes s'affichent TOUJOURS — c'est la correction d'un vrai défaut
  * ---------------------------------------------------------------------------
- * Donc « femme » PLUS « mixte », et non le seul effectif de la valeur. Une
- * carte qui annonce vingt-sept pièces et en montre vingt-huit se remarque, et
- * elle décrédibilise tous les autres nombres du site.
+ * Une première version se retirait entièrement tant qu'un des deux côtés
+ * n'avait aucune pièce. L'intention était bonne — ne pas mener à une grille
+ * vide — mais l'effet a été le pire possible : en production, où aucune pièce
+ * n'était encore rangée, la section demandée n'apparaissait PAS DU TOUT. Rien
+ * dans les journaux, rien dans les tests, une page simplement identique à
+ * l'ancienne. Une mise en page qui dépend des données ne se voit jamais
+ * pendant qu'on la construit.
  *
- * Les effectifs viennent des facettes du catalogue : ce sont les mêmes que
- * ceux du panneau de filtres, ils ne peuvent donc pas diverger.
+ * Ces cartes sont la STRUCTURE du magasin, pas un compte rendu de son stock.
+ * Les deux portes existent parce que la boutique habille les femmes et les
+ * hommes, pas parce qu'il y a quelque chose derrière aujourd'hui.
  *
  * ---------------------------------------------------------------------------
- * Une carte sans pièce n'est pas affichée
+ * L'effectif n'est écrit que s'il y en a un
  * ---------------------------------------------------------------------------
- * Tant qu'aucune pièce n'est qualifiée « homme », la carte Homme mènerait à
- * une grille vide. La section n'apparaît qu'à partir de deux univers fournis :
- * une seule carte n'est pas un choix, et le catalogue reste accessible par la
- * barre de navigation.
+ * « 0 pièce » sous une carte est pire que rien : cela transforme une porte en
+ * constat d'échec. Quand le nombre existe, il est celui que la page D'ARRIVÉE
+ * montrera — donc « femme » PLUS « mixte », et non le seul effectif de la
+ * valeur. Une carte qui annonce vingt-sept pièces et en montre vingt-huit se
+ * remarque, et elle décrédibilise tous les autres nombres du site.
  */
 export async function UniverseCards({
   audiences,
@@ -54,8 +60,6 @@ export async function UniverseCards({
     image: images[cle],
   }))
 
-  if (univers.some((entree) => entree.total === 0)) return null
-
   return (
     <section className="mx-auto max-w-[80rem] px-4 py-10 sm:px-6 sm:py-14">
       <Reveal>
@@ -69,12 +73,16 @@ export async function UniverseCards({
         <h2 className="sr-only">{t('chooseUniverse')}</h2>
 
         <ul className="grid gap-4 sm:grid-cols-2 sm:gap-5">
-          {univers.map((entree, index) => (
+          {univers.map((entree) => (
             <li key={entree.cle}>
               <PictureCard
                 href={`/${entree.cle}`}
                 title={tc(`audiences.${entree.cle}`)}
-                detail={t('pieceCount', { count: entree.total })}
+                detail={
+                  entree.total > 0
+                    ? t('pieceCount', { count: entree.total })
+                    : null
+                }
                 image={
                   entree.image
                     ? // Dimensions de composition, pas de fichier : le cadre
@@ -87,7 +95,7 @@ export async function UniverseCards({
                 // Sous le visuel d'arrivée, donc sous le pli : rien ici ne
                 // dispute la priorité au LCP.
                 priority={false}
-                sizes={index === 0 ? '(min-width: 640px) 50vw, 100vw' : '(min-width: 640px) 50vw, 100vw'}
+                sizes="(min-width: 640px) 50vw, 100vw"
               />
             </li>
           ))}

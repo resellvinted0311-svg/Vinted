@@ -2,7 +2,12 @@ import Image from 'next/image'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { SeedHeadPlate } from '@/components/shop/engraving'
-import { deliveryUrl } from '@/lib/providers/storage/delivery'
+import {
+  deliveryUrl,
+  isVideoUrl,
+  videoPosterUrl,
+} from '@/lib/providers/storage/delivery'
+import { HeroVideo } from './hero-video'
 
 /**
  * Le grand visuel d'arrivée.
@@ -51,6 +56,13 @@ import { deliveryUrl } from '@/lib/providers/storage/delivery'
 export async function HeroBanner({ imageUrl }: { imageUrl: string | null }) {
   const t = await getTranslations('home')
 
+  // Une vidéo et une photographie occupent le même cadre et se règlent au même
+  // endroit : la boutiquière colle une adresse, la page pose la bonne balise.
+  // Servir une vidéo dans une balise `img` n'afficherait rien — un cadre vide,
+  // sans la moindre erreur.
+  const estVideo = imageUrl !== null && isVideoUrl(imageUrl)
+  const affiche = imageUrl !== null ? videoPosterUrl(imageUrl) : null
+
   return (
     <section className="relative isolate overflow-hidden ruled-b">
       <div className="relative min-h-[56svh] lg:min-h-[75svh]">
@@ -65,7 +77,15 @@ export async function HeroBanner({ imageUrl }: { imageUrl: string | null }) {
           <SeedHeadPlate className="pointer-events-none absolute -right-20 top-0 hidden h-[130%] w-auto select-none text-engraving opacity-30 lg:block" />
         </div>
 
-        {imageUrl ? (
+        {imageUrl && estVideo ? (
+          <HeroVideo
+            src={deliveryUrl(imageUrl)}
+            poster={affiche ?? ''}
+            className="absolute inset-0 -z-10 h-full w-full object-cover"
+          />
+        ) : null}
+
+        {imageUrl && !estVideo ? (
           <Image
             // Borne la largeur de la SOURCE : sans elle, l'optimiseur
             // retélécharge l'original — jusqu'à six mille pixels — pour chaque

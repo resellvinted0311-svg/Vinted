@@ -67,6 +67,57 @@ export async function getCategoryTree(locale: string): Promise<CategoryNode[]> {
   return roots
 }
 
+/** Une entrée de rayon, telle que les cartes de vitrine l'affichent. */
+export interface ShowcaseCategory {
+  slug: string
+  name: string
+}
+
+/**
+ * Les rayons de la boutique, pour les cartes de vitrine.
+ *
+ * ---------------------------------------------------------------------------
+ * Cette liste vient de l'ARBRE, jamais des facettes — et c'est tout l'enjeu
+ * ---------------------------------------------------------------------------
+ * Les cartes de sous-catégorie se construisaient sur `getFacets`, c'est-à-dire
+ * sur les pièces réellement en vente. Conséquence : un rayon sans pièce
+ * n'avait pas de carte, et une boutique dont rien n'est encore rangé n'avait
+ * AUCUNE carte — la page s'affichait vide, sans erreur, et la mise en page
+ * demandée restait invisible.
+ *
+ * Or ces cartes ne sont pas un compte rendu du stock : ce sont les rayons du
+ * magasin. Un rayon existe parce qu'il est prévu, pas parce qu'il est plein,
+ * exactement comme un panneau « Chaussures » reste accroché quand l'étagère
+ * est vide. La liste est donc celle de la taxonomie, et elle est stable.
+ *
+ * ---------------------------------------------------------------------------
+ * Seules les FEUILLES sont rendues
+ * ---------------------------------------------------------------------------
+ * « Hauts » et « Bas » sont des regroupements qui portent des enfants ; les
+ * proposer à côté de leurs propres enfants donnerait deux chemins vers le même
+ * contenu et une carte « Hauts » juste avant une carte « T-shirts » qu'elle
+ * contient. On garde donc les rayons où l'on range vraiment quelque chose.
+ */
+export async function listShowcaseCategories(
+  locale: string,
+): Promise<ShowcaseCategory[]> {
+  const rows = await prisma.category.findMany({
+    orderBy: { position: 'asc' },
+    select: {
+      slug: true,
+      _count: { select: { children: true } },
+      translations: { select: { locale: true, name: true } },
+    },
+  })
+
+  return rows
+    .filter((row) => row._count.children === 0)
+    .map((row) => ({
+      slug: row.slug,
+      name: nameFor(row.translations, locale, row.slug),
+    }))
+}
+
 export interface CategoryDetail {
   id: string
   slug: string

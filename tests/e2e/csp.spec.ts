@@ -155,4 +155,28 @@ test.describe('Ce que la politique ferme partout', () => {
     expect(csp).toContain("base-uri 'self'")
     expect(csp).toContain("form-action 'self'")
   })
+
+  test('le grand visuel a le droit de servir une VIDÉO', async ({ page }) => {
+    /**
+     * Sans directive `media-src`, c'est `default-src 'self'` qui s'applique
+     * aux vidéos, et l'hébergeur est alors refusé.
+     *
+     * Cette panne-là est muette : aucune erreur de build, aucune erreur
+     * serveur, aucun message à l'écran. Le grand cadre d'arrivée reste
+     * simplement vide, et le refus n'apparaît que dans la console du
+     * navigateur — c'est-à-dire nulle part, pour la personne qui tient la
+     * boutique.
+     */
+    const response = await page.goto('/fr')
+    const csp = response?.headers()['content-security-policy'] ?? ''
+
+    expect(csp).toContain('media-src')
+    const directive = csp
+      .split(';')
+      .map((part) => part.trim())
+      .find((part) => part.startsWith('media-src'))
+
+    expect(directive).toBeDefined()
+    expect(directive).toContain('res.cloudinary.com')
+  })
 })

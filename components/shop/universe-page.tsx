@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server'
-import { getFacets, getCategoryCovers } from '@/lib/db/queries/articles'
+import { getCategoryCovers, hasSortedAudiences } from '@/lib/db/queries/articles'
+import { listShowcaseCategories } from '@/lib/db/queries/taxonomy'
 import { parseCatalogueSearchParams } from '@/lib/validation/catalogue'
 import { audiencesFor } from '@/lib/domain/vocabulary'
 import { CatalogueView } from './catalogue-view'
@@ -45,11 +46,33 @@ export async function UniversePage({
   const audiences = audiencesFor(universe)
 
   const { filters, sort, cursor } = parseCatalogueSearchParams(searchParams)
-  const imposes = { ...filters, audiences }
 
-  const [facets, covers, t, tc, tNav] = await Promise.all([
-    getFacets(imposes, locale),
-    getCategoryCovers(audiences),
+  /**
+   * L'univers n'est imposé QUE s'il trie réellement quelque chose.
+   *
+   * Tant qu'aucune pièce ne porte « femme » ni « mixte », cette contrainte ne
+   * restreint pas : elle vide. La page affichait « aucun article » alors que
+   * chaque rayon en dessous était plein, et chaque carte de rayon menait à une
+   * grille déserte — un cul-de-sac fabriqué par un filtre qui ne sert encore à
+   * rien.
+   *
+   * La même décision gouverne les trois usages : la grille, les liens des
+   * cartes, et la pastille verrouillée. Les séparer, c'est se retrouver avec
+   * des cartes qui marchent au-dessus d'une grille vide, ce qui est exactement
+   * ce qui vient d'arriver.
+   *
+   * Rien à faire le jour où le rangement commencera : la réponse bascule
+   * d'elle-même dès la première pièce rangée.
+   */
+  const trieQuelqueChose = await hasSortedAudiences(audiences)
+  const imposes = trieQuelqueChose ? { ...filters, audiences } : filters
+
+  const [rayons, covers, t, tc, tNav] = await Promise.all([
+    // Les rayons viennent de la TAXONOMIE, pas du stock : ils s'affichent que
+    // la boutique soit rangée ou non. C'est le défaut qui rendait cette page
+    // vide en production.
+    listShowcaseCategories(locale),
+    getCategoryCovers(trieQuelqueChose ? audiences : []),
     getTranslations('home'),
     getTranslations('catalogue'),
     getTranslations('nav'),
@@ -79,9 +102,9 @@ export async function UniversePage({
       */}
       <CategoryCards
         title={t('shopByCategory')}
-        entries={facets.categories}
+        entries={rayons}
         covers={covers}
-        audiences={audiences}
+        audiences={trieQuelqueChose ? audiences : []}
       />
 
       <CatalogueView
@@ -90,7 +113,10 @@ export async function UniversePage({
         sort={sort}
         cursor={cursor}
         locale={locale}
-        lockedDimensions={['audiences']}
+        // Verrouillée seulement quand elle est posée : verrouiller une
+        // dimension absente afficherait une pastille « Femme » que rien
+        // n'applique, et qui ne se retire pas.
+        lockedDimensions={trieQuelqueChose ? ['audiences'] : []}
         heading={titre}
       />
     </>

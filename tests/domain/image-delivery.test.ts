@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   deliveryUrl,
+  isVideoUrl,
+  videoPosterUrl,
   MAX_DELIVERY_WIDTH,
 } from '@/lib/providers/storage/delivery'
 
@@ -78,10 +80,15 @@ describe('l’adresse de livraison', () => {
   it('laisse intacte une adresse qui n’est pas servie par l’hébergeur d’images', () => {
     // Le jeu de démonstration sert des SVG en local, par une adresse relative.
     // Une adresse d'un autre hôte n'est pas la nôtre à réécrire.
+    //
+    // La vidéo ne figure PLUS dans cette liste, et c'est délibéré : le grand
+    // visuel d'arrivée en accepte une depuis que la vitrine a été montée, donc
+    // elle se transforme comme une image — même grammaire, même raison. La
+    // laisser intacte servirait l'original en pleine définition sur la page la
+    // plus vue du site. Le cas est couvert plus bas.
     for (const adresse of [
       '/seed/veste.svg',
       'https://exemple-inconnu.test/photo.jpg',
-      'https://res.cloudinary.com/nina-diego/video/upload/v1/x.mp4',
       'http://res.cloudinary.com/nina-diego/image/upload/v1/x.webp',
       '',
     ]) {
@@ -121,5 +128,75 @@ describe('l’adresse de livraison', () => {
     const servie = deliveryUrl(ORIGINAL)
     const motif = /^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/.+$/
     expect(servie).toMatch(motif)
+  })
+})
+
+/**
+ * La vidéo du grand visuel d'arrivée.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce que ces tests protègent
+ * ---------------------------------------------------------------------------
+ * La boutiquière colle UNE adresse dans un seul réglage, et la page en déduit
+ * s'il faut poser une balise `img` ou une balise `video`. Se tromper de balise
+ * ne lève rien : une vidéo dans un `img` laisse un cadre vide, et une image
+ * dans un `video` aussi. C'est la panne muette dont ce projet a déjà souffert
+ * deux fois — d'où une reconnaissance testée plutôt que supposée.
+ */
+
+const VIDEO =
+  'https://res.cloudinary.com/nina-diego/video/upload/v1712345678/vitrine/atelier.mp4'
+
+describe('la reconnaissance d’une vidéo', () => {
+  it('distingue une vidéo d’une image au segment de RESSOURCE', () => {
+    expect(isVideoUrl(VIDEO)).toBe(true)
+    expect(isVideoUrl(ORIGINAL)).toBe(false)
+  })
+
+  it('ne se fie pas à l’extension', () => {
+    // Cloudinary sert volontiers une vidéo sans suffixe, et une image peut
+    // parfaitement s'appeler « .mp4.jpg ». L'extension ment ; le chemin, non.
+    expect(
+      isVideoUrl('https://res.cloudinary.com/nina-diego/video/upload/v1/vitrine/film'),
+    ).toBe(true)
+    expect(
+      isVideoUrl('https://res.cloudinary.com/nina-diego/image/upload/v1/a/x.mp4.jpg'),
+    ).toBe(false)
+  })
+
+  it('laisse tranquille ce qui n’est pas de l’hébergeur', () => {
+    expect(isVideoUrl('https://exemple.fr/vitrine/atelier.mp4')).toBe(false)
+    expect(isVideoUrl('/seed/veste.svg')).toBe(false)
+  })
+
+  it('transforme une vidéo comme une image', () => {
+    // Même grammaire, même raison : borner la source et laisser l'hébergeur
+    // choisir le format. Un motif qui n'accepterait que « /image/upload/ »
+    // renverrait la vidéo intacte, donc l'original en pleine définition.
+    expect(deliveryUrl(VIDEO)).toBe(
+      `https://res.cloudinary.com/nina-diego/video/upload/f_auto,q_auto,c_limit,w_${MAX_DELIVERY_WIDTH}/v1712345678/vitrine/atelier.mp4`,
+    )
+  })
+})
+
+describe('l’affiche d’une vidéo', () => {
+  it('réclame la première image, en JPEG', () => {
+    expect(videoPosterUrl(VIDEO)).toBe(
+      `https://res.cloudinary.com/nina-diego/video/upload/so_0,f_auto,q_auto,c_limit,w_${MAX_DELIVERY_WIDTH}/v1712345678/vitrine/atelier.jpg`,
+    )
+  })
+
+  it('REMPLACE l’extension au lieu de l’ajouter', () => {
+    // « atelier.mp4.jpg » ne désigne aucun fichier chez l'hébergeur : le
+    // navigateur recevrait un 404 et peindrait un cadre noir le temps du
+    // chargement de la vidéo.
+    expect(videoPosterUrl(VIDEO)).not.toContain('.mp4.jpg')
+  })
+
+  it('n’invente pas d’affiche pour une image', () => {
+    // Une image n'en a pas besoin, et fabriquer une adresse plausible mais
+    // fausse vaut moins que ne rien poser du tout.
+    expect(videoPosterUrl(ORIGINAL)).toBeNull()
+    expect(videoPosterUrl('https://exemple.fr/film.mp4')).toBeNull()
   })
 })

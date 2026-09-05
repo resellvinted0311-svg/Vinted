@@ -42,13 +42,35 @@
 export const MAX_DELIVERY_WIDTH = 2096
 
 /**
- * Reconnaît une adresse de livraison Cloudinary.
+ * Reconnaît une adresse de livraison Cloudinary, image OU vidéo.
  *
- * Le segment `/image/upload/` est la charnière : ce qui le suit est soit une
- * liste de transformations, soit directement la version et le chemin du
- * fichier. C'est là, et nulle part ailleurs, qu'une transformation s'insère.
+ * Le segment `/image/upload/` — ou `/video/upload/` — est la charnière : ce qui
+ * le suit est soit une liste de transformations, soit directement la version et
+ * le chemin du fichier. C'est là, et nulle part ailleurs, qu'une transformation
+ * s'insère.
+ *
+ * Les deux types acceptent la même grammaire de transformation : `f_auto`,
+ * `q_auto` et `c_limit` sont valables pour une vidéo comme pour une image, et
+ * pour la même raison — laisser l'hébergeur choisir le format et borner la
+ * source. Un seul motif suffit donc.
  */
-const CLOUDINARY = /^(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/)(.*)$/
+const CLOUDINARY =
+  /^(https:\/\/res\.cloudinary\.com\/[^/]+\/(?:image|video)\/upload\/)(.*)$/
+
+/**
+ * Cette adresse désigne-t-elle une VIDÉO ?
+ *
+ * Sert au grand visuel d'arrivée, qui accepte l'un ou l'autre : la boutiquière
+ * colle une adresse, et la page doit poser la bonne balise. Une vidéo rendue
+ * dans une balise `img` n'affiche rien du tout — un cadre vide, sans erreur.
+ *
+ * Le type est lu dans le CHEMIN, pas dans l'extension : Cloudinary sert
+ * volontiers `.../video/upload/.../film` sans suffixe, et à l'inverse une image
+ * peut s'appeler `.mp4.jpg`. Le segment de ressource, lui, ne ment pas.
+ */
+export function isVideoUrl(url: string): boolean {
+  return /^https:\/\/res\.cloudinary\.com\/[^/]+\/video\/upload\//.test(url)
+}
 
 /**
  * Une liste de transformations est déjà présente ?
@@ -104,4 +126,44 @@ export function deliveryUrl(url: string, options: DeliveryOptions = {}): string 
     poids de la source.
   */
   return `${prefixe}f_auto,q_auto,c_limit,w_${largeur}/${reste}`
+}
+
+/**
+ * L'affiche d'une vidéo : sa toute première image, servie en JPEG.
+ *
+ * ---------------------------------------------------------------------------
+ * À quoi elle sert vraiment
+ * ---------------------------------------------------------------------------
+ * C'est ce que le navigateur peint pendant le téléchargement de la vidéo, en
+ * cas d'échec, et quand le système demande de réduire les animations. Sans
+ * elle, le grand cadre d'arrivée est NOIR plusieurs secondes en connexion
+ * lente — sur la première chose que voit une visiteuse.
+ *
+ * Cloudinary fabrique cette image à la demande : il suffit de réclamer le même
+ * fichier avec une extension d'image. `so_0` fixe l'instant à la première
+ * seconde ; sans lui, le point choisi peut varier d'un rendu à l'autre.
+ *
+ * Renvoie `null` si l'adresse n'est pas une vidéo de l'hébergeur — l'appelant
+ * n'a alors pas d'affiche à poser, ce qui vaut mieux qu'une adresse inventée
+ * qui répondrait 404.
+ */
+export function videoPosterUrl(url: string, options: DeliveryOptions = {}): string | null {
+  if (!isVideoUrl(url)) return null
+
+  const correspondance = CLOUDINARY.exec(url)
+  if (!correspondance) return null
+
+  const [, prefixe, reste] = correspondance as unknown as [string, string, string]
+  if (DEJA_TRANSFORMEE.test(reste)) return null
+
+  const largeur = Math.min(
+    Math.max(Math.round(options.width ?? MAX_DELIVERY_WIDTH), 1),
+    MAX_DELIVERY_WIDTH,
+  )
+
+  // L'extension est remplacée, jamais ajoutée : « film.mp4.jpg » ne désigne
+  // aucun fichier chez l'hébergeur. Une adresse sans extension en reçoit une.
+  const base = reste.replace(/\.[a-z0-9]{2,5}$/i, '')
+
+  return `${prefixe}so_0,f_auto,q_auto,c_limit,w_${largeur}/${base}.jpg`
 }
