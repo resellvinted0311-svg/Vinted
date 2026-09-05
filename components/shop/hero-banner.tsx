@@ -13,19 +13,30 @@ import { HeroVideo } from './hero-video'
  * Le grand visuel d'arrivée.
  *
  * ---------------------------------------------------------------------------
- * Trois quarts de la hauteur d'écran en bureau, et pas davantage
+ * Un cadre 16/9, sur toute la largeur de l'écran
  * ---------------------------------------------------------------------------
- * C'est la proportion demandée. Elle est tenue par `min-height`, jamais par
- * `height` : un bandeau à hauteur FIXE se fait couper son propre texte dès
- * qu'un titre passe sur trois lignes — ce qui arrive en allemand et en
- * néerlandais avant d'arriver en français. La hauteur est donc un plancher,
- * et le contenu peut la dépasser.
+ * C'est la proportion demandée, et c'est aussi celle que sortent un téléphone
+ * et un appareil photo : une photographie posée là ne sera donc pas recadrée.
  *
- * En dessous de 1024 px, la borne descend à 56 % de la fenêtre. La raison
- * n'est pas esthétique : sur un écran de téléphone, un bandeau qui remplit la
- * vue ne montre aucune pièce, et un visiteur qui ne voit pas de produit s'en
- * va. La première rangée du catalogue doit dépasser sous le pli. Le réglage
- * mobile reste à affiner.
+ * La hauteur venait auparavant de la FENÊTRE — 75 % de la vue en bureau — et
+ * c'était le défaut : un bandeau dimensionné en hauteur d'écran change de
+ * proportion à chaque taille de navigateur, et ne ressemble jamais à un cadre.
+ * On ne voyait pas où la photographie viendrait. Une proportion fixe, elle, se
+ * lit comme un emplacement même vide.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi un plancher de hauteur en dessous de 768 px
+ * ---------------------------------------------------------------------------
+ * Sur un téléphone de 390 px de large, 16/9 fait 219 px de haut : le titre,
+ * l'accroche et le bouton n'y tiennent pas — ils déborderaient du cadre ou
+ * s'y feraient couper. Le plancher rend donc le cadre plus haut que 16/9 sur
+ * petit écran, et c'est un écart assumé : mieux vaut une proportion inexacte
+ * qu'un titre tronqué.
+ *
+ * Au-dessus, `min-h-fit` prend le relais : la proportion gouverne, mais le
+ * cadre ne peut jamais devenir plus court que son propre contenu. C'est la
+ * même précaution qu'avant — un titre de trois lignes arrive en allemand et en
+ * néerlandais bien avant d'arriver en français.
  *
  * ---------------------------------------------------------------------------
  * L'emplacement vide est un état prévu, pas une panne
@@ -33,11 +44,13 @@ import { HeroVideo } from './hero-video'
  * La boutique n'a pas encore de photographie. Le cadre existe donc sans image :
  * il porte le lavis de la charte et la gravure au trait, il est composé, et il
  * ne montre nulle part qu'il manque quelque chose. Le jour où une adresse est
- * saisie en régie, la photographie remplace le lavis sans qu'aucune ligne de
- * mise en page ne bouge.
+ * saisie en régie — Réglages, groupe « contenu » —, la photographie ou la vidéo
+ * remplit ce cadre sans qu'aucune ligne de mise en page ne bouge.
  *
  * Ce qui est délibérément ABSENT de l'état vide : tout texte du genre « photo à
- * venir ». Une vitrine n'annonce pas ses travaux à ses clientes.
+ * venir », et tout liseré en pointillés. Une vitrine n'annonce pas ses travaux
+ * à ses clientes. C'est la PROPORTION qui dit où va la photographie, pas une
+ * mention.
  *
  * ---------------------------------------------------------------------------
  * Ce que le navigateur peint en premier
@@ -65,7 +78,53 @@ export async function HeroBanner({ imageUrl }: { imageUrl: string | null }) {
 
   return (
     <section className="relative isolate overflow-hidden ruled-b">
-      <div className="relative min-h-[56svh] lg:min-h-[75svh]">
+      {/*
+        La proportion est portée ICI, sur le cadre lui-même.
+
+        `aspect-[16/9]` donne la hauteur à partir de la largeur, donc le cadre
+        garde la même forme sur un portable et sur un grand moniteur. C'est ce
+        qui le fait lire comme un emplacement, y compris vide.
+
+        `min-h-[26rem]` vaut à TOUTES les tailles. Sur téléphone il relève un
+        16/9 qui ne ferait que 219 px de haut ; ailleurs il garantit que le
+        titre, l'accroche et le bouton ont toujours leur place.
+
+        Il a d'abord été écrit `md:min-h-fit`, pour que le cadre ne soit jamais
+        plus court que son contenu. C'était un piège : avec `aspect-ratio`,
+        `fit-content` se résout à la hauteur DE LA PROPORTION — 720 px — et en
+        CSS `min-height` l'emporte toujours sur `max-height`. Le plafond
+        ci-dessous était donc calculé, appliqué, et sans le moindre effet. Le
+        test de composition l'a montré ; la lecture du style calculé l'a
+        expliqué.
+      */}
+      {/*
+        `w-full` n'est PAS décoratif : sans lui, le cadre débordait l'écran.
+
+        Une proportion se résout à partir de la dimension connue. Sur
+        téléphone, `min-h-[26rem]` fixe la HAUTEUR ; la largeur devenait alors
+        l'inconnue, et le navigateur la calculait — 416 px × 16/9 = 740 px de
+        large dans une fenêtre de 390. Mesuré, pas supposé. Le débordement
+        était masqué par `overflow-hidden` sur la section, donc invisible
+        jusqu'à ce qu'on aille lire les dimensions réelles.
+
+        En imposant la largeur, c'est la hauteur qui se déduit — le sens qu'on
+        veut — et le plancher ne fait plus que la relever sur petit écran.
+
+        `max-h-[74svh]` est un PLAFOND, et il mérite son explication.
+
+        Sur une fenêtre de 1280 × 800, 16/9 donne 720 px : le cadre occupe 90 %
+        de la vue, et plus aucune pièce n'est visible sans faire défiler. C'est
+        la règle que `phase0.spec.ts` tient depuis le début, et elle protège les
+        ventes : « un bandeau qui remplit la fenêtre ne montre aucune pièce, et
+        un visiteur qui ne voit pas de produit s'en va ».
+
+        Le plafond ne mord donc QUE sur les fenêtres basses. Au-delà de 1024 px
+        de haut, 16/9 passe entier et la proportion est exacte. En dessous, le
+        cadre s'aplatit un peu — il reste un bandeau paysage pleine largeur, et
+        la photographie se recadre d'elle-même par `object-cover` au lieu de se
+        déformer.
+      */}
+      <div className="relative aspect-[16/9] max-h-[74svh] min-h-[26rem] w-full">
         {/*
           Le cadre du visuel, qu'il y ait une image ou non.
 
@@ -121,7 +180,17 @@ export async function HeroBanner({ imageUrl }: { imageUrl: string | null }) {
           />
         ) : null}
 
-        <div className="mx-auto flex min-h-[56svh] max-w-[80rem] flex-col justify-end gap-5 px-4 pb-10 pt-16 sm:px-6 lg:min-h-[75svh] lg:pb-14">
+        {/*
+          `h-full` et non une hauteur à lui : le contenu épouse le cadre, dont
+          la proportion est fixée au-dessus. Répéter ici une hauteur en unités
+          de fenêtre — ce qu'il faisait — ferait deux sources de vérité pour une
+          seule hauteur, et elles divergeraient au premier réglage.
+
+          `justify-end` pose le texte en bas : sur une photographie, le haut
+          porte en général le sujet, et le bas le ciel ou le sol — c'est là que
+          l'encre se lit.
+        */}
+        <div className="mx-auto flex h-full max-w-[80rem] flex-col justify-end gap-5 px-4 pb-10 pt-16 sm:px-6 lg:pb-14">
           <h1 className="type-hero max-w-3xl font-display font-bold uppercase text-ink">
             {t('heroTitle')}
           </h1>

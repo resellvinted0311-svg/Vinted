@@ -284,8 +284,7 @@ test.describe('Le visuel d’arrivée', () => {
       /**
        * Ce que ce test tient, et pourquoi les deux bornes sont différentes.
        *
-       * En BUREAU, le propriétaire a demandé les trois quarts de la hauteur
-       * d’écran. La borne haute est à 80 % : elle laisse la marge d’un titre
+       * En BUREAU, la borne haute est à 80 % : elle laisse la marge d’un titre
        * qui passe sur trois lignes — ce qui arrive en allemand avant d’arriver
        * en français — tout en interdisant la dérive vers le plein écran. Un
        * bandeau qui remplit la fenêtre ne montre aucune pièce, et un visiteur
@@ -296,9 +295,22 @@ test.describe('Le visuel d’arrivée', () => {
        * découverte, depuis un lien social. La première rangée du catalogue doit
        * dépasser sous le pli.
        *
-       * On mesure la hauteur RENDUE, jamais la valeur CSS : la borne vient
-       * d’un `min-height`, donc le contenu peut la dépasser, et c’est
-       * précisément le dépassement qu’on surveille.
+       * -----------------------------------------------------------------------
+       * Le MÉCANISME a changé, la règle non
+       * -----------------------------------------------------------------------
+       * La hauteur venait d’un `min-height` en unités de fenêtre. Elle vient
+       * maintenant d’une PROPORTION — un cadre 16/9 pleine largeur, choisi par
+       * la propriétaire — bornée par un plafond.
+       *
+       * C’est ce test qui a montré que la proportion seule ne suffisait pas :
+       * sur 1280 × 800, 16/9 fait 720 px, soit 90 % de la vue, et la première
+       * pièce passait sous le pli. Le plafond est né de cet échec-là. Il ne
+       * mord que sur les fenêtres basses ; au-delà de 1024 px de haut, la
+       * proportion est exacte.
+       *
+       * On mesure la hauteur RENDUE, jamais la valeur CSS : entre le plancher,
+       * la proportion et le plafond, trois règles se disputent cette hauteur,
+       * et seule celle que le navigateur applique compte.
        */
       await page.setViewportSize(viewport)
       await page.goto('/fr')
