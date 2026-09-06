@@ -3,6 +3,7 @@ import { Link } from '@/lib/i18n/navigation'
 import { Wordmark } from './wordmark'
 import { AccountNav } from './account-nav'
 import { CartCountBadge } from './cart-count-badge'
+import { Surpiqure } from './surpiqure'
 
 /**
  * La barre de navigation, flottante.
@@ -87,7 +88,16 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
-      <div className="nav-bar nav-float mx-auto max-w-[80rem] px-4 py-3 sm:px-6">
+      <div className="nav-bar nav-float relative mx-auto max-w-[80rem] px-4 py-3 sm:px-6">
+        {/*
+          La surpiqûre borde la barre comme le fil borde une ceinture de jean.
+
+          Elle est posée AVANT le contenu et en `pointer-events: none` : elle
+          couvre toute la barre, et sans cela elle intercepterait les clics sur
+          les liens qu'elle recouvre.
+        */}
+        <Surpiqure rayon={16} retrait={7} />
+
         {/*
           La signature sans sa baseline : une barre de navigation porte le nom
           de la boutique, pas son argument. La baseline reste là où elle

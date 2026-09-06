@@ -59,6 +59,11 @@ test.describe('Accueil', () => {
      * l'indigo — l'inversion la plus profonde qu'ait connue cette palette,
      * puisque le fond et l'encre échangent leurs rôles.
      *
+     * La valeur épinglée n'est d'ailleurs plus CHOISIE : c'est la couleur
+     * moyenne de la toile tissée, calculée par `scripts/tisser-denim.mjs` et
+     * reportée dans le jeton. Elle changera donc à chaque nouveau délavage, et
+     * ce test est l'endroit qui le signalera.
+     *
      * La valeur est mise à jour ici EN MÊME TEMPS que la feuille de style,
      * jamais après coup — un garde-fou qu'on desserre pour faire passer un test
      * ne garde plus rien.
@@ -71,14 +76,14 @@ test.describe('Accueil', () => {
         .getPropertyValue('--paper')
         .trim(),
     )
-    expect(paper.toLowerCase()).toBe('#1a3a5c')
+    expect(paper.toLowerCase()).toBe('#3f5a7b')
 
     // Le jeton doit aussi être réellement peint : déclaré sans être appliqué,
     // il passerait le contrôle ci-dessus tout en laissant la page blanche.
     const background = await page.evaluate(
       () => getComputedStyle(document.body).backgroundColor,
     )
-    expect(background).toBe('rgb(26, 58, 92)')
+    expect(background).toBe('rgb(63, 90, 123)')
   })
 })
 
@@ -125,9 +130,15 @@ test.describe('Le fond de page reste lisible', () => {
        *
        * Le calcul par jetons ne pouvait pas l'attraper : le fond n'est pas une
        * couleur déclarée mais un `color-mix` résolu par le navigateur. On
-       * mesure donc la couleur PEINTE, aux deux extrémités du dégradé, dans les
-       * deux thèmes — le thème sombre mélange une teinte claire dans un fond
-       * sombre, il ÉCLAIRCIT le papier, et c'est l'inverse du thème clair.
+       * mesure donc la couleur PEINTE, aux deux extrémités du dégradé.
+       *
+       * Depuis le passage au denim, ce fond est une IMAGE tissée surmontée d'un
+       * lavis translucide. On compose donc le lavis sur `--paper`, qui porte la
+       * couleur MOYENNE de la toile. C'est une approximation, et il faut le
+       * dire : les fils les plus clairs du tissage remontent localement
+       * au-dessus de cette moyenne. Elle reste la bonne mesure de référence —
+       * mais elle explique pourquoi on garde de la marge au lieu de se poser
+       * sur le seuil.
        */
       await page.emulateMedia({ colorScheme: theme })
       await page.goto('/fr')
@@ -157,12 +168,13 @@ test.describe('Le fond de page reste lisible', () => {
         const resultat = {
           // Les deux extrémités de `--gradient-page`, telles qu'elles sont
           // déclarées dans globals.css.
-          depart: peindre(
-            'color-mix(in oklab, var(--stamp) 16%, var(--paper-raised))',
-          ),
-          arrivee: peindre(
-            'color-mix(in oklab, var(--mark) 14%, var(--paper-raised))',
-          ),
+          // Le lavis est désormais TRANSLUCIDE et posé sur la toile tissée :
+          // on le compose donc sur `--paper`, qui porte la couleur moyenne de
+          // cette toile. Les pourcentages doivent suivre `--gradient-page` —
+          // une sonde qui mesure une formule que la page n'utilise plus est
+          // pire qu'aucune sonde.
+          depart: peindre('color-mix(in oklab, var(--stamp) 7%, var(--paper))'),
+          arrivee: peindre('color-mix(in oklab, var(--mark) 5%, var(--paper))'),
           muted: peindre('var(--muted)'),
           ink: peindre('var(--ink)'),
         }

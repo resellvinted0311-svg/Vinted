@@ -1,18 +1,23 @@
 @import 'tailwindcss';
 
 /* ===========================================================================
-   Nina & Diego — jetons de design « Registre », teinte Rose & Cuivre
+   Nina & Diego — jetons de design « Registre », teinte DENIM
 
    Chaque pièce est unique : le site l'assume et se tient comme un registre
    d'atelier plutôt que comme une vitrine. Filets pleins, numéro d'inventaire
    visible, données composées en chasse fixe — et des fiches aux angles
    adoucis, qui empêchent le registre de virer au formulaire administratif.
 
-   La structure n'a pas bougé ; la TEINTE, si. Le crème écru et l'encre de
-   régie bleue ont laissé la place à un crème rosé, un rose profond en action
-   principale et un cuivre en marqueur, reliés par un dégradé. Ce qui portait
-   la charte — le contour plein, la donnée affichée, le mouvement sobre — est
-   inchangé : une charte tient à sa grammaire, pas à sa gamme.
+   La structure n'a pas bougé ; la TEINTE, si — trois fois. Crème écru, puis
+   crème rosé, et maintenant du DENIM : le fond du site est une toile de jean,
+   tissée fil par fil par `scripts/tisser-denim.mjs`, et l'encre est blanche.
+   Ce qui portait la charte — le contour plein, la donnée affichée, le
+   mouvement sobre — est inchangé : une charte tient à sa grammaire, pas à sa
+   gamme.
+
+   Cette teinte-ci inverse deux réflexes, et c'est ce qui la rend piégeuse :
+   une fiche s'ASSOMBRIT au lieu de blanchir, et un lavis d'accent ÉCLAIRCIT
+   la page au lieu de l'assombrir. Les deux sont expliqués à leur place.
 
    L'écologie ne passe pas par le symbole mais par la traçabilité : référence,
    matière, poids, date d'entrée sont affichés parce qu'ils sont réels.
@@ -34,30 +39,34 @@
      LA TOILE EST DU DENIM. C'est le parti pris de la boutique : le fond du
      site est de l'indigo, pas un crème sur lequel on poserait du bleu.
 
-     Trois profondeurs de la même toile, et l'écart entre elles est ce qui
-     distingue un plan d'un autre : `--paper` est le vêtement, `--paper-raised`
-     une section qui se détache, `--surface` une fiche qu'on prend en main. Sur
-     un fond sombre, une fiche s'ÉCLAIRCIT — l'inverse d'un fond clair, où elle
-     blanchit. Les trois restent la même teinte : trois bleus différents
-     donneraient trois matières.
+     `--paper` porte la couleur MOYENNE de la toile tissée. Elle n'est pas
+     choisie : elle est calculée par le script qui produit l'image, et reportée
+     ici. C'est ce qu'on voit pendant le chargement de l'image, à l'impression,
+     et sur un moteur qui refuse le WebP — donc elle doit être juste, sans quoi
+     le texte blanc se retrouve un instant sur du blanc.
 
-     L'encre est un ÉCRU, jamais un blanc pur. C'est la couleur du fil de
-     surpiqûre d'un jean, et c'est aussi ce qui empêche le texte de vibrer sur
-     l'indigo comme le ferait du blanc franc. */
-  --paper: #1a3a5c;
-  --paper-raised: #21486e;
-  --surface: #27527c;
-  --ink: #f1eee4;
-  --muted: #cddfee;
+     Trois profondeurs de la même toile : `--paper` est le vêtement,
+     `--paper-raised` une section qui se détache, `--surface` une fiche qu'on
+     prend en main. Elles vont en s'ASSOMBRISSANT, comme une double épaisseur
+     de toile — c'est l'inverse d'un fond clair, où une fiche blanchit. Les
+     éclaircir a été essayé : sur un fond mi-ton, cela écrase le contraste aux
+     deux bouts à la fois, et trois paires passaient sous le seuil.
+
+     L'encre est un BLANC FRANC, comme le fil de surpiqûre. */
+  --paper: #3f5a7b;
+  --paper-raised: #36506f;
+  --surface: #2e4664;
+  --ink: #ffffff;
+  --muted: #d3e0ee;
 
   /* --- Filets ------------------------------------------------------------
      Deux régimes distincts, et c'est la grammaire du design : le filet PLEIN
      (encre, 1,5px) délimite un objet — une fiche, un cadre photo, une
      section ; le filet SABLE sépare à l'intérieur d'un objet. Les confondre
      fait perdre la lecture. */
-  --sand: #34618c;
-  --sand-strong: #4e7ea8;
-  --rule: #f1eee4;
+  --sand: #57739a;
+  --sand-strong: #7b96bb;
+  --rule: #ffffff;
 
   /* --- Accents -----------------------------------------------------------
      DEUX DÉLAVAGES de la toile : un bleu lavé en principal, un bleu porté en
@@ -75,24 +84,24 @@
      Les valeurs ne sont pas choisies à l'œil mais pour leur CONTRASTE, et
      vérifiées par `tests/domain/palette.test.ts`, qui recalcule les rapports à
      partir de ce fichier — pas à partir d'une note prise au moment du choix. */
-  --stamp: #cfe2f5;
-  --stamp-hover: #e6f0fb;
-  --mark: #a9cdec;
-  --mark-hover: #c4dcf3;
+  --stamp: #dce9f6;
+  --stamp-hover: #f0f7ff;
+  --mark: #bbd4ec;
+  --mark-hover: #d5e5f5;
 
   /* Teinte de la gravure botanique éditoriale. Un bleu de toile plus soutenu
      que le fond : le dessin se lit comme un motif tissé DANS la matière, pas
      comme un trait posé dessus. */
-  --engraving: #4d7ba6;
+  --engraving: #6b88ad;
 
   /* Les trois signaux s'éclaircissent eux aussi : un vert et un rouge sombres,
      posés sur de l'indigo, deviennent deux taches noirâtres indiscernables. */
-  --success: #7fd1a4;
-  --warning: #ecc06a;
-  --danger: #ffb3ab;
+  --success: #a8e6c4;
+  --warning: #f5d79a;
+  --danger: #ffcfc9;
 
-  --ink-inverse: #12293f;
-  --focus-ring: #cfe2f5;
+  --ink-inverse: #14263c;
+  --focus-ring: #dce9f6;
 
   /* --- Dégradés ----------------------------------------------------------
      UN parcours de teintes — rose vers cuivre — décliné en cinq intensités, et
@@ -134,10 +143,11 @@
     var(--mark) 60%,
     transparent 100%
   );
+  /* Translucide depuis que la toile passe dessous : opaque, il l'effaçait. */
   --gradient-wash: linear-gradient(
     148deg,
-    color-mix(in oklab, var(--stamp) 24%, var(--paper-raised)) 0%,
-    color-mix(in oklab, var(--mark) 20%, var(--paper-raised)) 100%
+    color-mix(in oklab, var(--stamp) 15%, transparent) 0%,
+    color-mix(in oklab, var(--mark) 11%, transparent) 100%
   );
 
   /*
@@ -166,8 +176,8 @@
   */
   --gradient-page: linear-gradient(
     155deg,
-    color-mix(in oklab, var(--stamp) 10%, var(--paper-raised)) 0%,
-    color-mix(in oklab, var(--mark) 9%, var(--paper-raised)) 100%
+    color-mix(in oklab, var(--stamp) 7%, transparent) 0%,
+    color-mix(in oklab, var(--mark) 5%, transparent) 100%
   );
 
   /* --- Typographie -------------------------------------------------------
@@ -205,60 +215,60 @@
    au crème. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --paper: #0d1c2c;
-    --paper-raised: #12263a;
-    --surface: #173049;
-    --ink: #eceadf;
-    --muted: #9fb6ce;
+    --paper: #1d2c3e;
+    --paper-raised: #182636;
+    --surface: #14202e;
+    --ink: #ffffff;
+    --muted: #c3d3e4;
 
-    --sand: #21405c;
-    --sand-strong: #33587a;
-    --rule: #eceadf;
+    --sand: #2e4257;
+    --sand-strong: #455d78;
+    --rule: #ffffff;
 
     /* Les accents CHANGENT de valeur, pas de teinte : le rose et le cuivre du
        thème clair porteraient du texte illisible sur une encre sombre. Ce sont
        les mêmes couleurs, remontées jusqu'à repasser les seuils — et le texte
        qu'ils portent devient sombre, d'où `--ink-inverse`. */
-    --stamp: #bcd8f2;
-    --stamp-hover: #d6e7f8;
-    --mark: #93bfe4;
-    --mark-hover: #b0d2ee;
+    --stamp: #cfe1f3;
+    --stamp-hover: #e4eff9;
+    --mark: #a7c8e6;
+    --mark-hover: #c2dbf1;
 
-    --engraving: #3f6d99;
+    --engraving: #4a6b88;
 
-    --success: #6fc396;
-    --warning: #e0b45f;
-    --danger: #f2897f;
+    --success: #8fd9b0;
+    --warning: #e9c47f;
+    --danger: #ffb0a8;
 
-    --ink-inverse: #0d1c2c;
-    --focus-ring: #bcd8f2;
+    --ink-inverse: #14263c;
+    --focus-ring: #cfe1f3;
   }
 }
 
 :root[data-theme='dark'] {
-  --paper: #0d1c2c;
-  --paper-raised: #12263a;
-  --surface: #173049;
-  --ink: #eceadf;
-  --muted: #9fb6ce;
+  --paper: #1d2c3e;
+  --paper-raised: #182636;
+  --surface: #14202e;
+  --ink: #ffffff;
+  --muted: #c3d3e4;
 
-  --sand: #21405c;
-  --sand-strong: #33587a;
-  --rule: #eceadf;
+  --sand: #2e4257;
+  --sand-strong: #455d78;
+  --rule: #ffffff;
 
-  --stamp: #bcd8f2;
-  --stamp-hover: #d6e7f8;
-  --mark: #93bfe4;
-  --mark-hover: #b0d2ee;
+  --stamp: #cfe1f3;
+  --stamp-hover: #e4eff9;
+  --mark: #a7c8e6;
+  --mark-hover: #c2dbf1;
 
-  --engraving: #3f6d99;
+  --engraving: #4a6b88;
 
-  --success: #6fc396;
-  --warning: #e0b45f;
-  --danger: #f2897f;
+  --success: #8fd9b0;
+  --warning: #e9c47f;
+  --danger: #ffb0a8;
 
-  --ink-inverse: #0d1c2c;
-  --focus-ring: #bcd8f2;
+  --ink-inverse: #14263c;
+  --focus-ring: #cfe1f3;
 }
 
 /* `inline` fait émettre var(--x) plutôt que la valeur littérale : c'est ce qui
@@ -358,8 +368,29 @@
       à la fenêtre (`background-attachment: fixed`) aurait figé la même image à
       chaque écran, au prix d'un repeint à chaque défilement sur mobile.
     */
+    /*
+      LA TOILE. Une vraie image de denim tissée, répétée sur toute la page.
+
+      Elle est produite par `scripts/tisser-denim.mjs` — armure sergé 3/1, fils
+      irréguliers, teinture inégale — et pas par des dégradés CSS. Un
+      `repeating-linear-gradient` donne des rayures régulières ; il ne donne
+      jamais du tissu, et l'écart se voit au premier coup d'œil.
+
+      `background-color` reste déclarée SOUS l'image, et ce n'est pas une
+      formalité : c'est la couleur MOYENNE de la toile. Elle est servie pendant
+      le chargement des 132 kio de l'image, à l'impression, et sur tout moteur
+      qui refuse le WebP. Sans elle, la page est blanche le temps du
+      téléchargement, avec du texte blanc dessus — donc vide.
+
+      Le lavis d'accent passe PAR-DESSUS la toile, très dilué : il donne la
+      descente de teinte d'un bout à l'autre du document sans effacer le
+      tissage. L'ordre compte — l'image d'abord dans la pile, donc écrite en
+      second.
+    */
     background-color: var(--paper);
-    background-image: var(--gradient-page);
+    background-image: var(--gradient-page), url('/toile-denim.webp');
+    background-size: auto, 340px 340px;
+    background-repeat: no-repeat, repeat;
     color: var(--ink);
 
     /*
@@ -589,12 +620,18 @@
       sur une toile de nuit, où il éblouirait.
     */
     /*
-      Trois pixels, et pas deux. La longueur des tirets suit l'épaisseur du
-      trait : à deux pixels le pointillé se lit comme une bordure en tirets, à
-      trois il se lit comme une couture. C'est le même réglage qui donne
-      l'épaisseur demandée et la bonne longueur de point.
+      Aucune bordure : la surpiqûre est DESSINÉE, pas bordée.
+
+      Il y a eu ici un `border: 3px dashed`. Un pointillé CSS est parfaitement
+      régulier par construction — même longueur, même position, même épaisseur
+      pour tous les tirets — et il se lit comme une bordure, jamais comme une
+      couture. Il a été remplacé par `components/shop/surpiqure.tsx`, qui
+      dessine du fil : sillon continu dans la toile, points fuselés, dégradé
+      cylindrique, trous d'aiguille, et une ligne qui dérive du bord.
+
+      En laisser une ici doublerait la couture d'un trait régulier — et c'est
+      précisément le trait régulier qu'on cherchait à faire disparaître.
     */
-    border: 3px dashed color-mix(in oklab, var(--ink) 82%, transparent);
     border-radius: 1rem;
 
     /*
@@ -618,12 +655,25 @@
       concurrencer les libellés — l'encre garde tout son contraste, la barre
       cesse d'être un aplat.
     */
-    background-image: linear-gradient(
-      100deg,
-      color-mix(in oklab, var(--stamp) 7%, transparent) 0%,
-      transparent 45%,
-      color-mix(in oklab, var(--mark) 6%, transparent) 100%
-    );
+    background-image:
+      linear-gradient(
+        100deg,
+        color-mix(in oklab, var(--stamp) 7%, transparent) 0%,
+        transparent 45%,
+        color-mix(in oklab, var(--mark) 6%, transparent) 100%
+      ),
+      /*
+        La barre est un morceau de toile, comme la ceinture d'un jean — c'est
+        ce que la surpiqûre suppose. Sans le tissage dessous, on coud du fil
+        sur un aplat, et la couture perd la moitié de ce qui la rend crédible.
+
+        Un cran plus serré que le fond de page (300 contre 340) : sur une bande
+        de soixante pixels de haut, un motif à la même échelle que la page
+        n'aurait pas la place de se lire.
+      */
+      url('/toile-denim.webp');
+    background-size: auto, 300px 300px;
+    background-repeat: no-repeat, repeat;
   }
 
   /*
@@ -1029,10 +1079,26 @@
     que celles qui en ont une, ce qui est exactement l'inverse de ce qu'on veut.
   */
   .wash-accent {
-    /* Repli sous le dégradé : si l'image de fond ne peint pas, le cadre reste
-       une surface tenue et non un trou blanc au milieu d'une fiche. */
+    /*
+      Les surfaces d'attente sont de la TOILE, pas un aplat.
+
+      Ce lavis couvre les plus grandes surfaces du site tant qu'aucune
+      photographie n'est posée : le grand cadre d'arrivée, les cartes d'univers,
+      les cartes de rayon. Un aplat à cet endroit masquait le tissage sur la
+      moitié de la page — la toile n'apparaissait qu'en haut et en bas, autour
+      de ces blocs, ce qui donnait des bandes.
+
+      L'image d'abord dans la pile, le lavis d'accent par-dessus en
+      TRANSLUCIDE : la teinte reste, le tissage traverse.
+
+      Repli sous l'image : si elle ne peint pas — impression, moteur sans WebP,
+      chargement en cours — le cadre reste une surface tenue, et non un trou au
+      milieu d'une fiche.
+    */
     background-color: var(--sand);
-    background-image: var(--gradient-wash);
+    background-image: var(--gradient-wash), url('/toile-denim.webp');
+    background-size: auto, 300px 300px;
+    background-repeat: no-repeat, repeat;
   }
 
   /*

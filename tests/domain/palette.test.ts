@@ -200,12 +200,22 @@ describe('les lavis', () => {
   it('restent dilués dans le fond de fiche', () => {
     /**
      * Le lavis habille les cadres SANS PHOTOGRAPHIE, qui sont aujourd'hui la
-     * majorité du catalogue. S'il cessait d'être mélangé au fond pour devenir
-     * un accent plein, les pièces sans visuel ressortiraient plus que celles
-     * qui en ont un — exactement l'inverse de ce qu'on veut d'une boutique.
+     * majorité du catalogue. S'il cessait d'être un lavis pour devenir un
+     * accent plein, les pièces sans visuel ressortiraient plus que celles qui
+     * en ont un — exactement l'inverse de ce qu'on veut d'une boutique.
      *
-     * La dilution se lit dans la présence de `--paper-raised` comme base du
-     * mélange : c'est elle qui distingue un lavis d'un aplat.
+     * -----------------------------------------------------------------------
+     * La dilution ne se lit plus au même endroit
+     * -----------------------------------------------------------------------
+     * Elle se lisait dans la présence de `--paper-raised` comme base du
+     * mélange. Depuis que la toile de denim passe SOUS le lavis, la base est
+     * `transparent` : mélanger dans une couleur opaque masquerait le tissage,
+     * qui est précisément ce qu'on veut voir.
+     *
+     * On vérifie donc la dilution à la source — le POURCENTAGE d'accent — au
+     * lieu de la déduire du nom de la base. C'est plus direct, et cela résiste
+     * au prochain changement de fond : un lavis à quinze pour cent reste un
+     * lavis, quelle que soit la matière posée dessous.
      */
     const bloc = CSS.slice(
       CSS.indexOf('--gradient-wash:'),
@@ -214,7 +224,21 @@ describe('les lavis', () => {
 
     expect(bloc).toContain('var(--stamp)')
     expect(bloc).toContain('var(--mark)')
-    expect(bloc).toContain('var(--paper-raised)')
+    expect(bloc).toContain('transparent')
+
+    // Le seuil : au-delà, ce n'est plus un lavis mais une teinte, et un cadre
+    // vide se mettrait à crier plus fort qu'une photographie.
+    // On ne lit QUE le taux de mélange, pas les positions d'arrêt du dégradé :
+    // un `100%` de fin de course n'est pas une dose d'accent, et le confondre
+    // faisait échouer ce test sur une couture parfaitement diluée.
+    const parts = [...bloc.matchAll(/var\(--[a-z-]+\)\s+(\d+(?:\.\d+)?)%/g)].map(
+      (m) => Number(m[1]),
+    )
+    expect(parts.length, 'aucun pourcentage trouvé dans le lavis').toBeGreaterThan(0)
+    for (const part of parts) {
+      expect(part, `le lavis monte à ${part}%, le plafond est 25%`).toBeLessThanOrEqual(25)
+    }
+
     // Comme pour le dégradé plein : une couleur littérale échapperait au
     // thème sombre et laisserait un cadre clair au milieu d'une page sombre.
     expect(bloc).not.toMatch(/#[0-9a-fA-F]{3,8}/)
