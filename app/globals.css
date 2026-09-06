@@ -31,56 +31,68 @@
 
 :root {
   /* --- Fonds et encres ---------------------------------------------------
-     Le crème penche vers le ROSE, pas vers le jaune. Un neutre parfaitement
-     gris à côté d'accents rose et cuivre se lit comme un fond par défaut ;
-     incliné d'un souffle vers l'accent, il se lit comme un fond choisi. C'est
-     un écart minuscule en valeur et décisif à l'œil.
+     LA TOILE EST DU DENIM. C'est le parti pris de la boutique : le fond du
+     site est de l'indigo, pas un crème sur lequel on poserait du bleu.
 
-     L'encre suit le même raisonnement : un noir légèrement prune, jamais un
-     noir pur, qui trancherait avec la chaleur de tout le reste. */
-  --paper: #fbf3f0;
-  --paper-raised: #fefaf9;
-  --surface: #ffffff;
-  --ink: #1c1315;
-  --muted: #6f5b60;
+     Trois profondeurs de la même toile, et l'écart entre elles est ce qui
+     distingue un plan d'un autre : `--paper` est le vêtement, `--paper-raised`
+     une section qui se détache, `--surface` une fiche qu'on prend en main. Sur
+     un fond sombre, une fiche s'ÉCLAIRCIT — l'inverse d'un fond clair, où elle
+     blanchit. Les trois restent la même teinte : trois bleus différents
+     donneraient trois matières.
+
+     L'encre est un ÉCRU, jamais un blanc pur. C'est la couleur du fil de
+     surpiqûre d'un jean, et c'est aussi ce qui empêche le texte de vibrer sur
+     l'indigo comme le ferait du blanc franc. */
+  --paper: #1a3a5c;
+  --paper-raised: #21486e;
+  --surface: #27527c;
+  --ink: #f1eee4;
+  --muted: #cddfee;
 
   /* --- Filets ------------------------------------------------------------
      Deux régimes distincts, et c'est la grammaire du design : le filet PLEIN
      (encre, 1,5px) délimite un objet — une fiche, un cadre photo, une
      section ; le filet SABLE sépare à l'intérieur d'un objet. Les confondre
      fait perdre la lecture. */
-  --sand: #eeddd7;
-  --sand-strong: #d9beb6;
-  --rule: #1c1315;
+  --sand: #34618c;
+  --sand-strong: #4e7ea8;
+  --rule: #f1eee4;
 
   /* --- Accents -----------------------------------------------------------
-     ROSE en principal, CUIVRE en secondaire, et le dégradé qui va de l'un à
-     l'autre.
+     DEUX DÉLAVAGES de la toile : un bleu lavé en principal, un bleu porté en
+     secondaire, et le dégradé qui va de l'un à l'autre.
 
-     Les deux valeurs ne sont pas choisies à l'œil : elles sont choisies pour
-     leur CONTRASTE. Le rose porte du texte blanc sur les boutons, le cuivre
-     porte du texte sur le fond crème — deux exigences différentes, deux
-     valeurs différentes. Un rose plus clair serait plus joli et illisible en
-     bouton ; un cuivre plus vif ne passerait pas les 4,5:1 exigés d'un
-     libellé.
+     Sur un fond sombre, les accents s'ÉCLAIRCISSENT — c'est l'inversion la
+     plus importante de cette palette. Un indigo soutenu posé sur de l'indigo
+     ne se voit pas ; il faut la partie usée du jean, celle des plis et des
+     genoux, pour qu'un bouton se détache de la toile.
 
-     Vérifiées par `tests/domain/palette.test.ts`, qui recalcule les rapports à
+     Conséquence directe : le texte que ces accents portent devient SOMBRE,
+     d'où `--ink-inverse` qui vaut désormais un indigo profond et non un crème.
+     Un libellé clair sur un bouton clair serait illisible.
+
+     Les valeurs ne sont pas choisies à l'œil mais pour leur CONTRASTE, et
+     vérifiées par `tests/domain/palette.test.ts`, qui recalcule les rapports à
      partir de ce fichier — pas à partir d'une note prise au moment du choix. */
-  --stamp: #c2255c;
-  --stamp-hover: #a01546;
-  --mark: #b03a08;
-  --mark-hover: #8d2e05;
+  --stamp: #cfe2f5;
+  --stamp-hover: #e6f0fb;
+  --mark: #a9cdec;
+  --mark-hover: #c4dcf3;
 
-  /* Teinte de la gravure botanique éditoriale. Terre rosée : elle appartient à
-     la famille, là où le vert d'origine devenait un corps étranger. */
-  --engraving: #c98a76;
+  /* Teinte de la gravure botanique éditoriale. Un bleu de toile plus soutenu
+     que le fond : le dessin se lit comme un motif tissé DANS la matière, pas
+     comme un trait posé dessus. */
+  --engraving: #4d7ba6;
 
-  --success: #2f6b4d;
-  --warning: #8c5a12;
-  --danger: #b3261e;
+  /* Les trois signaux s'éclaircissent eux aussi : un vert et un rouge sombres,
+     posés sur de l'indigo, deviennent deux taches noirâtres indiscernables. */
+  --success: #7fd1a4;
+  --warning: #ecc06a;
+  --danger: #ffb3ab;
 
-  --ink-inverse: #fff8f6;
-  --focus-ring: #c2255c;
+  --ink-inverse: #12293f;
+  --focus-ring: #cfe2f5;
 
   /* --- Dégradés ----------------------------------------------------------
      UN parcours de teintes — rose vers cuivre — décliné en cinq intensités, et
@@ -129,14 +141,21 @@
   );
 
   /*
-    Le même lavis, en PLUS CLAIR, pour le fond de page.
+    Le même lavis, BEAUCOUP plus dilué, pour le fond de page.
 
-    Et l'écart n'est pas une question de goût : il est mesuré. Le lavis de
-    fiche, posé tel quel sur toute la page, fait tomber les mentions
-    secondaires — `--muted` — à 4,30:1 sur son extrémité rose. Le seuil AA pour
-    du texte courant est 4,5:1, et le cahier des charges l'impose. À seize pour
-    cent, le même parcours de teintes donne 4,82:1, soit une marge réelle
-    plutôt qu'une valeur posée sur le seuil.
+    L'écart n'est pas une question de goût, il est mesuré — et le passage au
+    denim a INVERSÉ le sens du réglage.
+
+    Sur l'ancien fond crème, les accents étaient sombres : les diluer dans la
+    page l'assombrissait, et il fallait s'arrêter à seize pour cent pour que
+    les mentions secondaires gardent leurs 4,5:1. Sur une toile d'indigo, les
+    accents sont CLAIRS : les diluer ÉCLAIRCIT la page, donc les rapproche de
+    la couleur du texte. Reprendre les seize pour cent d'avant faisait tomber
+    `--muted` à 4,27:1 — sous le seuil AA, sans que rien ne le signale.
+
+    Dix et neuf pour cent rendent 5,51:1. La règle générale tient dans une
+    phrase : un lavis d'accent doit toujours s'éloigner du texte, jamais s'en
+    rapprocher.
 
     Un cadre de fiche peut se permettre d'être plus soutenu : il ne porte pas
     de texte. Le fond de page en porte partout, et c'est toute la différence.
@@ -147,8 +166,8 @@
   */
   --gradient-page: linear-gradient(
     155deg,
-    color-mix(in oklab, var(--stamp) 16%, var(--paper-raised)) 0%,
-    color-mix(in oklab, var(--mark) 14%, var(--paper-raised)) 100%
+    color-mix(in oklab, var(--stamp) 10%, var(--paper-raised)) 0%,
+    color-mix(in oklab, var(--mark) 9%, var(--paper-raised)) 100%
   );
 
   /* --- Typographie -------------------------------------------------------
@@ -186,60 +205,60 @@
    au crème. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --paper: #17100f;
-    --paper-raised: #1f1618;
-    --surface: #271b1e;
-    --ink: #f7ece9;
-    --muted: #b39ba0;
+    --paper: #0d1c2c;
+    --paper-raised: #12263a;
+    --surface: #173049;
+    --ink: #eceadf;
+    --muted: #9fb6ce;
 
-    --sand: #3a2a2e;
-    --sand-strong: #543c43;
-    --rule: #f7ece9;
+    --sand: #21405c;
+    --sand-strong: #33587a;
+    --rule: #eceadf;
 
     /* Les accents CHANGENT de valeur, pas de teinte : le rose et le cuivre du
        thème clair porteraient du texte illisible sur une encre sombre. Ce sont
        les mêmes couleurs, remontées jusqu'à repasser les seuils — et le texte
        qu'ils portent devient sombre, d'où `--ink-inverse`. */
-    --stamp: #ff8fb4;
-    --stamp-hover: #ffb0c9;
-    --mark: #ff9d5e;
-    --mark-hover: #ffb783;
+    --stamp: #bcd8f2;
+    --stamp-hover: #d6e7f8;
+    --mark: #93bfe4;
+    --mark-hover: #b0d2ee;
 
-    --engraving: #d59a86;
+    --engraving: #3f6d99;
 
-    --success: #6fb28c;
-    --warning: #d9a45e;
-    --danger: #ef8c82;
+    --success: #6fc396;
+    --warning: #e0b45f;
+    --danger: #f2897f;
 
-    --ink-inverse: #17100f;
-    --focus-ring: #ff8fb4;
+    --ink-inverse: #0d1c2c;
+    --focus-ring: #bcd8f2;
   }
 }
 
 :root[data-theme='dark'] {
-  --paper: #17100f;
-  --paper-raised: #1f1618;
-  --surface: #271b1e;
-  --ink: #f7ece9;
-  --muted: #b39ba0;
+  --paper: #0d1c2c;
+  --paper-raised: #12263a;
+  --surface: #173049;
+  --ink: #eceadf;
+  --muted: #9fb6ce;
 
-  --sand: #3a2a2e;
-  --sand-strong: #543c43;
-  --rule: #f7ece9;
+  --sand: #21405c;
+  --sand-strong: #33587a;
+  --rule: #eceadf;
 
-  --stamp: #ff8fb4;
-  --stamp-hover: #ffb0c9;
-  --mark: #ff9d5e;
-  --mark-hover: #ffb783;
+  --stamp: #bcd8f2;
+  --stamp-hover: #d6e7f8;
+  --mark: #93bfe4;
+  --mark-hover: #b0d2ee;
 
-  --engraving: #d59a86;
+  --engraving: #3f6d99;
 
-  --success: #6fb28c;
-  --warning: #d9a45e;
-  --danger: #ef8c82;
+  --success: #6fc396;
+  --warning: #e0b45f;
+  --danger: #f2897f;
 
-  --ink-inverse: #17100f;
-  --focus-ring: #ff8fb4;
+  --ink-inverse: #0d1c2c;
+  --focus-ring: #bcd8f2;
 }
 
 /* `inline` fait émettre var(--x) plutôt que la valeur littérale : c'est ce qui
@@ -554,15 +573,28 @@
     background-color: var(--paper-raised);
 
     /*
-      Le filet est un CHEVEU, pas un contour.
+      Le contour est une SURPIQÛRE, comme sur un jean.
 
-      Un contour plein noir refermé sur un rectangle arrondi, avec l'ombre
-      décalée de la charte par-dessus, donnait à la barre l'allure d'un
-      panneau d'interface de jeu : une pastille appliquée sur la page plutôt
-      qu'un élément qui lui appartient. Le filet plein reste ce qui délimite
-      une FICHE — un objet qu'on prend — et la barre n'en est pas une.
+      C'est ce qui a été demandé, et c'est aussi ce qui règle un vrai problème :
+      sur une toile d'indigo, un filet-cheveu d'encre à 11 % disparaissait
+      complètement. Il fallait soit l'épaissir, soit changer sa nature.
+
+      Une surpiqûre, c'est un TIRET RÉGULIER de fil clair, posé en retrait du
+      bord — jamais un trait continu. `dashed` donne le tiret, la largeur donne
+      l'épaisseur du fil, et l'écart entre le bord et la couture vient du fond
+      qui dépasse dessous.
+
+      Le fil est de l'écru, pas du blanc pur : c'est `--ink`, la même couleur
+      que le texte, donc il suit le thème. Un blanc littéral resterait blanc
+      sur une toile de nuit, où il éblouirait.
     */
-    border: 1px solid color-mix(in oklab, var(--ink) 11%, transparent);
+    /*
+      Trois pixels, et pas deux. La longueur des tirets suit l'épaisseur du
+      trait : à deux pixels le pointillé se lit comme une bordure en tirets, à
+      trois il se lit comme une couture. C'est le même réglage qui donne
+      l'épaisseur demandée et la bonne longueur de point.
+    */
+    border: 3px dashed color-mix(in oklab, var(--ink) 82%, transparent);
     border-radius: 1rem;
 
     /*

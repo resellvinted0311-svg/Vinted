@@ -53,10 +53,15 @@ test.describe('Accueil', () => {
      * Valeur épinglée volontairement : c'est le garde-fou qui signale qu'une
      * refonte a touché la palette.
      *
-     * Il a fait son travail au passage à la teinte « Rose & Cuivre » : le crème
-     * écru (#f3f0e7) a laissé la place à un crème rosé. La valeur est mise à
-     * jour ici EN MÊME TEMPS que la feuille de style, jamais après coup — un
-     * garde-fou qu'on desserre pour faire passer un test ne garde plus rien.
+     * Il a fait son travail deux fois. Au passage à « Rose & Cuivre » d'abord :
+     * le crème écru (#f3f0e7) a laissé la place à un crème rosé (#fbf3f0). Puis
+     * au passage au DENIM, où la toile cesse d'être un crème pour devenir de
+     * l'indigo — l'inversion la plus profonde qu'ait connue cette palette,
+     * puisque le fond et l'encre échangent leurs rôles.
+     *
+     * La valeur est mise à jour ici EN MÊME TEMPS que la feuille de style,
+     * jamais après coup — un garde-fou qu'on desserre pour faire passer un test
+     * ne garde plus rien.
      *
      * Les rapports de contraste de la nouvelle palette, eux, sont vérifiés par
      * `tests/domain/palette.test.ts`, qui les recalcule depuis `globals.css`.
@@ -66,14 +71,14 @@ test.describe('Accueil', () => {
         .getPropertyValue('--paper')
         .trim(),
     )
-    expect(paper.toLowerCase()).toBe('#fbf3f0')
+    expect(paper.toLowerCase()).toBe('#1a3a5c')
 
     // Le jeton doit aussi être réellement peint : déclaré sans être appliqué,
     // il passerait le contrôle ci-dessus tout en laissant la page blanche.
     const background = await page.evaluate(
       () => getComputedStyle(document.body).backgroundColor,
     )
-    expect(background).toBe('rgb(251, 243, 240)')
+    expect(background).toBe('rgb(26, 58, 92)')
   })
 })
 

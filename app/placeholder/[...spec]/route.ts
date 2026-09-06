@@ -13,17 +13,24 @@ import { NextResponse } from 'next/server'
 /**
  * Teintes sourdes tirées de la palette, jamais saturées.
  *
- * Elles ont suivi la charte quand celle-ci est passée du crème écru au crème
- * rosé : ces beiges verdâtres étaient les seules surfaces du jeu d'essai à
- * n'appartenir à aucune palette, et elles faussaient chaque relecture visuelle
- * en local — on croyait juger la teinte du site, on jugeait un reste.
+ * Elles suivent la charte à CHAQUE refonte, et c'est la troisième : beiges
+ * verdâtres, puis crème rosé, maintenant délavés de denim. À chaque fois,
+ * elles avaient été le seul reste — les seules surfaces du jeu d'essai à
+ * n'appartenir à aucune palette — et elles faussaient chaque relecture
+ * visuelle en local : on croyait juger la teinte du site, on jugeait un reste.
+ *
+ * Elles ne peuvent PAS lire les jetons CSS : cette route fabrique un SVG servi
+ * comme une image, hors de toute feuille de style. D'où des valeurs écrites en
+ * dur, et d'où le fait qu'elles soient à reprendre à la main. C'est le prix de
+ * l'endroit, pas un oubli — et ce commentaire est là pour que la prochaine
+ * refonte n'ait pas à les redécouvrir sur une capture d'écran.
  */
 const TONES = [
-  { bg: '#EFE1DC', fg: '#6F5B60' },
-  { bg: '#E7D3CD', fg: '#63505A' },
-  { bg: '#F4E8E4', fg: '#6F5B60' },
-  { bg: '#DFC9C3', fg: '#584750' },
-  { bg: '#F7EFEC', fg: '#7A666B' },
+  { bg: '#D6DFEA', fg: '#44566E' },
+  { bg: '#C7D4E3', fg: '#3C4E66' },
+  { bg: '#E1E8F1', fg: '#4A5C74' },
+  { bg: '#B9CADD', fg: '#36485F' },
+  { bg: '#EAEFF6', fg: '#51637B' },
 ] as const
 
 function hashString(value: string): number {

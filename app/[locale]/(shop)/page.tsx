@@ -5,7 +5,6 @@ import {
   countListedArticles,
 } from '@/lib/db/queries/articles'
 import { getFacets } from '@/lib/db/queries/articles'
-import { listBrandsWithCounts } from '@/lib/db/queries/taxonomy'
 import { EMPTY_FILTERS } from '@/lib/domain/catalogue'
 import {
   getHomeHeroImageUrl,
@@ -16,7 +15,6 @@ import { ReassuranceBand } from '@/components/shop/reassurance-band'
 import { ShortcutGrid } from '@/components/shop/shortcut-grid'
 import { UniverseCards } from '@/components/shop/universe-cards'
 import { ArrivalsRail } from '@/components/shop/arrivals-rail'
-import { TypeIndex } from '@/components/shop/type-index'
 import { BranchPlate, SeedHeadPlate } from '@/components/shop/engraving'
 import { Reveal } from '@/components/motion/reveal'
 
@@ -32,9 +30,13 @@ import { Reveal } from '@/components/motion/reveal'
  * sur décision du propriétaire, au profit du patron d'arrivée dominant : un
  * grand visuel paysage, puis les raccourcis vers le stock.
  *
- * La séquence suit la spécification de conversion : le visuel, les trois faits,
- * ce qui vient d'entrer, l'entrée par taille, l'entrée par catégorie, la
- * méthode, les marques, le catalogue.
+ * La séquence : le visuel, les trois faits, les deux univers, ce qui vient
+ * d'entrer, l'entrée par taille, l'entrée par catégorie, la méthode, le
+ * catalogue.
+ *
+ * Les deux INDEX qui figuraient dans cette descente — catégories, puis marques
+ * — ont été retirés. Tous deux doublaient la barre de navigation, et la page se
+ * terminait par des relevés que personne ne lit avant d'avoir vu une pièce.
  *
  * Deux raccourcis — taille et catégorie — plutôt qu'un seul, et c'est le point
  * de cette page : sur un stock chiné, le visiteur n'a pas une envie de produit,
@@ -59,22 +61,23 @@ export default async function HomePage({
 
   const t = await getTranslations('home')
   const tSite = await getTranslations('site')
-  const tNav = await getTranslations('nav')
 
   /*
-    L'index des catégories a été retiré, et sa requête avec lui.
+    Les index de la vitrine ont été retirés, et leurs requêtes avec eux.
 
     Une section supprimée dont la requête reste dans le `Promise.all` continue
     de coûter un aller en base à chaque régénération de la page, pour un
     résultat que personne n'affiche. Ces requêtes-là sont invisibles : rien
     n'échoue, la page est simplement un peu plus lente pour rien.
+
+    C'est arrivé pour les catégories, puis pour les marques : `brands` était
+    encore chargé alors que plus rien ne l'affichait.
   */
-  const [latest, brands, total, facets, heroImageUrl, universeImages] =
+  const [latest, total, facets, heroImageUrl, universeImages] =
     await Promise.all([
     // Huit pièces, et plus neuf : la vitrine ne prélève plus la première pour
     // en faire la pièce du moment. « Ajouté cette semaine » en montre huit.
     getLatestArticles(locale, 8),
-    listBrandsWithCounts(),
     countListedArticles(),
     // Les facettes du catalogue SANS filtre : elles donnent les tailles et les
     // catégories avec leurs effectifs réels, en une seule série de requêtes.
@@ -129,9 +132,11 @@ export default async function HomePage({
           que ce magasin a quelque chose pour moi. Y répondre en deux cartes
           évite de faire défiler un arrivage dont la moitié ne le concerne pas.
 
-          La section disparaît d'elle-même tant qu'un des deux univers est
-          vide : une carte qui mène à une grille vide est pire que pas de
-          carte.
+          Les deux cartes s'affichent TOUJOURS. Une première version se
+          retirait tant qu'un des deux univers était vide : en production, où
+          aucune pièce n'était encore rangée, la section demandée n'apparaissait
+          alors pas du tout. Ces cartes sont la structure du magasin, pas un
+          compte rendu de son stock.
           -------------------------------------------------------------------- */}
       <UniverseCards audiences={facets.audiences} images={universeImages} />
 
@@ -215,44 +220,19 @@ export default async function HomePage({
       </section>
 
       {/* --------------------------------------------------------------------
-          Index des marques.
+          L'index des marques a été retiré de la vitrine.
 
-          Les entrées en composition pleine largeur plutôt qu'en pastilles : le
-          compteur cesse d'être une décoration et dit où le catalogue est
-          fourni.
+          Il suivait le même sort que l'index des catégories avant lui, et pour
+          la même raison : la barre de navigation porte déjà « Marques », et la
+          descente de la page se terminait par un relevé que personne ne lit
+          avant d'avoir vu une pièce.
 
-          L'index des CATÉGORIES a été retiré d'ici. Il doublait la barre de
-          navigation sans rien ajouter, et la descente de la page contenait
-          alors deux listes verticales côte à côte — le seul endroit du site où
-          l'on demandait de choisir entre deux façons de choisir. L'accès par
-          catégorie reste entier : la barre le porte, et le panneau de filtres
-          du catalogue aussi.
+          Ce qui compte : la page `/marques` n'est pas supprimée pour autant,
+          et elle reste atteignable depuis la barre. Retirer la section EN
+          MÊME TEMPS que son seul lien entrant aurait rendu toutes les pages de
+          marque orphelines — indexables, et plus rien pour y mener. C'est
+          exactement le défaut que les pages de catégorie ont connu.
           -------------------------------------------------------------------- */}
-      <section className="mx-auto max-w-[80rem] px-4 py-16 sm:px-6 sm:py-24">
-        {/* Pleine largeur depuis qu'il est seul : à demi-largeur, l'index
-            gardait la colonne de gauche d'une grille dont la droite était
-            vide. Les lignes portent leur compteur à l'extrémité, comme une
-            table des matières — c'est cette longueur qui les fait lire comme
-            un relevé plutôt que comme une liste de liens. */}
-        <div>
-          <TypeIndex
-            title={t('indexBrands')}
-            entries={brands.map((brand) => ({
-              href: `/marque/${brand.slug}`,
-              label: brand.name,
-              count: brand.articleCount,
-            }))}
-            footer={
-              <Link
-                href="/marques"
-                className="label-reg text-muted underline underline-offset-4 hover:text-ink"
-              >
-                {tNav('brands')}
-              </Link>
-            }
-          />
-        </div>
-      </section>
 
       {/* --------------------------------------------------------------------
           L'entrée du catalogue.
