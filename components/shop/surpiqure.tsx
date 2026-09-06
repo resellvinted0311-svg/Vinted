@@ -44,17 +44,66 @@ import { coudre } from '@/lib/design/couture'
  */
 const LARGEUR_DE_REFERENCE = 1100
 
+/**
+ * Hauteur servie par le serveur, avant que le navigateur ne mesure.
+ *
+ * Elle doit être ANNONCÉE par l'appelant quand elle s'écarte de celle d'une
+ * barre de navigation. Le SVG est étiré à la boîte réelle tandis que son
+ * `viewBox` reste celui du rendu serveur : une couture dessinée pour 64 px et
+ * servie dans une bande de 9 en sortirait écrasée sept fois pendant le temps
+ * qui sépare le premier affichage de l'hydratation. Bref, mais visible, et
+ * exactement le genre de défaut qu'on ne voit jamais en développement — où
+ * l'hydratation est immédiate.
+ */
+const HAUTEUR_DE_REFERENCE = 64
+
 export function Surpiqure({
   /** Rayon de la barre, pour que la couture en épouse les arrondis. */
   rayon = 16,
   /** Retrait de la couture par rapport au bord de la barre. */
   retrait = 7,
+  /** `cadre` fait le tour de l'élément ; `ligne` le traverse de bord à bord. */
+  forme = 'cadre',
+  /** La toile traversée. Voir `TEINTES` dans le module de couture. */
+  ton = 'sombre',
+  /**
+   * Deux coutures voisines doivent avoir des graines DIFFÉRENTES.
+   *
+   * Le hasard est semé pour que serveur et navigateur produisent le même
+   * balisage. La contrepartie : à dimensions égales, deux coutures de même
+   * graine sont identiques au point près — deux lignes parallèles au haut et
+   * au bas d'une bande se répondraient comme un calque, et l'œil le voit tout
+   * de suite.
+   */
+  graine = 31,
+  /**
+   * Force de l'irrégularité, de 0 (machine parfaite) à 1 (franchement
+   * artisanal).
+   *
+   * Elle se règle en fonction de CE À QUOI LA COUTURE SE COMPARE. Autour de la
+   * barre de navigation, la piqûre longe un bord courbe : le regard suit la
+   * courbe et l'écart passe inaperçu. Sur un bandeau de neuf pixels, le bord
+   * droit passe à quatre pixels du fil, et le même écart se lit comme une
+   * ondulation. Ce n'est pas la main de la couturière qui change, c'est ce
+   * que l'œil a sous les yeux pour la juger.
+   */
+  desordre = 0.85,
+  /** Hauteur attendue de la boîte, pour le rendu servi avant l'hydratation. */
+  hauteurDeReference = HAUTEUR_DE_REFERENCE,
 }: {
   rayon?: number
   retrait?: number
+  forme?: 'cadre' | 'ligne'
+  ton?: 'sombre' | 'clair'
+  graine?: number
+  desordre?: number
+  hauteurDeReference?: number
 }) {
   const ref = useRef<HTMLDivElement>(null)
-  const [boite, setBoite] = useState({ w: LARGEUR_DE_REFERENCE, h: 64 })
+  const [boite, setBoite] = useState({
+    w: LARGEUR_DE_REFERENCE,
+    h: hauteurDeReference,
+  })
 
   // Les identifiants de dégradé doivent être uniques par instance : deux
   // coutures sur la même page partageraient sinon leurs `id`, et la seconde
@@ -83,12 +132,20 @@ export function Surpiqure({
   }, [])
 
   const w = Math.max(0, boite.w - retrait * 2)
-  const h = Math.max(0, boite.h - retrait * 2)
+  // Une ligne garde toute la hauteur de sa boîte : le retrait sert à l'écarter
+  // des bords GAUCHE et DROIT, pas à la comprimer verticalement — elle se pose
+  // déjà à mi-hauteur, et lui retrancher deux fois le retrait la ferait
+  // passer sous la hauteur minimale sur une bande fine, donc disparaître.
+  const h = forme === 'ligne' ? boite.h : Math.max(0, boite.h - retrait * 2)
 
   const contenu = coudre({
     largeur: w,
     hauteur: h,
     rayon: Math.max(2, rayon - retrait),
+    forme,
+    ton,
+    graine,
+    desordre,
     cle,
   })
 
@@ -101,8 +158,13 @@ export function Surpiqure({
           viewBox={`0 0 ${boite.w} ${boite.h}`}
           className="absolute inset-0 h-full w-full overflow-visible"
         >
+          {/*
+            La ligne n'est décalée QUE sur l'axe horizontal : sa hauteur est
+            déjà celle de la boîte, et elle s'y place d'elle-même à mi-hauteur.
+            La descendre encore du retrait la sortirait par le bas.
+          */}
           <g
-            transform={`translate(${retrait},${retrait})`}
+            transform={`translate(${retrait},${forme === 'ligne' ? 0 : retrait})`}
             dangerouslySetInnerHTML={{ __html: contenu }}
           />
         </svg>

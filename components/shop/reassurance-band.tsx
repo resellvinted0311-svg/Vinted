@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server'
+import { Surpiqure } from '@/components/shop/surpiqure'
 
 /**
  * Le bandeau de réassurance, sous le visuel d'arrivée.
@@ -28,6 +29,25 @@ import { getTranslations } from 'next-intl/server'
  * l'expédition, le colophon pour la rétractation. Les réécrire ici, même en
  * mieux, créerait deux versions d'une même promesse, et c'est la plus
  * ambitieuse des deux qui engagerait.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi ce bandeau est SURPIQUÉ
+ * ---------------------------------------------------------------------------
+ * Parce que c'est ce qu'il est, dans le vocabulaire du vêtement : un panneau
+ * clair rapporté sur de l'indigo. Sur un jean, un empiècement de cette sorte
+ * n'est jamais posé — il est COUSU, et la couture se voit sur ses deux bords.
+ * Sans elle, la bande flotte au milieu de la toile comme un aplat qu'on aurait
+ * oublié de fixer.
+ *
+ * Le fil est le même que celui de la barre de navigation, mais il n'y joue pas
+ * le même rôle. Sur l'indigo, un fil blanc porte le dessin à lui seul. Ici, la
+ * toile est presque aussi claire que lui : ce qui se voit, c'est le RELIEF —
+ * le pli, les trous d'aiguille, l'ombre portée. C'est une couture ton sur ton,
+ * et elle se lit exactement comme sur un vêtement.
+ *
+ * Deux graines différentes pour les deux lignes : à graine égale, elles
+ * seraient superposables au point près, et deux coutures parallèles identiques
+ * se repèrent immédiatement comme un décalque.
  */
 export async function ReassuranceBand() {
   const t = await getTranslations('home')
@@ -39,7 +59,42 @@ export async function ReassuranceBand() {
   ] as const
 
   return (
-    <section className="gradient-accent ruled-t ruled-b text-ink-inverse">
+    <section className="gradient-accent relative ruled-t ruled-b text-ink-inverse">
+      {/*
+        Les deux coutures sont posées à l'intérieur des bords, à la distance
+        où tombe une surpiqûre de vêtement — assez près du bord pour dire
+        qu'elle le retient, assez loin pour ne pas se confondre avec lui.
+
+        Elles ne rentrent pas dans le flux : le bandeau garde exactement la
+        hauteur de son texte, et la couture ne la modifie pas.
+      */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[9px]"
+      >
+        <Surpiqure
+          forme="ligne"
+          ton="clair"
+          retrait={0}
+          graine={17}
+          desordre={0.55}
+          hauteurDeReference={9}
+        />
+      </div>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[9px]"
+      >
+        <Surpiqure
+          forme="ligne"
+          ton="clair"
+          retrait={0}
+          graine={83}
+          desordre={0.55}
+          hauteurDeReference={9}
+        />
+      </div>
+
       <ul className="mx-auto flex max-w-[80rem] flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6">
         {faits.map((fait) => (
           <li key={fait} className="label-reg">

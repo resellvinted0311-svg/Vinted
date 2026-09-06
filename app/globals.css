@@ -52,10 +52,20 @@
      éclaircir a été essayé : sur un fond mi-ton, cela écrase le contraste aux
      deux bouts à la fois, et trois paires passaient sous le seuil.
 
-     L'encre est un BLANC FRANC, comme le fil de surpiqûre. */
-  --paper: #3f5a7b;
-  --paper-raised: #36506f;
-  --surface: #2e4664;
+     L'encre est un BLANC FRANC, comme le fil de surpiqûre.
+
+     LA TOILE A ÉTÉ ASSOMBRIE, et ce n'est pas un changement de goût. Le fond
+     a été mesuré sur la page réelle : en effaçant l'encre et en relisant les
+     pixels sous chaque bloc de texte, la médiane sortait à 6,7:1 — bonne —
+     mais le neuvième décile à 2,7:1, et les pixels les plus clairs du tissage
+     étaient blancs. Un texte blanc posé là-dessus se délite dans l'armure.
+
+     Un fond ne se juge pas à sa couleur moyenne quand ce fond est une IMAGE.
+     Le tissage porte désormais un plafond de luminance déduit du seuil AA
+     (voir `scripts/tisser-denim.mjs`), et la moyenne descend avec lui. */
+  --paper: #334562;
+  --paper-raised: #2d3c56;
+  --surface: #27354b;
   --ink: #ffffff;
   --muted: #d3e0ee;
 

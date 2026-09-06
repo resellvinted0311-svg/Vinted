@@ -76,14 +76,14 @@ test.describe('Accueil', () => {
         .getPropertyValue('--paper')
         .trim(),
     )
-    expect(paper.toLowerCase()).toBe('#3f5a7b')
+    expect(paper.toLowerCase()).toBe('#334562')
 
     // Le jeton doit aussi être réellement peint : déclaré sans être appliqué,
     // il passerait le contrôle ci-dessus tout en laissant la page blanche.
     const background = await page.evaluate(
       () => getComputedStyle(document.body).backgroundColor,
     )
-    expect(background).toBe('rgb(63, 90, 123)')
+    expect(background).toBe('rgb(51, 69, 98)')
   })
 })
 
