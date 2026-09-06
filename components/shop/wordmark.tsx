@@ -53,18 +53,19 @@ export function Wordmark({
         {SITE.name}
       </span>
 
-      <span
-        aria-hidden
-        className={cn(
-          // Le filet de la signature porte le dégradé rose → cuivre, comme les
-          // filets qui ouvrent une section. Ce qui reste noir, c'est le filet
-          // qui DÉLIMITE — contour de fiche, cadre photo : un trait coloré
-          // partout ne délimiterait plus rien.
-          'gradient-accent mt-1.5 block transition-[width] duration-200 ease-out',
-          size === 'lg' ? 'h-[2px] w-16' : 'h-[1.5px] w-9',
-          'group-hover:w-full',
-        )}
-      />
+      {/*
+        Il y avait ici un filet sous la signature, qui s'étirait au survol.
+
+        Il a été retiré à la demande de la boutique. Il se défendait tant que la
+        barre n'avait pas d'ornement propre ; depuis qu'elle porte une
+        surpiqûre, deux traits se disputaient le même rôle à trois centimètres
+        l'un de l'autre — et le fil blanc de la couture est plus fort que le
+        filet.
+
+        Le survol reste signalé : la signature est un lien, et son état
+        survolé passe par la couleur du texte comme les autres liens de la
+        barre.
+      */}
 
       {tagline ? (
         <span

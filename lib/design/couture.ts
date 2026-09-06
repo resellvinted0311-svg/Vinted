@@ -13,10 +13,13 @@
  *     assemblées ici ». Sans lui, il ne reste que des marques côte à côte.
  *
  *  2. LE VOLUME. Un fil est un cylindre : chaque point reçoit un dégradé dans
- *     sa section — sombre au bord haut, clair au quart, moyen au centre, ombré
- *     en bas. La double inflexion donne le coton mat ; un simple
- *     clair-vers-sombre donne du métal, et trois aplats empilés donnent la
- *     perle de plastique.
+ *     sa section — clair au quart supérieur, à peine éteint en bas. La double
+ *     inflexion donne le coton mat ; un simple clair-vers-sombre donne du
+ *     métal, et trois aplats empilés donnent la perle de plastique.
+ *
+ *     Les quatre arrêts restent tous CLAIRS, et c'est un réglage, pas un
+ *     hasard : un bas de cylindre trop soutenu grise le fil, et sur une
+ *     couture blanche cela se voit avant tout le reste.
  *
  *  3. LE GALBE. Le fil sort d'un trou, court à plat, rentre dans un autre : il
  *     est pincé aux deux bouts et renflé au milieu. On remplit donc une forme
@@ -223,7 +226,6 @@ export function coudre({
     gb: number
     cambrure: number
     demi: number
-    eclat: number
     mi: Sur
   }[] = []
   const trous: { x: number; y: number; r: number }[] = []
@@ -239,7 +241,16 @@ export function coudre({
     const gb = (rnd() - 0.5) * 3.1 * desordre
     const cambrure = (rnd() - 0.5) * 0.9 * desordre
     const demi = (fil / 2) * (1 + (rnd() - 0.5) * 0.42 * desordre)
-    const eclat = 1 - rnd() * 0.34 * desordre
+    // Aucune variation d'OPACITÉ sur le fil.
+    //
+    // Elle allait jusqu'à −29 %, et un point à 71 % laisse passer l'indigo
+    // dessous : il ne paraît pas « moins éclairé », il paraît GRIS. Sur une
+    // couture blanche, c'est le seul défaut qu'on remarque — quelques points
+    // ternes au milieu des autres.
+    //
+    // L'irrégularité reste entière, mais elle est dans la FORME : longueur,
+    // position, cambrure, grosseur du fil. Un fil de coton blanc reste blanc
+    // d'un bout à l'autre d'une couture ; ce sont ses points qui bougent.
 
     morceaux.push({
       d0: d,
@@ -248,7 +259,6 @@ export function coudre({
       gb,
       cambrure,
       demi,
-      eclat,
       mi: en(d + longueur / 2),
     })
 
@@ -275,7 +285,7 @@ export function coudre({
       const y1 = (m.mi.y + m.mi.ny * -e).toFixed(2)
       const x2 = (m.mi.x + m.mi.nx * e).toFixed(2)
       const y2 = (m.mi.y + m.mi.ny * e).toFixed(2)
-      return `<linearGradient id="${cle}${i}" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="#EDEFF2"/><stop offset="0.26" stop-color="#FFFFFF"/><stop offset="0.6" stop-color="#F1F4F7"/><stop offset="1" stop-color="#AEBAC7"/></linearGradient>`
+      return `<linearGradient id="${cle}${i}" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="#EDEFF2"/><stop offset="0.26" stop-color="#FFFFFF"/><stop offset="0.6" stop-color="#F1F4F7"/><stop offset="1" stop-color="#D8E0E8"/></linearGradient>`
     })
     .join('')
 
@@ -302,7 +312,7 @@ export function coudre({
     morceaux
       .map(
         (m, i) =>
-          `<path d="${fuseau(en, m.d0, m.longueur, m.demi, m.ga, m.gb, m.cambrure)}" fill="url(#${cle}${i})" opacity="${m.eclat.toFixed(2)}"/>`,
+          `<path d="${fuseau(en, m.d0, m.longueur, m.demi, m.ga, m.gb, m.cambrure)}" fill="url(#${cle}${i})"/>`,
       )
       .join('')
   )
