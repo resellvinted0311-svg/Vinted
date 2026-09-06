@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
-import { SeedHeadPlate } from '@/components/shop/engraving'
 import {
   deliveryUrl,
   isVideoUrl,
@@ -87,7 +86,10 @@ export async function HeroBanner({ imageUrl }: { imageUrl: string | null }) {
 
         `min-h-[26rem]` vaut à TOUTES les tailles. Sur téléphone il relève un
         16/9 qui ne ferait que 219 px de haut ; ailleurs il garantit que le
-        titre, l'accroche et le bouton ont toujours leur place.
+        titre et le bouton ont toujours leur place. Il a été dimensionné du
+        temps où une accroche s'intercalait entre les deux : il est désormais
+        plus large que nécessaire, et on le laisse tel quel — c'est la hauteur
+        minimale qui donne au cadre l'allure d'un cadre sur un téléphone.
 
         Il a d'abord été écrit `md:min-h-fit`, pour que le cadre ne soit jamais
         plus court que son contenu. C'était un piège : avec `aspect-ratio`,
@@ -132,9 +134,19 @@ export async function HeroBanner({ imageUrl }: { imageUrl: string | null }) {
           alternatif du type « emplacement d'image » serait annoncé à chaque
           arrivée sur la boutique, pour n'apprendre rien à personne.
         */}
-        <div aria-hidden className="wash-accent absolute inset-0 -z-10">
-          <SeedHeadPlate className="pointer-events-none absolute -right-20 top-0 hidden h-[130%] w-auto select-none text-engraving opacity-30 lg:block" />
-        </div>
+        {/*
+          Le lavis SEUL, sans gravure.
+
+          La fleur au trait a été retirée d'ici à la demande de la boutique.
+          Elle occupait le tiers droit du cadre, c'est-à-dire précisément la
+          zone qu'une photographie doit remplir : un dessin sous une photo ne
+          se voit pas, et un dessin sans photo donne au cadre l'air d'être déjà
+          composé alors qu'il attend son visuel.
+
+          Elle reste employée plus bas dans la page, où elle n'entre en
+          concurrence avec rien.
+        */}
+        <div aria-hidden className="wash-accent absolute inset-0 -z-10" />
 
         {imageUrl && estVideo ? (
           <HeroVideo
@@ -195,7 +207,14 @@ export async function HeroBanner({ imageUrl }: { imageUrl: string | null }) {
             {t('heroTitle')}
           </h1>
 
-          <p className="max-w-xl text-lg text-muted">{t('heroSubtitle')}</p>
+          {/*
+            Pas d'accroche sous le titre : elle a été retirée à la demande de la
+            boutique. Elle annonçait « lavée, contrôlée et mesurée, expédition
+            sous 48 heures, retour sous 14 jours » — c'est-à-dire, mot pour mot,
+            ce que la bande de réassurance répète immédiatement en dessous. Deux
+            fois la même promesse à trois centimètres d'écart n'en renforce
+            aucune.
+          */}
 
           {/*
             Un seul appel, verbe et destination. Deux boutons côte à côte se
