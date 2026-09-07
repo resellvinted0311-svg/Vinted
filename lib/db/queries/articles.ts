@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { cache } from 'react'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
 import {
@@ -266,41 +267,55 @@ export interface Facets {
   priceRange: { minCents: number; maxCents: number } | null
 }
 
-async function facetCount(
+/** Les tables et jointures communes à toutes les branches de facette. */
+const FACET_SOURCE = (locale: string): Prisma.Sql => Prisma.sql`
+  FROM "Article" a
+  JOIN "ArticleTranslation" t
+    ON t."articleId" = a.id AND t.locale = ${locale}
+  LEFT JOIN "Brand" b ON b.id = a."brandId"
+  JOIN "Category" c ON c.id = a."categoryId"
+  LEFT JOIN "CategoryTranslation" ct
+    ON ct."categoryId" = c.id AND ct.locale = ${locale}
+`
+
+/**
+ * Une branche de facette : les compteurs d'UNE dimension.
+ *
+ * Elle est parenthésée et porte son propre `ORDER BY` et son propre `LIMIT` :
+ * c'est ce qui permet de la coudre aux sept autres par `UNION ALL` sans que
+ * le tri de l'une déborde sur les autres.
+ *
+ * `skipDimension` reste le cœur de la logique : on ignore le filtre de la
+ * dimension qu'on compte, sans quoi sélectionner « Levi's » afficherait 0
+ * partout ailleurs et il deviendrait impossible d'en changer.
+ */
+function facetBranch(
   filters: CatalogueFilters,
   locale: string,
   dimension: keyof CatalogueFilters,
+  nom: string,
   valueExpression: Prisma.Sql,
   labelExpression: Prisma.Sql,
-): Promise<FacetEntry[]> {
+): Prisma.Sql {
   const clauses = whereClauses(filters, locale, dimension)
   clauses.push(Prisma.sql`${valueExpression} IS NOT NULL`)
 
-  const rows = await prisma.$queryRaw<
-    { value: string; label: string; count: bigint }[]
-  >`
-    ${categoryCte(filters.categorySlugs)}
-    SELECT ${valueExpression} AS value,
-           ${labelExpression} AS label,
-           count(*)::bigint AS count
-    FROM "Article" a
-    JOIN "ArticleTranslation" t
-      ON t."articleId" = a.id AND t.locale = ${locale}
-    LEFT JOIN "Brand" b ON b.id = a."brandId"
-    JOIN "Category" c ON c.id = a."categoryId"
-    LEFT JOIN "CategoryTranslation" ct
-      ON ct."categoryId" = c.id AND ct.locale = ${locale}
+  // Les types des colonnes doivent coïncider d'une branche à l'autre, sinon
+  // PostgreSQL refuse l'union. D'où les conversions explicites, y compris sur
+  // les colonnes qu'une branche donnée n'utilise pas.
+  return Prisma.sql`(
+    SELECT ${nom}::text AS dim,
+           (${valueExpression})::text AS value,
+           (${labelExpression})::text AS label,
+           count(*)::bigint AS count,
+           NULL::int AS min_cents,
+           NULL::int AS max_cents
+    ${FACET_SOURCE(locale)}
     WHERE ${andAll(clauses)}
-    GROUP BY 1, 2
-    ORDER BY count DESC, 1 ASC
+    GROUP BY (${valueExpression})::text, (${labelExpression})::text
+    ORDER BY count(*) DESC, (${valueExpression})::text ASC
     LIMIT 60
-  `
-
-  return rows.map((row) => ({
-    value: row.value,
-    label: row.label ?? row.value,
-    count: Number(row.count),
-  }))
+  )`
 }
 
 /**
@@ -313,40 +328,112 @@ async function facetCount(
 export async function getFacets(
   filters: CatalogueFilters,
   locale: string,
+  /**
+   * Le client à interroger. Sert à COMPTER les allers-retours.
+   *
+   * Le gain de cette fonction tient dans son nombre de requêtes, pas dans son
+   * résultat. Vérifier l'égalité des résultats sans vérifier le nombre
+   * d'appels laisserait une réécriture future revenir à neuf requêtes en
+   * gardant tous les tests au vert — le compteur serait alors le seul témoin,
+   * et il n'existerait pas.
+   *
+   * Le paramètre est donc là pour qu'un test puisse passer un client
+   * instrumenté. En production, la valeur par défaut est celle du singleton et
+   * personne n'a à s'en soucier.
+   */
+  client: Pick<typeof prisma, '$queryRaw'> = prisma,
 ): Promise<Facets> {
-  const [categories, brands, sizes, conditions, colors, materials, audiences, price] =
-    await Promise.all([
-      facetCount(filters, locale, 'categorySlugs', Prisma.sql`c.slug`, Prisma.sql`ct.name`),
-      facetCount(filters, locale, 'brandSlugs', Prisma.sql`b.slug`, Prisma.sql`b.name`),
-      facetCount(filters, locale, 'sizes', Prisma.sql`a."sizeNormalized"`, Prisma.sql`a."sizeLabel"`),
-      facetCount(filters, locale, 'conditions', Prisma.sql`a.condition::text`, Prisma.sql`a.condition::text`),
-      facetCount(filters, locale, 'colors', Prisma.sql`a.color`, Prisma.sql`a.color`),
-      facetCount(filters, locale, 'materials', Prisma.sql`a.material`, Prisma.sql`a.material`),
-      facetCount(filters, locale, 'audiences', Prisma.sql`a.audience`, Prisma.sql`a.audience`),
-      prisma.$queryRaw<{ min: number | null; max: number | null }[]>`
-        ${categoryCte(filters.categorySlugs)}
-        SELECT min(a."priceCents")::int AS min, max(a."priceCents")::int AS max
-        FROM "Article" a
-        JOIN "ArticleTranslation" t
-          ON t."articleId" = a.id AND t.locale = ${locale}
-        LEFT JOIN "Brand" b ON b.id = a."brandId"
-        WHERE ${andAll(whereClauses(filters, locale))}
-      `,
-    ])
+  /**
+   * UNE requête, et non plus neuf.
+   *
+   * -------------------------------------------------------------------------
+   * Pourquoi le `Promise.all` d'avant ne parallélisait rien
+   * -------------------------------------------------------------------------
+   * Les sept compteurs et les bornes de prix partaient dans un `Promise.all`,
+   * ce qui donne l'apparence du parallélisme. En production il n'y en avait
+   * aucun : la connexion applicative porte `connection_limit=1` — le réglage
+   * juste derrière un pooler — et les neuf requêtes faisaient donc la queue
+   * sur une seule connexion, l'une après l'autre.
+   *
+   * Chacune embarquait en outre la MÊME sous-requête récursive de catégories.
+   * Mesuré sur un rendu de page de rayon : dix-neuf requêtes SQL, dont dix
+   * fois cette récursion, à paramètres identiques.
+   *
+   * Neuf allers-retours coûtent neuf fois la distance à la base. C'est
+   * indolore en local — moins d'une milliseconde pièce — et c'est ce qui
+   * faisait les secondes d'attente depuis une région éloignée.
+   *
+   * -------------------------------------------------------------------------
+   * Ce que l'union change, et ce qu'elle ne change pas
+   * -------------------------------------------------------------------------
+   * Les branches sont exactement les requêtes d'avant, parenthésées et
+   * cousues par `UNION ALL` : mêmes clauses, même `skipDimension`, mêmes
+   * tris, mêmes limites. Seul le nombre d'allers-retours change.
+   *
+   * L'équivalence n'est pas affirmée, elle est VÉRIFIÉE : la sortie de
+   * l'ancienne version a été capturée sur neuf combinaisons de filtres, et
+   * `tests/integration/facettes.test.ts` compare la nouvelle à cette
+   * empreinte.
+   */
+  const branches = [
+    facetBranch(filters, locale, 'categorySlugs', 'categories', Prisma.sql`c.slug`, Prisma.sql`ct.name`),
+    facetBranch(filters, locale, 'brandSlugs', 'brands', Prisma.sql`b.slug`, Prisma.sql`b.name`),
+    facetBranch(filters, locale, 'sizes', 'sizes', Prisma.sql`a."sizeNormalized"`, Prisma.sql`a."sizeLabel"`),
+    facetBranch(filters, locale, 'conditions', 'conditions', Prisma.sql`a.condition::text`, Prisma.sql`a.condition::text`),
+    facetBranch(filters, locale, 'colors', 'colors', Prisma.sql`a.color`, Prisma.sql`a.color`),
+    facetBranch(filters, locale, 'materials', 'materials', Prisma.sql`a.material`, Prisma.sql`a.material`),
+    facetBranch(filters, locale, 'audiences', 'audiences', Prisma.sql`a.audience`, Prisma.sql`a.audience`),
+    // Les bornes de prix : une seule ligne, sans compteur, et SANS
+    // `skipDimension` — l'amplitude annoncée sous le curseur doit être celle
+    // de la sélection courante, pas d'une sélection qu'on n'a pas faite.
+    Prisma.sql`(
+      SELECT 'price'::text AS dim,
+             NULL::text AS value,
+             NULL::text AS label,
+             NULL::bigint AS count,
+             min(a."priceCents")::int AS min_cents,
+             max(a."priceCents")::int AS max_cents
+      ${FACET_SOURCE(locale)}
+      WHERE ${andAll(whereClauses(filters, locale))}
+    )`,
+  ]
 
-  const bounds = price[0]
+  const rows = await client.$queryRaw<
+    {
+      dim: string
+      value: string | null
+      label: string | null
+      count: bigint | null
+      min_cents: number | null
+      max_cents: number | null
+    }[]
+  >`
+    ${categoryCte(filters.categorySlugs)}
+    ${Prisma.join(branches, ' UNION ALL ')}
+  `
+
+  const parDimension = (nom: string): FacetEntry[] =>
+    rows
+      .filter((row) => row.dim === nom && row.value !== null)
+      .map((row) => ({
+        value: row.value as string,
+        label: row.label ?? (row.value as string),
+        count: Number(row.count),
+      }))
+
+  const bornes = rows.find((row) => row.dim === 'price')
 
   return {
-    categories,
-    brands,
-    sizes,
-    conditions,
-    colors,
-    materials,
-    audiences,
+    categories: parDimension('categories'),
+    brands: parDimension('brands'),
+    sizes: parDimension('sizes'),
+    conditions: parDimension('conditions'),
+    colors: parDimension('colors'),
+    materials: parDimension('materials'),
+    audiences: parDimension('audiences'),
     priceRange:
-      bounds?.min != null && bounds.max != null
-        ? { minCents: bounds.min, maxCents: bounds.max }
+      bornes?.min_cents != null && bornes.max_cents != null
+        ? { minCents: bornes.min_cents, maxCents: bornes.max_cents }
         : null,
   }
 }
@@ -362,7 +449,20 @@ export async function getFacets(
  * reste en 200, marquée SoldOut, avec des articles similaires disponibles.
  * Seuls les brouillons et les archives sont réellement introuvables.
  */
-export async function getArticleBySlug(
+/**
+ * Mutualisée sur la durée d'un rendu par `cache` de React.
+ *
+ * Next appelle `generateMetadata` PUIS le composant de page, et les deux ont
+ * besoin de la même pièce. Sans cette enveloppe, la lecture part deux fois :
+ * mesuré sur une fiche article, vingt-deux requêtes SQL dont la moitié
+ * exactement en double — la pièce, ses traductions, ses images, ses mesures,
+ * sa marque et sa catégorie, lues une fois pour le titre de l'onglet et une
+ * fois pour la page.
+ *
+ * C'est un doublon que rien ne signale : les deux lectures rendent la même
+ * chose, la page est juste, et elle coûte le double.
+ */
+export const getArticleBySlug = cache(async function getArticleBySlug(
   slug: string,
   locale: string,
 ): Promise<PublicArticleDetail | null> {
@@ -379,7 +479,7 @@ export async function getArticleBySlug(
   if (!hasLocale && article.translations.length === 0) return null
 
   return article
-}
+})
 
 export async function getSimilarArticles(
   {

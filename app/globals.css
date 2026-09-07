@@ -609,6 +609,30 @@
     décollement qui la fait lire comme flottante — une barre pleine largeur
     accrochée en haut redevient un en-tête ordinaire.
   */
+  /*
+    Le fil d'attente d'une navigation.
+
+    Il avance VITE au début puis ralentit sans jamais atteindre le bout : la
+    durée réelle est inconnue, et une barre qui arriverait à 100 % avant la
+    page promettrait une fin qu'elle ne peut pas tenir. Ce profil est le seul
+    honnête — il dit « ça travaille », pas « il reste tant ».
+
+    Le mouvement disparaît sous `prefers-reduced-motion` grâce à la règle
+    générale plus haut, et le trait reste alors affiché en position finale :
+    l'information « une navigation est en cours » survit à la suppression de
+    l'animation, ce qui est bien ce qu'on veut d'un indicateur.
+  */
+  @keyframes nd-nav-progress {
+    0% { transform: scaleX(0.02); }
+    28% { transform: scaleX(0.45); }
+    62% { transform: scaleX(0.72); }
+    100% { transform: scaleX(0.9); }
+  }
+
+  .nav-progress {
+    animation: nd-nav-progress 8s cubic-bezier(0.16, 0.9, 0.3, 1) forwards;
+  }
+
   .nav-float {
     position: relative;
     background-color: var(--paper-raised);

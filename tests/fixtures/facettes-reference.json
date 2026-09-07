@@ -1,0 +1,1812 @@
+{
+ "aucun filtre": {
+  "categories": [
+   {
+    "value": "jeans-pantalons",
+    "label": "Jeans et pantalons",
+    "count": 7
+   },
+   {
+    "value": "robes",
+    "label": "Robes",
+    "count": 5
+   },
+   {
+    "value": "sacs",
+    "label": "Sacs",
+    "count": 5
+   },
+   {
+    "value": "accessoires",
+    "label": "Accessoires",
+    "count": 4
+   },
+   {
+    "value": "chaussures",
+    "label": "Chaussures",
+    "count": 4
+   },
+   {
+    "value": "manteaux",
+    "label": "Manteaux et doudounes",
+    "count": 4
+   },
+   {
+    "value": "pulls-sweats",
+    "label": "Pulls et sweats",
+    "count": 4
+   },
+   {
+    "value": "vestes-legeres",
+    "label": "Vestes légères",
+    "count": 4
+   },
+   {
+    "value": "chemises",
+    "label": "Chemises et blouses",
+    "count": 3
+   },
+   {
+    "value": "t-shirts",
+    "label": "T-shirts et débardeurs",
+    "count": 2
+   }
+  ],
+  "brands": [
+   {
+    "value": "burberry",
+    "label": "Burberry",
+    "count": 13
+   },
+   {
+    "value": "levis",
+    "label": "Levi's",
+    "count": 11
+   },
+   {
+    "value": "adidas",
+    "label": "Adidas",
+    "count": 6
+   },
+   {
+    "value": "ralph-lauren",
+    "label": "Ralph Lauren",
+    "count": 6
+   },
+   {
+    "value": "uniqlo",
+    "label": "Uniqlo",
+    "count": 6
+   }
+  ],
+  "sizes": [
+   {
+    "value": "L",
+    "label": "L",
+    "count": 9
+   },
+   {
+    "value": "M",
+    "label": "M",
+    "count": 5
+   },
+   {
+    "value": "TU",
+    "label": "TU",
+    "count": 5
+   },
+   {
+    "value": "42",
+    "label": "42",
+    "count": 4
+   },
+   {
+    "value": "W30",
+    "label": "W30",
+    "count": 4
+   },
+   {
+    "value": "XL",
+    "label": "XL",
+    "count": 4
+   },
+   {
+    "value": "S",
+    "label": "S",
+    "count": 3
+   },
+   {
+    "value": "38",
+    "label": "38",
+    "count": 2
+   },
+   {
+    "value": "36",
+    "label": "36",
+    "count": 1
+   },
+   {
+    "value": "41",
+    "label": "41",
+    "count": 1
+   },
+   {
+    "value": "44",
+    "label": "44",
+    "count": 1
+   },
+   {
+    "value": "W28",
+    "label": "W28",
+    "count": 1
+   },
+   {
+    "value": "W32",
+    "label": "W32",
+    "count": 1
+   },
+   {
+    "value": "W36",
+    "label": "W36",
+    "count": 1
+   }
+  ],
+  "conditions": [
+   {
+    "value": "GOOD",
+    "label": "GOOD",
+    "count": 18
+   },
+   {
+    "value": "VERY_GOOD",
+    "label": "VERY_GOOD",
+    "count": 8
+   },
+   {
+    "value": "NEW_WITHOUT_TAGS",
+    "label": "NEW_WITHOUT_TAGS",
+    "count": 7
+   },
+   {
+    "value": "NEW_WITH_TAGS",
+    "label": "NEW_WITH_TAGS",
+    "count": 5
+   },
+   {
+    "value": "FAIR",
+    "label": "FAIR",
+    "count": 4
+   }
+  ],
+  "colors": [
+   {
+    "value": "kaki",
+    "label": "kaki",
+    "count": 10
+   },
+   {
+    "value": "noir",
+    "label": "noir",
+    "count": 8
+   },
+   {
+    "value": "camel",
+    "label": "camel",
+    "count": 7
+   },
+   {
+    "value": "gris",
+    "label": "gris",
+    "count": 5
+   },
+   {
+    "value": "marine",
+    "label": "marine",
+    "count": 5
+   },
+   {
+    "value": "ecru",
+    "label": "ecru",
+    "count": 4
+   },
+   {
+    "value": "bordeaux",
+    "label": "bordeaux",
+    "count": 3
+   }
+  ],
+  "materials": [
+   {
+    "value": "denim",
+    "label": "denim",
+    "count": 13
+   },
+   {
+    "value": "laine",
+    "label": "laine",
+    "count": 10
+   },
+   {
+    "value": "coton",
+    "label": "coton",
+    "count": 7
+   },
+   {
+    "value": "lin",
+    "label": "lin",
+    "count": 6
+   },
+   {
+    "value": "velours",
+    "label": "velours",
+    "count": 4
+   },
+   {
+    "value": "cuir",
+    "label": "cuir",
+    "count": 2
+   }
+  ],
+  "audiences": [
+   {
+    "value": "femme",
+    "label": "femme",
+    "count": 23
+   },
+   {
+    "value": "homme",
+    "label": "homme",
+    "count": 9
+   },
+   {
+    "value": "mixte",
+    "label": "mixte",
+    "count": 5
+   }
+  ],
+  "priceRange": {
+   "minCents": 1911,
+   "maxCents": 5116
+  }
+ },
+ "une catégorie": {
+  "categories": [
+   {
+    "value": "jeans-pantalons",
+    "label": "Jeans et pantalons",
+    "count": 7
+   },
+   {
+    "value": "robes",
+    "label": "Robes",
+    "count": 5
+   },
+   {
+    "value": "sacs",
+    "label": "Sacs",
+    "count": 5
+   },
+   {
+    "value": "accessoires",
+    "label": "Accessoires",
+    "count": 4
+   },
+   {
+    "value": "chaussures",
+    "label": "Chaussures",
+    "count": 4
+   },
+   {
+    "value": "manteaux",
+    "label": "Manteaux et doudounes",
+    "count": 4
+   },
+   {
+    "value": "pulls-sweats",
+    "label": "Pulls et sweats",
+    "count": 4
+   },
+   {
+    "value": "vestes-legeres",
+    "label": "Vestes légères",
+    "count": 4
+   },
+   {
+    "value": "chemises",
+    "label": "Chemises et blouses",
+    "count": 3
+   },
+   {
+    "value": "t-shirts",
+    "label": "T-shirts et débardeurs",
+    "count": 2
+   }
+  ],
+  "brands": [
+   {
+    "value": "burberry",
+    "label": "Burberry",
+    "count": 2
+   },
+   {
+    "value": "levis",
+    "label": "Levi's",
+    "count": 2
+   },
+   {
+    "value": "ralph-lauren",
+    "label": "Ralph Lauren",
+    "count": 2
+   },
+   {
+    "value": "adidas",
+    "label": "Adidas",
+    "count": 1
+   }
+  ],
+  "sizes": [
+   {
+    "value": "W30",
+    "label": "W30",
+    "count": 4
+   },
+   {
+    "value": "W28",
+    "label": "W28",
+    "count": 1
+   },
+   {
+    "value": "W32",
+    "label": "W32",
+    "count": 1
+   },
+   {
+    "value": "W36",
+    "label": "W36",
+    "count": 1
+   }
+  ],
+  "conditions": [
+   {
+    "value": "GOOD",
+    "label": "GOOD",
+    "count": 3
+   },
+   {
+    "value": "FAIR",
+    "label": "FAIR",
+    "count": 1
+   },
+   {
+    "value": "NEW_WITHOUT_TAGS",
+    "label": "NEW_WITHOUT_TAGS",
+    "count": 1
+   },
+   {
+    "value": "NEW_WITH_TAGS",
+    "label": "NEW_WITH_TAGS",
+    "count": 1
+   },
+   {
+    "value": "VERY_GOOD",
+    "label": "VERY_GOOD",
+    "count": 1
+   }
+  ],
+  "colors": [
+   {
+    "value": "gris",
+    "label": "gris",
+    "count": 2
+   },
+   {
+    "value": "kaki",
+    "label": "kaki",
+    "count": 2
+   },
+   {
+    "value": "noir",
+    "label": "noir",
+    "count": 2
+   },
+   {
+    "value": "ecru",
+    "label": "ecru",
+    "count": 1
+   }
+  ],
+  "materials": [
+   {
+    "value": "denim",
+    "label": "denim",
+    "count": 2
+   },
+   {
+    "value": "lin",
+    "label": "lin",
+    "count": 2
+   },
+   {
+    "value": "velours",
+    "label": "velours",
+    "count": 2
+   },
+   {
+    "value": "laine",
+    "label": "laine",
+    "count": 1
+   }
+  ],
+  "audiences": [
+   {
+    "value": "femme",
+    "label": "femme",
+    "count": 4
+   },
+   {
+    "value": "homme",
+    "label": "homme",
+    "count": 1
+   },
+   {
+    "value": "mixte",
+    "label": "mixte",
+    "count": 1
+   }
+  ],
+  "priceRange": {
+   "minCents": 2815,
+   "maxCents": 5052
+  }
+ },
+ "une catégorie parente": {
+  "categories": [
+   {
+    "value": "jeans-pantalons",
+    "label": "Jeans et pantalons",
+    "count": 7
+   },
+   {
+    "value": "robes",
+    "label": "Robes",
+    "count": 5
+   },
+   {
+    "value": "sacs",
+    "label": "Sacs",
+    "count": 5
+   },
+   {
+    "value": "accessoires",
+    "label": "Accessoires",
+    "count": 4
+   },
+   {
+    "value": "chaussures",
+    "label": "Chaussures",
+    "count": 4
+   },
+   {
+    "value": "manteaux",
+    "label": "Manteaux et doudounes",
+    "count": 4
+   },
+   {
+    "value": "pulls-sweats",
+    "label": "Pulls et sweats",
+    "count": 4
+   },
+   {
+    "value": "vestes-legeres",
+    "label": "Vestes légères",
+    "count": 4
+   },
+   {
+    "value": "chemises",
+    "label": "Chemises et blouses",
+    "count": 3
+   },
+   {
+    "value": "t-shirts",
+    "label": "T-shirts et débardeurs",
+    "count": 2
+   }
+  ],
+  "brands": [
+   {
+    "value": "burberry",
+    "label": "Burberry",
+    "count": 2
+   },
+   {
+    "value": "levis",
+    "label": "Levi's",
+    "count": 2
+   },
+   {
+    "value": "ralph-lauren",
+    "label": "Ralph Lauren",
+    "count": 2
+   },
+   {
+    "value": "adidas",
+    "label": "Adidas",
+    "count": 1
+   }
+  ],
+  "sizes": [
+   {
+    "value": "W30",
+    "label": "W30",
+    "count": 4
+   },
+   {
+    "value": "W28",
+    "label": "W28",
+    "count": 1
+   },
+   {
+    "value": "W32",
+    "label": "W32",
+    "count": 1
+   },
+   {
+    "value": "W36",
+    "label": "W36",
+    "count": 1
+   }
+  ],
+  "conditions": [
+   {
+    "value": "GOOD",
+    "label": "GOOD",
+    "count": 3
+   },
+   {
+    "value": "FAIR",
+    "label": "FAIR",
+    "count": 1
+   },
+   {
+    "value": "NEW_WITHOUT_TAGS",
+    "label": "NEW_WITHOUT_TAGS",
+    "count": 1
+   },
+   {
+    "value": "NEW_WITH_TAGS",
+    "label": "NEW_WITH_TAGS",
+    "count": 1
+   },
+   {
+    "value": "VERY_GOOD",
+    "label": "VERY_GOOD",
+    "count": 1
+   }
+  ],
+  "colors": [
+   {
+    "value": "gris",
+    "label": "gris",
+    "count": 2
+   },
+   {
+    "value": "kaki",
+    "label": "kaki",
+    "count": 2
+   },
+   {
+    "value": "noir",
+    "label": "noir",
+    "count": 2
+   },
+   {
+    "value": "ecru",
+    "label": "ecru",
+    "count": 1
+   }
+  ],
+  "materials": [
+   {
+    "value": "denim",
+    "label": "denim",
+    "count": 2
+   },
+   {
+    "value": "lin",
+    "label": "lin",
+    "count": 2
+   },
+   {
+    "value": "velours",
+    "label": "velours",
+    "count": 2
+   },
+   {
+    "value": "laine",
+    "label": "laine",
+    "count": 1
+   }
+  ],
+  "audiences": [
+   {
+    "value": "femme",
+    "label": "femme",
+    "count": 4
+   },
+   {
+    "value": "homme",
+    "label": "homme",
+    "count": 1
+   },
+   {
+    "value": "mixte",
+    "label": "mixte",
+    "count": 1
+   }
+  ],
+  "priceRange": {
+   "minCents": 2815,
+   "maxCents": 5052
+  }
+ },
+ "une marque": {
+  "categories": [
+   {
+    "value": "robes",
+    "label": "Robes",
+    "count": 3
+   },
+   {
+    "value": "jeans-pantalons",
+    "label": "Jeans et pantalons",
+    "count": 2
+   },
+   {
+    "value": "sacs",
+    "label": "Sacs",
+    "count": 2
+   },
+   {
+    "value": "accessoires",
+    "label": "Accessoires",
+    "count": 1
+   },
+   {
+    "value": "manteaux",
+    "label": "Manteaux et doudounes",
+    "count": 1
+   },
+   {
+    "value": "t-shirts",
+    "label": "T-shirts et débardeurs",
+    "count": 1
+   },
+   {
+    "value": "vestes-legeres",
+    "label": "Vestes légères",
+    "count": 1
+   }
+  ],
+  "brands": [
+   {
+    "value": "burberry",
+    "label": "Burberry",
+    "count": 13
+   },
+   {
+    "value": "levis",
+    "label": "Levi's",
+    "count": 11
+   },
+   {
+    "value": "adidas",
+    "label": "Adidas",
+    "count": 6
+   },
+   {
+    "value": "ralph-lauren",
+    "label": "Ralph Lauren",
+    "count": 6
+   },
+   {
+    "value": "uniqlo",
+    "label": "Uniqlo",
+    "count": 6
+   }
+  ],
+  "sizes": [
+   {
+    "value": "L",
+    "label": "L",
+    "count": 3
+   },
+   {
+    "value": "42",
+    "label": "42",
+    "count": 2
+   },
+   {
+    "value": "TU",
+    "label": "TU",
+    "count": 2
+   },
+   {
+    "value": "38",
+    "label": "38",
+    "count": 1
+   },
+   {
+    "value": "M",
+    "label": "M",
+    "count": 1
+   },
+   {
+    "value": "W32",
+    "label": "W32",
+    "count": 1
+   },
+   {
+    "value": "W36",
+    "label": "W36",
+    "count": 1
+   }
+  ],
+  "conditions": [
+   {
+    "value": "GOOD",
+    "label": "GOOD",
+    "count": 4
+   },
+   {
+    "value": "NEW_WITHOUT_TAGS",
+    "label": "NEW_WITHOUT_TAGS",
+    "count": 3
+   },
+   {
+    "value": "VERY_GOOD",
+    "label": "VERY_GOOD",
+    "count": 3
+   },
+   {
+    "value": "FAIR",
+    "label": "FAIR",
+    "count": 1
+   }
+  ],
+  "colors": [
+   {
+    "value": "marine",
+    "label": "marine",
+    "count": 4
+   },
+   {
+    "value": "noir",
+    "label": "noir",
+    "count": 3
+   },
+   {
+    "value": "kaki",
+    "label": "kaki",
+    "count": 2
+   },
+   {
+    "value": "bordeaux",
+    "label": "bordeaux",
+    "count": 1
+   },
+   {
+    "value": "camel",
+    "label": "camel",
+    "count": 1
+   }
+  ],
+  "materials": [
+   {
+    "value": "denim",
+    "label": "denim",
+    "count": 4
+   },
+   {
+    "value": "laine",
+    "label": "laine",
+    "count": 3
+   },
+   {
+    "value": "coton",
+    "label": "coton",
+    "count": 2
+   },
+   {
+    "value": "velours",
+    "label": "velours",
+    "count": 2
+   }
+  ],
+  "audiences": [
+   {
+    "value": "femme",
+    "label": "femme",
+    "count": 6
+   },
+   {
+    "value": "mixte",
+    "label": "mixte",
+    "count": 4
+   }
+  ],
+  "priceRange": {
+   "minCents": 2593,
+   "maxCents": 4680
+  }
+ },
+ "une taille": {
+  "categories": [
+   {
+    "value": "jeans-pantalons",
+    "label": "Jeans et pantalons",
+    "count": 4
+   }
+  ],
+  "brands": [
+   {
+    "value": "burberry",
+    "label": "Burberry",
+    "count": 2
+   },
+   {
+    "value": "ralph-lauren",
+    "label": "Ralph Lauren",
+    "count": 2
+   }
+  ],
+  "sizes": [
+   {
+    "value": "L",
+    "label": "L",
+    "count": 9
+   },
+   {
+    "value": "M",
+    "label": "M",
+    "count": 5
+   },
+   {
+    "value": "TU",
+    "label": "TU",
+    "count": 5
+   },
+   {
+    "value": "42",
+    "label": "42",
+    "count": 4
+   },
+   {
+    "value": "W30",
+    "label": "W30",
+    "count": 4
+   },
+   {
+    "value": "XL",
+    "label": "XL",
+    "count": 4
+   },
+   {
+    "value": "S",
+    "label": "S",
+    "count": 3
+   },
+   {
+    "value": "38",
+    "label": "38",
+    "count": 2
+   },
+   {
+    "value": "36",
+    "label": "36",
+    "count": 1
+   },
+   {
+    "value": "41",
+    "label": "41",
+    "count": 1
+   },
+   {
+    "value": "44",
+    "label": "44",
+    "count": 1
+   },
+   {
+    "value": "W28",
+    "label": "W28",
+    "count": 1
+   },
+   {
+    "value": "W32",
+    "label": "W32",
+    "count": 1
+   },
+   {
+    "value": "W36",
+    "label": "W36",
+    "count": 1
+   }
+  ],
+  "conditions": [
+   {
+    "value": "FAIR",
+    "label": "FAIR",
+    "count": 1
+   },
+   {
+    "value": "GOOD",
+    "label": "GOOD",
+    "count": 1
+   },
+   {
+    "value": "NEW_WITH_TAGS",
+    "label": "NEW_WITH_TAGS",
+    "count": 1
+   },
+   {
+    "value": "VERY_GOOD",
+    "label": "VERY_GOOD",
+    "count": 1
+   }
+  ],
+  "colors": [
+   {
+    "value": "ecru",
+    "label": "ecru",
+    "count": 1
+   },
+   {
+    "value": "gris",
+    "label": "gris",
+    "count": 1
+   },
+   {
+    "value": "kaki",
+    "label": "kaki",
+    "count": 1
+   },
+   {
+    "value": "noir",
+    "label": "noir",
+    "count": 1
+   }
+  ],
+  "materials": [
+   {
+    "value": "lin",
+    "label": "lin",
+    "count": 2
+   },
+   {
+    "value": "denim",
+    "label": "denim",
+    "count": 1
+   },
+   {
+    "value": "velours",
+    "label": "velours",
+    "count": 1
+   }
+  ],
+  "audiences": [
+   {
+    "value": "femme",
+    "label": "femme",
+    "count": 2
+   },
+   {
+    "value": "homme",
+    "label": "homme",
+    "count": 1
+   }
+  ],
+  "priceRange": {
+   "minCents": 2815,
+   "maxCents": 4919
+  }
+ },
+ "un univers": {
+  "categories": [
+   {
+    "value": "jeans-pantalons",
+    "label": "Jeans et pantalons",
+    "count": 5
+   },
+   {
+    "value": "robes",
+    "label": "Robes",
+    "count": 5
+   },
+   {
+    "value": "accessoires",
+    "label": "Accessoires",
+    "count": 3
+   },
+   {
+    "value": "chaussures",
+    "label": "Chaussures",
+    "count": 3
+   },
+   {
+    "value": "sacs",
+    "label": "Sacs",
+    "count": 3
+   },
+   {
+    "value": "chemises",
+    "label": "Chemises et blouses",
+    "count": 2
+   },
+   {
+    "value": "manteaux",
+    "label": "Manteaux et doudounes",
+    "count": 2
+   },
+   {
+    "value": "t-shirts",
+    "label": "T-shirts et débardeurs",
+    "count": 2
+   },
+   {
+    "value": "vestes-legeres",
+    "label": "Vestes légères",
+    "count": 2
+   },
+   {
+    "value": "pulls-sweats",
+    "label": "Pulls et sweats",
+    "count": 1
+   }
+  ],
+  "brands": [
+   {
+    "value": "levis",
+    "label": "Levi's",
+    "count": 10
+   },
+   {
+    "value": "burberry",
+    "label": "Burberry",
+    "count": 9
+   },
+   {
+    "value": "adidas",
+    "label": "Adidas",
+    "count": 4
+   },
+   {
+    "value": "uniqlo",
+    "label": "Uniqlo",
+    "count": 3
+   },
+   {
+    "value": "ralph-lauren",
+    "label": "Ralph Lauren",
+    "count": 2
+   }
+  ],
+  "sizes": [
+   {
+    "value": "L",
+    "label": "L",
+    "count": 7
+   },
+   {
+    "value": "42",
+    "label": "42",
+    "count": 4
+   },
+   {
+    "value": "M",
+    "label": "M",
+    "count": 3
+   },
+   {
+    "value": "TU",
+    "label": "TU",
+    "count": 3
+   },
+   {
+    "value": "W30",
+    "label": "W30",
+    "count": 2
+   },
+   {
+    "value": "XL",
+    "label": "XL",
+    "count": 2
+   },
+   {
+    "value": "36",
+    "label": "36",
+    "count": 1
+   },
+   {
+    "value": "38",
+    "label": "38",
+    "count": 1
+   },
+   {
+    "value": "41",
+    "label": "41",
+    "count": 1
+   },
+   {
+    "value": "44",
+    "label": "44",
+    "count": 1
+   },
+   {
+    "value": "W28",
+    "label": "W28",
+    "count": 1
+   },
+   {
+    "value": "W32",
+    "label": "W32",
+    "count": 1
+   },
+   {
+    "value": "W36",
+    "label": "W36",
+    "count": 1
+   }
+  ],
+  "conditions": [
+   {
+    "value": "GOOD",
+    "label": "GOOD",
+    "count": 11
+   },
+   {
+    "value": "NEW_WITHOUT_TAGS",
+    "label": "NEW_WITHOUT_TAGS",
+    "count": 6
+   },
+   {
+    "value": "NEW_WITH_TAGS",
+    "label": "NEW_WITH_TAGS",
+    "count": 4
+   },
+   {
+    "value": "VERY_GOOD",
+    "label": "VERY_GOOD",
+    "count": 4
+   },
+   {
+    "value": "FAIR",
+    "label": "FAIR",
+    "count": 3
+   }
+  ],
+  "colors": [
+   {
+    "value": "kaki",
+    "label": "kaki",
+    "count": 9
+   },
+   {
+    "value": "camel",
+    "label": "camel",
+    "count": 5
+   },
+   {
+    "value": "marine",
+    "label": "marine",
+    "count": 4
+   },
+   {
+    "value": "noir",
+    "label": "noir",
+    "count": 4
+   },
+   {
+    "value": "bordeaux",
+    "label": "bordeaux",
+    "count": 3
+   },
+   {
+    "value": "gris",
+    "label": "gris",
+    "count": 2
+   },
+   {
+    "value": "ecru",
+    "label": "ecru",
+    "count": 1
+   }
+  ],
+  "materials": [
+   {
+    "value": "denim",
+    "label": "denim",
+    "count": 9
+   },
+   {
+    "value": "laine",
+    "label": "laine",
+    "count": 6
+   },
+   {
+    "value": "coton",
+    "label": "coton",
+    "count": 5
+   },
+   {
+    "value": "lin",
+    "label": "lin",
+    "count": 3
+   },
+   {
+    "value": "velours",
+    "label": "velours",
+    "count": 3
+   },
+   {
+    "value": "cuir",
+    "label": "cuir",
+    "count": 2
+   }
+  ],
+  "audiences": [
+   {
+    "value": "femme",
+    "label": "femme",
+    "count": 23
+   },
+   {
+    "value": "homme",
+    "label": "homme",
+    "count": 9
+   },
+   {
+    "value": "mixte",
+    "label": "mixte",
+    "count": 5
+   }
+  ],
+  "priceRange": {
+   "minCents": 1911,
+   "maxCents": 5116
+  }
+ },
+ "catégorie + taille": {
+  "categories": [
+   {
+    "value": "jeans-pantalons",
+    "label": "Jeans et pantalons",
+    "count": 4
+   }
+  ],
+  "brands": [
+   {
+    "value": "burberry",
+    "label": "Burberry",
+    "count": 2
+   },
+   {
+    "value": "ralph-lauren",
+    "label": "Ralph Lauren",
+    "count": 2
+   }
+  ],
+  "sizes": [
+   {
+    "value": "W30",
+    "label": "W30",
+    "count": 4
+   },
+   {
+    "value": "W28",
+    "label": "W28",
+    "count": 1
+   },
+   {
+    "value": "W32",
+    "label": "W32",
+    "count": 1
+   },
+   {
+    "value": "W36",
+    "label": "W36",
+    "count": 1
+   }
+  ],
+  "conditions": [
+   {
+    "value": "FAIR",
+    "label": "FAIR",
+    "count": 1
+   },
+   {
+    "value": "GOOD",
+    "label": "GOOD",
+    "count": 1
+   },
+   {
+    "value": "NEW_WITH_TAGS",
+    "label": "NEW_WITH_TAGS",
+    "count": 1
+   },
+   {
+    "value": "VERY_GOOD",
+    "label": "VERY_GOOD",
+    "count": 1
+   }
+  ],
+  "colors": [
+   {
+    "value": "ecru",
+    "label": "ecru",
+    "count": 1
+   },
+   {
+    "value": "gris",
+    "label": "gris",
+    "count": 1
+   },
+   {
+    "value": "kaki",
+    "label": "kaki",
+    "count": 1
+   },
+   {
+    "value": "noir",
+    "label": "noir",
+    "count": 1
+   }
+  ],
+  "materials": [
+   {
+    "value": "lin",
+    "label": "lin",
+    "count": 2
+   },
+   {
+    "value": "denim",
+    "label": "denim",
+    "count": 1
+   },
+   {
+    "value": "velours",
+    "label": "velours",
+    "count": 1
+   }
+  ],
+  "audiences": [
+   {
+    "value": "femme",
+    "label": "femme",
+    "count": 2
+   },
+   {
+    "value": "homme",
+    "label": "homme",
+    "count": 1
+   }
+  ],
+  "priceRange": {
+   "minCents": 2815,
+   "maxCents": 4919
+  }
+ },
+ "une fourchette de prix": {
+  "categories": [
+   {
+    "value": "jeans-pantalons",
+    "label": "Jeans et pantalons",
+    "count": 7
+   },
+   {
+    "value": "robes",
+    "label": "Robes",
+    "count": 5
+   },
+   {
+    "value": "sacs",
+    "label": "Sacs",
+    "count": 5
+   },
+   {
+    "value": "accessoires",
+    "label": "Accessoires",
+    "count": 4
+   },
+   {
+    "value": "chaussures",
+    "label": "Chaussures",
+    "count": 4
+   },
+   {
+    "value": "manteaux",
+    "label": "Manteaux et doudounes",
+    "count": 4
+   },
+   {
+    "value": "pulls-sweats",
+    "label": "Pulls et sweats",
+    "count": 4
+   },
+   {
+    "value": "chemises",
+    "label": "Chemises et blouses",
+    "count": 3
+   },
+   {
+    "value": "vestes-legeres",
+    "label": "Vestes légères",
+    "count": 3
+   },
+   {
+    "value": "t-shirts",
+    "label": "T-shirts et débardeurs",
+    "count": 2
+   }
+  ],
+  "brands": [
+   {
+    "value": "burberry",
+    "label": "Burberry",
+    "count": 13
+   },
+   {
+    "value": "levis",
+    "label": "Levi's",
+    "count": 11
+   },
+   {
+    "value": "adidas",
+    "label": "Adidas",
+    "count": 6
+   },
+   {
+    "value": "ralph-lauren",
+    "label": "Ralph Lauren",
+    "count": 6
+   },
+   {
+    "value": "uniqlo",
+    "label": "Uniqlo",
+    "count": 5
+   }
+  ],
+  "sizes": [
+   {
+    "value": "L",
+    "label": "L",
+    "count": 9
+   },
+   {
+    "value": "TU",
+    "label": "TU",
+    "count": 5
+   },
+   {
+    "value": "42",
+    "label": "42",
+    "count": 4
+   },
+   {
+    "value": "M",
+    "label": "M",
+    "count": 4
+   },
+   {
+    "value": "W30",
+    "label": "W30",
+    "count": 4
+   },
+   {
+    "value": "XL",
+    "label": "XL",
+    "count": 4
+   },
+   {
+    "value": "S",
+    "label": "S",
+    "count": 3
+   },
+   {
+    "value": "38",
+    "label": "38",
+    "count": 2
+   },
+   {
+    "value": "36",
+    "label": "36",
+    "count": 1
+   },
+   {
+    "value": "41",
+    "label": "41",
+    "count": 1
+   },
+   {
+    "value": "44",
+    "label": "44",
+    "count": 1
+   },
+   {
+    "value": "W28",
+    "label": "W28",
+    "count": 1
+   },
+   {
+    "value": "W32",
+    "label": "W32",
+    "count": 1
+   },
+   {
+    "value": "W36",
+    "label": "W36",
+    "count": 1
+   }
+  ],
+  "conditions": [
+   {
+    "value": "GOOD",
+    "label": "GOOD",
+    "count": 17
+   },
+   {
+    "value": "VERY_GOOD",
+    "label": "VERY_GOOD",
+    "count": 8
+   },
+   {
+    "value": "NEW_WITHOUT_TAGS",
+    "label": "NEW_WITHOUT_TAGS",
+    "count": 7
+   },
+   {
+    "value": "NEW_WITH_TAGS",
+    "label": "NEW_WITH_TAGS",
+    "count": 5
+   },
+   {
+    "value": "FAIR",
+    "label": "FAIR",
+    "count": 4
+   }
+  ],
+  "colors": [
+   {
+    "value": "kaki",
+    "label": "kaki",
+    "count": 9
+   },
+   {
+    "value": "noir",
+    "label": "noir",
+    "count": 8
+   },
+   {
+    "value": "camel",
+    "label": "camel",
+    "count": 7
+   },
+   {
+    "value": "gris",
+    "label": "gris",
+    "count": 5
+   },
+   {
+    "value": "marine",
+    "label": "marine",
+    "count": 5
+   },
+   {
+    "value": "ecru",
+    "label": "ecru",
+    "count": 4
+   },
+   {
+    "value": "bordeaux",
+    "label": "bordeaux",
+    "count": 3
+   }
+  ],
+  "materials": [
+   {
+    "value": "denim",
+    "label": "denim",
+    "count": 13
+   },
+   {
+    "value": "laine",
+    "label": "laine",
+    "count": 10
+   },
+   {
+    "value": "coton",
+    "label": "coton",
+    "count": 6
+   },
+   {
+    "value": "lin",
+    "label": "lin",
+    "count": 6
+   },
+   {
+    "value": "velours",
+    "label": "velours",
+    "count": 4
+   },
+   {
+    "value": "cuir",
+    "label": "cuir",
+    "count": 2
+   }
+  ],
+  "audiences": [
+   {
+    "value": "femme",
+    "label": "femme",
+    "count": 22
+   },
+   {
+    "value": "homme",
+    "label": "homme",
+    "count": 9
+   },
+   {
+    "value": "mixte",
+    "label": "mixte",
+    "count": 5
+   }
+  ],
+  "priceRange": {
+   "minCents": 2180,
+   "maxCents": 5116
+  }
+ },
+ "une recherche": {
+  "categories": [
+   {
+    "value": "jeans-pantalons",
+    "label": "Jeans et pantalons",
+    "count": 7
+   }
+  ],
+  "brands": [
+   {
+    "value": "burberry",
+    "label": "Burberry",
+    "count": 2
+   },
+   {
+    "value": "levis",
+    "label": "Levi's",
+    "count": 2
+   },
+   {
+    "value": "ralph-lauren",
+    "label": "Ralph Lauren",
+    "count": 2
+   },
+   {
+    "value": "adidas",
+    "label": "Adidas",
+    "count": 1
+   }
+  ],
+  "sizes": [
+   {
+    "value": "W30",
+    "label": "W30",
+    "count": 4
+   },
+   {
+    "value": "W28",
+    "label": "W28",
+    "count": 1
+   },
+   {
+    "value": "W32",
+    "label": "W32",
+    "count": 1
+   },
+   {
+    "value": "W36",
+    "label": "W36",
+    "count": 1
+   }
+  ],
+  "conditions": [
+   {
+    "value": "GOOD",
+    "label": "GOOD",
+    "count": 3
+   },
+   {
+    "value": "FAIR",
+    "label": "FAIR",
+    "count": 1
+   },
+   {
+    "value": "NEW_WITHOUT_TAGS",
+    "label": "NEW_WITHOUT_TAGS",
+    "count": 1
+   },
+   {
+    "value": "NEW_WITH_TAGS",
+    "label": "NEW_WITH_TAGS",
+    "count": 1
+   },
+   {
+    "value": "VERY_GOOD",
+    "label": "VERY_GOOD",
+    "count": 1
+   }
+  ],
+  "colors": [
+   {
+    "value": "gris",
+    "label": "gris",
+    "count": 2
+   },
+   {
+    "value": "kaki",
+    "label": "kaki",
+    "count": 2
+   },
+   {
+    "value": "noir",
+    "label": "noir",
+    "count": 2
+   },
+   {
+    "value": "ecru",
+    "label": "ecru",
+    "count": 1
+   }
+  ],
+  "materials": [
+   {
+    "value": "denim",
+    "label": "denim",
+    "count": 2
+   },
+   {
+    "value": "lin",
+    "label": "lin",
+    "count": 2
+   },
+   {
+    "value": "velours",
+    "label": "velours",
+    "count": 2
+   },
+   {
+    "value": "laine",
+    "label": "laine",
+    "count": 1
+   }
+  ],
+  "audiences": [
+   {
+    "value": "femme",
+    "label": "femme",
+    "count": 4
+   },
+   {
+    "value": "homme",
+    "label": "homme",
+    "count": 1
+   },
+   {
+    "value": "mixte",
+    "label": "mixte",
+    "count": 1
+   }
+  ],
+  "priceRange": {
+   "minCents": 2815,
+   "maxCents": 5052
+  }
+ }
+}

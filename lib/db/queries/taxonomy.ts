@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { cache } from 'react'
 import { prisma } from '@/lib/db/client'
 
 /**
@@ -17,6 +18,87 @@ export interface CategoryNode {
   children: CategoryNode[]
 }
 
+/**
+ * Toute la taxonomie, en UNE requête, mutualisée sur la durée d'un rendu.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce qu'elle remplace
+ * ---------------------------------------------------------------------------
+ * Chaque fonction de ce fichier interrogeait la base pour son compte, et deux
+ * d'entre elles remontaient l'arbre UN NIVEAU À LA FOIS : une requête pour la
+ * catégorie, une pour son parent, une pour le parent du parent. Sur une page
+ * de rayon, la taxonomie coûtait à elle seule quatre allers-retours ; sur une
+ * fiche article, cinq — le fil d'Ariane refaisant le même trajet que la page.
+ *
+ * C'est le coût qui grandit le plus mal : il suit la PROFONDEUR de l'arbre.
+ * Ajouter un niveau de rangement ajouterait une requête à chaque page, sans
+ * que rien ne l'annonce.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi tout charger est ici moins cher que cibler
+ * ---------------------------------------------------------------------------
+ * La taxonomie d'une friperie tient en quelques dizaines de lignes — dix-huit
+ * aujourd'hui. Les rapatrier toutes coûte une requête et quelques kilo-octets,
+ * là où les cibler en coûte une par niveau et par appelant. Le calcul
+ * s'inverserait sur un arbre de plusieurs milliers d'entrées ; il ne s'en
+ * approche pas.
+ *
+ * `cache` de React mutualise l'appel sur la DURÉE D'UN RENDU : la vitrine, le
+ * fil d'Ariane et le résolveur de chemin peuvent la demander chacun leur tour,
+ * la base n'est interrogée qu'une fois. Ce n'est pas un cache entre requêtes —
+ * une catégorie renommée est visible au rendu suivant.
+ */
+const chargerTaxonomie = cache(async () => {
+  const rows = await prisma.category.findMany({
+    orderBy: { position: 'asc' },
+    select: {
+      id: true,
+      slug: true,
+      parentId: true,
+      position: true,
+      _count: { select: { children: true } },
+      translations: {
+        select: {
+          locale: true,
+          name: true,
+          seoTitle: true,
+          seoDescription: true,
+          editorialBody: true,
+        },
+      },
+    },
+  })
+
+  return { rows, parId: new Map(rows.map((row) => [row.id, row])) }
+})
+
+type LigneTaxonomie = Awaited<ReturnType<typeof chargerTaxonomie>>['rows'][number]
+
+/**
+ * Le chemin d'une catégorie, de la racine jusqu'à elle.
+ *
+ * La remontée est BORNÉE par le nombre de lignes : une donnée cyclique — un
+ * parent qui serait son propre descendant — ferait sinon tourner cette boucle
+ * indéfiniment et figerait le rendu de la page, sans la moindre erreur.
+ */
+function remonter(
+  ligne: LigneTaxonomie,
+  parId: Map<string, LigneTaxonomie>,
+  total: number,
+): LigneTaxonomie[] {
+  const chemin: LigneTaxonomie[] = []
+  let courant: LigneTaxonomie | undefined = ligne
+  let garde = total + 1
+
+  while (courant && garde > 0) {
+    chemin.unshift(courant)
+    courant = courant.parentId ? parId.get(courant.parentId) : undefined
+    garde -= 1
+  }
+
+  return chemin
+}
+
 function nameFor(
   translations: { locale: string; name: string }[],
   locale: string,
@@ -30,16 +112,7 @@ function nameFor(
 }
 
 export async function getCategoryTree(locale: string): Promise<CategoryNode[]> {
-  const rows = await prisma.category.findMany({
-    select: {
-      id: true,
-      slug: true,
-      parentId: true,
-      position: true,
-      translations: { select: { locale: true, name: true } },
-    },
-    orderBy: { position: 'asc' },
-  })
+  const { rows } = await chargerTaxonomie()
 
   const nodes = new Map<string, CategoryNode>()
   for (const row of rows) {
@@ -120,50 +193,14 @@ export interface ShowcaseCategory {
 export async function listShowcaseCategories(
   locale: string,
 ): Promise<ShowcaseCategory[]> {
-  const rows = await prisma.category.findMany({
-    orderBy: { position: 'asc' },
-    select: {
-      id: true,
-      parentId: true,
-      slug: true,
-      _count: { select: { children: true } },
-      translations: { select: { locale: true, name: true } },
-    },
-  })
-
-  // Le chemin se remonte EN MÉMOIRE, sur les lignes déjà chargées.
-  //
-  // La taxonomie tient en quelques dizaines de lignes et on les a toutes :
-  // interroger la base une fois par feuille pour retrouver ses parents
-  // ajouterait autant d'allers-retours qu'il y a de rayons, à chaque
-  // affichage de la vitrine, pour une information déjà en main.
-  const parDefaut = new Map(rows.map((row) => [row.id, row]))
-
-  const cheminDe = (id: string): string[] => {
-    const chemin: string[] = []
-    let courant = parDefaut.get(id)
-    // Borné par le nombre de lignes : une donnée cyclique — un parent qui
-    // serait son propre descendant — ferait sinon tourner cette boucle
-    // indéfiniment et figerait le rendu de la page, sans la moindre erreur.
-    let garde = rows.length + 1
-
-    while (courant && garde > 0) {
-      chemin.unshift(courant.slug)
-      courant = courant.parentId
-        ? parDefaut.get(courant.parentId)
-        : undefined
-      garde -= 1
-    }
-
-    return chemin
-  }
+  const { rows, parId } = await chargerTaxonomie()
 
   return rows
     .filter((row) => row._count.children === 0)
     .map((row) => ({
       slug: row.slug,
       name: nameFor(row.translations, locale, row.slug),
-      path: cheminDe(row.id),
+      path: remonter(row, parId, rows.length).map((etape) => etape.slug),
     }))
 }
 
@@ -192,49 +229,22 @@ export async function getCategoryByPath(
   const slug = segments.at(-1)
   if (!slug) return null
 
-  const category = await prisma.category.findUnique({
-    where: { slug },
-    select: {
-      id: true,
-      slug: true,
-      parentId: true,
-      translations: {
-        select: {
-          locale: true,
-          name: true,
-          seoTitle: true,
-          seoDescription: true,
-          editorialBody: true,
-        },
-      },
-    },
-  })
+  const { rows, parId } = await chargerTaxonomie()
+  const category = rows.find((row) => row.slug === slug)
   if (!category) return null
 
-  const ancestors: { slug: string; name: string }[] = []
-  let parentId = category.parentId
+  const chemin = remonter(category, parId, rows.length)
+  const ancestors = chemin.slice(0, -1).map((etape) => ({
+    slug: etape.slug,
+    name: nameFor(etape.translations, locale, etape.slug),
+  }))
 
-  while (parentId) {
-    const parent = await prisma.category.findUnique({
-      where: { id: parentId },
-      select: {
-        slug: true,
-        parentId: true,
-        translations: { select: { locale: true, name: true } },
-      },
-    })
-    if (!parent) break
-
-    ancestors.unshift({
-      slug: parent.slug,
-      name: nameFor(parent.translations, locale, parent.slug),
-    })
-    parentId = parent.parentId
+  // Le chemin annoncé doit correspondre à la hiérarchie réelle. C'est cette
+  // garde qui interdit deux adresses pour une même page — et c'est elle que
+  // les cartes de rayon violaient en ne posant que le slug de la feuille.
+  if (segments.join('/') !== chemin.map((etape) => etape.slug).join('/')) {
+    return null
   }
-
-  // Le chemin annoncé doit correspondre à la hiérarchie réelle.
-  const expected = [...ancestors.map((a) => a.slug), category.slug]
-  if (segments.join('/') !== expected.join('/')) return null
 
   const translation =
     category.translations.find((t) => t.locale === locale) ??
@@ -253,23 +263,11 @@ export async function getCategoryByPath(
 
 /** Chemin complet d'une catégorie, pour construire ses liens. */
 export async function getCategoryPath(slug: string): Promise<string[]> {
-  const path: string[] = []
-  let current: { slug: string; parentId: string | null } | null =
-    await prisma.category.findUnique({
-      where: { slug },
-      select: { slug: true, parentId: true },
-    })
+  const { rows, parId } = await chargerTaxonomie()
+  const ligne = rows.find((row) => row.slug === slug)
+  if (!ligne) return []
 
-  while (current) {
-    path.unshift(current.slug)
-    if (!current.parentId) break
-    current = await prisma.category.findUnique({
-      where: { id: current.parentId },
-      select: { slug: true, parentId: true },
-    })
-  }
-
-  return path
+  return remonter(ligne, parId, rows.length).map((etape) => etape.slug)
 }
 
 export interface BrandSummary {
@@ -374,9 +372,14 @@ export async function listCategoriesWithCounts(
     .sort((a, b) => b.articleCount - a.articleCount)
 }
 
-export async function getBrandBySlug(slug: string) {
+/**
+ * Mutualisée sur la durée d'un rendu, pour la même raison que la fiche
+ * article : `generateMetadata` et le composant de page demandent tous deux la
+ * marque, et sans enveloppe la lecture part deux fois.
+ */
+export const getBrandBySlug = cache(async function getBrandBySlug(slug: string) {
   return prisma.brand.findUnique({
     where: { slug },
     select: { id: true, slug: true, name: true, logoUrl: true, isLuxury: true },
   })
-}
+})

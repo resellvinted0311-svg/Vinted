@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import { ToastProvider } from '@/components/ui/toast'
 import { FavoritesProvider } from '@/components/shop/favorites-provider'
+import { NavigationProgress } from '@/components/shop/navigation-progress'
 import { SiteHeader } from '@/components/shop/site-header'
 import { SiteFooter } from '@/components/shop/site-footer'
 
@@ -46,6 +47,15 @@ export default async function ShopLayout({
   return (
     <ToastProvider>
       <FavoritesProvider>
+        {/*
+          Le fil d'attente d'une navigation, posé au-dessus de tout le reste.
+
+          Il vit dans la mise en page et non dans une page : il doit survivre
+          au changement de page, puisque c'est précisément ce changement qu'il
+          annonce.
+        */}
+        <NavigationProgress />
+
         <a
           href="#contenu"
           className="skip-link rounded-input ruled bg-surface px-3 py-2 text-base"

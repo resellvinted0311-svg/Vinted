@@ -356,6 +356,34 @@ function setParam(url: string, name: string, value: string): string {
 }
 
 /**
+ * ===========================================================================
+ * LA DISTANCE À LA BASE EST UN RÉGLAGE, ET C'EST LE PLUS LOURD DE TOUS
+ * ===========================================================================
+ * Ce fichier décide de la FORME des connexions. Leur longueur, elle, se règle
+ * dans `vercel.json`, à la clé `regions` — et les deux se lisent ensemble.
+ *
+ * Sans cette clé, Vercel place les fonctions dans sa région par défaut : iad1,
+ * Washington. La base Supabase est à Paris (eu-west-3). Chaque requête SQL
+ * traversait donc l'Atlantique deux fois.
+ *
+ * Trois grandeurs se MULTIPLIENT, et c'est leur produit qui faisait les
+ * secondes d'attente à chaque clic :
+ *
+ *   - le nombre de requêtes par page — mesuré entre quinze et vingt-deux ;
+ *   - l'aller-retour vers la base — environ 85 ms d'un continent à l'autre,
+ *     contre moins de deux sur place ;
+ *   - le `connection_limit=1` posé plus haut, qui les SÉRIALISE : les
+ *     `Promise.all` du code ne se recouvrent pas en production, ils font la
+ *     queue sur l'unique connexion.
+ *
+ * Vingt requêtes × 85 ms = près de deux secondes d'attente pure, avant même
+ * que la page ne commence à s'écrire. `regions: ["cdg1"]` — Paris, la ville de
+ * la base — ramène ce produit sous les cinquante millisecondes.
+ *
+ * Le jour où la base déménage, cette région déménage avec elle. Ce n'est pas
+ * leur valeur qui compte, c'est leur ÉCART.
+ *
+ * ---------------------------------------------------------------------------
  * Combien de processus prérendent les pages, et combien de connexions chacun
  * a le droit d'ouvrir.
  *
