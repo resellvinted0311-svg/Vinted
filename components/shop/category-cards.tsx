@@ -90,7 +90,15 @@ export function CategoryCards({
           <Reveal key={entry.slug} delay={Math.min(index, 6) * 40}>
             <li>
               <PictureCard
-                href={univers === '' ? `/c/${entry.slug}` : `/c/${entry.slug}?${univers}`}
+                // Le CHEMIN, pas le slug. La route vérifie que le chemin
+                // annoncé correspond à la hiérarchie réelle : `/c/t-shirts`
+                // était rejeté en 404 parce que la catégorie vit sous
+                // « Hauts ». Voir `ShowcaseCategory.path`.
+                href={
+                  univers === ''
+                    ? `/c/${entry.path.join('/')}`
+                    : `/c/${entry.path.join('/')}?${univers}`
+                }
                 title={entry.name}
                 image={covers.get(entry.slug) ?? null}
                 ratio="aspect-[4/5]"

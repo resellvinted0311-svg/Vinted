@@ -5,6 +5,7 @@ import { parseCatalogueSearchParams } from '@/lib/validation/catalogue'
 import { getCategoryByPath } from '@/lib/db/queries/taxonomy'
 import { CatalogueView } from '@/components/shop/catalogue-view'
 import { Breadcrumbs } from '@/components/shop/breadcrumbs'
+import { CategoryBanner } from '@/components/shop/category-banner'
 import { locales, localeTags } from '@/lib/i18n/routing'
 
 type Params = Promise<{ locale: string; slug: string[] }>
@@ -53,6 +54,18 @@ export default async function CategoryPage({
 
   return (
     <>
+      {/*
+        Le bandeau ouvre la page, avant le fil d'Ariane.
+
+        C'est l'ordre d'une page de rayon en magasin : on voit d'abord
+        l'enseigne du rayon, on regarde ensuite par où l'on est arrivé. Mis
+        sous le fil, le bandeau perdrait sa fonction — annoncer où l'on vient
+        d'atterrir — pour devenir une illustration au milieu de la page.
+
+        Il porte le `h1`, que `CatalogueView` cesse donc d'écrire.
+      */}
+      <CategoryBanner title={category.name} intro={category.editorialBody} />
+
       <div className="mx-auto max-w-[80rem] px-4 pt-6 sm:px-6">
         <Breadcrumbs
           items={[
@@ -77,6 +90,9 @@ export default async function CategoryPage({
         lockedDimensions={['categorySlugs']}
         heading={category.name}
         intro={category.editorialBody}
+        // Le titre et l'accroche sont déjà dans le bandeau, au-dessus. Les
+        // laisser ici en ferait un doublon, et surtout un second `h1`.
+        hideHeading
       />
     </>
   )

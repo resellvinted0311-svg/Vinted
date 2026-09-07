@@ -22,12 +22,29 @@ export async function CatalogueFiltersPanel({
   filters,
   sort,
   locale,
+  lockedDimensions = [],
 }: {
   action: string
   facets: Facets
   filters: CatalogueFilters
   sort: SortKey
   locale: string
+  /**
+   * Dimensions IMPOSÉES par la page, dont on ne montre pas le groupe.
+   *
+   * Sur `/c/bas/jeans-pantalons`, la page réécrit la catégorie des filtres
+   * avec la sienne. Le groupe « Catégorie » restait pourtant affiché, et il
+   * proposait Robes, Sacs, Accessoires — cocher l'un d'eux rechargeait la
+   * page sur les mêmes jeans, la case revenant décochée.
+   *
+   * Ce n'est pas un filtre qui filtre mal, c'est un CONTRÔLE MORT : il a
+   * l'apparence exacte des sept autres, il répond au clic, et il ne peut rien
+   * faire. Un filtre absent se comprend ; un filtre qui ne réagit pas fait
+   * douter de tous les autres.
+   *
+   * Le même raisonnement vaut sur `/marque/levis` pour la marque.
+   */
+  lockedDimensions?: (keyof CatalogueFilters)[]
 }) {
   const t = await getTranslations('catalogue')
   const tc = await getTranslations('condition')
@@ -84,19 +101,23 @@ export async function CatalogueFiltersPanel({
         selected={filters.audiences}
       />
 
-      <FacetGroup
-        legend={t('facets.category')}
-        name="cat"
-        entries={facets.categories}
-        selected={filters.categorySlugs}
-      />
+      {lockedDimensions.includes('categorySlugs') ? null : (
+        <FacetGroup
+          legend={t('facets.category')}
+          name="cat"
+          entries={facets.categories}
+          selected={filters.categorySlugs}
+        />
+      )}
 
-      <FacetGroup
-        legend={t('facets.brand')}
-        name="marque"
-        entries={facets.brands}
-        selected={filters.brandSlugs}
-      />
+      {lockedDimensions.includes('brandSlugs') ? null : (
+        <FacetGroup
+          legend={t('facets.brand')}
+          name="marque"
+          entries={facets.brands}
+          selected={filters.brandSlugs}
+        />
+      )}
 
       <FacetGroup
         legend={t('facets.size')}

@@ -570,6 +570,96 @@ test.describe('Univers', () => {
     expect(href).toContain('univers=mixte')
   })
 
+  test('toutes les cartes de rayon mènent à une page qui existe', async ({
+    page,
+  }) => {
+    /**
+     * Le test voisin vérifiait que la carte PORTE le filtre d'univers. Il
+     * n'allait jamais voir où elle MÈNE — et pendant ce temps huit rayons sur
+     * quinze pointaient vers un 404.
+     *
+     * La cause : les cartes composaient leur lien avec le seul slug de la
+     * catégorie, alors que la route `/c/[...slug]` exige le chemin complet.
+     * « T-shirts » vit sous « Hauts » : son adresse est `/c/hauts/t-shirts`,
+     * et `/c/t-shirts` est refusé — à juste titre, pour qu'une page n'ait pas
+     * deux adresses.
+     *
+     * Ce qui l'a rendu invisible si longtemps : les sept autres rayons sont
+     * des feuilles de premier niveau, pour lesquelles chemin et slug sont la
+     * même chaîne. La moitié de la vitrine marchait, et une carte cassée
+     * ressemble trait pour trait à une carte valide.
+     */
+    await page.goto('/fr/femme')
+
+    const liens = await page
+      .locator('a[href*="/c/"]')
+      .evaluateAll((ancres) =>
+        ancres.map((a) => a.getAttribute('href') ?? ''),
+      )
+
+    expect(liens.length, 'aucune carte de rayon sur la vitrine').toBeGreaterThan(0)
+
+    const casses: string[] = []
+    for (const lien of liens) {
+      const reponse = await page.request.get(lien)
+      if (reponse.status() !== 200) casses.push(`${reponse.status()} ${lien}`)
+    }
+
+    expect(casses, `cartes en échec :\n  ${casses.join('\n  ')}`).toEqual([])
+  })
+
+  test('un rayon ouvre sur son bandeau, ses pièces et ses filtres', async ({
+    page,
+  }) => {
+    await page.goto('/fr/femme')
+    await page.locator('a[href*="/c/"]').first().click()
+    await page.waitForURL(/\/c\//)
+
+    // Le bandeau porte le nom du rayon, et il est SEUL à le porter : le
+    // titre a quitté l'en-tête de la vue catalogue pour monter dans le
+    // bandeau, et deux `h1` sur une page passeraient inaperçus au rendu.
+    const titres = page.locator('h1')
+    await expect(titres).toHaveCount(1)
+    const nom = (await titres.textContent())?.trim() ?? ''
+    expect(nom.length).toBeGreaterThan(0)
+
+    // Il est DANS le bandeau, pas au-dessus ni en dessous.
+    const dedans = await titres.evaluate((h1) => {
+      const bandeau = document.querySelector('section')
+      if (!bandeau) return false
+      const b = bandeau.getBoundingClientRect()
+      const t = h1.getBoundingClientRect()
+      return t.top >= b.top && t.bottom <= b.bottom + 1
+    })
+    expect(dedans, 'le titre doit être posé dans le bandeau').toBe(true)
+
+    // Les deux filtres nommément demandés répondent présent.
+    const filtres = page.locator('[data-testid="filtres"]')
+    await expect(filtres).toContainText(/taille/i)
+    await expect(filtres).toContainText(/prix/i)
+
+    // Et la catégorie n'a PAS de groupe : la page l'impose, ses cases
+    // seraient sans effet. Un contrôle mort fait douter de tous les autres.
+    await expect(filtres.locator('input[name="cat"]')).toHaveCount(0)
+  })
+
+  test('le bandeau ne mange pas la fenêtre : des pièces restent visibles', async ({
+    page,
+  }) => {
+    // Même règle que sur l'accueil, et pour la même raison commerciale : un
+    // visiteur qui n'aperçoit aucun produit s'en va. C'est d'autant plus vrai
+    // ici, où l'on vient précisément de demander à voir un rayon.
+    await page.goto('/fr/c/bas/jeans-pantalons')
+
+    const hauteur = await page
+      .locator('section')
+      .first()
+      .evaluate((s) => s.getBoundingClientRect().height)
+    const fenetre = page.viewportSize()?.height ?? 0
+
+    expect(hauteur).toBeLessThan(fenetre * 0.5)
+  })
+
   test('les deux univers sont annoncés au plan de site', async ({ request }) => {
     const xml = await (await request.get('/sitemap.xml')).text()
     expect(xml).toContain('/fr/femme')

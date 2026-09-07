@@ -32,6 +32,22 @@ export async function CatalogueView({
   lockedDimensions = [],
   heading,
   intro,
+  /**
+   * Le titre et l'accroche sont portés PAR LA PAGE, pas par cette vue.
+   *
+   * Sert aux pages de rayon, où le nom de la catégorie est écrit dans le
+   * bandeau qui ouvre la page. Sans cette bascule, le nom apparaîtrait deux
+   * fois à quelques centimètres d'intervalle — et surtout la page aurait DEUX
+   * `h1`, ce qu'aucun rendu ne signale et que le référencement lit mal.
+   *
+   * La contrepartie est une obligation pour l'appelant : s'il masque le titre
+   * ici, il doit en poser un ailleurs. Un test de bout en bout compte les `h1`
+   * de la page de rayon pour que l'oubli ne passe pas.
+   *
+   * Le décompte de pièces, la recherche et les filtres restent en place : ils
+   * appartiennent à l'outil, pas à l'en-tête éditorial.
+   */
+  hideHeading = false,
 }: {
   /**
    * Chemin SANS préfixe de langue, ex. `/catalogue`.
@@ -49,6 +65,7 @@ export async function CatalogueView({
   lockedDimensions?: (keyof CatalogueFilters)[]
   heading: string
   intro?: string | null
+  hideHeading?: boolean
 }) {
   const t = await getTranslations('catalogue')
   const formAction = `/${locale}${basePath}`
@@ -142,8 +159,12 @@ export async function CatalogueView({
           filet plein. Le nombre est une donnée d'inventaire, il est donc
           composé comme telle et non comme un argument. */}
       <header className="ruled-signature flex flex-col gap-3 pb-5">
-        <h1 className="text-gradient text-2xl">{heading}</h1>
-        {intro ? <p className="max-w-2xl text-base text-muted">{intro}</p> : null}
+        {hideHeading ? null : (
+          <h1 className="text-gradient text-2xl">{heading}</h1>
+        )}
+        {intro && !hideHeading ? (
+          <p className="max-w-2xl text-base text-muted">{intro}</p>
+        ) : null}
         <p className="data label-reg text-muted">
           {t('results', { count: page.totalCount })}
         </p>
@@ -211,6 +232,9 @@ export async function CatalogueView({
               filters={filters}
               sort={sort}
               locale={locale}
+              // Les dimensions que la page impose n'ont pas de groupe : leurs
+              // cases seraient sans effet, la page réécrivant le filtre.
+              lockedDimensions={lockedDimensions}
             />
           </aside>
         </div>

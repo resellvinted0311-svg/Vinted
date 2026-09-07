@@ -71,6 +71,25 @@ export async function getCategoryTree(locale: string): Promise<CategoryNode[]> {
 export interface ShowcaseCategory {
   slug: string
   name: string
+  /**
+   * Chemin COMPLET depuis la racine, `['hauts', 't-shirts']`.
+   *
+   * Il ne double pas `slug` : c'est la seule des deux valeurs avec laquelle on
+   * puisse composer un lien. La route `/c/[...slug]` vérifie que le chemin
+   * annoncé correspond à la hiérarchie réelle et renvoie 404 sinon — une
+   * garde légitime, qui empêche deux adresses de servir la même page.
+   *
+   * Les cartes de rayon composaient leur lien avec le seul `slug`. Sur les
+   * feuilles de premier niveau — Robes, Sacs, Chaussures — le chemin se
+   * trouvait être identique et tout fonctionnait ; sur toutes les autres,
+   * la carte menait à un 404. Huit rayons sur quinze, dont Jeans, T-shirts
+   * et Pulls, c'est-à-dire précisément ceux qu'on ouvre en premier.
+   *
+   * `slug` reste exposé parce qu'il sert de CLÉ — les photographies de rayon
+   * sont indexées par lui. Les deux valeurs ont donc chacune leur emploi, et
+   * les confondre est exactement ce qui a produit le défaut.
+   */
+  path: string[]
 }
 
 /**
@@ -104,17 +123,47 @@ export async function listShowcaseCategories(
   const rows = await prisma.category.findMany({
     orderBy: { position: 'asc' },
     select: {
+      id: true,
+      parentId: true,
       slug: true,
       _count: { select: { children: true } },
       translations: { select: { locale: true, name: true } },
     },
   })
 
+  // Le chemin se remonte EN MÉMOIRE, sur les lignes déjà chargées.
+  //
+  // La taxonomie tient en quelques dizaines de lignes et on les a toutes :
+  // interroger la base une fois par feuille pour retrouver ses parents
+  // ajouterait autant d'allers-retours qu'il y a de rayons, à chaque
+  // affichage de la vitrine, pour une information déjà en main.
+  const parDefaut = new Map(rows.map((row) => [row.id, row]))
+
+  const cheminDe = (id: string): string[] => {
+    const chemin: string[] = []
+    let courant = parDefaut.get(id)
+    // Borné par le nombre de lignes : une donnée cyclique — un parent qui
+    // serait son propre descendant — ferait sinon tourner cette boucle
+    // indéfiniment et figerait le rendu de la page, sans la moindre erreur.
+    let garde = rows.length + 1
+
+    while (courant && garde > 0) {
+      chemin.unshift(courant.slug)
+      courant = courant.parentId
+        ? parDefaut.get(courant.parentId)
+        : undefined
+      garde -= 1
+    }
+
+    return chemin
+  }
+
   return rows
     .filter((row) => row._count.children === 0)
     .map((row) => ({
       slug: row.slug,
       name: nameFor(row.translations, locale, row.slug),
+      path: cheminDe(row.id),
     }))
 }
 
