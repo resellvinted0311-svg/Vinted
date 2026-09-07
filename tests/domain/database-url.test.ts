@@ -12,6 +12,10 @@ import {
   withBuildParams,
   BUILD_WORKERS,
   BUILD_TOTAL_CONNECTIONS,
+  RESERVE_APPLICATION,
+  BUILD_CONNECTION_LIMIT,
+  BUILD_POOL_TIMEOUT_SECONDS,
+  PLAFOND_POOLER,
 } from '@/lib/db/database-url'
 
 /**
@@ -84,10 +88,14 @@ describe('profil de connexion du build', () => {
     const runtime = resolveDatabaseUrl(SUPABASE)
     expect(runtime?.value).toContain('connection_limit=1')
 
+    // Les valeurs attendues sont LUES depuis le module, pas recopiées : un
+    // nombre recopié ici resterait vrai longtemps après que le budget de
+    // connexions a changé — et c'est précisément un budget qu'on a déjà dû
+    // corriger deux fois.
     const build = withBuildParams(runtime?.value ?? '')
     expect(build).not.toContain('connection_limit=1&')
-    expect(build).toContain('connection_limit=5')
-    expect(build).toContain('pool_timeout=30')
+    expect(build).toContain(`connection_limit=${BUILD_CONNECTION_LIMIT}`)
+    expect(build).toContain(`pool_timeout=${BUILD_POOL_TIMEOUT_SECONDS}`)
   })
 
   it('vise le même hôte que la connexion applicative', () => {
@@ -104,8 +112,8 @@ describe('profil de connexion du build', () => {
 
   it('pose les paramètres sur une URL qui n’en a aucun', () => {
     const build = withBuildParams(LOCAL.DATABASE_URL)
-    expect(build).toContain('connection_limit=5')
-    expect(build).toContain('pool_timeout=30')
+    expect(build).toContain(`connection_limit=${BUILD_CONNECTION_LIMIT}`)
+    expect(build).toContain(`pool_timeout=${BUILD_POOL_TIMEOUT_SECONDS}`)
     expect(build).toContain('schema=public')
     expect(build).not.toContain('??')
   })
@@ -433,8 +441,6 @@ describe('le budget de connexions du build', () => {
    * Le mode de panne, lui, ne ressemble pas à sa cause : le build échoue sur
    * une page de marques, en parlant de la base.
    */
-  const PLAFOND_POOLER = 15
-
   it('reste sous le plafond du pooler, marge comprise', () => {
     const build = withBuildParams('postgres://u:pw@hote:5432/db')
     const limite = Number(/connection_limit=(\d+)/.exec(build)?.[1])
@@ -444,9 +450,28 @@ describe('le budget de connexions du build', () => {
       BUILD_WORKERS * limite,
       `${BUILD_WORKERS} workers × ${limite} connexions dépasse le budget`,
     ).toBeLessThanOrEqual(BUILD_TOTAL_CONNECTIONS)
+  })
+
+  it('laisse au SITE EN SERVICE de quoi tenir pendant le build', () => {
+    /**
+     * La version précédente de ce test comparait le budget au plafond du
+     * pooler, et elle passait : dix est bien inférieur à quinze. Le build a
+     * pourtant échoué avec ces dix connexions.
+     *
+     * Parce que l'assertion vérifiait l'arithmétique en laissant sa PRÉMISSE
+     * hors du test. Elle supposait, sans le dire, que les quinze places
+     * revenaient au build. Un build Vercel ne remplace pas le site : il le
+     * double. Le déploiement en cours sert pendant toute la construction et
+     * tient ses connexions sur le même pooler.
+     *
+     * La réserve entre donc dans le calcul. Une garde dont la prémisse n'est
+     * pas dans l'assertion ne garde que la moitié de ce qu'elle croit.
+     */
     expect(
-      BUILD_TOTAL_CONNECTIONS,
-      'le budget doit garder une marge sous le plafond du pooler',
+      BUILD_TOTAL_CONNECTIONS + RESERVE_APPLICATION,
+      `le build (${BUILD_TOTAL_CONNECTIONS}) et le site en service ` +
+        `(${RESERVE_APPLICATION}) demandent ensemble plus que les ` +
+        `${PLAFOND_POOLER} places du pooler`,
     ).toBeLessThan(PLAFOND_POOLER)
   })
 

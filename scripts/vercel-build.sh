@@ -98,4 +98,61 @@ else
 fi
 
 echo "→ Build Next.js"
-DATABASE_URL="$BUILD_DATABASE_URL" next build
+
+# ---------------------------------------------------------------------------
+# Le build, et la traduction de la seule panne qui s'est répétée
+# ---------------------------------------------------------------------------
+# « max clients reached in session mode » remonte du pooler au beau milieu du
+# prérendu, sur une page de marques prise au hasard, et désigne la base alors
+# que la base va très bien. Le message a coûté deux enquêtes complètes. On le
+# traduit une fois pour toutes, ici, où il est lu.
+#
+# La sortie est à la fois DIFFUSÉE et CONSERVÉE, et le code de retour passe
+# par un fichier. Deux règles du shell se liguent ici, et il faut les deux :
+#
+#  1. Dans un tuyau, `$?` est celui du DERNIER maillon — donc de `tee`, qui
+#     réussit toujours. Ce projet s'est déjà fait prendre par cette règle, sur
+#     un build annoncé vert alors qu'il venait d'échouer. Vérifié : après le
+#     tuyau, `$?` vaut 0 quand la commande en tête sort en 7.
+#
+#  2. `set -e` est actif. Écrire le code sur la ligne SUIVANTE ne marche donc
+#     pas : le groupe est tué dès l'échec, et l'écriture n'a jamais lieu — le
+#     fichier reste vide et le test qui suit part en erreur de syntaxe.
+#     Vérifié aussi, sous `sh` comme sous `dash`.
+#
+# D'où le `||` : il fait de la commande une commande TESTÉE, que `set -e`
+# laisse passer, et `$?` y désigne bien le build. Fichier vide = succès.
+JOURNAL="$(mktemp)"
+CODE_FICHIER="$(mktemp)"
+
+{
+  DATABASE_URL="$BUILD_DATABASE_URL" next build 2>&1 || echo "$?" > "$CODE_FICHIER"
+} | tee "$JOURNAL"
+
+CODE="$(cat "$CODE_FICHIER")"
+
+if [ -n "$CODE" ]; then
+  if grep -q 'EMAXCONNSESSION\|max clients reached' "$JOURNAL"; then
+    echo "" >&2
+    echo "───────────────────────────────────────────────────────────────" >&2
+    echo "Ce n'est pas une panne de la base : c'est un manque de PLACES." >&2
+    echo "" >&2
+    echo "Le pooler Supabase en mode session (port 5432) n'accepte que" >&2
+    echo "quinze clients. Le build en demande quelques-unes — et le site" >&2
+    echo "DÉJÀ EN LIGNE garde les siennes pendant toute la construction :" >&2
+    echo "un déploiement ne remplace pas le site, il le double." >&2
+    echo "" >&2
+    echo "Deux leviers, dans lib/db/database-url.ts :" >&2
+    echo "  - RESERVE_APPLICATION  : places laissées au site en service." >&2
+    echo "    À relever si le trafic a grandi." >&2
+    echo "  - BUILD_TOTAL_CONNECTIONS : ce que le build s'autorise." >&2
+    echo "" >&2
+    echo "Le remède durable est ailleurs : faire passer la connexion" >&2
+    echo "applicative par le pooler en mode TRANSACTION (port 6543), qui" >&2
+    echo "multiplexe et accepte bien plus de clients — en renseignant" >&2
+    echo "alors DIRECT_URL avec la connexion directe, sans quoi les" >&2
+    echo "migrations perdent leurs verrous consultatifs." >&2
+    echo "───────────────────────────────────────────────────────────────" >&2
+  fi
+  exit "$CODE"
+fi

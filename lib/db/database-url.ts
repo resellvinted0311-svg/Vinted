@@ -373,17 +373,29 @@ function setParam(url: string, name: string, value: string): string {
  * « (EMAXCONNSESSION) max clients reached in session mode ».
  *
  * ---------------------------------------------------------------------------
- * Le build qui a échoué
+ * Les deux builds qui ont échoué, et ce qu'ils ont appris
  * ---------------------------------------------------------------------------
- * Huit connexions par worker, deux cœurs sur la machine de build : seize
- * demandées pour quinze disponibles. Le prérendu s'arrêtait à la 67ᵉ page sur
- * 269, sur `/pt/marques`, avec une erreur qui désigne la base alors que la
- * base va parfaitement bien.
+ * PREMIER ÉCHEC. Huit connexions par worker, deux cœurs : seize demandées pour
+ * quinze. Le prérendu s'arrêtait à la 67ᵉ page sur 269, sur `/pt/marques`.
+ * Corrigé en ramenant le produit à dix.
  *
- * Le réglage tenait tant que le site comptait moins de pages : les deux
- * workers n'atteignaient jamais leur plafond en même temps. Seize pages de
- * plus ont suffi. Autrement dit, ce n'était pas un seuil franchi, c'était un
- * seuil qu'on frôlait depuis le début.
+ * SECOND ÉCHEC, avec ce produit de dix. Même erreur, même page, à la 69ᵉ sur
+ * 277. Le compte, lui, était juste : mesuré sur un build complet en comptant
+ * `pg_stat_activity`, le prérendu ouvre EXACTEMENT dix connexions, ni une de
+ * plus. L'arithmétique n'était pas en cause.
+ *
+ * C'était la PRÉMISSE. Elle tenait dans un mot jamais écrit : « disponibles ».
+ * On raisonnait comme si les quinze places du pooler revenaient au build. Or
+ * un build Vercel ne remplace pas le site, il le double : le déploiement en
+ * cours continue de servir pendant toute la construction, et chacune de ses
+ * instances tient sa connexion sur le MÊME pooler. Le build n'a jamais eu
+ * quinze places ; il a celles que la production ne prend pas.
+ *
+ * D'où la forme du défaut, qui expliquait tout et qu'on avait mal lue : le
+ * build échouait à peu près à la même page avec huit connexions par worker et
+ * avec cinq. Si le produit avait été la cause, le second aurait tenu bien plus
+ * longtemps. Un seuil franchi au même endroit quelle que soit la consommation,
+ * c'est le signe que le plafond, lui, bouge.
  *
  * ---------------------------------------------------------------------------
  * Pourquoi épingler le nombre de workers
@@ -396,20 +408,52 @@ function setParam(url: string, name: string, value: string): string {
 export const BUILD_WORKERS = 2
 
 /**
- * Plafond que le PRODUIT ne doit pas franchir.
- *
- * Dix, et non quinze : la marge couvre la connexion des migrations, qui vient
- * de se fermer mais que le pooler peut encore compter, et les connexions que
- * l'hébergeur se réserve. Un plafond calculé au ras du plafond réel n'est pas
- * un plafond.
+ * Places du pooler Supabase en mode session (port 5432), `pool_size` par
+ * défaut. Au-delà, la connexion suivante n'attend pas : elle est REFUSÉE, avec
+ * « (EMAXCONNSESSION) max clients reached in session mode ».
  */
-export const BUILD_TOTAL_CONNECTIONS = 10
+export const PLAFOND_POOLER = 15
 
-const BUILD_CONNECTION_LIMIT = Math.max(
+/**
+ * Places laissées au SITE EN SERVICE pendant que le build tourne.
+ *
+ * C'est le terme qui manquait, et il ne se déduit d'aucun réglage de build :
+ * il décrit ce qui se passe à côté. Chaque instance serverless chaude tient
+ * une connexion — une seule, grâce au `connection_limit=1` que
+ * `withPoolerParams` pose sur la connexion applicative — et leur nombre suit
+ * le trafic, pas le déploiement.
+ *
+ * Huit couvre confortablement une boutique de cette taille. Le jour où le
+ * trafic la dépasse, c'est la RÉSERVE qu'il faut relever, pas le budget du
+ * build : se tromper de terme est exactement ce qui a produit le second échec.
+ */
+export const RESERVE_APPLICATION = 8
+
+/**
+ * Ce que le build s'autorise.
+ *
+ * Il ne se choisit plus : il se DÉDUIT de ce qui reste une fois la production
+ * servie et une marge gardée pour la connexion des migrations, qui vient de se
+ * fermer mais que le pooler peut encore compter.
+ */
+export const BUILD_TOTAL_CONNECTIONS = 4
+
+export const BUILD_CONNECTION_LIMIT = Math.max(
   2,
   Math.floor(BUILD_TOTAL_CONNECTIONS / BUILD_WORKERS),
 )
-const BUILD_POOL_TIMEOUT_SECONDS = 30
+
+/**
+ * Un pool plus étroit met forcément plus de requêtes en file.
+ *
+ * Le délai passe donc de trente à soixante secondes. Ce n'est pas une
+ * précaution vague : depuis la région de build, un aller-retour vers la base
+ * coûte une centaine de millisecondes, et c'est l'attente cumulée — pas la
+ * durée d'une requête — que Prisma compare à ce délai avant de répondre P2024.
+ * Rétrécir le pool sans allonger le délai, c'est échanger une panne contre
+ * l'autre.
+ */
+export const BUILD_POOL_TIMEOUT_SECONDS = 60
 
 /**
  * Profil de connexion du build.
