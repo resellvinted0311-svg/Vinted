@@ -57,6 +57,9 @@
   "catalogue": {
     "title": "Catalogo",
     "filtersHeading": "Filtra",
+    "filterAndSort": "Filtra e ordina",
+    "closeFilters": "Chiudi i filtri",
+    "seeResults": "Vedi i risultati",
     "results": "{count, plural, =0 {Nessun capo} one {# capo} other {# capi}}",
     "noResults": "Nessun capo corrisponde a questi filtri.",
     "noResultsHint": "Rimuovi un filtro per ampliare la ricerca.",

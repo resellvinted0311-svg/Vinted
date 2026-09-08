@@ -258,39 +258,52 @@ describe('les lavis', () => {
   })
 })
 
-describe('la barre flottante', () => {
-  it('n’est translucide que si le flou l’accompagne', () => {
+describe('la barre de navigation', () => {
+  it('a un fond PLEIN, sans aucune translucidité', () => {
     /**
      * Ce que ce test empêche, précisément.
      *
-     * La barre reste à l'écran pendant tout le défilement. Translucide SANS
-     * flou, elle laisse passer le contenu de la page en clair : au moment où
-     * une photographie sombre glisse dessous, « Catalogue » et « Panier »
-     * deviennent illisibles — puis redeviennent lisibles, sans que rien
-     * n'échoue et sans qu'aucune capture d'écran ne le montre.
+     * La barre reste à l'écran pendant tout le défilement. Translucide, elle
+     * laisse passer le contenu de la page : au moment où une photographie
+     * sombre glisse dessous, « Catalogue » et « Panier » deviennent
+     * illisibles — puis redeviennent lisibles, sans que rien n'échoue et sans
+     * qu'aucune capture d'écran ne le montre.
      *
-     * La règle de base doit donc rester OPAQUE, et la transparence vivre
-     * uniquement dans la requête de fonctionnalité. Déplacer la ligne d'un
-     * bloc à l'autre est une modification d'une seconde ; ce test est ce qui
-     * la rattrape.
+     * ---------------------------------------------------------------------
+     * Ce test était plus faible avant, et il a suivi la barre
+     * ---------------------------------------------------------------------
+     * La barre était une pastille flottante posée sur une toile de denim, et
+     * elle DEVAIT être un peu translucide pour la laisser paraître. Le test
+     * ne pouvait donc pas exiger l'opacité : il exigeait seulement que la
+     * translucidité soit accompagnée d'un flou d'arrière-plan, en vérifiant
+     * qu'elle vivait dans une requête de fonctionnalité et non dans la règle
+     * de base.
+     *
+     * La toile a disparu avec le passage au fond blanc, et cette contrainte
+     * avec elle. On peut donc exiger la chose FORTE : un fond plein. Ce n'est
+     * plus « le défaut est rattrapé par un flou », c'est « le défaut ne peut
+     * pas se produire ».
      */
-    const debut = CSS.indexOf('.nav-float {')
-    expect(debut, '.nav-float introuvable').toBeGreaterThan(-1)
+    const debut = CSS.indexOf('.nav-plein {')
+    expect(debut, '.nav-plein introuvable').toBeGreaterThan(-1)
 
-    // Le bloc de BASE seulement : jusqu'à sa propre accolade fermante, donc
-    // sans la requête de fonctionnalité qui le suit — c'est justement ce
-    // qu'on veut séparer.
     const declaration = CSS.slice(debut, CSS.indexOf('}', debut))
 
-    // On lit LE fond, pas le bloc entier : le filet et l'ombre de la barre
-    // sont eux-mêmes translucides, et c'est normal — chercher le mot
-    // « transparent » n'importe où ferait échouer le test sur des règles qui
-    // n'ont rien à voir avec la lisibilité des libellés.
+    // On lit LE fond, pas le bloc entier : l'ombre de la barre est elle-même
+    // translucide, et c'est normal — chercher le mot « transparent » n'importe
+    // où ferait échouer le test sur une règle qui n'a rien à voir avec la
+    // lisibilité des libellés.
     const fond = /background-color:\s*([^;]+);/.exec(declaration)?.[1]
 
     expect(
       fond,
-      'le fond de base de la barre doit être une couleur pleine',
-    ).toBe('var(--paper-raised)')
+      'le fond de la barre doit être une couleur pleine',
+    ).toBe('var(--paper)')
+
+    expect(
+      declaration.includes('backdrop-filter'),
+      'un flou d’arrière-plan sur une barre opaque ne sert à rien et coûte ' +
+        'un repeint à chaque défilement',
+    ).toBe(false)
   })
 })

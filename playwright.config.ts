@@ -98,6 +98,7 @@ export default defineConfig({
     locale: 'fr-FR',
     timezoneId: 'Europe/Paris',
     trace: 'retain-on-failure',
+
     ...(executablePath ? { launchOptions: { executablePath } } : {}),
   },
 

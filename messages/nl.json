@@ -57,6 +57,9 @@
   "catalogue": {
     "title": "Collectie",
     "filtersHeading": "Filteren",
+    "filterAndSort": "Filteren en sorteren",
+    "closeFilters": "Filters sluiten",
+    "seeResults": "Resultaten bekijken",
     "results": "{count, plural, =0 {Geen items} one {# item} other {# items}}",
     "noResults": "Geen items komen overeen met deze filters.",
     "noResultsHint": "Verwijder een filter om ruimer te zoeken.",

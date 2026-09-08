@@ -87,17 +87,38 @@ export async function SiteHeader() {
     'whitespace-nowrap text-base text-muted transition-colors duration-150 ease-out hover:text-ink'
 
   return (
-    <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 sm:pt-4">
-      <div className="nav-bar nav-float relative mx-auto max-w-[80rem] px-4 py-3 sm:px-6">
-        {/*
-          La surpiqûre borde la barre comme le fil borde une ceinture de jean.
+    <header className="nav-plein sticky top-0 z-50">
+      {/*
+        La couture n'entoure plus la barre : elle en ferme le BORD BAS.
 
-          Elle est posée AVANT le contenu et en `pointer-events: none` : elle
-          couvre toute la barre, et sans cela elle intercepterait les clics sur
-          les liens qu'elle recouvre.
-        */}
-        <Surpiqure rayon={16} retrait={7} />
+        La barre était une pastille flottante, et une pastille se borde tout
+        autour — c'est ce que faisait la surpiqûre en cadre. Une barre pleine
+        largeur n'a plus de côtés : elle touche les deux bords de la fenêtre,
+        et un cadre y dessinerait deux traits verticaux qui ne délimitent rien.
 
+        Reste sa seule arête réelle, celle du bas, là où la barre rencontre la
+        page. C'est la couture d'un ourlet plutôt que celle d'une ceinture, et
+        elle remplace le filet d'un pixel qu'on aurait mis sinon — un trait
+        régulier, précisément ce que la charte a écarté partout ailleurs.
+
+        Le fil passe au TON CLAIR : il est désormais posé sur un panneau blanc,
+        où un fil blanc n'aurait aucun écart avec le fond.
+      */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[9px]"
+      >
+        <Surpiqure
+          forme="ligne"
+          ton="clair"
+          retrait={0}
+          desordre={0.55}
+          graine={41}
+          hauteurDeReference={9}
+        />
+      </div>
+
+      <div className="nav-bar relative mx-auto max-w-[80rem] px-4 py-3 sm:px-6">
         {/*
           La signature sans sa baseline : une barre de navigation porte le nom
           de la boutique, pas son argument. La baseline reste là où elle

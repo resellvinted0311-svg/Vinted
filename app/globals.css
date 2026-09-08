@@ -35,83 +35,105 @@
    =========================================================================== */
 
 :root {
-  /* --- Fonds et encres ---------------------------------------------------
-     LA TOILE EST DU DENIM. C'est le parti pris de la boutique : le fond du
-     site est de l'indigo, pas un crème sur lequel on poserait du bleu.
+  /*
+    Le site est CLAIR, et il l'est par défaut.
 
-     `--paper` porte la couleur MOYENNE de la toile tissée. Elle n'est pas
-     choisie : elle est calculée par le script qui produit l'image, et reportée
-     ici. C'est ce qu'on voit pendant le chargement de l'image, à l'impression,
-     et sur un moteur qui refuse le WebP — donc elle doit être juste, sans quoi
-     le texte blanc se retrouve un instant sur du blanc.
+    Il a été en denim : le fond était une toile de jean tissée, l'encre était
+    blanche, et toute la palette était construite pour ça. Le fond passe au
+    blanc, ce qui n'est pas un réglage mais un renversement — chaque jeton
+    change de rôle, et deux règles s'inversent avec eux :
 
-     Trois profondeurs de la même toile : `--paper` est le vêtement,
-     `--paper-raised` une section qui se détache, `--surface` une fiche qu'on
-     prend en main. Elles vont en s'ASSOMBRISSANT, comme une double épaisseur
-     de toile — c'est l'inverse d'un fond clair, où une fiche blanchit. Les
-     éclaircir a été essayé : sur un fond mi-ton, cela écrase le contraste aux
-     deux bouts à la fois, et trois paires passaient sous le seuil.
+      - les trois profondeurs de papier vont désormais en s'ASSOMBRISSANT
+        depuis le blanc. Sur la toile elles s'assombrissaient aussi, comme une
+        double épaisseur d'étoffe ; ici c'est une ombre portée sur du papier.
+        Le sens est le même, la matière non.
 
-     L'encre est un BLANC FRANC, comme le fil de surpiqûre.
+      - les accents s'ASSOMBRISSENT. Sur l'indigo il fallait la partie usée du
+        jean pour qu'un bouton se détache ; sur du blanc c'est l'inverse, et
+        le texte que ces accents portent redevient donc clair — d'où
+        `--ink-inverse` qui repasse au blanc.
 
-     LA TOILE A ÉTÉ ASSOMBRIE, et ce n'est pas un changement de goût. Le fond
-     a été mesuré sur la page réelle : en effaçant l'encre et en relisant les
-     pixels sous chaque bloc de texte, la médiane sortait à 6,7:1 — bonne —
-     mais le neuvième décile à 2,7:1, et les pixels les plus clairs du tissage
-     étaient blancs. Un texte blanc posé là-dessus se délite dans l'armure.
+    La bascule automatique sur le thème du système a été RETIRÉE. Elle aurait
+    servi du denim à quiconque a son ordinateur en mode sombre, c'est-à-dire
+    l'exact contraire de ce qui est demandé. Le bloc `[data-theme='dark']`
+    reste en place, testé comme avant : la palette sombre existe toujours et
+    reste disponible, elle n'est simplement plus choisie dans le dos de la
+    personne.
 
-     Un fond ne se juge pas à sa couleur moyenne quand ce fond est une IMAGE.
-     Le tissage porte désormais un plafond de luminance déduit du seuil AA
-     (voir `scripts/tisser-denim.mjs`), et la moyenne descend avec lui. */
-  --paper: #334562;
-  --paper-raised: #2d3c56;
-  --surface: #27354b;
-  --ink: #ffffff;
-  --muted: #d3e0ee;
+    Les valeurs ne sont pas prises à l'œil. `tests/domain/palette.test.ts`
+    relit CE fichier et recalcule seize paires de contraste : elles tiennent
+    toutes 4,5:1, seuil du RGAA et des WCAG AA.
+  */
+  --paper: #ffffff;
+  --paper-raised: #f4f7fb;
+  /*
+    LA FICHE BLANCHIT, elle ne s'assombrit plus — c'est le renversement le
+    plus contre-intuitif du lot, et il était écrit d'avance : le commentaire
+    de la version denim disait déjà que l'assombrissement était « l'inverse
+    d'un fond clair, où une fiche blanchit ».
+
+    Concrètement `--surface` vaut le même blanc que la page, et ce n'est pas
+    un oubli. Ce qui délimite une fiche est son FILET PLEIN, pas un aplat :
+    c'est la grammaire de la charte depuis le début, et sur du blanc elle
+    devient la seule qui tienne. Un gris de fiche posé sur une page blanche
+    donne deux valeurs presque égales — la grille paraît molle, et l'œil ne
+    sait plus si le gris est une fiche ou une zone morte.
+
+    Le lavis de page, lui, descend juste au-dessous du blanc : la fiche
+    ressort alors d'un cheveu, en plus de son contour.
+  */
+  --surface: #ffffff;
+  --ink: #10233a;
+  --muted: #4a5f7d;
 
   /* --- Filets ------------------------------------------------------------
      Deux régimes distincts, et c'est la grammaire du design : le filet PLEIN
      (encre, 1,5px) délimite un objet — une fiche, un cadre photo, une
      section ; le filet SABLE sépare à l'intérieur d'un objet. Les confondre
-     fait perdre la lecture. */
-  --sand: #57739a;
-  --sand-strong: #7b96bb;
-  --rule: #ffffff;
+     fait perdre la lecture.
+
+     Sur du blanc, ces filets portent une charge qu'ils n'avaient pas : c'est
+     eux, et non plus la matière du fond, qui donnent ses arêtes à la page. Le
+     filet sable est donc franc plutôt que discret — un gris trop pâle laisse
+     une grille de fiches flotter dans du vide. */
+  --sand: #cfdaea;
+  --sand-strong: #a6b9d2;
+  --rule: #10233a;
 
   /* --- Accents -----------------------------------------------------------
-     DEUX DÉLAVAGES de la toile : un bleu lavé en principal, un bleu porté en
-     secondaire, et le dégradé qui va de l'un à l'autre.
+     Un bleu d'encre en principal, un bleu de toile en secondaire, et le
+     dégradé qui va de l'un à l'autre.
 
-     Sur un fond sombre, les accents s'ÉCLAIRCISSENT — c'est l'inversion la
-     plus importante de cette palette. Un indigo soutenu posé sur de l'indigo
-     ne se voit pas ; il faut la partie usée du jean, celle des plis et des
-     genoux, pour qu'un bouton se détache de la toile.
+     Sur un fond clair, les accents s'ASSOMBRISSENT — c'est l'inversion la
+     plus importante de cette palette, et elle vaut dans les deux sens. Sur
+     l'indigo il fallait la partie usée du jean pour qu'un bouton se détache ;
+     sur du blanc, un bleu délavé ne se verrait pas davantage.
 
-     Conséquence directe : le texte que ces accents portent devient SOMBRE,
-     d'où `--ink-inverse` qui vaut désormais un indigo profond et non un crème.
-     Un libellé clair sur un bouton clair serait illisible.
+     Conséquence directe : le texte que ces accents portent redevient CLAIR,
+     d'où `--ink-inverse` repassé au blanc. Un libellé sombre sur un bouton
+     sombre serait illisible.
 
      Les valeurs ne sont pas choisies à l'œil mais pour leur CONTRASTE, et
      vérifiées par `tests/domain/palette.test.ts`, qui recalcule les rapports à
      partir de ce fichier — pas à partir d'une note prise au moment du choix. */
-  --stamp: #dce9f6;
-  --stamp-hover: #f0f7ff;
-  --mark: #bbd4ec;
-  --mark-hover: #d5e5f5;
+  --stamp: #1d3a63;
+  --stamp-hover: #14263c;
+  --mark: #2f5488;
+  --mark-hover: #24406a;
 
   /* Teinte de la gravure botanique éditoriale. Un bleu de toile plus soutenu
      que le fond : le dessin se lit comme un motif tissé DANS la matière, pas
      comme un trait posé dessus. */
-  --engraving: #6b88ad;
+  --engraving: #8ba4c3;
 
-  /* Les trois signaux s'éclaircissent eux aussi : un vert et un rouge sombres,
-     posés sur de l'indigo, deviennent deux taches noirâtres indiscernables. */
-  --success: #a8e6c4;
-  --warning: #f5d79a;
-  --danger: #ffcfc9;
+  /* Les trois signaux s'assombrissent avec le reste : un vert et un rouge
+     pastel, posés sur du blanc, ne signalent rien du tout. */
+  --success: #0f6b3f;
+  --warning: #7a4c00;
+  --danger: #a01a12;
 
-  --ink-inverse: #14263c;
-  --focus-ring: #dce9f6;
+  --ink-inverse: #ffffff;
+  --focus-ring: #1d3a63;
 
   /* --- Dégradés ----------------------------------------------------------
      UN parcours de teintes — rose vers cuivre — décliné en cinq intensités, et
@@ -137,11 +159,7 @@
      éclairci parce qu'il porte du texte sur toute sa surface. Voir sa
      déclaration : l'écart de dilution est une mesure de contraste, pas un
      réglage à l'œil. */
-  --gradient-accent: linear-gradient(
-    135deg,
-    var(--stamp) 0%,
-    var(--mark) 100%
-  );
+  --gradient-accent: linear-gradient(135deg, var(--stamp) 0%, var(--mark) 100%);
   --gradient-accent-hover: linear-gradient(
     135deg,
     var(--stamp-hover) 0%,
@@ -184,10 +202,23 @@
     RÉELLEMENT peintes dans les deux thèmes — une valeur recopiée ici serait
     fausse dès le prochain réglage de palette.
   */
+  /*
+    Le lavis de page a été DIVISÉ PAR TROIS en passant au thème clair, et ce
+    n'est pas un ajustement de goût.
+
+    Il valait 7 % et 5 % des deux accents. Ces accents étaient alors des bleus
+    délavés posés sur de l'indigo : dilués à 7 %, ils éclaircissaient la toile
+    d'un souffle. Les mêmes pourcentages appliqués aux accents SOMBRES du
+    thème clair font l'inverse — ils grisent la page. Mesuré sur la page
+    servie, le fond sortait à un gris-bleu franc là où on demandait du blanc.
+
+    C'est le piège d'un jeton défini en pourcentage d'un autre : il survit au
+    renversement sans erreur, et change complètement d'effet.
+  */
   --gradient-page: linear-gradient(
     155deg,
-    color-mix(in oklab, var(--stamp) 7%, transparent) 0%,
-    color-mix(in oklab, var(--mark) 5%, transparent) 100%
+    color-mix(in oklab, var(--stamp) 3%, transparent) 0%,
+    color-mix(in oklab, var(--mark) 2%, transparent) 100%
   );
 
   /* --- Typographie -------------------------------------------------------
@@ -220,41 +251,20 @@
   --rule-width: 1.5px;
 }
 
-/* Thème sombre : la toile devient encre. La règle d'or est conservée — le
-   filet plein reste le plus contrasté des deux régimes, donc il passe du noir
-   au crème. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --paper: #1d2c3e;
-    --paper-raised: #182636;
-    --surface: #14202e;
-    --ink: #ffffff;
-    --muted: #c3d3e4;
+/*
+  Il n'y a PLUS de bascule sur le thème du système.
 
-    --sand: #2e4257;
-    --sand-strong: #455d78;
-    --rule: #ffffff;
+  Il y avait ici un `@media (prefers-color-scheme: dark)`. Il servait le denim
+  à toute personne dont l'ordinateur est en mode sombre — c'est-à-dire la
+  majorité — et le site aurait donc été sombre pour elles alors qu'on vient de
+  le vouloir blanc. Une préférence système est une préférence de LECTURE, pas
+  un choix d'identité : elle ne doit pas décider de la couleur de la boutique.
 
-    /* Les accents CHANGENT de valeur, pas de teinte : le rose et le cuivre du
-       thème clair porteraient du texte illisible sur une encre sombre. Ce sont
-       les mêmes couleurs, remontées jusqu'à repasser les seuils — et le texte
-       qu'ils portent devient sombre, d'où `--ink-inverse`. */
-    --stamp: #cfe1f3;
-    --stamp-hover: #e4eff9;
-    --mark: #a7c8e6;
-    --mark-hover: #c2dbf1;
-
-    --engraving: #4a6b88;
-
-    --success: #8fd9b0;
-    --warning: #e9c47f;
-    --danger: #ffb0a8;
-
-    --ink-inverse: #14263c;
-    --focus-ring: #cfe1f3;
-  }
-}
-
+  Le thème sombre n'est pas supprimé pour autant : le bloc ci-dessous reste en
+  place, et `tests/domain/palette.test.ts` continue de vérifier ses seize
+  paires de contraste. Il s'obtient en posant `data-theme="dark"` sur la
+  racine, et redeviendra une option offerte le jour où on la proposera.
+*/
 :root[data-theme='dark'] {
   --paper: #1d2c3e;
   --paper-raised: #182636;
@@ -302,11 +312,12 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
 
-  --font-display: var(--font-archivo), 'Helvetica Neue', Helvetica, Arial,
-    sans-serif;
+  --font-display:
+    var(--font-archivo), 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo,
-    Consolas, monospace;
+  --font-mono:
+    var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
 
   --text-xs: var(--fs-xs);
   --text-base: var(--fs-base);
@@ -398,10 +409,35 @@
       second.
     */
     background-color: var(--paper);
-    background-image: var(--gradient-page), url('/toile-denim.webp');
-    background-size: auto, 340px 340px;
-    background-repeat: no-repeat, repeat;
+
+    /*
+      LA TOILE EST RETIRÉE, et il faut dire ce qu'on perd.
+
+      Le fond était une image de denim tissée fil par fil. Elle donnait à la
+      page une matière : même vide, un écran avait quelque chose à regarder.
+      Sur du blanc, cette béquille disparaît — et c'est précisément le risque
+      qui a été signalé en demandant le fond blanc, « il ne faut pas que le
+      site semble vide ».
+
+      Ce qui la remplace n'est pas une autre texture, c'est de la DÉFINITION :
+      des filets francs, des fiches qui portent leur contour, une grille plus
+      dense. Une texture cache un vide ; un contour le structure. On garde
+      seulement le lavis d'accent, très dilué, pour que le blanc ne soit pas
+      un blanc d'écran d'un bord à l'autre.
+    */
+    background-image: var(--gradient-page);
+    background-repeat: no-repeat;
     color: var(--ink);
+
+    /*
+      Les contrôles natifs suivent le thème DÉCLARÉ, pas celui du système.
+
+      Sans cette ligne, une personne dont l'ordinateur est en mode sombre
+      obtient un menu déroulant à fond noir posé au milieu d'une page blanche
+      — le tri du catalogue en est un. C'est le pendant exact du `@media`
+      qu'on vient de retirer : le système ne décide plus de rien ici.
+    */
+    color-scheme: light;
 
     /*
       Pas de `overflow-x` ici, et c'est une décision, pas un oubli.
@@ -440,8 +476,8 @@
   h1,
   h2,
   h3 {
-    font-family: var(--font-archivo), 'Helvetica Neue', Helvetica, Arial,
-      sans-serif;
+    font-family:
+      var(--font-archivo), 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-weight: 700;
     line-height: 1.04;
     letter-spacing: -0.035em;
@@ -623,91 +659,142 @@
     l'animation, ce qui est bien ce qu'on veut d'un indicateur.
   */
   @keyframes nd-nav-progress {
-    0% { transform: scaleX(0.02); }
-    28% { transform: scaleX(0.45); }
-    62% { transform: scaleX(0.72); }
-    100% { transform: scaleX(0.9); }
+    0% {
+      transform: scaleX(0.02);
+    }
+    28% {
+      transform: scaleX(0.45);
+    }
+    62% {
+      transform: scaleX(0.72);
+    }
+    100% {
+      transform: scaleX(0.9);
+    }
   }
 
   .nav-progress {
     animation: nd-nav-progress 8s cubic-bezier(0.16, 0.9, 0.3, 1) forwards;
   }
 
-  .nav-float {
+  /*
+    Le bouton « Filtrer et trier », posé au bas de la fenêtre.
+
+    -------------------------------------------------------------------------
+    Pourquoi il porte l'accent PLEIN, contrairement à tout le reste
+    -------------------------------------------------------------------------
+    La charte est avare de surfaces d'accent : elles sont « peu nombreuses et
+    volontairement espacées — la teinte ne ressort que si la page respire entre
+    deux occurrences ». Ce bouton en est une, et il la mérite.
+
+    Il est le SEUL accès aux filtres depuis qu'ils ont quitté la page. S'il se
+    confond avec le fond, l'outil n'a pas seulement l'air discret : il devient
+    introuvable, et la boutique perd son filtrage pour qui ne devine pas qu'un
+    bouton se cache là. Un contrôle unique et vital n'est pas un endroit où
+    faire de la retenue.
+
+    -------------------------------------------------------------------------
+    L'ombre porte une information, elle ne décore pas
+    -------------------------------------------------------------------------
+    La charte proscrit le flou parce qu'il simule une profondeur inventée. Ici
+    la profondeur est réelle et c'est même tout le propos : le bouton flotte
+    AU-DESSUS de la grille, et la grille défile dessous. Sans ombre, il se lit
+    comme une pastille collée dans la page, et l'on cherche à le faire défiler
+    avec le reste.
+  */
+  .bouton-filtres {
+    background-image: var(--gradient-accent);
+    color: var(--ink-inverse);
+    box-shadow:
+      0 2px 6px color-mix(in oklab, var(--ink) 14%, transparent),
+      0 14px 32px -18px color-mix(in oklab, var(--ink) 65%, transparent);
+    transition:
+      background-image 150ms ease-out,
+      box-shadow 150ms ease-out;
+
+    /*
+      La barre système des téléphones sans bouton d'accueil.
+
+      Sans cette marge, le bouton se cale sur le bord bas de la fenêtre, c'est
+      à dire SOUS la barre de geste : la moitié de sa hauteur devient
+      incliquable, et le geste de retour se déclenche à la place. La valeur
+      vaut zéro partout ailleurs, donc elle ne coûte rien sur un ordinateur.
+    */
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .bouton-filtres:hover {
+    background-image: var(--gradient-accent-hover);
+  }
+
+  /*
+    L'enfoncement se joue sur l'OMBRE, pas sur un déplacement.
+
+    Un `transform: translateY(1px)` était le geste évident, et il aurait cassé
+    le bouton : sa position horizontale vient d'un `-translate-x-1/2` qui le
+    centre, et poser un `transform` ici l'écrase — le bouton aurait sauté d'un
+    demi-largeur vers la droite au moment précis où on appuie dessus. Deux
+    propriétés qui se disputent le même canal.
+
+    Rapprocher l'ombre dit la même chose sans toucher à la position : l'objet
+    descend vers la page au lieu de glisser.
+  */
+  .bouton-filtres:active {
+    box-shadow:
+      0 1px 2px color-mix(in oklab, var(--ink) 18%, transparent),
+      0 6px 14px -12px color-mix(in oklab, var(--ink) 60%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bouton-filtres {
+      transition: none;
+    }
+    .bouton-filtres:active {
+      box-shadow: none;
+    }
+  }
+
+  .nav-plein {
     position: relative;
-    background-color: var(--paper-raised);
 
     /*
-      Le contour est une SURPIQÛRE, comme sur un jean.
+      LA BARRE EST PLEINE LARGEUR, et ce n'est pas qu'une question de goût.
 
-      C'est ce qui a été demandé, et c'est aussi ce qui règle un vrai problème :
-      sur une toile d'indigo, un filet-cheveu d'encre à 11 % disparaissait
-      complètement. Il fallait soit l'épaissir, soit changer sa nature.
+      Elle était une pastille flottante : décollée des bords, arrondie, posée
+      sur la toile de denim qui passait dessous. Ce dessin supposait un fond
+      qui EXISTE — la toile lui servait de plateau. Sur du blanc, la même
+      pastille flotte sur du rien : elle se lit comme un bandeau oublié au
+      milieu de la page plutôt que comme le sommet du site.
 
-      Une surpiqûre, c'est un TIRET RÉGULIER de fil clair, posé en retrait du
-      bord — jamais un trait continu. `dashed` donne le tiret, la largeur donne
-      l'épaisseur du fil, et l'écart entre le bord et la couture vient du fond
-      qui dépasse dessous.
-
-      Le fil est de l'écru, pas du blanc pur : c'est `--ink`, la même couleur
-      que le texte, donc il suit le thème. Un blanc littéral resterait blanc
-      sur une toile de nuit, où il éblouirait.
+      Pleine largeur, elle redevient une arête : elle ferme la page par le
+      haut, et c'est la première chose que la définition doit faire quand la
+      matière du fond a disparu.
     */
+    background-color: var(--paper);
+
     /*
-      Aucune bordure : la surpiqûre est DESSINÉE, pas bordée.
+      Opaque, contrairement à la pastille qui était translucide.
 
-      Il y a eu ici un `border: 3px dashed`. Un pointillé CSS est parfaitement
-      régulier par construction — même longueur, même position, même épaisseur
-      pour tous les tirets — et il se lit comme une bordure, jamais comme une
-      couture. Il a été remplacé par `components/shop/surpiqure.tsx`, qui
-      dessine du fil : sillon continu dans la toile, points fuselés, dégradé
-      cylindrique, trous d'aiguille, et une ligne qui dérive du bord.
-
-      En laisser une ici doublerait la couture d'un trait régulier — et c'est
-      précisément le trait régulier qu'on cherchait à faire disparaître.
+      La translucidité avait sa raison : la toile passait dessous et un fond
+      opaque l'effaçait. Cette raison est morte avec la toile. Et elle avait
+      un coût réel, écrit à l'époque — sans flou d'arrière-plan, le contenu de
+      la page défile en clair derrière les libellés, et « Catalogue » devient
+      illisible pendant tout le défilement au-dessus d'une photographie. Un
+      fond opaque supprime le problème au lieu de le rattraper.
     */
-    border-radius: 1rem;
 
     /*
-      La seule ombre floue de tout le site, et c'est assumé.
+      La seule ombre floue du site, et elle est plus discrète qu'avant.
 
       La charte proscrit le flou parce qu'il simule une profondeur que rien ne
       justifie. Ici la profondeur est RÉELLE : la barre est le seul élément qui
-      passe devant le contenu pendant tout le défilement. L'ombre dure la
-      faisait sauter d'un cran ; celle-ci la pose, à peine.
+      passe devant le contenu pendant tout le défilement. Sur blanc elle n'a
+      plus besoin de se détacher d'une matière, seulement d'annoncer qu'il y a
+      quelque chose dessous — d'où une ombre courte, presque nulle en haut de
+      page, qui ne se remarque qu'une fois le contenu engagé sous la barre.
     */
-    box-shadow:
-      0 1px 2px color-mix(in oklab, var(--ink) 6%, transparent),
-      0 12px 32px -20px color-mix(in oklab, var(--ink) 55%, transparent);
-
-    /*
-      Un souffle de teinte dans le fond, rose d'un côté, cuivre de l'autre.
-
-      Sept et six pour cent : à peine nommable, et pourtant c'est ce qui fait
-      la différence entre une plaque de crème posée là et un objet qui
-      appartient au site. La valeur reste sous le seuil où elle commencerait à
-      concurrencer les libellés — l'encre garde tout son contraste, la barre
-      cesse d'être un aplat.
-    */
-    background-image:
-      linear-gradient(
-        100deg,
-        color-mix(in oklab, var(--stamp) 7%, transparent) 0%,
-        transparent 45%,
-        color-mix(in oklab, var(--mark) 6%, transparent) 100%
-      ),
-      /*
-        La barre est un morceau de toile, comme la ceinture d'un jean — c'est
-        ce que la surpiqûre suppose. Sans le tissage dessous, on coud du fil
-        sur un aplat, et la couture perd la moitié de ce qui la rend crédible.
-
-        Un cran plus serré que le fond de page (300 contre 340) : sur une bande
-        de soixante pixels de haut, un motif à la même échelle que la page
-        n'aurait pas la place de se lire.
-      */
-      url('/toile-denim.webp');
-    background-size: auto, 300px 300px;
-    background-repeat: no-repeat, repeat;
+    box-shadow: 0 6px 16px -14px
+      color-mix(in oklab, var(--ink) 60%, transparent);
   }
 
   /*
@@ -720,17 +807,11 @@
     La requête de fonctionnalité fait donc du fond OPAQUE le cas par défaut, et
     de la transparence l'exception vérifiée.
   */
-  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-    .nav-float {
-      background-color: color-mix(
-        in oklab,
-        var(--paper-raised) 86%,
-        transparent
-      );
-      -webkit-backdrop-filter: blur(14px) saturate(1.2);
-      backdrop-filter: blur(14px) saturate(1.2);
-    }
-  }
+  /*
+    Il y avait ici un fond translucide, conditionné à la présence du flou
+    d'arrière-plan. Il servait à laisser voir la toile de denim sous la barre.
+    La toile est partie, le fond est opaque, la condition n'a plus d'objet.
+  */
 
   /*
     Pas de filet de couleur sous la barre.
@@ -787,6 +868,34 @@
     align-items: center;
     column-gap: 1.25rem;
     row-gap: 0.625rem;
+  }
+
+  /*
+    Sur les écrans étroits, la signature CÈDE la ligne aux services.
+
+    Sa piste est en `minmax(0, 1fr)`, donc elle a le droit de rétrécir — mais
+    le nom, lui, ne se coupe pas : il est en `whitespace-nowrap`, et pour une
+    bonne raison, « Nina & Diego » sur deux lignes n'est plus une signature.
+    Il débordait donc de sa piste et venait toucher « Favoris », sans espace,
+    sur un téléphone de 390 px. Mesuré sur la page servie.
+
+    Le nom passe donc sur son propre registre en dessous de 480 px, et les
+    services gardent le leur. Un registre de plus, une collision de moins —
+    et au-delà de 480 px, rien ne change.
+  */
+  @media (max-width: 479px) {
+    .nav-bar {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        'mark'
+        'tools'
+        'nav';
+      justify-items: start;
+    }
+
+    .nav-bar__tools {
+      justify-content: flex-start;
+    }
   }
 
   .nav-bar__mark {
@@ -1114,25 +1223,24 @@
   */
   .wash-accent {
     /*
-      Les surfaces d'attente sont de la TOILE, pas un aplat.
+      Les surfaces d'attente, tant qu'aucune photographie n'est posée : le
+      grand cadre d'arrivée, les cartes d'univers, les cartes de rayon.
 
-      Ce lavis couvre les plus grandes surfaces du site tant qu'aucune
-      photographie n'est posée : le grand cadre d'arrivée, les cartes d'univers,
-      les cartes de rayon. Un aplat à cet endroit masquait le tissage sur la
-      moitié de la page — la toile n'apparaissait qu'en haut et en bas, autour
-      de ces blocs, ce qui donnait des bandes.
+      LA TOILE EN A ÉTÉ RETIRÉE avec le passage au fond blanc. Elle y avait
+      une raison : le fond du site était du denim, et un aplat à cet endroit
+      masquait le tissage sur la moitié de la page — on voyait des bandes. Ce
+      raisonnement meurt avec la toile. Poser du jean indigo dans une carte au
+      milieu d'une page blanche produirait exactement l'inverse de ce qu'il
+      corrigeait : une tache sombre là où il n'y a rien à montrer.
 
-      L'image d'abord dans la pile, le lavis d'accent par-dessus en
-      TRANSLUCIDE : la teinte reste, le tissage traverse.
-
-      Repli sous l'image : si elle ne peint pas — impression, moteur sans WebP,
-      chargement en cours — le cadre reste une surface tenue, et non un trou au
-      milieu d'une fiche.
+      C'était d'ailleurs le dernier endroit où l'image était peinte. Le
+      fichier et son générateur restent au dépôt — la palette sombre existe
+      toujours et les reprendra si elle revient — mais plus rien ne les
+      affiche aujourd'hui.
     */
     background-color: var(--sand);
-    background-image: var(--gradient-wash), url('/toile-denim.webp');
-    background-size: auto, 300px 300px;
-    background-repeat: no-repeat, repeat;
+    background-image: var(--gradient-wash);
+    background-repeat: no-repeat;
   }
 
   /*

@@ -57,6 +57,9 @@
   "catalogue": {
     "title": "Katalog",
     "filtersHeading": "Filtruj",
+    "filterAndSort": "Filtruj i sortuj",
+    "closeFilters": "Zamknij filtry",
+    "seeResults": "Zobacz wyniki",
     "results": "{count, plural, =0 {Brak przedmiotów} one {# przedmiot} few {# przedmioty} many {# przedmiotów} other {# przedmiotu}}",
     "noResults": "Żaden przedmiot nie odpowiada tym filtrom.",
     "noResultsHint": "Usuń filtr, aby poszerzyć wyszukiwanie.",

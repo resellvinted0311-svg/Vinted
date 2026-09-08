@@ -59,10 +59,13 @@ test.describe('Accueil', () => {
      * l'indigo — l'inversion la plus profonde qu'ait connue cette palette,
      * puisque le fond et l'encre échangent leurs rôles.
      *
-     * La valeur épinglée n'est d'ailleurs plus CHOISIE : c'est la couleur
-     * moyenne de la toile tissée, calculée par `scripts/tisser-denim.mjs` et
-     * reportée dans le jeton. Elle changera donc à chaque nouveau délavage, et
-     * ce test est l'endroit qui le signalera.
+     * Il a fait son travail une troisième fois au passage AU BLANC : la toile
+     * de denim disparaît, le fond redevient du papier et l'encre repasse au
+     * sombre. C'est la même inversion qu'au passage au denim, en sens inverse.
+     *
+     * La valeur n'est plus la moyenne d'une toile tissée — il n'y a plus de
+     * toile. C'est un blanc franc, et le lavis de page qui passe par-dessus
+     * ne le teinte plus que d'un souffle.
      *
      * La valeur est mise à jour ici EN MÊME TEMPS que la feuille de style,
      * jamais après coup — un garde-fou qu'on desserre pour faire passer un test
@@ -76,14 +79,23 @@ test.describe('Accueil', () => {
         .getPropertyValue('--paper')
         .trim(),
     )
-    expect(paper.toLowerCase()).toBe('#334562')
+    /*
+      Le navigateur RÉÉCRIT la valeur : `#ffffff` déclaré dans la feuille est
+      relu `#fff`. On compare donc sur une forme normalisée plutôt que sur la
+      chaîne, sinon le test échoue sur une abréviation et non sur une couleur.
+    */
+    const enSixChiffres = (v: string) =>
+      /^#[0-9a-f]{3}$/.test(v)
+        ? `#${v[1]}${v[1]}${v[2]}${v[2]}${v[3]}${v[3]}`
+        : v
+    expect(enSixChiffres(paper.toLowerCase())).toBe('#ffffff')
 
     // Le jeton doit aussi être réellement peint : déclaré sans être appliqué,
     // il passerait le contrôle ci-dessus tout en laissant la page blanche.
     const background = await page.evaluate(
       () => getComputedStyle(document.body).backgroundColor,
     )
-    expect(background).toBe('rgb(51, 69, 98)')
+    expect(background).toBe('rgb(255, 255, 255)')
   })
 })
 
@@ -217,7 +229,7 @@ test.describe('Barre de navigation', () => {
      */
     await page.goto('/fr')
 
-    const barre = page.locator('header .nav-float')
+    const barre = page.locator('header.nav-plein')
     await expect(barre).toBeVisible()
 
     await page.evaluate(() => {
@@ -271,7 +283,7 @@ test.describe('Barre de navigation', () => {
     await expect(page).toHaveURL(/\/fr\/compte/)
 
     await page.goto('/fr')
-    const barre = page.locator('header .nav-float')
+    const barre = page.locator('header.nav-plein')
 
     // On attend que la barre reflète la session avant de conclure à une
     // absence : sans cette attente, le test passerait aussi sur une barre pas
@@ -426,7 +438,7 @@ test.describe('Connexion', () => {
       l'entrée de compte : « Se connecter » devient « Mon compte ».
     */
     await page.goto('/fr')
-    const barre = page.locator('header .nav-float')
+    const barre = page.locator('header.nav-plein')
     await expect(barre.getByRole('link', { name: 'Mon compte' })).toBeVisible({
       timeout: 15_000,
     })
