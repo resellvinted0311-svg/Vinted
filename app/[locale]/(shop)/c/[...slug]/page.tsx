@@ -6,6 +6,7 @@ import { getCategoryByPath } from '@/lib/db/queries/taxonomy'
 import { CatalogueView } from '@/components/shop/catalogue-view'
 import { Breadcrumbs } from '@/components/shop/breadcrumbs'
 import { CategoryBanner } from '@/components/shop/category-banner'
+import { bannerFor } from '@/lib/design/category-banners'
 import { locales, localeTags } from '@/lib/i18n/routing'
 
 type Params = Promise<{ locale: string; slug: string[] }>
@@ -48,6 +49,10 @@ export default async function CategoryPage({
   // vendu, il n'y a pas de référencement à préserver.
   if (!category) notFound()
 
+  // Un rayon sans photographie déclarée garde son lavis d'accent : c'est un
+  // état normal, pas une image manquante.
+  const bandeau = bannerFor(category.slug)
+
   const raw = await searchParams
   const { filters, sort, cursor } = parseCatalogueSearchParams(raw)
   const t = await getTranslations('nav')
@@ -64,7 +69,13 @@ export default async function CategoryPage({
 
         Il porte le `h1`, que `CatalogueView` cesse donc d'écrire.
       */}
-      <CategoryBanner title={category.name} intro={category.editorialBody} />
+      <CategoryBanner
+        title={category.name}
+        intro={category.editorialBody}
+        imageUrl={bandeau?.src ?? null}
+        cadrage={bandeau?.cadrage ?? '50% 50%'}
+        alt={bandeau?.alt ?? ''}
+      />
 
       <div className="mx-auto max-w-[80rem] px-4 pt-6 sm:px-6">
         <Breadcrumbs

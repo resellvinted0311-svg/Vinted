@@ -58,12 +58,26 @@ export function CategoryBanner({
   title,
   /** Texte éditorial court, quand la catégorie en a un. */
   intro,
-  /** Le visuel du rayon, quand il en aura un. */
+  /** Le visuel du rayon, quand il en a un. */
   imageUrl = null,
+  /**
+   * Le point de l'image qui reste visible une fois recadrée.
+   *
+   * Le bandeau est un 3/1 très large : une photographie ordinaire y est rognée
+   * en haut et en bas, parfois beaucoup. Le défaut de `object-fit: cover` est
+   * le centre, ce qui tombe souvent sur le ventre du modèle — le vêtement
+   * coupé, le visage hors champ. La valeur se règle image par image, en la
+   * regardant : il n'y a pas de cadrage universellement juste.
+   */
+  cadrage = '50% 50%',
+  /** Description de l'image ; vide si elle est décorative. */
+  alt = '',
 }: {
   title: string
   intro?: string | null
   imageUrl?: string | null
+  cadrage?: string
+  alt?: string
 }) {
   // Une vidéo et une photographie occupent le même cadre : servir une vidéo
   // dans une balise `img` n'afficherait rien — un cadre vide, sans erreur.
@@ -87,7 +101,7 @@ export function CategoryBanner({
         {imageUrl && !estVideo ? (
           <Image
             src={deliveryUrl(imageUrl)}
-            alt=""
+            alt={alt}
             fill
             priority
             // Le bandeau est en pleine largeur : la valeur est exacte plutôt
@@ -95,6 +109,17 @@ export function CategoryBanner({
             // kilo-octets sur la vue qui porte le LCP.
             sizes="100vw"
             className="absolute inset-0 -z-10 h-full w-full object-cover"
+            /*
+              Le cadrage passe par un STYLE et non par une classe utilitaire.
+
+              Tailwind fabrique ses classes en lisant le code source : il ne
+              peut pas en produire une à partir d'une valeur qui n'existe qu'à
+              l'exécution. Écrire `object-[${cadrage}]` compilerait sans erreur
+              et ne produirait aucune règle — le cadrage serait silencieusement
+              ignoré, ce qui est exactement le genre de défaut qu'on ne voit
+              qu'en comparant deux captures.
+            */
+            style={{ objectPosition: cadrage }}
           />
         ) : null}
 
