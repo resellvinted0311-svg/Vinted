@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from '@/lib/i18n/navigation'
 import { cn } from '@/lib/utils/cn'
+import { FormNavigation } from './form-navigation'
 
 interface Suggestion {
   type: 'article' | 'brand' | 'category'
@@ -111,6 +112,12 @@ export function SearchBox({
   return (
     <div ref={container} className={cn('relative', className)}>
       <form action={`/${locale}/catalogue`} method="get" role="search">
+        {/*
+          Valider la recherche rechargeait tout le document, comme les
+          filtres. `FormNavigation` la fait passer par le routeur, sans
+          retirer au formulaire sa capacité à fonctionner sans JavaScript.
+        */}
+        <FormNavigation />
         <label htmlFor={`${listId}-input`} className="sr-only">
           {t('label')}
         </label>

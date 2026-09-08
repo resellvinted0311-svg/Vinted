@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { PendingBar } from './pending-bar'
 
 /**
  * Le fil d'attente : un trait qui court en haut de page pendant une navigation.
@@ -137,17 +138,5 @@ export function NavigationProgress() {
     return () => window.clearTimeout(minuteur)
   }, [enCours])
 
-  return (
-    <div
-      aria-hidden
-      // `role` et texte absents à dessein : l'état de chargement est déjà
-      // annoncé aux lecteurs d'écran par le changement de page lui-même.
-      // Doubler l'annonce ferait parler deux fois pour un seul événement.
-      className="pointer-events-none fixed inset-x-0 top-0 z-50 h-[3px]"
-    >
-      {enCours ? (
-        <div className="nav-progress h-full origin-left bg-stamp" />
-      ) : null}
-    </div>
-  )
+  return enCours ? <PendingBar /> : null
 }

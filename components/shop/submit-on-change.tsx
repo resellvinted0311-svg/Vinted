@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { FormNavigation } from './form-navigation'
 
 /**
  * Amélioration progressive du panneau de filtres.
@@ -13,6 +14,11 @@ import { useEffect, useRef } from 'react'
  * Il masque aussi le bouton « Appliquer », devenu redondant, tout en le
  * laissant atteignable au clavier : quelqu'un qui navigue à la tabulation
  * doit pouvoir valider explicitement.
+ *
+ * La soumission elle-même est confiée à `FormNavigation`, qui la fait passer
+ * par le routeur au lieu de recharger le document. Les deux vont ensemble :
+ * soumettre à chaque case cochée n'aurait aucun sens si chaque soumission
+ * rechargeait la boutique entière — c'est d'ailleurs ce qui se passait.
  */
 export function SubmitOnChange() {
   const anchor = useRef<HTMLSpanElement>(null)
@@ -55,5 +61,10 @@ export function SubmitOnChange() {
     }
   }, [])
 
-  return <span ref={anchor} hidden />
+  return (
+    <>
+      <span ref={anchor} hidden />
+      <FormNavigation />
+    </>
+  )
 }

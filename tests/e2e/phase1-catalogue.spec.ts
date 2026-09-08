@@ -16,6 +16,22 @@ async function resultCount(page: Page): Promise<number> {
   return match ? Number(match[1]) : 0
 }
 
+/**
+ * Ouvre le panneau de filtres s'il est replié.
+ *
+ * Au-delà de 1024 px il est toujours déployé ; en dessous il vit derrière une
+ * bascule, pour ne pas occuper l'écran entier avant qu'on ne la demande. Un
+ * test qui cocherait directement une case ne passerait donc que sur grand
+ * écran — et c'est exactement ce qui vient d'arriver.
+ */
+async function ouvrirLesFiltres(page: Page): Promise<void> {
+  const panneau = page.locator('[data-testid="filtres"]')
+  if (await panneau.isVisible()) return
+
+  await page.locator('label[for="nd-filtres"]').click()
+  await expect(panneau).toBeVisible()
+}
+
 test.describe('Catalogue', () => {
   test('affiche la grille et un compteur de résultats', async ({ page }) => {
     await page.goto('/fr/catalogue')
@@ -658,6 +674,87 @@ test.describe('Univers', () => {
     const fenetre = page.viewportSize()?.height ?? 0
 
     expect(hauteur).toBeLessThan(fenetre * 0.5)
+  })
+
+  test('changer un filtre ne recharge PAS le document', async ({ page }) => {
+    /**
+     * Le panneau de filtres est un vrai formulaire GET — c'est ce qui le fait
+     * fonctionner sans JavaScript, et c'est aussi ce qui rechargeait toute la
+     * boutique à chaque case cochée : Next n'intercepte pas les soumissions
+     * natives, le navigateur repartait donc chercher le document entier —
+     * barre de navigation, toile de fond, pied de page — pour ne changer
+     * qu'une grille de résultats.
+     *
+     * On ne peut pas le vérifier en regardant l'écran : les deux chemins
+     * finissent par afficher la même chose. On plante donc un TÉMOIN dans la
+     * page. Il ne survit qu'à une navigation côté client ; un rechargement de
+     * document l'emporte avec le reste.
+     */
+    await page.goto('/fr/c/bas/jeans-pantalons')
+    const avant = await resultCount(page)
+    expect(avant, 'le rayon doit lister des pièces').toBeGreaterThan(0)
+
+    await page.evaluate(() => {
+      ;(window as unknown as { __temoin?: number }).__temoin = 1
+    })
+
+    await ouvrirLesFiltres(page)
+    const filtres = page.locator('[data-testid="filtres"]')
+    await filtres.locator('input[name="taille"]').first().check()
+    await page.waitForURL(/taille=/)
+
+    const survivant = await page.evaluate(
+      () => (window as unknown as { __temoin?: number }).__temoin,
+    )
+    expect(
+      survivant,
+      'le document a été rechargé : la soumission n’est pas interceptée',
+    ).toBe(1)
+
+    /**
+     * Et le SERVEUR a bien renvoyé une grille filtrée.
+     *
+     * Sans cette seconde vérification, le test resterait vert si la
+     * soumission était simplement annulée : le témoin survivrait d'autant
+     * mieux qu'il ne se serait rien passé du tout. C'est le décompte qui
+     * distingue « navigué sans recharger » de « rien fait ».
+     */
+    await expect.poll(() => resultCount(page)).toBeLessThan(avant)
+  })
+
+  test('le filtre garde la position de défilement', async ({ page }) => {
+    // Un panneau de filtres se lit en bas de colonne : renvoyer en haut de
+    // page à chaque case cochée oblige à redescendre pour cocher la suivante.
+    await page.goto('/fr/catalogue')
+    await ouvrirLesFiltres(page)
+
+    /**
+     * On ATTEND que le défilement se pose avant de le lire.
+     *
+     * `window.scrollTo` ne prend pas effet dans le même tour de boucle : lire
+     * `scrollY` juste après renvoyait zéro, et une première version de ce test
+     * en concluait « page trop courte » puis s'ignorait elle-même. Un test qui
+     * se saute pour une raison fausse est pire qu'un test absent : il occupe
+     * la place de celui qui aurait vérifié.
+     *
+     * On mesure la position RÉELLEMENT atteinte plutôt qu'une valeur absolue :
+     * elle dépend de la taille de l'écran, et exiger un nombre ferait échouer
+     * le test sur une mise en page au lieu d'un défaut.
+     */
+    await page.evaluate(() => window.scrollTo(0, 400))
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100)
+    const avant = await page.evaluate(() => window.scrollY)
+
+    const filtres = page.locator('[data-testid="filtres"]')
+    await filtres.locator('input[name="etat"]').first().check()
+    await page.waitForURL(/etat=/)
+    await page.waitForTimeout(400)
+
+    const apres = await page.evaluate(() => window.scrollY)
+    expect(
+      apres,
+      'le filtre a renvoyé le visiteur en haut de page',
+    ).toBeGreaterThan(avant / 2)
   })
 
   test('les deux univers sont annoncés au plan de site', async ({ request }) => {
