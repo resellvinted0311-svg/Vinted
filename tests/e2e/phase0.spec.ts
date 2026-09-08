@@ -118,10 +118,9 @@ function luminance(rgb: number[]): number {
 }
 
 function contraste(a: number[], b: number[]): number {
-  const [clair, sombre] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [
-    number,
-    number,
-  ]
+  const [clair, sombre] = [luminance(a), luminance(b)].sort(
+    (x, y) => y - x,
+  ) as [number, number]
   return (clair + 0.05) / (sombre + 0.05)
 }
 
@@ -197,8 +196,16 @@ test.describe('Le fond de page reste lisible', () => {
 
       const AA = 4.5
       const paires: [string, number[], number[]][] = [
-        ['les mentions secondaires au départ du fond', mesures.muted, mesures.depart],
-        ['les mentions secondaires à son arrivée', mesures.muted, mesures.arrivee],
+        [
+          'les mentions secondaires au départ du fond',
+          mesures.muted,
+          mesures.depart,
+        ],
+        [
+          'les mentions secondaires à son arrivée',
+          mesures.muted,
+          mesures.arrivee,
+        ],
         ['le texte courant au départ du fond', mesures.ink, mesures.depart],
         ['le texte courant à son arrivée', mesures.ink, mesures.arrivee],
       ]
@@ -355,7 +362,10 @@ test.describe('Barre de navigation', () => {
       .filter({ visible: true })
       .first()
       .fill('admin@nina-diego.test')
-    await page.getByLabel('Mot de passe').filter({ visible: true }).fill(SEED_PASSWORD)
+    await page
+      .getByLabel('Mot de passe')
+      .filter({ visible: true })
+      .fill(SEED_PASSWORD)
     await page.getByRole('button', { name: 'Se connecter' }).click()
     await expect(page).toHaveURL(/\/fr\/compte/)
 
@@ -369,7 +379,9 @@ test.describe('Barre de navigation', () => {
       timeout: 15_000,
     })
 
-    await expect(barre.getByRole('button', { name: 'Se déconnecter' })).toHaveCount(0)
+    await expect(
+      barre.getByRole('button', { name: 'Se déconnecter' }),
+    ).toHaveCount(0)
     await expect(barre.getByRole('link', { name: 'Admin' })).toHaveCount(0)
     await expect(barre.getByLabel('Langue')).toHaveCount(0)
     // « Nina » est le prénom du compte administrateur du jeu d'essai. Il
@@ -378,6 +390,195 @@ test.describe('Barre de navigation', () => {
     await expect(
       barre.locator('.nav-bar__tools').getByText('Nina'),
     ).toHaveCount(0)
+  })
+})
+
+/*
+  Le rayon des pulls sert de banc d'essai parce qu'il PORTE une photographie.
+  Un rayon sans image ne remonte pas sous la barre — c'est voulu, et c'est
+  expliqué dans `category-banner.tsx` — donc aucun de ces tests n'aurait de
+  sens sur un rayon nu.
+*/
+const RAYON_AVEC_PHOTO = '/fr/c/hauts/pulls-sweats'
+
+test.describe('La barre posée sur le bandeau', () => {
+  test('vaut la constante `--nav-h`, dans toutes les largeurs de bureau', async ({
+    page,
+  }) => {
+    /**
+     * Ce test garde une ÉGALITÉ, pas une apparence.
+     *
+     * Le bandeau remonte d'exactement `--nav-h` pour que la photographie
+     * commence au pixel zéro. La constante est écrite dans la feuille de
+     * style ; la hauteur réelle de la barre, elle, dépend du contenu — quatre
+     * libellés traduits, quatre outils, un nom de boutique. Les deux peuvent
+     * diverger sans qu'aucune règle ne devienne invalide, et la divergence se
+     * voit alors comme un filet blanc au-dessus de l'image, ou comme un
+     * morceau de barre qui mange le titre.
+     *
+     * Le défaut a déjà eu lieu : entre 768 et 900 px, les chemins passaient
+     * sur deux lignes et la barre montait à 92 px pour une constante à 84.
+     *
+     * Les largeurs choisies encadrent ce piège : juste au seuil, dans la
+     * plage qui a failli, et deux tailles de bureau courantes.
+     */
+    for (const largeur of [768, 800, 900, 1280, 1440]) {
+      await page.setViewportSize({ width: largeur, height: 900 })
+      await page.goto(RAYON_AVEC_PHOTO)
+      await page.waitForLoadState('load')
+      await page.evaluate(() => document.fonts.ready)
+
+      const mesure = await page.evaluate(() => {
+        const barre = document.querySelector('header.nav-plein')
+        const section = document.querySelector('main section')
+        const constante = getComputedStyle(
+          document.documentElement,
+        ).getPropertyValue('--nav-h')
+        // La constante est en `rem` : on la convertit dans l'unité qui sert à
+        // comparer, sans supposer que la racine fait seize pixels.
+        const rem = parseFloat(
+          getComputedStyle(document.documentElement).fontSize,
+        )
+        return {
+          barre: Math.round(barre!.getBoundingClientRect().height),
+          hautDuBandeau: Math.round(section!.getBoundingClientRect().top),
+          constante: Math.round(parseFloat(constante) * rem),
+        }
+      })
+
+      expect(
+        mesure.barre,
+        `à ${largeur}px la barre fait ${mesure.barre}px pour une constante de ${mesure.constante}px : la remontée du bandeau est fausse d'autant`,
+      ).toBe(mesure.constante)
+
+      // Et la photographie commence bien au bord haut de la fenêtre : c'est
+      // la propriété visible, celle qui a été demandée.
+      expect(
+        mesure.hautDuBandeau,
+        `le bandeau commence à ${mesure.hautDuBandeau}px du haut au lieu de 0`,
+      ).toBe(0)
+    }
+  })
+
+  test('sans fond sur l’image, blanche dès qu’on descend dessous', async ({
+    page,
+  }) => {
+    /**
+     * Les deux états demandés, et ce qui les distingue d'un décor.
+     *
+     * Posée sur la photographie, la barre n'a pas de fond et son encre est
+     * blanche : c'est ce qui la fait se confondre dans l'image. Sous l'image,
+     * elle redevient une barre — fond blanc, encre sombre — sinon elle
+     * disparaîtrait purement et simplement au-dessus du catalogue, qui est
+     * blanc lui aussi.
+     *
+     * On mesure le style CALCULÉ et non une capture : c'est la seule façon de
+     * distinguer « transparente » de « blanche sur une photo claire ».
+     */
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(RAYON_AVEC_PHOTO)
+    await page.waitForLoadState('load')
+
+    const etat = () =>
+      page.evaluate(() => {
+        const barre = document.querySelector('header.nav-plein')!
+        const lien = barre.querySelector('.nav-bar__nav a')!
+        return {
+          fond: getComputedStyle(barre).backgroundColor,
+          encre: getComputedStyle(lien).color,
+        }
+      })
+
+    const posee = await etat()
+    expect(
+      posee.fond,
+      `la barre porte un fond (${posee.fond}) alors qu’elle est sur la photographie`,
+    ).toBe('rgba(0, 0, 0, 0)')
+    expect(posee.encre).toBe('rgb(255, 255, 255)')
+
+    // Assez bas pour que le bas du bandeau passe au-dessus de la barre.
+    await page.evaluate(() => {
+      document.documentElement.style.scrollBehavior = 'auto'
+      window.scrollTo(0, 900)
+    })
+    await expect
+      .poll(async () => (await etat()).fond, {
+        message: 'la barre est restée sans fond sous l’image',
+      })
+      .not.toBe('rgba(0, 0, 0, 0)')
+
+    const descendue = await etat()
+    expect(descendue.encre).not.toBe('rgb(255, 255, 255)')
+
+    // Et l'on revient à l'état posé en remontant : une bascule à sens unique
+    // laisserait une barre blanche sur la photographie après tout retour en
+    // haut de page — par le clavier, par un ancrage, ou par le bouton retour.
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await expect
+      .poll(async () => (await etat()).fond, {
+        message: 'la barre a gardé son fond alors qu’on est revenu sur l’image',
+      })
+      .toBe('rgba(0, 0, 0, 0)')
+  })
+
+  test('reprend un fond blanc au survol', async ({ page }) => {
+    /**
+     * Demandé tel quel : « quand on passe dessus un fond blanc doit
+     * apparaître derrière ». Ce n'est pas qu'un effet — c'est l'état de
+     * LECTURE. Une barre sans fond se lit grâce à une ombre portée sur des
+     * lettres blanches, ce qui suffit à repérer les chemins mais pas à les
+     * lire confortablement. Au moment où l'on vient cliquer, le fond revient.
+     */
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(RAYON_AVEC_PHOTO)
+    await page.waitForLoadState('load')
+
+    await page.locator('header.nav-plein').hover()
+
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(
+            () =>
+              getComputedStyle(document.querySelector('header.nav-plein')!)
+                .backgroundColor,
+          ),
+        { message: 'la barre est restée transparente sous le pointeur' },
+      )
+      .not.toBe('rgba(0, 0, 0, 0)')
+  })
+
+  test.describe('sans JavaScript', () => {
+    test.use({ javaScriptEnabled: false })
+
+    test('la barre reste blanche, donc lisible', async ({ page }) => {
+      /**
+       * La dégradation, et pourquoi elle va dans CE sens.
+       *
+       * L'état posé est obtenu sous `@media (scripting: enabled)`. Script
+       * coupé, la règle entière est ignorée : la barre garde son fond blanc et
+       * son encre sombre, et la photographie commence simplement sous elle.
+       *
+       * L'inverse aurait été un défaut grave : une barre transparente à
+       * l'encre blanche, sans le script qui la repeint quand on descend,
+       * deviendrait invisible sur le catalogue dès le premier défilement. Ce
+       * test tient donc le SENS de la dégradation, pas seulement son
+       * existence.
+       */
+      await page.setViewportSize({ width: 1440, height: 900 })
+      await page.goto(RAYON_AVEC_PHOTO)
+      await page.waitForLoadState('load')
+
+      const fond = await page.evaluate(
+        () =>
+          getComputedStyle(document.querySelector('header.nav-plein')!)
+            .backgroundColor,
+      )
+      expect(
+        fond,
+        'sans script, la barre est transparente : la navigation disparaîtra sur le catalogue',
+      ).not.toBe('rgba(0, 0, 0, 0)')
+    })
   })
 })
 
@@ -473,7 +674,10 @@ test.describe('Connexion', () => {
       .filter({ visible: true })
       .first()
       .fill('client@nina-diego.test')
-    await page.getByLabel('Mot de passe').filter({ visible: true }).fill('mauvais-mot-de-passe')
+    await page
+      .getByLabel('Mot de passe')
+      .filter({ visible: true })
+      .fill('mauvais-mot-de-passe')
     await page.getByRole('button', { name: 'Se connecter' }).click()
 
     await expect(
@@ -490,7 +694,10 @@ test.describe('Connexion', () => {
       .filter({ visible: true })
       .first()
       .fill('client@nina-diego.test')
-    await page.getByLabel('Mot de passe').filter({ visible: true }).fill(SEED_PASSWORD)
+    await page
+      .getByLabel('Mot de passe')
+      .filter({ visible: true })
+      .fill(SEED_PASSWORD)
     await page.getByRole('button', { name: 'Se connecter' }).click()
 
     await expect(page).toHaveURL(/\/fr\/compte/)
@@ -519,17 +726,24 @@ test.describe('Connexion', () => {
     await expect(barre.getByRole('link', { name: 'Mon compte' })).toBeVisible({
       timeout: 15_000,
     })
-    await expect(
-      barre.getByRole('link', { name: 'Se connecter' }),
-    ).toHaveCount(0)
+    await expect(barre.getByRole('link', { name: 'Se connecter' })).toHaveCount(
+      0,
+    )
   })
 
   test('un compte admin voit l’accès au back-office, pas un client', async ({
     page,
   }) => {
     await page.goto('/fr/connexion')
-    await page.getByLabel('Adresse e-mail').filter({ visible: true }).first().fill('admin@nina-diego.test')
-    await page.getByLabel('Mot de passe').filter({ visible: true }).fill(SEED_PASSWORD)
+    await page
+      .getByLabel('Adresse e-mail')
+      .filter({ visible: true })
+      .first()
+      .fill('admin@nina-diego.test')
+    await page
+      .getByLabel('Mot de passe')
+      .filter({ visible: true })
+      .fill(SEED_PASSWORD)
     await page.getByRole('button', { name: 'Se connecter' }).click()
 
     await expect(page).toHaveURL(/\/fr\/compte/)
@@ -546,7 +760,10 @@ test.describe('Connexion', () => {
       .filter({ visible: true })
       .first()
       .fill('client@nina-diego.test')
-    await page.getByLabel('Mot de passe').filter({ visible: true }).fill(SEED_PASSWORD)
+    await page
+      .getByLabel('Mot de passe')
+      .filter({ visible: true })
+      .fill(SEED_PASSWORD)
     await page.getByRole('button', { name: 'Se connecter' }).click()
     await expect(page).toHaveURL(/\/fr\/compte/)
 
@@ -580,7 +797,12 @@ test.describe('Étanchéité des données privées', () => {
     const response = await request.get('/api/session')
     const body = await response.text()
 
-    for (const field of ['costCents', 'floorPriceCents', 'passwordHash', 'internalNotes']) {
+    for (const field of [
+      'costCents',
+      'floorPriceCents',
+      'passwordHash',
+      'internalNotes',
+    ]) {
       expect(body).not.toContain(field)
     }
   })

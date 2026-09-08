@@ -249,6 +249,22 @@
   /* Épaisseur du filet plein. Centralisée : c'est un réglage de justesse
      visuelle qu'on veut pouvoir changer en un seul endroit. */
   --rule-width: 1.5px;
+
+  /* --- Hauteur de la barre de navigation ---------------------------------
+     Une CONSTANTE, et c'est ce qui la rend utilisable.
+
+     Le bandeau des rayons doit remonter EXACTEMENT sous la barre pour que la
+     photographie commence au pixel zéro. Une remontée en « à peu près »
+     laisse soit un filet blanc au-dessus de l'image, soit un morceau de titre
+     coupé — deux défauts qu'on ne voit que sur la page servie.
+
+     La valeur n'est donc pas décorative : elle est TENUE des deux côtés.
+     `.nav-plein` s'y cale par un `min-height` à partir de 768 px, et
+     `tests/e2e/phase0.spec.ts` mesure la barre rendue en trois largeurs et
+     dans la langue aux libellés les plus longs. Si une traduction fait
+     déborder les chemins sur deux lignes, la barre grandit, la constante ment
+     et le test tombe. */
+  --nav-h: 5.25rem;
 }
 
 /*
@@ -795,6 +811,16 @@
     */
     box-shadow: 0 6px 16px -14px
       color-mix(in oklab, var(--ink) 60%, transparent);
+
+    /*
+      La transition sert l'état « posée sur la photographie », plus bas : la
+      barre y passe du transparent au blanc au survol, et du transparent au
+      blanc quand on descend sous l'image. Sans transition, les deux bascules
+      sont des à-coups.
+    */
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out);
   }
 
   /*
@@ -886,10 +912,33 @@
     et c'est exactement ce qu'on veut voir.
   */
   @media (min-width: 768px) {
+    .nav-plein {
+      /*
+        La barre vaut la constante, ni plus ni moins.
+
+        `min-height` et non `height` : une barre à hauteur FIXE rognerait son
+        propre contenu le jour où une traduction déborde, et le défaut serait
+        invisible en français. Avec un plancher, elle grandit — la mise en
+        page reste juste, et c'est le test de hauteur qui signale que la
+        constante ne dit plus la vérité.
+      */
+      min-height: var(--nav-h);
+    }
+
     .nav-bar {
       grid-template-columns: auto minmax(0, 1fr) auto;
       grid-template-areas: 'mark nav tools';
-      column-gap: 2.5rem;
+      /*
+        Deux virgules et demie d'écart entre les trois groupes ont été
+        ramenées à une et demie. Mesuré : à 768 px, les quatre chemins ne
+        tenaient pas sur une ligne et repassaient à la ligne — la barre
+        montait à quatre-vingt-douze pixels entre 768 et 900, contre
+        quatre-vingt-quatre au-delà. Une barre qui change de hauteur au milieu
+        des tailles d'écran est déjà laide en soi ; depuis que le bandeau
+        remonte dessous, elle est fausse, puisque la remontée vaut une
+        constante.
+      */
+      column-gap: 1.5rem;
       row-gap: 0;
       width: auto;
       margin-inline: 0;
@@ -939,6 +988,82 @@
   .nav-bar__tools {
     grid-area: tools;
     justify-self: end;
+  }
+
+  /* ==========================================================================
+     LE BANDEAU DE RAYON PASSE SOUS LA BARRE
+     ==========================================================================
+     Demandé tel quel : la barre doit se CONFONDRE dans la photographie du
+     bandeau, se poser dessus sans fond, faire apparaître un fond blanc au
+     survol, et redevenir blanche dès qu'on descend sous l'image.
+
+     Trois pièces, et chacune règle un problème distinct :
+
+       1. `.bandeau-cadre` — la géométrie du cadre, sortie des classes
+          utilitaires. Elle y était (`aspect-[3/1] max-h-[34svh] min-h-[11rem]`)
+          et elle devait en sortir : les couches de la cascade font gagner une
+          utilitaire sur une règle de composant QUEL QUE SOIT le sélecteur, si
+          bien qu'aucune règle écrite ici n'aurait pu rendre le cadre plus haut.
+          Le remède n'est pas d'écrire un sélecteur plus fort, c'est de ne plus
+          avoir deux sources pour la même hauteur.
+
+       2. `.bandeau-sous-barre` — la remontée. Une marge haute négative d'exactement
+          une hauteur de barre. Elle ne s'applique qu'à partir de 768 px : en
+          dessous, la barre fait deux ou trois registres, sa hauteur dépend de
+          la langue, et une remontée en aveugle y découperait le nom de la
+          boutique dans la photographie.
+
+       3. Le cadre REND la bande mangée. Sans cela le bandeau perdrait
+          quatre-vingt-quatre pixels sur trois cents, soit un bon quart de la
+          photographie et la moitié de l'air au-dessus du titre. Le plafond et
+          le plancher grandissent donc de la même constante : ce qui passe sous
+          la barre est ajouté en bas.
+     ========================================================================== */
+  .bandeau-cadre {
+    position: relative;
+    width: 100%;
+
+    /*
+      Trois règles se disputent cette hauteur, et l'ordre compte : le plancher
+      l'emporte toujours sur le plafond, et la proportion ne s'applique
+      qu'entre les deux. C'est pourquoi le plancher reste modeste.
+    */
+    aspect-ratio: 3 / 1;
+    min-height: 11rem;
+    max-height: 34svh;
+  }
+
+  @media (min-width: 768px) {
+    .bandeau-sous-barre {
+      margin-top: calc(-1 * var(--nav-h));
+    }
+
+    /*
+      La bande qui passe sous la barre est RENDUE au bas du cadre, et c'est le
+      seul endroit du site où une boîte change de mode de calcul.
+
+      En `border-box` — le réglage global — la proportion 3/1 fixe la hauteur
+      TOTALE : un rembourrage haut se servirait dedans, et le cadre garderait
+      la même hauteur en montrant moins de photographie. Ajouter la constante
+      au plafond et au plancher ne suffit pas non plus : entre 768 et 1020 px,
+      c'est la PROPORTION qui décide de la hauteur, ni l'un ni l'autre, et le
+      bandeau y perdait quatre-vingts pixels de photographie sur deux cent
+      soixante — mesuré.
+
+      En `content-box`, la proportion fixe la hauteur VISIBLE, sous la barre, et
+      la bande cachée s'ajoute par-dessus. Le plafond et le plancher se lisent
+      alors de la même façon, sans calcul : ce qu'on voit du bandeau est ce
+      qu'on en voyait avant la remontée, à tous les formats de fenêtre.
+
+      L'image et le repère sont posés en absolu, donc calés sur la boîte de
+      REMBOURRAGE : la photographie couvre bien la bande cachée. Le bloc de
+      titre, lui, est en `h-full`, donc à la hauteur du contenu : il reste sous
+      la barre, où on le lit.
+    */
+    .bandeau-sous-barre .bandeau-cadre {
+      box-sizing: content-box;
+      padding-top: var(--nav-h);
+    }
   }
 
   /*
@@ -1397,5 +1522,99 @@
   a[href] {
     text-decoration: none;
     color: inherit;
+  }
+}
+
+/* ===========================================================================
+   LA BARRE POSÉE SUR LA PHOTOGRAPHIE
+
+   Trois états, et un seul est obtenu par du script :
+
+     posée      la barre n'a pas de fond, son encre passe au blanc, la couture
+                s'efface. On lit la photographie d'un bord à l'autre, la barre
+                y flotte.
+     survolée   le fond blanc revient, l'encre redevient sombre. C'est l'état
+                de LECTURE : on ne clique pas dans une barre qu'on lit mal.
+     descendue  sous l'image, la barre est blanche et le reste.
+
+   ---------------------------------------------------------------------------
+   Pourquoi `(scripting: enabled)` et pas seulement du script
+   ---------------------------------------------------------------------------
+   La boutique fonctionne script coupé — c'est une garantie tenue par des
+   tests. Un état par défaut TRANSPARENT laisserait, sans script, une barre à
+   l'encre blanche posée sur du blanc dès qu'on descend sous l'image : la
+   navigation deviendrait invisible. Un état par défaut BLANC, corrigé après
+   l'hydratation, dégraderait bien mais ferait clignoter la barre en blanc le
+   temps d'une image sur toutes les visites.
+
+   La requête de fonctionnalité règle les deux : elle est évaluée à la lecture
+   de la feuille, avant la première peinture et sans exécuter la moindre ligne.
+   Script actif, la barre est posée dès le premier pixel affiché ; script
+   coupé — ou navigateur qui ne connaît pas la requête —, tout ce bloc est
+   ignoré et la barre reste blanche, ce qui est exactement l'état sûr.
+
+   Le script n'a donc plus qu'UNE chose à dire, et elle n'existe pas en CSS :
+   « on est passé sous l'image ». Il la dit en posant `data-barre-descendue`
+   sur la racine.
+
+   ---------------------------------------------------------------------------
+   Pourquoi c'est écrit ici et pas dans la couche des composants
+   ---------------------------------------------------------------------------
+   L'encre des chemins vient d'une classe utilitaire (`text-ink`). Les couches
+   de la cascade passent AVANT la spécificité : une règle de la couche des
+   composants perd contre une utilitaire même avec un sélecteur dix fois plus
+   fort. Ces règles sont donc dans la couche des utilitaires, où elles gagnent
+   par la spécificité et par l'ordre.
+   =========================================================================== */
+@layer utilities {
+  @media (min-width: 768px) and (scripting: enabled) {
+    html:not([data-barre-descendue])
+      body:has(.bandeau-sous-barre)
+      .nav-plein:not(:hover, :focus-within) {
+      background-color: transparent;
+      box-shadow: none;
+    }
+
+    /*
+      Le blanc est ÉCRIT, pas pris dans un jeton.
+
+      Une photographie ne s'éclaircit pas quand la boutique passe au thème
+      sombre : elle reste la même image, et le texte qui se pose dessus doit
+      rester clair dans les deux thèmes. C'est le même raisonnement que sur les
+      cartes de rayon, et la même valeur.
+
+      L'ombre portée ne décore pas : le titre du bandeau la porte déjà pour la
+      même raison, l'encre claire sur une photographie INCONNUE. Un mur blanc,
+      un ciel, une pierre de seuil, et « Femmes » s'efface. L'ombre ne pose de
+      l'encre que dans le halo des lettres — la photographie n'est pas
+      assombrie, seul le contraste du glyphe est garanti.
+
+      La pastille de comptage en est exclue : elle a son propre fond plein, et
+      une ombre portée sur un chiffre de onze pixels le rend flou.
+    */
+    html:not([data-barre-descendue])
+      body:has(.bandeau-sous-barre)
+      .nav-plein:not(:hover, :focus-within)
+      :is(a, label, span):not([data-numeric]) {
+      color: #ffffff;
+      text-shadow:
+        0 1px 2px rgba(11, 17, 28, 0.92),
+        0 2px 14px rgba(11, 17, 28, 0.78);
+    }
+
+    /*
+      La couture disparaît avec le fond.
+
+      Elle ferme le bord bas de la barre — l'ourlet entre la barre et la page.
+      Tant que la barre n'a pas de fond, il n'y a pas d'ourlet : le fil resterait
+      tendu en travers de la photographie, à trois centimètres du haut, sans
+      rien séparer.
+    */
+    html:not([data-barre-descendue])
+      body:has(.bandeau-sous-barre)
+      .nav-plein:not(:hover, :focus-within)
+      .nav-bar__couture {
+      opacity: 0;
+    }
   }
 }

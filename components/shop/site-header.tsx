@@ -117,7 +117,7 @@ export async function SiteHeader() {
       */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-[9px]"
+        className="nav-bar__couture pointer-events-none absolute inset-x-0 bottom-0 h-[9px] transition-opacity duration-150 ease-out"
       >
         <Surpiqure
           forme="ligne"
@@ -139,7 +139,22 @@ export async function SiteHeader() {
 
         <nav
           aria-label={t('mainNav')}
-          className="nav-bar__nav flex flex-wrap items-center gap-x-7 gap-y-1"
+          /*
+            Les chemins ne se replient plus dès 768 px.
+
+            Mesuré : entre 768 et 900 px, les quatre libellés passaient sur
+            deux lignes et la barre montait de quatre-vingt-quatre à
+            quatre-vingt-douze pixels. C'était déjà une irrégularité ; c'est
+            devenu une erreur depuis que le bandeau remonte d'une hauteur de
+            barre CONSTANTE, car la remontée ne vaut plus la bonne valeur dans
+            cette plage — un filet blanc apparaîtrait au-dessus de la photo.
+
+            L'écart entre les chemins se resserre donc d'un cran jusqu'à
+            1024 px, où la place revient. Le repli reste autorisé sous 768 px :
+            là, les chemins ont leur propre registre et la barre n'a pas de
+            hauteur à tenir.
+          */
+          className="nav-bar__nav flex flex-wrap items-center gap-x-5 gap-y-1 md:flex-nowrap lg:gap-x-7"
         >
           {chemins.map((chemin) => (
             <Link key={chemin.href} href={chemin.href} className={lien}>

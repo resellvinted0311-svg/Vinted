@@ -5,6 +5,7 @@ import {
   videoPosterUrl,
 } from '@/lib/providers/storage/delivery'
 import { HeroVideo } from './hero-video'
+import { BarreSurImage } from './barre-sur-image'
 
 /**
  * Le bandeau d'un rayon, en tête de sa page.
@@ -88,8 +89,24 @@ export function CategoryBanner({
   const affiche = imageUrl !== null ? videoPosterUrl(imageUrl) : null
 
   return (
-    <section className="relative isolate overflow-hidden ruled-b">
-      <div className="relative aspect-[3/1] max-h-[34svh] min-h-[11rem] w-full">
+    /*
+      LA PHOTOGRAPHIE REMONTE SOUS LA BARRE, le lavis non.
+
+      Demandé tel quel : la barre doit se confondre dans l'image. Elle ne le
+      peut que si l'image commence au pixel zéro de la fenêtre — d'où la
+      remontée d'une hauteur de barre, portée par `.bandeau-sous-barre` et
+      décrite dans la feuille de style.
+
+      Elle est réservée aux rayons qui ont une photographie, et ce n'est pas
+      une économie : sous la barre, un rayon sans image ferait passer le lavis
+      d'accent DERRIÈRE des libellés à l'encre blanche — un lavis clair, une
+      encre claire, la navigation disparaîtrait. Le lavis reste donc sous une
+      barre blanche, à sa place.
+    */
+    <section
+      className={`relative isolate overflow-hidden ruled-b${imageUrl ? ' bandeau-sous-barre' : ''}`}
+    >
+      <div className="bandeau-cadre">
         {/* Le lavis, qui tient lieu de fond tant qu'aucune image n'est posée. */}
         <div aria-hidden className="wash-accent absolute inset-0 -z-10" />
 
@@ -180,14 +197,48 @@ export function CategoryBanner({
               : undefined
           }
         >
-          <h1 className="type-section font-display font-bold uppercase text-ink">
+          {/*
+            L'encre du titre dépend de CE QU'IL Y A DERRIÈRE, pas du thème.
+
+            Elle était prise dans le jeton `--ink`. Ce jeton a changé de valeur
+            le jour où la boutique est passée au fond blanc : d'un blanc cassé
+            il est devenu un bleu nuit, et le titre s'est retrouvé en bleu nuit
+            sur une photographie — mesuré sur « PULLS ET SWEATS », illisible
+            contre un bardage sombre. Le défaut n'était visible sur aucune page
+            sans image, donc sur aucune des captures qui avaient servi à
+            valider la bascule.
+
+            Une photographie ne suit pas le thème : elle est claire ou sombre
+            en elle-même, dans les deux thèmes. Le blanc est donc écrit, comme
+            sur les cartes de rayon, et l'ombre portée plus haut garantit le
+            contraste quel que soit le cliché.
+          */}
+          <h1
+            className={`type-section font-display font-bold uppercase ${
+              imageUrl ? 'text-white' : 'text-ink'
+            }`}
+          >
             {title}
           </h1>
 
           {intro ? (
-            <p className="max-w-xl text-base text-muted">{intro}</p>
+            <p
+              className={`max-w-xl text-base ${
+                imageUrl ? 'text-white' : 'text-muted'
+              }`}
+            >
+              {intro}
+            </p>
           ) : null}
         </div>
+
+        {/*
+          Le repère de défilement, tout en bas du cadre.
+
+          Il ne sert QUE sur les rayons à photographie : ailleurs, la barre est
+          blanche du premier au dernier pixel et n'a aucune bascule à faire.
+        */}
+        {imageUrl ? <BarreSurImage /> : null}
       </div>
     </section>
   )
