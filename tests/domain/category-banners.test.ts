@@ -1,9 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
+import sharp from 'sharp'
 import {
   CATEGORY_BANNERS,
+  CATEGORY_CARDS,
   bannerFor,
+  cardFor,
+  type CategoryBannerImage,
+  type CategoryCardImage,
 } from '@/lib/design/category-banners'
 
 /**
@@ -32,7 +37,21 @@ const PUBLIC = join(process.cwd(), 'public')
 describe('les bandeaux de rayon', () => {
   const entrees = Object.entries(CATEGORY_BANNERS)
 
-  it.each(entrees.length > 0 ? entrees : [['(aucun)', null] as const])(
+  /*
+    Le cas de la table VIDE est un cas nommé, pas un tableau vide.
+
+    Un `it.each([])` ne signale rien : il ne produit aucun test, et la suite
+    passe au vert sans avoir rien vérifié. On fabrique donc un cas explicite
+    qui, lui, affirme que la table est bien vide.
+
+    Le type est annoté au lieu d'être déduit : sans annotation, TypeScript
+    infère une union de deux types de tableaux et choisit la surcharge
+    `it.each` en littéral de gabarit, ce qui échoue au typage.
+  */
+  const cas: [string, CategoryBannerImage | null][] =
+    entrees.length > 0 ? entrees : [['(aucun)', null]]
+
+  it.each(cas)(
     'le fichier déclaré pour « %s » est présent dans public/',
     (slug, bandeau) => {
       if (bandeau === null) {
@@ -95,5 +114,56 @@ describe('les bandeaux de rayon', () => {
 
   it('rend null pour un rayon sans photographie', () => {
     expect(bannerFor('rayon-qui-n-existe-pas')).toBeNull()
+  })
+})
+
+describe('les photographies choisies pour les cartes de rayon', () => {
+  const entrees = Object.entries(CATEGORY_CARDS)
+  const cas: [string, CategoryCardImage | null][] =
+    entrees.length > 0 ? entrees : [['(aucune)', null]]
+
+  it('désignent des fichiers présents, aux noms servables', () => {
+    for (const [slug, carte] of entrees) {
+      expect(
+        existsSync(join(PUBLIC, carte.src)),
+        `« ${slug} » déclare ${carte.src}, absent de public/`,
+      ).toBe(true)
+      expect(
+        /^[a-z0-9/_.-]+$/.test(carte.src),
+        `${slug} : « ${carte.src} » contient un caractère à encoder`,
+      ).toBe(true)
+    }
+  })
+
+  it.each(cas)(
+    'annonce pour « %s » les dimensions réelles du fichier',
+    async (slug, carte) => {
+      if (carte === null) {
+        expect(entrees).toHaveLength(0)
+        return
+      }
+
+      /*
+        Les dimensions ne sont pas décoratives : `PictureCard` les exige pour
+        réserver la proportion avant le chargement. Fausses, elles ne
+        provoquent aucune erreur — la carte s'affiche, puis la page SAUTE
+        quand l'image arrive et impose sa vraie forme. Le défaut ne se voit
+        qu'en réseau lent, c'est-à-dire jamais pendant qu'on développe.
+
+        Le cas réaliste n'est pas la faute de frappe initiale, c'est le
+        remplacement : la boutiquière fournit une meilleure photo, on écrase
+        le fichier, et les chiffres restent ceux de l'ancienne.
+      */
+      const vraies = await sharp(join(PUBLIC, carte.src)).metadata()
+      expect(
+        { width: vraies.width, height: vraies.height },
+        `${slug} : ${carte.src} mesure ${vraies.width}×${vraies.height}, ` +
+          `mais la table annonce ${carte.width}×${carte.height}`,
+      ).toEqual({ width: carte.width, height: carte.height })
+    },
+  )
+
+  it('rend null pour un rayon sans photographie choisie', () => {
+    expect(cardFor('rayon-qui-n-existe-pas')).toBeNull()
   })
 })

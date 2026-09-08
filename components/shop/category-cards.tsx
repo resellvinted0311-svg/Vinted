@@ -1,5 +1,6 @@
 import type { ShowcaseCategory } from '@/lib/db/queries/taxonomy'
 import { Reveal } from '@/components/motion/reveal'
+import { cardFor } from '@/lib/design/category-banners'
 import { PictureCard } from './picture-card'
 
 /**
@@ -50,6 +51,29 @@ import { PictureCard } from './picture-card'
  * chose à trier. Il s'allumera tout seul dès que le rangement commencera,
  * sans qu'aucune ligne ne change ici.
  */
+/**
+ * Le visuel d'une carte : le choix, puis le stock, puis rien.
+ *
+ * Par défaut la carte emprunte son image à la dernière pièce entrée dans le
+ * rayon — ça se tient, ça se met à jour tout seul et ça ne demande aucun
+ * travail. Mais certaines pièces photographient mal en carte : un plan serré,
+ * un fond qui ne dit rien du rayon. Or la carte d'entrée est précisément
+ * l'endroit où la boutique se présente.
+ *
+ * Un rayon sans déclaration ne change donc pas de comportement, et `null`
+ * reste un état normal : la carte porte alors le lavis de la maison.
+ */
+function visuel(
+  slug: string,
+  covers: Map<string, { url: string; width: number; height: number }>,
+): { url: string; width: number; height: number } | null {
+  const choisi = cardFor(slug)
+  if (choisi !== null) {
+    return { url: choisi.src, width: choisi.width, height: choisi.height }
+  }
+  return covers.get(slug) ?? null
+}
+
 export function CategoryCards({
   title,
   entries,
@@ -100,7 +124,7 @@ export function CategoryCards({
                     : `/c/${entry.path.join('/')}?${univers}`
                 }
                 title={entry.name}
-                image={covers.get(entry.slug) ?? null}
+                image={visuel(entry.slug, covers)}
                 ratio="aspect-[4/5]"
                 sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
               />

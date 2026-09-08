@@ -112,9 +112,94 @@ export const CATEGORY_BANNERS: Readonly<Record<string, CategoryBannerImage>> = {
     // bandeau, et le dit déjà.
     alt: '',
   },
+
+  /*
+    Jupes.
+
+    Positions relevées à la règle sur la source (5992×3992) :
+
+      0-18 %  visage et bras levés     18-40 %  débardeur
+      40-95 %  la jupe longue          85-95 %  l'ourlet et les pieds
+
+    Le sujet du rayon est la jupe, et elle occupe plus de la moitié de la
+    hauteur : aucune fenêtre ne la montrera en entier, puisque la plus basse
+    n'affiche que 25 % de la source. On ancre donc à 58 %, au milieu de la
+    jupe :
+
+      fenêtre basse  [43 %, 68 %]   la jupe, et rien d'autre
+      fenêtre haute  [33 %, 76 %]   la jupe et la taille
+      téléphone      [19 %, 87 %]   la silhouette presque entière
+
+    C'est le cas inverse du bandeau des pulls, où le sujet à tenir était le
+    visage. Ici le visage est en haut, presque hors champ dès la source, et
+    ce n'est pas lui qu'on vend.
+  */
+  jupes: {
+    src: '/images/bandeau-jupes.jpg',
+    cadrage: '50% 58%',
+    alt: '',
+  },
 }
 
 /** L'image d'un rayon, ou `null` s'il n'en a pas encore. */
 export function bannerFor(slug: string): CategoryBannerImage | null {
   return CATEGORY_BANNERS[slug] ?? null
+}
+
+/**
+ * Une photographie CHOISIE pour la carte d'un rayon.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce qu'elle remplace, et pourquoi le remplacement était prévu
+ * ---------------------------------------------------------------------------
+ * Les cartes de rayon s'illustrent d'elles-mêmes : `getCategoryCovers` prend la
+ * dernière pièce entrée dans la catégorie et emprunte son premier visuel. Ce
+ * choix se tient — il montre ce que la boutique a vraiment et se met à jour
+ * tout seul — et son commentaire annonçait déjà la suite : « le jour où un
+ * visuel choisi devient souhaitable, il se posera par-dessus ». C'est ce jour.
+ *
+ * Une photographie choisie l'emporte donc sur celle qui est dérivée du stock,
+ * et seulement pour les rayons qui en déclarent une. Les autres continuent de
+ * s'illustrer tout seuls : ce n'est pas un mécanisme qu'on remplace, c'est une
+ * exception qu'on autorise.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi les dimensions sont écrites ici
+ * ---------------------------------------------------------------------------
+ * `PictureCard` les EXIGE, et pour une bonne raison : sans elles la proportion
+ * n'est pas réservée avant le chargement, et la page saute quand l'image
+ * arrive. Elles sont donc déclarées à la main — et
+ * `tests/domain/category-banners.test.ts` les relit dans le fichier réel, pour
+ * qu'une photographie remplacée par une autre de taille différente échoue
+ * bruyamment plutôt que de faire sauter la vitrine.
+ */
+export interface CategoryCardImage {
+  src: string
+  width: number
+  height: number
+  alt: string
+}
+
+export const CATEGORY_CARDS: Readonly<Record<string, CategoryCardImage>> = {
+  /*
+    Chaussures.
+
+    Aucun cadrage à régler ici, et c'est la proportion qui l'explique : la
+    carte est un 4/5 vertical, la photographie un 3:2 horizontal. Le rognage
+    est donc LATÉRAL, pas vertical — l'inverse du bandeau. La bande visible
+    couvre 53 % de la largeur, soit [23 %, 77 %] au centre, et les escarpins
+    tiennent entre 33 % et 58 %. Ils sont dedans, avec de la marge des deux
+    côtés : le centre par défaut convient.
+  */
+  chaussures: {
+    src: '/images/carte-chaussures.jpg',
+    width: 5992,
+    height: 3992,
+    alt: '',
+  },
+}
+
+/** La photographie choisie pour la carte d'un rayon, ou `null`. */
+export function cardFor(slug: string): CategoryCardImage | null {
+  return CATEGORY_CARDS[slug] ?? null
 }

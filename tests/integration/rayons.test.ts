@@ -98,8 +98,11 @@ describe('les cartes de rayon', () => {
       Le fichier de domaine ne peut pas attraper ça : il ne connaît pas la
       taxonomie. Ici, si.
     */
-    const { CATEGORY_BANNERS } = await import('@/lib/design/category-banners')
-    const slugs = Object.keys(CATEGORY_BANNERS)
+    const { CATEGORY_BANNERS, CATEGORY_CARDS } = await import('@/lib/design/category-banners')
+    const slugs = [
+      ...Object.keys(CATEGORY_BANNERS),
+      ...Object.keys(CATEGORY_CARDS),
+    ]
     if (slugs.length === 0) return
 
     const connus = new Set(
