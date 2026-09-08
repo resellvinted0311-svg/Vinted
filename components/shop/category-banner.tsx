@@ -127,45 +127,33 @@ export function CategoryBanner({
         ) : null}
 
         {/*
-          Le voile n'existe QUE s'il y a une photographie.
-
-          Sur le lavis, on connaît le contraste et il est bon. Sur une image, on
-          ne sait rien : un titre posé sur un ciel clair est le défaut le plus
-          banal du bandeau d'e-commerce. Le voile est la contrepartie de
-          l'image, pas une décoration permanente.
+          AUCUN voile sur la photographie — c'est une demande explicite.
 
           -------------------------------------------------------------------
-          Pourquoi DEUX dosages, et non un seul jeu de pourcentages
+          Ce que le voile faisait, et ce qui le remplace
           -------------------------------------------------------------------
-          Le cadre garde son 3/1 aux deux tailles, mais le titre ne suit pas la
-          même échelle : `type-section` est un `clamp(1.75rem, 3.6vw, 2.75rem)`
-          plafonné sur grand écran et plancherisé sur téléphone. Le même titre
-          occupe donc un quart de la hauteur du cadre sur un écran de bureau, et
-          près de la moitié sur un téléphone — où il passe en outre à deux
-          lignes. Un voile en pourcentages ne peut pas servir les deux : réglé
-          pour le bureau il laisse le téléphone à découvert, réglé pour le
-          téléphone il noie la photographie sur grand écran.
+          Un dégradé sombre couvrait le bas du cadre pour garantir le contraste
+          du titre. Il marchait, et il avait un défaut réel : il éteignait la
+          photographie sur toute sa moitié basse. Une photo choisie pour un
+          rayon est censée se voir.
 
-          Les deux dosages ci-dessous sont les PLUS LÉGERS qui tiennent 4.5:1,
-          mesurés encre masquée sous la boîte réelle du titre, aux deux tailles
-          réelles du bandeau (1440×480 et 390×177) :
+          Mais le problème qu'il réglait, lui, ne disparaît pas. Le titre est
+          blanc et la photographie est inconnue : un mur clair, un ciel, une
+          pierre de seuil, et le titre s'efface. Le chiffre mesuré sans voile
+          ni ombre est reporté plus bas, sur l'ombre elle-même.
 
-            bureau   6.02:1     téléphone   5.05:1
+          L'ombre portée règle exactement le même problème sans toucher à
+          l'image. Elle ne pose de l'encre que dans le halo des LETTRES : la
+          photographie n'est ni assombrie ni éclaircie, et le contraste devient
+          celui du blanc contre le halo, non plus celui du blanc contre ce qui
+          se trouve derrière. C'est le traitement classique d'une légende sur
+          photographie, et il est réversible d'une ligne.
 
-          Et ils ne sont pas mesurés sur « Pulls et sweats », qui tient sur une
-          ligne en français et ne prouve rien. Le pire cas est le nom de rayon
-          le plus long de la base — « Sobretudos e casacos acolchoados », en
-          portugais — qui passe à deux lignes sur téléphone et fait remonter la
-          première exactement là où le voile s'arrêtait. Avec le voile de
-          bureau, ce titre-là tombait à 3.08:1 : illisible, et invisible pour
-          qui ne regarde que le français.
+          Deux ombres superposées, et chacune a sa raison :
+            - une très courte et opaque, qui détache le bord du glyphe ;
+            - une large et diffuse, qui éteint un fond clair sur quelques
+              pixels autour du mot sans dessiner de contour visible.
         */}
-        {imageUrl ? (
-          <div
-            aria-hidden
-            className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,color-mix(in_oklab,var(--paper)_94%,transparent)_0%,color-mix(in_oklab,var(--paper)_66%,transparent)_46%,transparent_76%)] sm:bg-[linear-gradient(to_top,color-mix(in_oklab,var(--paper)_92%,transparent)_0%,color-mix(in_oklab,var(--paper)_58%,transparent)_34%,transparent_62%)]"
-          />
-        ) : null}
 
         {/*
           Le texte est à GAUCHE et EN BAS.
@@ -178,7 +166,20 @@ export function CategoryBanner({
           En bas parce que le jour où une photographie arrivera, c'est le haut
           du cadre qui portera le sujet.
         */}
-        <div className="mx-auto flex h-full max-w-[80rem] flex-col justify-end gap-2 px-4 pb-6 sm:px-6 sm:pb-8">
+        <div
+          className="mx-auto flex h-full max-w-[80rem] flex-col justify-end gap-2 px-4 pb-6 sm:px-6 sm:pb-8"
+          // L'ombre ne sert QUE s'il y a une photographie derrière. Sur le
+          // lavis, le contraste est connu et bon : une ombre n'y ajouterait
+          // qu'une salissure autour des lettres.
+          style={
+            imageUrl
+              ? {
+                  textShadow:
+                    '0 1px 2px rgba(11,17,28,0.92), 0 2px 14px rgba(11,17,28,0.78)',
+                }
+              : undefined
+          }
+        >
           <h1 className="type-section font-display font-bold uppercase text-ink">
             {title}
           </h1>

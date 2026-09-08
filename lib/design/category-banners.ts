@@ -92,22 +92,27 @@ export const CATEGORY_BANNERS: Readonly<Record<string, CategoryBannerImage>> = {
       28 %  main levée        30 %  haut des cheveux     38-55 %  visage
       48-58 %  col roulé      55-85 %  corps du pull     80-87 %  bordure rayée
 
-    48 % pose donc l'ancre entre le menton et le col — c'est-à-dire sur la
-    charnière entre la personne et le vêtement, les deux choses à montrer.
+    54 % pose donc l'ancre sur le col — c'est-à-dire sur la charnière entre la
+    personne et le vêtement, les deux choses à montrer.
 
     Vérifié sur la page servie, de la fenêtre la plus basse à la plus haute :
 
-      1440×700   cadre 6.03/1   bande source [36 %, 61 %]
-      1440×900   cadre 4.69/1   bande source [33 %, 65 %]
-      1440×1200  cadre 3.52/1   bande source [28 %, 70 %]
-      390×844    cadre 2.20/1   bande source [15 %, 84 %]
+      1440×700   cadre 6.03/1   bande source [40 %, 65 %]
+      1440×900   cadre 4.69/1   bande source [37 %, 69 %]
+      1440×1200  cadre 3.52/1   bande source [31 %, 74 %]
+      390×844    cadre 2.20/1   bande source [17 %, 85 %]
 
     Le visage (38-55 %) tient dans les quatre. C'était le point : sur la plus
-    basse — celle qui montre le moins — il reste entier.
+    basse — celle qui montre le moins — la chevelure est effleurée en haut du
+    cadre, mais le visage reste entier.
+
+    Le réglage précédent était 48 %, choisi pour garder aussi la chevelure sur
+    toutes les fenêtres. Remonté à la demande : 54 % montre davantage de pull,
+    au prix de ce haut de tête sur la seule fenêtre la plus basse.
   */
   'pulls-sweats': {
     src: '/images/bandeau-pull.jpg',
-    cadrage: '50% 48%',
+    cadrage: '50% 54%',
     // Décorative : le titre « Pulls et sweats » est juste à côté, dans le
     // bandeau, et le dit déjà.
     alt: '',

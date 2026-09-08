@@ -18,15 +18,21 @@ import { ArticleImage } from './article-image'
  * s'y lit à pleine encre.
  *
  * ---------------------------------------------------------------------------
- * Le voile n'existe QUE s'il y a une image, et il n'est pas décoratif
+ * Rien ne couvre la photographie ; ce qui protège l'intitulé est sur l'encre
  * ---------------------------------------------------------------------------
  * Sur le lavis, l'encre passe à plus de douze contre un. Sur une photographie
- * inconnue — un mur clair, un vêtement blanc — elle peut tomber à un contre
- * un, et l'intitulé disparaît. Le dégradé sombre posé sous le texte garantit
- * le contraste quelle que soit la photo, et il n'est rendu que dans ce cas :
- * appliqué au lavis, il l'assombrirait pour rien.
+ * inconnue — un mur clair, un vêtement blanc, une porte sombre — elle peut
+ * tomber à un contre un, et l'intitulé disparaît. Il faut donc bien quelque
+ * chose ; la question est seulement OÙ on le met.
  *
- * C'est la même règle, et pour la même raison, que dans le visuel d'arrivée.
+ * Un dégradé le mettait sur l'image, et éteignait la moitié basse de chaque
+ * carte — exactement la part où la photo montre le vêtement. L'ombre portée le
+ * met sur les lettres : le halo se limite au contour du glyphe, la
+ * photographie n'est ni assombrie ni éclaircie, et le contraste devient celui
+ * du blanc contre le halo.
+ *
+ * Le détail du réglage, et pourquoi l'encre est passée au blanc en dur, est
+ * expliqué au point d'application plus bas.
  */
 export function PictureCard({
   href,
@@ -73,19 +79,47 @@ export function PictureCard({
         <span aria-hidden className="wash-accent absolute inset-0" />
       )}
 
-      {/* Le voile, uniquement sous une vraie photographie. */}
-      {image ? (
-        <span
-          aria-hidden
-          className="absolute inset-0 bg-[linear-gradient(to_top,color-mix(in_oklab,var(--ink)_78%,transparent)_0%,color-mix(in_oklab,var(--ink)_28%,transparent)_45%,transparent_75%)]"
-        />
-      ) : null}
-
       <span
         className={cn(
           'relative mt-auto flex w-full flex-col gap-0.5 p-4 sm:p-5',
-          image ? 'text-ink-inverse' : 'text-ink',
+          image ? 'text-white' : 'text-ink',
         )}
+        /*
+          Pas de voile sur la photographie — c'est une demande explicite, et le
+          reproche était juste : le dégradé couvrait la moitié basse de chaque
+          carte, c'est-à-dire l'endroit où la photo montrait le vêtement.
+
+          Le problème qu'il réglait reste entier, et il est plus dur ici que sur
+          le bandeau : une carte de rayon prend n'importe quelle photographie
+          d'article, cadrée et éclairée de n'importe quelle façon. On ne sait
+          donc RIEN du fond derrière l'intitulé.
+
+          Deux changements le règlent sans toucher à l'image :
+
+            - l'encre passe au blanc. Elle était sombre parce que le voile,
+              lui, était clair (`--ink` en thème sombre est presque blanc) :
+              sans le voile, cette encre-là se posait sur la photo brute, et
+              une porte grise sombre l'effaçait complètement.
+
+            - une ombre portée sur les LETTRES. Elle n'assombrit pas la
+              photographie : elle pose un halo dans le contour du glyphe, si
+              bien que le contraste devient celui du blanc contre le halo — et
+              non plus celui du blanc contre ce qu'il y a derrière.
+
+          Le blanc est écrit en dur, et non pris dans les jetons : il ne doit
+          PAS suivre le thème. Le fond n'est pas la page, c'est une
+          photographie — elle ne s'éclaircit pas quand la personne passe en
+          thème clair, et une encre qui suivrait le thème deviendrait sombre
+          sur une image restée sombre.
+        */
+        style={
+          image
+            ? {
+                textShadow:
+                  '0 1px 2px rgba(11,17,28,0.92), 0 2px 14px rgba(11,17,28,0.78)',
+              }
+            : undefined
+        }
       >
         <span className="font-display text-xl font-bold uppercase leading-none tracking-tight sm:text-2xl">
           {title}
