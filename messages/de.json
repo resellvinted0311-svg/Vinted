@@ -3,6 +3,15 @@
     "tagline": "Second Hand in Reichweite"
   },
   "nav": {
+    "women": "Damen",
+    "men": "Herren",
+    "newIn": "Neuheiten",
+    "discover": "Entdecken",
+    "openSearch": "Suche öffnen",
+    "closeSearch": "Suche schließen",
+    "searchPlaceholder": "Ein Kleidungsstück, eine Marke, ein Stoff…",
+    "favoritesCount": "{count} Teile in Favoriten",
+    "cartCount": "{count} Teile im Warenkorb",
     "home": "Startseite",
     "catalogue": "Gesamter Katalog",
     "brands": "Marken",

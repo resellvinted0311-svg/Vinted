@@ -9,7 +9,6 @@ import { ArticleCard, ArticleGrid, GRID_IMAGE_SIZES } from './article-card'
 import { CatalogueFiltersPanel } from './catalogue-filters'
 import { LoadMore } from './load-more'
 import { ActiveFilterChips } from './active-filter-chips'
-import { SearchBox } from './search-box'
 
 /**
  * Vue catalogue partagée.
@@ -195,23 +194,29 @@ export async function CatalogueView({
         </p>
 
         {/*
-          La recherche vit ICI, et nulle part ailleurs sur le site.
+          LA RECHERCHE EST REMONTÉE DANS LA BARRE, derrière la loupe.
 
-          Elle était dans l'en-tête, donc sur toutes les pages : sur la
-          vitrine, sur une fiche article, dans le tunnel de paiement. Un champ
-          de recherche affiché là où l'on ne cherche pas encombre sans servir,
-          et il ouvrait la vitrine sur un formulaire alors que la page a été
-          écrite pour ouvrir sur une pièce.
+          Elle a fait l'aller-retour, et les deux mouvements avaient leur
+          raison. Elle vivait d'abord dans l'en-tête, donc sur toutes les pages
+          — vitrine, fiche article, tunnel de paiement — où un champ de
+          recherche encombre sans servir. Elle est descendue ici, auprès des
+          résultats qu'elle filtre.
 
-          `key` force un nouveau champ quand la requête change : l'état du
-          champ est local, et sans cela une navigation côté client laisserait
-          l'ancienne requête affichée au-dessus des nouveaux résultats.
+          Elle remonte parce que la barre a désormais une loupe, et que le
+          champ ne s'y déploie QUE si on le demande : l'encombrement qui avait
+          motivé la descente n'existe plus.
+
+          Elle ne peut pas vivre aux deux endroits. `SearchBox` est une
+          combobox, avec un intitulé et une liste annoncée ; deux exemplaires
+          dans un même document, c'est deux commandes homonymes pour un lecteur
+          d'écran, et sa propre documentation l'interdit.
+
+          Ce que cette page perd : le champ ne se rouvre plus prérempli avec la
+          requête en cours. Ce qui le remplace est juste en dessous — la
+          requête apparaît en pastille retirable parmi les filtres actifs, avec
+          les guillemets qui la citent. On la voit, on l'enlève d'un clic ; on
+          la corrige en rouvrant la loupe.
         */}
-        <SearchBox
-          key={filters.query ?? ''}
-          valeurInitiale={filters.query ?? ''}
-          className="w-full max-w-md"
-        />
       </header>
 
       {/*

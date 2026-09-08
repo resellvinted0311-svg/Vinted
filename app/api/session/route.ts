@@ -4,6 +4,7 @@ import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { getCurrentUser } from '@/lib/auth/session'
 import { cartOwnerFor, readCartCount } from '@/lib/shop/cart'
+import { readFavoriteCount } from '@/lib/shop/favorites-count'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -56,7 +57,20 @@ export async function GET() {
   // session une SECONDE fois, ici, sur chaque chargement de page du site.
   // Mesuré : six requêtes sur la table des comptes par appel, contre trois
   // maintenant.
-  const cartCount = await readCartCount(await cartOwnerFor(user))
+  /*
+    Les deux compteurs sont lus EN PARALLÈLE.
+
+    Ils ne dépendent pas l'un de l'autre, et cette route est appelée à chaque
+    chargement de page du site — les enchaîner ajouterait un aller-retour de
+    base de données au chemin critique de l'en-tête, pour rien.
+
+    L'identité est passée aux deux, jamais relue : voir le commentaire
+    ci-dessus, et celui de `readFavoriteCount`.
+  */
+  const [cartCount, favoriteCount] = await Promise.all([
+    readCartCount(await cartOwnerFor(user)),
+    readFavoriteCount(user),
+  ])
 
   const body = user
     ? {
@@ -64,8 +78,15 @@ export async function GET() {
         firstName: user.firstName,
         role: user.role,
         cartCount,
+        favoriteCount,
       }
-    : { signedIn: false as const, firstName: null, role: null, cartCount }
+    : {
+        signedIn: false as const,
+        firstName: null,
+        role: null,
+        cartCount,
+        favoriteCount,
+      }
 
   return publicJson(body, {
     headers: {

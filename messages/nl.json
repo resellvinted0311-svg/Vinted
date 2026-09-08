@@ -3,6 +3,15 @@
     "tagline": "Tweedehands binnen handbereik"
   },
   "nav": {
+    "women": "Dames",
+    "men": "Heren",
+    "newIn": "Nieuw",
+    "discover": "Ontdekken",
+    "openSearch": "Zoeken openen",
+    "closeSearch": "Zoeken sluiten",
+    "searchPlaceholder": "Een kledingstuk, een merk, een stof…",
+    "favoritesCount": "{count} stuks in favorieten",
+    "cartCount": "{count} stuks in winkelmandje",
     "home": "Home",
     "catalogue": "Hele collectie",
     "brands": "Merken",

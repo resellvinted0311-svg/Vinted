@@ -3,6 +3,15 @@
     "tagline": "Os usados ao alcance da mão"
   },
   "nav": {
+    "women": "Mulher",
+    "men": "Homem",
+    "newIn": "Novidades",
+    "discover": "Descobrir",
+    "openSearch": "Abrir a pesquisa",
+    "closeSearch": "Fechar a pesquisa",
+    "searchPlaceholder": "Uma peça, uma marca, um tecido…",
+    "favoritesCount": "{count} peças nos favoritos",
+    "cartCount": "{count} peças no cesto",
     "home": "Início",
     "catalogue": "Todo o catálogo",
     "brands": "Marcas",

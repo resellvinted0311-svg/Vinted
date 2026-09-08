@@ -871,6 +871,36 @@
   }
 
   /*
+    UN SEUL REGISTRE dès 768 px, et la signature ANCRÉE au bord gauche.
+
+    Trois pistes : le nom prend sa largeur, les chemins prennent tout le reste,
+    les outils prennent la leur. C'est le `1fr` du milieu qui fait le travail —
+    il pousse les outils contre le bord droit et laisse le nom contre le
+    gauche, sans qu'aucun des deux n'ait à connaître la largeur de l'autre.
+
+    La barre ne se centre plus et ne se referme plus sur son contenu. Elle l'a
+    fait tant qu'elle était une pastille flottante : tendue sur quatre-vingts
+    rem, elle logeait sept cents pixels de libellés dans mille deux cent
+    soixante, et un vide s'ouvrait au milieu. Une barre pleine largeur n'a pas
+    ce problème — le vide du milieu est ce qui SÉPARE les chemins des outils,
+    et c'est exactement ce qu'on veut voir.
+  */
+  @media (min-width: 768px) {
+    .nav-bar {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas: 'mark nav tools';
+      column-gap: 2.5rem;
+      row-gap: 0;
+      width: auto;
+      margin-inline: 0;
+    }
+
+    .nav-bar__nav {
+      justify-content: flex-start;
+    }
+  }
+
+  /*
     Sur les écrans étroits, la signature CÈDE la ligne aux services.
 
     Sa piste est en `minmax(0, 1fr)`, donc elle a le droit de rétrécir — mais
@@ -912,42 +942,22 @@
   }
 
   /*
-    Un seul registre dès que la largeur le permet — et la barre se referme sur
-    son contenu.
+    Il y avait ici une seconde règle, à 1024 px, qui RECENTRAIT la barre :
+    `width: fit-content` et `margin-inline: auto`, plus deux filets verticaux
+    encadrant les chemins.
 
-    Tendue sur les quatre-vingts rem de la page, elle logeait sept cents pixels
-    de libellés dans mille deux cent soixante : un vide de cinq cents pixels
-    s'ouvrait au milieu, et la barre avait l'air d'attendre quelque chose qui
-    n'arrivait jamais. Les pistes passent donc de `1fr` à `auto` et la barre à
-    `fit-content` : elle fait exactement la largeur de ce qu'elle porte, et se
-    centre. Une barre flottante n'a pas à s'aligner sur la colonne de texte —
-    c'est précisément ce qui la distingue d'un en-tête.
+    Elle avait sa raison du temps de la pastille flottante — tendue sur
+    quatre-vingts rem, la barre logeait sept cents pixels de libellés dans
+    mille deux cent soixante, et un vide s'ouvrait au milieu. Elle est retirée
+    parce qu'elle contredit frontalement ce qui est demandé maintenant : la
+    signature doit toucher le bord GAUCHE de la fenêtre, et une barre centrée
+    sur son contenu la ramène vers le milieu.
 
-    `max-width` la borne toujours : sur un écran étroit, `fit-content` cède et
-    les groupes se replient comme avant.
+    Les filets verticaux partent avec elle. Ils séparaient trois groupes serrés
+    les uns contre les autres ; avec la piste centrale en `1fr`, ce sont les
+    espaces qui séparent, et deux traits de plus n'auraient rien ajouté qu'un
+    bruit.
   */
-  @media (min-width: 1024px) {
-    .nav-bar {
-      grid-template-columns: auto auto auto;
-      grid-template-areas: 'mark nav tools';
-      column-gap: 2.25rem;
-      row-gap: 0;
-      width: fit-content;
-      margin-inline: auto;
-    }
-
-    /*
-      Deux filets verticaux encadrent les entrées.
-
-      Ils font ce que le vide faisait mal : séparer la signature, les chemins
-      et les services. Filet SABLE et non filet plein — ils séparent à
-      l'intérieur d'un objet, ils ne délimitent pas un objet.
-    */
-    .nav-bar__nav {
-      border-inline: 1px solid var(--sand-strong);
-      padding-inline: 2.25rem;
-    }
-  }
 
   /*
     Ombre dure décalée.

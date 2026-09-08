@@ -3,6 +3,15 @@
     "tagline": "Druga ręka w zasięgu ręki"
   },
   "nav": {
+    "women": "Kobiety",
+    "men": "Mężczyźni",
+    "newIn": "Nowości",
+    "discover": "Odkrywaj",
+    "openSearch": "Otwórz wyszukiwanie",
+    "closeSearch": "Zamknij wyszukiwanie",
+    "searchPlaceholder": "Ubranie, marka, materiał…",
+    "favoritesCount": "{count} rzeczy w ulubionych",
+    "cartCount": "{count} rzeczy w koszyku",
     "home": "Strona główna",
     "catalogue": "Cały katalog",
     "brands": "Marki",

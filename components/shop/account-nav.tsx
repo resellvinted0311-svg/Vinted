@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/lib/i18n/navigation'
+import { IconeCompte } from './icones'
 
 interface SessionState {
   signedIn: boolean
@@ -38,7 +39,7 @@ interface SessionState {
  * « Se connecter » puis de le remplacer : cela éviterait un décalage de mise
  * en page (CLS).
  */
-export function AccountNav() {
+export function AccountNav({ classeOutil }: { classeOutil: string }) {
   const t = useTranslations('nav')
   const tAuth = useTranslations('auth')
   const pathname = usePathname()
@@ -72,16 +73,41 @@ export function AccountNav() {
     }
   }, [pathname])
 
+  /*
+    Tant que l'état est inconnu, on RÉSERVE la place au lieu de l'occuper.
+
+    Le raisonnement n'a pas changé — afficher « Se connecter » puis le
+    remplacer décale la mise en page — mais sa mise en œuvre s'est simplifiée
+    avec l'icône : la réserve n'est plus une largeur de texte devinée, c'est
+    exactement le carré de l'outil. Les quatre outils gardent donc leur
+    alignement du premier rendu au dernier, sans le moindre saut.
+  */
   if (session === null) {
-    return <span aria-hidden className="inline-block h-5 w-24" />
+    return <span aria-hidden className={classeOutil} />
   }
+
+  const libelle = session.signedIn ? t('account') : tAuth('signIn')
 
   return (
     <Link
       href={session.signedIn ? '/compte' : '/connexion'}
-      className="whitespace-nowrap text-base text-muted transition-colors duration-150 ease-out hover:text-ink"
+      className={classeOutil}
+      title={libelle}
     >
-      {session.signedIn ? t('account') : tAuth('signIn')}
+      <IconeCompte taille={22} />
+      {/*
+        Le nom est un `sr-only` et non un `aria-label`, par cohérence avec les
+        deux outils voisins qui portent un compteur : là-bas un `aria-label`
+        effacerait le nombre du nom accessible. Ici il n'y a rien à effacer,
+        mais quatre outils construits de quatre façons différentes est
+        exactement ce qui produit, six mois plus tard, celui qu'on a oublié de
+        corriger.
+
+        Le libellé DIT ce qui va se passer : « Se connecter » quand on ne
+        l'est pas, « Mon compte » quand on l'est. Une icône de personne, seule,
+        ne dit ni l'un ni l'autre.
+      */}
+      <span className="sr-only">{libelle}</span>
     </Link>
   )
 }

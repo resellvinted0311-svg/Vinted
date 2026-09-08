@@ -58,6 +58,21 @@ async function ouvrirLesFiltres(page: Page): Promise<void> {
  * elle-même : `none` est la valeur d'arrivée. Une temporisation fixe aurait
  * marché aujourd'hui et se serait mise à mentir le jour où la durée change.
  */
+/**
+ * Ouvre la recherche de la barre.
+ *
+ * Elle est repliée derrière la loupe, et son ouverture ne dépend d'aucun
+ * script : c'est une case à cocher, comme le volet de filtres. Le libellé
+ * visé est celui de l'étiquette d'OUVERTURE — il y en a une seconde pour
+ * fermer, qui porte le même `for`.
+ */
+async function ouvrirLaRecherche(page: Page): Promise<void> {
+  await page.getByTitle('Ouvrir la recherche').click()
+  await expect(
+    page.getByRole('combobox', { name: 'Rechercher un article' }),
+  ).toBeVisible()
+}
+
 async function attendreLeVolet(page: Page): Promise<void> {
   await expect(page.getByTestId('volet-filtres')).toHaveCSS('transform', 'none')
   await expect(page.locator('[data-testid="filtres"]')).toBeVisible()
@@ -435,6 +450,11 @@ test.describe('Recherche', () => {
   test('propose des suggestions et y navigue', async ({ page }) => {
     await page.goto('/fr/catalogue')
 
+    // La recherche est remontée dans la barre : elle ne s'affiche qu'une fois
+    // la loupe ouverte. Voir `header-search.tsx` pour le mécanisme, qui est
+    // une case à cocher et non un gestionnaire d'événement.
+    await ouvrirLaRecherche(page)
+
     const input = page.getByRole('combobox', { name: 'Rechercher un article' })
     await input.fill('chemise')
 
@@ -451,48 +471,82 @@ test.describe('Recherche', () => {
     expect(await resultCount(page)).toBeGreaterThan(0)
   })
 
-  test('le champ rouvre sur la requête en cours', async ({ page }) => {
+  test('la requête en cours reste VISIBLE et retirable', async ({ page }) => {
     /*
-      Le défaut visé : le champ se rouvrait vide au-dessus d'une grille
-      filtrée. On lisait « Résultats pour chemise » et il fallait retaper
-      « chemise » en entier pour la corriger d'une lettre.
+      Ce test a changé d'objet parce que la recherche a changé de place, et il
+      faut dire ce qui est perdu autant que ce qui est gardé.
+
+      Il vérifiait que le champ se rouvrait prérempli : on lisait « Résultats
+      pour chemise », et sans cela il fallait retaper le mot en entier pour le
+      corriger d'une lettre. Le champ vit maintenant dans la barre, où il
+      s'ouvre à la demande — et la barre est rendue statiquement, sur des pages
+      mises en cache : elle ne peut pas connaître la requête sans faire
+      basculer tout le site en rendu dynamique, ce qui coûterait le
+      référencement de chaque page.
+
+      La requête reste donc visible AUTREMENT, et c'est cela qu'on vérifie :
+      elle apparaît en pastille retirable parmi les filtres actifs, citée entre
+      guillemets. On la voit, on l'enlève d'un clic. La corriger demande de
+      rouvrir la loupe — un geste de plus, assumé, contre le rendu statique de
+      toutes les pages du site.
     */
     await page.goto('/fr/catalogue?q=chemise')
 
-    await expect(
-      page.getByRole('combobox', { name: 'Rechercher un article' }),
-    ).toHaveValue('chemise')
+    const pastille = page.getByRole('link', { name: /chemise/ })
+    await expect(pastille.first()).toBeVisible()
+
+    // Et elle RETIRE vraiment le filtre, plutôt que de seulement l'afficher.
+    await pastille.first().click()
+    await expect(page).not.toHaveURL(/q=chemise/)
   })
 
-  test('la vitrine ne porte AUCUN champ de recherche', async ({ page }) => {
+  test('n’existe qu’à UN exemplaire dans le document', async ({ page }) => {
     /*
-      La recherche a quitté l'en-tête, donc toutes les pages où l'on ne
-      cherche pas. C'est un choix de composition — la vitrine ouvre sur une
-      pièce, pas sur un formulaire — et il se défait en une ligne : il suffit
-      que quelqu'un remette <SearchBox /> dans site-header.tsx pour qu'elle
-      revienne partout d'un coup, y compris ici.
+      Ce test a changé d'objet, lui aussi, et pour la même raison.
 
-      On vérifie sur la vitrine ET sur une fiche article : ce sont les deux
-      pages où le champ n'a rien à faire et où on ne le remarquerait pas tout
-      de suite.
+      Il vérifiait que la vitrine ne portait AUCUN champ de recherche : la
+      recherche vivait alors dans la vue catalogue, et l'enjeu était qu'elle ne
+      remonte pas dans l'en-tête où elle encombrerait toutes les pages. Cette
+      décision est renversée — la barre porte désormais une loupe, et le champ
+      ne s'y déploie que si on le demande, donc il n'encombre plus rien.
+
+      Ce qui reste vrai, et qui compte davantage : il ne doit y avoir qu'UN
+      champ dans le document. `SearchBox` est une combobox, avec son intitulé
+      et sa liste annoncée ; deux exemplaires, c'est deux commandes homonymes
+      pour un lecteur d'écran. Le risque est réel maintenant que le champ est
+      dans la mise en page : il suffirait qu'on le remette aussi dans la vue
+      catalogue pour en avoir deux sur `/catalogue`, et rien à l'écran ne le
+      signalerait — le second serait replié dans la barre.
+
+      On compte donc sur les trois pages où la barre passe, dont celle qui
+      porte déjà des résultats.
     */
-    await page.goto('/fr')
-    await expect(page.getByRole('search')).toHaveCount(0)
+    for (const url of ['/fr', '/fr/catalogue', '/fr/catalogue?q=chemise']) {
+      await page.goto(url)
 
-    const href = await page
-      .locator('article h3 a')
-      .first()
-      .getAttribute('href')
-    expect(href, 'la vitrine doit lister au moins une pièce').toBeTruthy()
+      /*
+        On compte dans le DOM, pas dans l'arbre d'accessibilité.
 
-    await page.goto(href!)
-    await expect(page.getByRole('search')).toHaveCount(0)
-  })
+        `getByRole('search')` rendait zéro, et c'était une BONNE nouvelle mal
+        interprétée : le panneau replié est en `visibility: hidden`, donc il
+        sort de l'arbre d'accessibilité — un champ de recherche fermé n'est
+        pas annoncé, ce qui est exactement ce qu'on veut.
 
-  test('le catalogue, lui, la porte', async ({ page }) => {
-    // Le pendant du test précédent : sans lui, supprimer purement et
-    // simplement la recherche du site ferait passer les deux.
+        Mais ce n'est pas la question posée ici. On cherche à savoir combien
+        d'exemplaires existent dans le document, replié ou non : un second
+        champ caché dans la barre serait tout aussi gênant le jour où on
+        l'ouvre. Le sélecteur d'attribut, lui, voit les deux états.
+      */
+      await expect(
+        page.locator('[role="search"]'),
+        `${url} doit porter exactement une recherche`,
+      ).toHaveCount(1)
+    }
+
+    // Et une fois ouverte, elle EST annoncée : sans cette seconde mesure, un
+    // champ resté caché en permanence passerait le test précédent.
     await page.goto('/fr/catalogue')
+    await ouvrirLaRecherche(page)
     await expect(page.getByRole('search')).toHaveCount(1)
   })
 })
@@ -621,7 +675,19 @@ test.describe('Univers', () => {
   }) => {
     await page.goto('/fr')
 
-    const femme = page.getByRole('link', { name: /^Femme/ })
+    /*
+      Ciblé DANS le contenu, hors de la barre.
+
+      La barre porte désormais une entrée « Femmes » vers la même page, et le
+      sélecteur en attrapait donc deux — la carte de la vitrine et le chemin
+      de navigation. Ce n'est pas une ambiguïté à contourner : ce sont
+      réellement deux portes vers `/fr/femme`, et c'est voulu. Seule la carte
+      annonce un effectif, et c'est l'effectif qu'on vérifie ici.
+    */
+    const femme = page
+      .locator('main')
+      .getByRole('link', { name: /^Femme/ })
+      .first()
     await expect(femme).toBeVisible()
 
     // Le nombre annoncé sur la carte doit être celui que la page montre. Un

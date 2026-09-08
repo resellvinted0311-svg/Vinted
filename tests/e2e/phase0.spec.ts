@@ -251,12 +251,89 @@ test.describe('Barre de navigation', () => {
     ).toBeGreaterThanOrEqual(0)
     expect(boite!.y).toBeLessThan(48)
 
-    // Et elle reste utilisable, pas seulement présente. Ciblé DANS la barre :
-    // « catalogue » figure aussi dans l'appel de bas de page, et une assertion
-    // qui l'attraperait passerait même si la barre était vide.
-    await expect(
-      barre.getByRole('link', { name: 'Tout le catalogue' }),
-    ).toBeVisible()
+    /*
+      Et elle reste UTILISABLE, pas seulement présente.
+
+      Ciblé dans la barre, et pas dans la page : plusieurs de ces libellés
+      figurent aussi ailleurs — dans le colophon, dans les cartes de la
+      vitrine — et une assertion qui les attraperait là passerait même si la
+      barre était vide.
+
+      L'entrée visée était « Tout le catalogue ». Elle s'appelle désormais
+      « Nouveautés » et pointe sur le même catalogue : le tri par défaut EST
+      le plus récent d'abord, si bien que le nom décrit ce que la page montre
+      sans qu'aucun paramètre ne soit nécessaire.
+    */
+    await expect(barre.getByRole('link', { name: 'Nouveautés' })).toBeVisible()
+  })
+
+  test('porte les quatre chemins, dans l’ordre demandé', async ({ page }) => {
+    /**
+     * L'ORDRE est une demande explicite, et rien d'autre ne le garde.
+     *
+     * Un tableau réordonné par mégarde ne casse rien : les quatre liens
+     * restent valides, la barre reste jolie, et personne ne s'en aperçoit
+     * avant de comparer avec une capture d'écran.
+     *
+     * On vérifie aussi les CIBLES, parce que c'est là que se cachent les deux
+     * pièges de cette barre :
+     *
+     *  - « Nouveautés » vise `/catalogue` NU. `nouveautes` est le tri par
+     *    défaut, et l'adresse ne le porte donc jamais ; écrire
+     *    `?tri=nouveautes` fabriquerait une seconde adresse pour la même page.
+     *
+     *  - « Découvrir » vise `/marques`. En perdant l'entrée « Marques », cette
+     *    page n'aurait plus eu aucun lien entrant depuis le site — ni la
+     *    barre, ni le colophon ne la portaient — et une page indexable sans
+     *    lien entrant s'effondre au référencement.
+     */
+    await page.goto('/fr')
+
+    const barre = page.locator('header.nav-plein')
+    const chemins = barre.locator('nav a')
+
+    await expect(chemins).toHaveText([
+      'Femmes',
+      'Hommes',
+      'Nouveautés',
+      'Découvrir',
+    ])
+
+    await expect(chemins.nth(0)).toHaveAttribute('href', '/fr/femme')
+    await expect(chemins.nth(1)).toHaveAttribute('href', '/fr/homme')
+    await expect(chemins.nth(2)).toHaveAttribute('href', '/fr/catalogue')
+    await expect(chemins.nth(3)).toHaveAttribute('href', '/fr/marques')
+  })
+
+  test('porte les quatre outils, et chacun mène quelque part', async ({
+    page,
+  }) => {
+    /**
+     * Les quatre outils sont des ICÔNES, et une icône muette est le défaut le
+     * plus banal d'une barre de ce genre : elle se dessine, elle se clique, et
+     * un lecteur d'écran n'annonce rien du tout.
+     *
+     * On les vise donc par leur NOM ACCESSIBLE, ce qui vérifie deux choses
+     * d'un coup — que le dessin est là, et qu'il se nomme.
+     *
+     * Le nom du compte varie avec l'état de session : « Se connecter » ici,
+     * puisque le test n'ouvre pas de session.
+     */
+    await page.goto('/fr')
+
+    const barre = page.locator('header.nav-plein')
+
+    await expect(barre.getByTitle('Ouvrir la recherche')).toBeVisible()
+
+    for (const [nom, cible] of [
+      ['Se connecter', '/fr/connexion'],
+      ['Favoris', '/fr/favoris'],
+      ['Panier', '/fr/panier'],
+    ] as const) {
+      const lien = barre.getByRole('link', { name: nom })
+      await expect(lien, `l’outil « ${nom} » manque`).toBeVisible()
+      await expect(lien).toHaveAttribute('href', cible)
+    }
   })
 
   test('ne porte ni prénom, ni régie, ni déconnexion, ni langue', async ({

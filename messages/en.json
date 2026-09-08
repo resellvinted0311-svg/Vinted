@@ -3,6 +3,15 @@
     "tagline": "Second-hand, within reach"
   },
   "nav": {
+    "women": "Women",
+    "men": "Men",
+    "newIn": "New in",
+    "discover": "Discover",
+    "openSearch": "Open search",
+    "closeSearch": "Close search",
+    "searchPlaceholder": "A garment, a brand, a fabric…",
+    "favoritesCount": "{count} items in favourites",
+    "cartCount": "{count} items in basket",
     "home": "Home",
     "catalogue": "All items",
     "brands": "Brands",

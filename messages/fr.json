@@ -3,6 +3,15 @@
     "tagline": "La seconde main à portée de main"
   },
   "nav": {
+    "women": "Femmes",
+    "men": "Hommes",
+    "newIn": "Nouveautés",
+    "discover": "Découvrir",
+    "openSearch": "Ouvrir la recherche",
+    "closeSearch": "Fermer la recherche",
+    "searchPlaceholder": "Un vêtement, une marque, une matière…",
+    "favoritesCount": "{count} pièces en favoris",
+    "cartCount": "{count} pièces au panier",
     "home": "Accueil",
     "catalogue": "Tout le catalogue",
     "brands": "Marques",

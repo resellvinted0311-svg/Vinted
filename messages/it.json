@@ -3,6 +3,15 @@
     "tagline": "La seconda mano a portata di mano"
   },
   "nav": {
+    "women": "Donna",
+    "men": "Uomo",
+    "newIn": "Novità",
+    "discover": "Scopri",
+    "openSearch": "Apri la ricerca",
+    "closeSearch": "Chiudi la ricerca",
+    "searchPlaceholder": "Un capo, un marchio, un tessuto…",
+    "favoritesCount": "{count} capi nei preferiti",
+    "cartCount": "{count} capi nel carrello",
     "home": "Home",
     "catalogue": "Tutto il catalogo",
     "brands": "Marchi",

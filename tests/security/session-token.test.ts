@@ -108,4 +108,76 @@ describe('cookie', () => {
       GUEST_DATA_RETENTION_DAYS * 24 * 60 * 60,
     )
   })
+
+  it('renouvelle le cookie quand le jeton est REPRIS, pas seulement créé', async () => {
+    /**
+     * La durée est GLISSANTE, et ce test est la seule chose qui l'empêche de
+     * redevenir fixe.
+     *
+     * -------------------------------------------------------------------------
+     * Le défaut, et pourquoi il était invisible
+     * -------------------------------------------------------------------------
+     * `ensureShopSessionToken` renvoyait le jeton existant sans réécrire son
+     * cookie. Les trente jours couraient donc depuis la PREMIÈRE visite, quoi
+     * qu'il arrive ensuite : quelqu'un qui revient au vingt-neuvième jour, met
+     * deux pièces en favori et repasse le surlendemain les trouve disparues,
+     * avec son panier.
+     *
+     * Il faut trente jours de calendrier pour que ce défaut se manifeste. Aucun
+     * essai à la main ne le rencontre jamais, et il frappe précisément les
+     * personnes qui reviennent.
+     *
+     * -------------------------------------------------------------------------
+     * Ce que le test observe
+     * -------------------------------------------------------------------------
+     * Pas la durée — elle est déjà épinglée juste au-dessus — mais le fait que
+     * `set` soit APPELÉE sur un jeton déjà valide. C'est l'écriture qui remet
+     * le compteur à zéro ; sans elle, la valeur de `maxAge` ne sert à rien.
+     *
+     * La valeur renvoyée est vérifiée aussi : renouveler ne doit pas faire
+     * tourner le jeton. Le faire viderait les favoris à chaque page, puisque
+     * `GuestFavorite` est indexée dessus — ce serait remplacer une perte à
+     * trente jours par une perte immédiate.
+     */
+    const jeton = mintLikeServer()
+
+    /*
+      Le magasin de cookies est simulé : `cookies()` de Next exige un contexte
+      de requête, qui n'existe pas sous vitest. On n'en a besoin que de deux
+      méthodes, et c'est justement l'appel à `set` qu'on veut observer.
+    */
+    const set = vi.fn()
+    vi.doMock('next/headers', () => ({
+      cookies: () =>
+        Promise.resolve({
+          get: (nom: string) =>
+            nom === shopSessionCookieName()
+              ? { name: nom, value: jeton }
+              : undefined,
+          set,
+          delete: vi.fn(),
+        }),
+    }))
+
+    vi.resetModules()
+    const { ensureShopSessionToken } = await import('@/lib/shop/session-token')
+    const rendu = await ensureShopSessionToken()
+
+    expect(rendu, 'un jeton valide ne doit pas être remplacé').toBe(jeton)
+    expect(
+      set,
+      'le cookie doit être réécrit, sinon les trente jours ne glissent pas',
+    ).toHaveBeenCalled()
+
+    const [, valeurEcrite, options] = set.mock.calls[0] as [
+      string,
+      string,
+      { maxAge?: number },
+    ]
+    expect(valeurEcrite).toBe(jeton)
+    expect(options.maxAge).toBe(SHOP_SESSION_MAX_AGE_SECONDS)
+
+    vi.doUnmock('next/headers')
+    vi.resetModules()
+  })
 })

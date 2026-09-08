@@ -23,10 +23,14 @@ interface Suggestion {
  * Le motif ARIA est celui d'une combobox : la liste est annoncée, les flèches
  * la parcourent, Échap la referme.
  *
- * Le champ vit dans la vue catalogue, et nulle part ailleurs — voir
- * `catalogue-view.tsx`. Il ne doit exister qu'à UN endroit du document : deux
- * exemplaires produiraient deux combobox portant le même intitulé, donc deux
- * fois la même commande annoncée aux lecteurs d'écran.
+ * Le champ vit dans la BARRE DE NAVIGATION, derrière la loupe, et nulle part
+ * ailleurs — voir `header-search.tsx`. Il ne doit exister qu'à UN endroit du
+ * document : deux exemplaires produiraient deux combobox portant le même
+ * intitulé, donc deux fois la même commande annoncée aux lecteurs d'écran.
+ *
+ * Il a vécu dans la vue catalogue entre-temps, pour ne pas encombrer les pages
+ * où l'on ne cherche pas. Cette raison est tombée le jour où la barre a reçu
+ * une loupe : le champ ne s'y déploie que si on le demande.
  */
 export function SearchBox({
   className,

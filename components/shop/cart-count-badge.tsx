@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils/cn'
 import { CART_CHANGED_EVENT, type CartChangedDetail } from './cart-events'
 
@@ -27,6 +28,7 @@ import { CART_CHANGED_EVENT, type CartChangedDetail } from './cart-events'
  * un panier qui annonce trois pièces pour deux est pire qu'un panier muet.
  */
 export function CartCountBadge({ className }: { className?: string }) {
+  const t = useTranslations('nav')
   const [count, setCount] = useState<number | null>(null)
 
   useEffect(() => {
@@ -73,19 +75,35 @@ export function CartCountBadge({ className }: { className?: string }) {
   if (count === null || count === 0) return null
 
   return (
-    <span
-      data-numeric
-      // Le nombre est déjà dans le libellé du lien parent : l'annoncer une
-      // seconde fois ferait lire « Panier 2 2 ».
-      aria-hidden
-      className={cn(
-        'data inline-flex min-w-[1.25rem] items-center justify-center',
-        'rounded-input border-[1.5px] border-rule bg-stamp px-1',
-        'text-[0.6875rem] leading-tight text-ink-inverse',
-        className,
-      )}
-    >
-      {count}
-    </span>
+    <>
+      {/*
+        Le nombre est ANNONCÉ, et il ne l'était plus.
+
+        Ce commentaire disait « le nombre est déjà dans le libellé du lien
+        parent », et c'était vrai tant que ce libellé était le texte
+        « Panier ». Depuis que l'entrée est devenue une icône, le lien porte
+        son nom dans un `sr-only` — et un `aria-label` posé sur le lien aurait
+        REMPLACÉ tout son contenu, effaçant le compteur du nom accessible.
+        Une personne au lecteur d'écran aurait entendu « Panier » avec deux
+        pièces dedans, sans jamais l'apprendre.
+
+        Le libellé et le nombre sont donc deux textes voisins, lus à la suite.
+      */}
+      <span className="sr-only">{t('cartCount', { count })}</span>
+
+      <span
+        data-numeric
+        aria-hidden
+        className={cn(
+          'data pointer-events-none absolute -right-0.5 -top-0.5',
+          'inline-flex min-w-[1.25rem] items-center justify-center',
+          'rounded-input border-[1.5px] border-rule bg-stamp px-1',
+          'text-[0.6875rem] leading-tight text-ink-inverse',
+          className,
+        )}
+      >
+        {count}
+      </span>
+    </>
   )
 }

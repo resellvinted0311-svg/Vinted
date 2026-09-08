@@ -179,7 +179,31 @@ export async function ensureShopSessionToken(): Promise<string> {
     store.get(PLAIN_COOKIE)?.value ??
     store.get(SECURE_COOKIE)?.value
 
-  if (existing && isValidShopSessionToken(existing)) return existing
+  if (existing && isValidShopSessionToken(existing)) {
+    /*
+      LA DURÉE EST GLISSANTE, et elle ne l'était pas.
+
+      Le cookie était écrit à la création et plus jamais ensuite. Ses trente
+      jours couraient donc depuis la PREMIÈRE visite, quoi qu'il arrive
+      après : quelqu'un qui revient au vingt-neuvième jour, met deux pièces en
+      favori et repasse le surlendemain les trouve disparues — avec son panier.
+
+      Le défaut est du genre qui ne se voit jamais en développement. Il exige
+      trente jours de calendrier pour se manifester, et il frappe précisément
+      les personnes qui reviennent, c'est-à-dire les meilleures.
+
+      Réécrire le cookie à chaque emploi remet le compteur à zéro : les trente
+      jours comptent désormais depuis la dernière visite. C'est ce que « garder
+      trente jours » veut dire pour la personne qui l'a demandé, et c'est aussi
+      ce que fait toute session de boutique.
+
+      Le coût est un en-tête `Set-Cookie` de plus sur les réponses qui passent
+      par ici. Elles sont déjà toutes non-cachables — ce sont des Server
+      Actions et des gestionnaires de route, jamais une page.
+    */
+    writeCookie(store, existing)
+    return existing
+  }
 
   const token = mint()
   writeCookie(store, token)
