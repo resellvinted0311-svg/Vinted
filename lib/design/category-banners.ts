@@ -35,20 +35,34 @@ export interface CategoryBannerImage {
   src: string
 
   /**
-   * Le point de l'image qui reste visible quand elle est recadrée.
+   * Le point de l'image qui reste ANCRÉ quand elle est recadrée.
    *
-   * Le bandeau est un 3/1 très large ; une photographie ordinaire y est donc
-   * rognée en haut et en bas, parfois beaucoup. Laissé au centre — le défaut
-   * de `object-fit: cover` — le cadre tombe souvent sur le ventre du modèle :
-   * le vêtement est coupé et le visage sort du champ.
+   * -------------------------------------------------------------------------
+   * Une ancre, et non une bande à montrer
+   * -------------------------------------------------------------------------
+   * On lit volontiers `objectPosition` comme « la partie de l'image qu'on
+   * veut voir ». C'est faux, et cette lecture coûte cher : elle suppose une
+   * proportion de cadre connue, or celle du bandeau varie beaucoup.
    *
-   * On remonte donc le point d'intérêt. La valeur est une position CSS
-   * (`objectPosition`) : `50% 30%` garde le milieu horizontal et le tiers
-   * supérieur, ce qui cadre les épaules et le buste — c'est-à-dire le
-   * vêtement.
+   * Le composant annonce un 3/1, mais son `max-h-[34svh]` mord presque
+   * toujours avant : à 1440 px de large, le cadre va du 6/1 sur une fenêtre
+   * basse au 3.5/1 sur une fenêtre haute, et tombe à 2.2/1 sur un téléphone.
+   * La part visible d'une photo en 3:2 passe donc de 25 % à 68 % de sa hauteur
+   * selon la fenêtre — pour un seul et même réglage. Une valeur choisie en
+   * visant une bande précise n'est juste que sur la fenêtre où on l'a choisie ;
+   * ailleurs elle décapite le modèle, et l'on ne s'en aperçoit pas puisque
+   * l'écran sur lequel on travaille, lui, va bien.
    *
-   * Elle se règle image par image, en la regardant. Il n'y a pas de valeur
-   * universellement juste : elle dépend d'où se trouve le sujet dans SA photo.
+   * La propriété à retenir est celle-ci : le point situé à la fraction P de la
+   * SOURCE se retrouve à la fraction P du CADRE, quelle que soit la hauteur du
+   * cadre. Régler `50% P%` revient donc à planter une épingle dans la
+   * photographie — et si l'épingle est plantée dans le sujet, le sujet ne sort
+   * jamais du champ, sur aucune fenêtre.
+   *
+   * D'où la méthode : repérer le sujet dans la source (une règle en
+   * pourcentages superposée à l'image suffit), et poser P dessus. Pour un
+   * portrait, entre le menton et le col — pas au centre géométrique, qui tombe
+   * sur le ventre.
    */
   cadrage: string
 
@@ -69,9 +83,36 @@ export interface CategoryBannerImage {
  * Un rayon absent de cette table n'a pas d'image : son bandeau reste sur le
  * lavis d'accent, ce qui est un état normal et non une panne.
  */
-export const CATEGORY_BANNERS: Readonly<
-  Record<string, CategoryBannerImage>
-> = {}
+export const CATEGORY_BANNERS: Readonly<Record<string, CategoryBannerImage>> = {
+  /*
+    Pulls et sweats.
+
+    Positions relevées à la règle sur la source (5992×3992) :
+
+      28 %  main levée        30 %  haut des cheveux     38-55 %  visage
+      48-58 %  col roulé      55-85 %  corps du pull     80-87 %  bordure rayée
+
+    48 % pose donc l'ancre entre le menton et le col — c'est-à-dire sur la
+    charnière entre la personne et le vêtement, les deux choses à montrer.
+
+    Vérifié sur la page servie, de la fenêtre la plus basse à la plus haute :
+
+      1440×700   cadre 6.03/1   bande source [36 %, 61 %]
+      1440×900   cadre 4.69/1   bande source [33 %, 65 %]
+      1440×1200  cadre 3.52/1   bande source [28 %, 70 %]
+      390×844    cadre 2.20/1   bande source [15 %, 84 %]
+
+    Le visage (38-55 %) tient dans les quatre. C'était le point : sur la plus
+    basse — celle qui montre le moins — il reste entier.
+  */
+  'pulls-sweats': {
+    src: '/images/bandeau-pull.jpg',
+    cadrage: '50% 48%',
+    // Décorative : le titre « Pulls et sweats » est juste à côté, dans le
+    // bandeau, et le dit déjà.
+    alt: '',
+  },
+}
 
 /** L'image d'un rayon, ou `null` s'il n'en a pas encore. */
 export function bannerFor(slug: string): CategoryBannerImage | null {

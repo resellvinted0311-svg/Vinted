@@ -73,6 +73,26 @@ describe('les bandeaux de rayon', () => {
     }
   })
 
+  it('n’emploie que des noms de fichier qui survivent à une URL', () => {
+    /*
+      Le fichier livré s'appelait « bandeau pull.jpg ». Il vit très bien sur un
+      disque, et très mal dans une adresse : l'espace y devient `%20`. Next
+      sert le fichier, mais l'optimiseur d'images compare l'adresse demandée à
+      celle qu'il a mise en cache, et un encodage divergent entre les deux
+      donne un 404 — sur une seule des deux, sans jamais dire laquelle.
+
+      Le renommer coûte trois secondes. Diagnostiquer un bandeau qui marche en
+      développement et pas en production en coûte beaucoup plus.
+    */
+    for (const [slug, bandeau] of entrees) {
+      expect(
+        /^[a-z0-9/_.-]+$/.test(bandeau.src),
+        `${slug} : « ${bandeau.src} » contient un caractère à encoder ` +
+          '(espace, accent, majuscule). À renommer en minuscules et tirets.',
+      ).toBe(true)
+    }
+  })
+
   it('rend null pour un rayon sans photographie', () => {
     expect(bannerFor('rayon-qui-n-existe-pas')).toBeNull()
   })

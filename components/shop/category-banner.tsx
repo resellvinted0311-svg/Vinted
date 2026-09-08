@@ -61,13 +61,16 @@ export function CategoryBanner({
   /** Le visuel du rayon, quand il en a un. */
   imageUrl = null,
   /**
-   * Le point de l'image qui reste visible une fois recadrée.
+   * Le point de l'image qui reste ANCRÉ une fois l'image recadrée.
    *
-   * Le bandeau est un 3/1 très large : une photographie ordinaire y est rognée
-   * en haut et en bas, parfois beaucoup. Le défaut de `object-fit: cover` est
-   * le centre, ce qui tombe souvent sur le ventre du modèle — le vêtement
-   * coupé, le visage hors champ. La valeur se règle image par image, en la
-   * regardant : il n'y a pas de cadrage universellement juste.
+   * Attention au piège : la proportion du cadre n'est PAS le 3/1 annoncé plus
+   * bas. `max-h-[34svh]` mord presque toujours avant, et le cadre va du 6/1
+   * au 2.2/1 selon la fenêtre — ce qui fait varier du simple au triple la part
+   * de la photographie qu'on voit. Un cadrage choisi en visant une bande n'est
+   * donc juste que sur la fenêtre où il a été choisi.
+   *
+   * `lib/design/category-banners.ts` explique comment poser cette valeur pour
+   * qu'elle tienne sur toutes les fenêtres.
    */
   cadrage = '50% 50%',
   /** Description de l'image ; vide si elle est décorative. */
@@ -130,11 +133,37 @@ export function CategoryBanner({
           ne sait rien : un titre posé sur un ciel clair est le défaut le plus
           banal du bandeau d'e-commerce. Le voile est la contrepartie de
           l'image, pas une décoration permanente.
+
+          -------------------------------------------------------------------
+          Pourquoi DEUX dosages, et non un seul jeu de pourcentages
+          -------------------------------------------------------------------
+          Le cadre garde son 3/1 aux deux tailles, mais le titre ne suit pas la
+          même échelle : `type-section` est un `clamp(1.75rem, 3.6vw, 2.75rem)`
+          plafonné sur grand écran et plancherisé sur téléphone. Le même titre
+          occupe donc un quart de la hauteur du cadre sur un écran de bureau, et
+          près de la moitié sur un téléphone — où il passe en outre à deux
+          lignes. Un voile en pourcentages ne peut pas servir les deux : réglé
+          pour le bureau il laisse le téléphone à découvert, réglé pour le
+          téléphone il noie la photographie sur grand écran.
+
+          Les deux dosages ci-dessous sont les PLUS LÉGERS qui tiennent 4.5:1,
+          mesurés encre masquée sous la boîte réelle du titre, aux deux tailles
+          réelles du bandeau (1440×480 et 390×177) :
+
+            bureau   6.02:1     téléphone   5.05:1
+
+          Et ils ne sont pas mesurés sur « Pulls et sweats », qui tient sur une
+          ligne en français et ne prouve rien. Le pire cas est le nom de rayon
+          le plus long de la base — « Sobretudos e casacos acolchoados », en
+          portugais — qui passe à deux lignes sur téléphone et fait remonter la
+          première exactement là où le voile s'arrêtait. Avec le voile de
+          bureau, ce titre-là tombait à 3.08:1 : illisible, et invisible pour
+          qui ne regarde que le français.
         */}
         {imageUrl ? (
           <div
             aria-hidden
-            className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,color-mix(in_oklab,var(--paper)_92%,transparent)_0%,color-mix(in_oklab,var(--paper)_58%,transparent)_50%,transparent_100%)]"
+            className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,color-mix(in_oklab,var(--paper)_94%,transparent)_0%,color-mix(in_oklab,var(--paper)_66%,transparent)_46%,transparent_76%)] sm:bg-[linear-gradient(to_top,color-mix(in_oklab,var(--paper)_92%,transparent)_0%,color-mix(in_oklab,var(--paper)_58%,transparent)_34%,transparent_62%)]"
           />
         ) : null}
 

@@ -86,6 +86,37 @@ describe('les cartes de rayon', () => {
     ).toBeGreaterThan(0)
   })
 
+  it('chaque photographie déclarée vise un rayon qui existe', async () => {
+    /*
+      `CATEGORY_BANNERS` est indexée par slug, et un slug est une chaîne : rien
+      n'oblige la clé à désigner un rayon réel. Écrire `pulls-sweat` au lieu de
+      `pulls-sweats` compile, passe le typage, passe le test qui vérifie que le
+      fichier existe — et ne pose simplement jamais l'image. Le rayon garde son
+      lavis, ce qui est un état parfaitement normal par ailleurs : rien ne
+      distingue « pas encore de photo » de « photo déclarée au mauvais nom ».
+
+      Le fichier de domaine ne peut pas attraper ça : il ne connaît pas la
+      taxonomie. Ici, si.
+    */
+    const { CATEGORY_BANNERS } = await import('@/lib/design/category-banners')
+    const slugs = Object.keys(CATEGORY_BANNERS)
+    if (slugs.length === 0) return
+
+    const connus = new Set(
+      (await prisma.category.findMany({ select: { slug: true } })).map(
+        (c) => c.slug,
+      ),
+    )
+    expect(connus.size, 'aucune catégorie : base non semée ?').toBeGreaterThan(0)
+
+    const orphelins = slugs.filter((slug) => !connus.has(slug))
+    expect(
+      orphelins,
+      `ces photographies ne seront jamais affichées, faute de rayon portant ` +
+        `ce slug : ${orphelins.join(', ')}`,
+    ).toEqual([])
+  })
+
   it('donne un chemin qui se termine par le rayon lui-même', async () => {
     // La feuille doit fermer son propre chemin. Un ordre inversé — la racine
     // en dernier — résoudrait aussi longtemps que la hiérarchie n'a que deux
