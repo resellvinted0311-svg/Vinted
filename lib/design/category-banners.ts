@@ -169,30 +169,32 @@ export const CATEGORY_BANNERS: Readonly<Record<string, CategoryBannerImage>> = {
   /*
     Accessoires.
 
-    Une nature morte, et non une silhouette : une planche posée sur des pavés,
-    portant bijoux, figues et piments. Cela change ce qu'il faut tenir dans le
-    cadre — non plus un visage, mais un OBJET ENTIER, dont on n'a pas le droit
-    de couper les bords sans que la composition parte en morceaux.
+    Une nature morte, et non une silhouette : une planche posée sur des pavés
+    de brique, portant bijoux, figues et piments. Cela change ce qu'il faut
+    tenir dans le cadre — non plus un visage, mais un OBJET ENTIER, dont on
+    n'a pas le droit de couper les bords sans que la composition parte en
+    morceaux.
 
     Positions relevées sur la source (5992×3992) :
 
-      22 %  bord haut de la planche      29-77 %  les bijoux
-      89 %  bord bas de la planche       0-22 %   les pavés, au-dessus
+      30 %  bord haut de la planche      32-72 %  les bijoux
+      78 %  bord bas de la planche       0-30 %   la brique et le lierre
 
-    54 % ancre au milieu des bijoux, et non au milieu de la planche : c'est ce
+    58 % ancre au milieu des bijoux, et non au milieu de la planche : c'est ce
     qu'on vend, et les deux ne coïncident pas — la planche est posée en biais,
     son coin bas déborde plus loin que le dernier pendentif.
 
     Mesuré sur la page servie, de la fenêtre la plus basse à la plus haute :
 
-      1440×600   cadre 4.14/1   bande source [34 %, 71 %]
-      1440×900   cadre 3.00/1   bande source [27 %, 77 %]
-      1440×1200  cadre 2.35/1   bande source [20 %, 83 %]
-      390×844    cadre 1.70/1   bande source [ 6 %, 94 %]
+      1440×600   cadre 4.14/1   bande source [37 %, 73 %]
+      1440×900   cadre 3.00/1   bande source [29 %, 79 %]
+      1440×1200  cadre 2.35/1   bande source [21 %, 85 %]
+      390×844    cadre 1.70/1   bande source [ 7 %, 95 %]
 
-    La fenêtre basse ne montre qu'une bande centrale de bijoux, et c'est le
-    bon compromis : elle reste lisible comme un étalage, là où descendre
-    l'ancre aurait fait entrer du pavé vide par le haut.
+    Dès 1440×900 la planche entière est dans le cadre. Sur la fenêtre la plus
+    basse, seul le haut de l'étalage sort ; la grande croix, pièce la plus
+    lisible de la composition, reste entière. Descendre l'ancre aurait fait
+    l'inverse : de la brique vide en haut, la croix coupée en bas.
 
     Le rapport du cadre est celui de la BOÎTE ENTIÈRE, bande cachée sous la
     barre comprise, et non de ce qui dépasse en dessous. Sur ces pages, la
@@ -203,10 +205,31 @@ export const CATEGORY_BANNERS: Readonly<Record<string, CategoryBannerImage>> = {
     plus large que le 3/2 de la source, donc seul le haut et le bas sont
     rognés. Les pavés vides de la moitié gauche restent visibles — c'est là que
     se pose le titre.
+
+    ---------------------------------------------------------------------------
+    LE `?v=` N'EST PAS UN ORNEMENT
+    ---------------------------------------------------------------------------
+    La photographie a été remplacée par une autre, sous le MÊME nom de fichier.
+    Le défaut a été mesuré ici même : le serveur a continué de servir l'ancienne
+    image après le remplacement, parce que l'optimiseur garde son résultat en
+    cache sous la clé de l'ADRESSE — et l'adresse, elle, n'avait pas changé. Il
+    a fallu vider ce cache à la main pour voir la nouvelle photo.
+
+    Ce qui est vrai en local l'est davantage en ligne, où s'ajoutent le cache du
+    réseau de diffusion et celui du navigateur. Sans changement d'adresse, la
+    boutique aurait pu ouvrir sa page, y trouver l'ancienne photo, et n'avoir
+    aucun moyen de distinguer un cache d'un travail non fait.
+
+    La version dans l'adresse change donc la clé de cache d'un bout à l'autre de
+    la chaîne. Elle s'incrémente à chaque remplacement de l'image ; le nom du
+    fichier, lui, continue de ne désigner qu'un rôle. C'est aussi pour cela
+    qu'elle est préférable à un `bandeau-accessoires-2.jpg` : le fichier ne se
+    dédouble pas, et l'ancienne image ne reste pas à traîner dans le
+    déploiement.
   */
   accessoires: {
-    src: '/images/bandeau-accessoires.jpg',
-    cadrage: '50% 54%',
+    src: '/images/bandeau-accessoires.jpg?v=2',
+    cadrage: '50% 58%',
     alt: '',
   },
 }

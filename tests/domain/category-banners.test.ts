@@ -35,6 +35,26 @@ import {
 
 const PUBLIC = join(process.cwd(), 'public')
 
+/**
+ * L'adresse déclarée se lit en DEUX parties : le chemin du fichier, et une
+ * version facultative.
+ *
+ * La version existe parce qu'une photographie peut être remplacée sous le même
+ * nom de fichier — et que, dans ce cas, l'optimiseur d'images continue de
+ * servir l'ancienne : il garde son résultat en cache sous la clé de l'adresse,
+ * et l'adresse n'a pas changé. Mesuré sur le bandeau des accessoires.
+ *
+ * Tous les contrôles ci-dessous portent donc sur le CHEMIN. Les écrire sur
+ * l'adresse entière ferait échouer le test d'existence — `public/…jpg?v=2`
+ * n'est le nom d'aucun fichier — et celui du format, puisque l'adresse ne se
+ * termine plus par `.jpg`. C'est le genre de faux échec qui pousse à
+ * désactiver un test plutôt qu'à le corriger.
+ */
+function decouper(src: string): { chemin: string; version: string | null } {
+  const [chemin = '', requete] = src.split('?')
+  return { chemin, version: requete ?? null }
+}
+
 describe('les bandeaux de rayon', () => {
   const entrees = Object.entries(CATEGORY_BANNERS)
 
@@ -62,7 +82,7 @@ describe('les bandeaux de rayon', () => {
         return
       }
 
-      const chemin = join(PUBLIC, bandeau.src)
+      const chemin = join(PUBLIC, decouper(bandeau.src).chemin)
       expect(
         existsSync(chemin),
         `« ${slug} » déclare ${bandeau.src}, absent de public/. ` +
@@ -87,7 +107,7 @@ describe('les bandeaux de rayon', () => {
     // donnerait un cadre vide, sans erreur.
     for (const [slug, bandeau] of entrees) {
       expect(
-        /\.(jpe?g|png|webp|avif)$/i.test(bandeau.src),
+        /\.(jpe?g|png|webp|avif)$/i.test(decouper(bandeau.src).chemin),
         `${slug} : ${bandeau.src} n’est pas un format web (jpg, png, webp, avif)`,
       ).toBe(true)
     }
@@ -106,9 +126,31 @@ describe('les bandeaux de rayon', () => {
     */
     for (const [slug, bandeau] of entrees) {
       expect(
-        /^[a-z0-9/_.-]+$/.test(bandeau.src),
+        /^[a-z0-9/_.-]+$/.test(decouper(bandeau.src).chemin),
         `${slug} : « ${bandeau.src} » contient un caractère à encoder ` +
           '(espace, accent, majuscule). À renommer en minuscules et tirets.',
+      ).toBe(true)
+    }
+  })
+
+  it('ne porte, après le chemin, qu’un numéro de version', () => {
+    /*
+      La partie qui suit le « ? » sert à UNE chose : forcer les caches à
+      relire l'image quand on la remplace sous le même nom. Elle s'écrit donc
+      `v=` suivi d'un nombre, et rien d'autre.
+
+      Ce n'est pas du purisme. Cette chaîne part telle quelle dans l'adresse de
+      l'optimiseur d'images, où elle est ré-encodée : une esperluette ou un
+      caractère accentué y produirait une adresse différente de celle qu'on
+      croit avoir écrite, et le symptôme serait un bandeau vide — sans erreur,
+      comme d'habitude avec les images.
+    */
+    for (const [slug, bandeau] of entrees) {
+      const { version } = decouper(bandeau.src)
+      if (version === null) continue
+      expect(
+        /^v=\d+$/.test(version),
+        `${slug} : « ?${version} » n’est pas un numéro de version`,
       ).toBe(true)
     }
   })
@@ -126,11 +168,11 @@ describe('les photographies choisies pour les cartes de rayon', () => {
   it('désignent des fichiers présents, aux noms servables', () => {
     for (const [slug, carte] of entrees) {
       expect(
-        existsSync(join(PUBLIC, carte.src)),
+        existsSync(join(PUBLIC, decouper(carte.src).chemin)),
         `« ${slug} » déclare ${carte.src}, absent de public/`,
       ).toBe(true)
       expect(
-        /^[a-z0-9/_.-]+$/.test(carte.src),
+        /^[a-z0-9/_.-]+$/.test(decouper(carte.src).chemin),
         `${slug} : « ${carte.src} » contient un caractère à encoder`,
       ).toBe(true)
     }
@@ -155,7 +197,9 @@ describe('les photographies choisies pour les cartes de rayon', () => {
         remplacement : la boutiquière fournit une meilleure photo, on écrase
         le fichier, et les chiffres restent ceux de l'ancienne.
       */
-      const vraies = await sharp(join(PUBLIC, carte.src)).metadata()
+      const vraies = await sharp(
+        join(PUBLIC, decouper(carte.src).chemin),
+      ).metadata()
       expect(
         { width: vraies.width, height: vraies.height },
         `${slug} : ${carte.src} mesure ${vraies.width}×${vraies.height}, ` +
@@ -191,11 +235,11 @@ describe('les visuels des deux cartes d’univers', () => {
   it('désignent des fichiers présents, aux noms servables', () => {
     for (const [univers, carte] of entrees) {
       expect(
-        existsSync(join(PUBLIC, carte.src)),
+        existsSync(join(PUBLIC, decouper(carte.src).chemin)),
         `« ${univers} » déclare ${carte.src}, absent de public/`,
       ).toBe(true)
       expect(
-        /^[a-z0-9/_.-]+$/.test(carte.src),
+        /^[a-z0-9/_.-]+$/.test(decouper(carte.src).chemin),
         `${univers} : « ${carte.src} » contient un caractère à encoder`,
       ).toBe(true)
     }
@@ -204,7 +248,9 @@ describe('les visuels des deux cartes d’univers', () => {
   it.each(entrees)(
     'annonce pour « %s » les dimensions réelles du fichier',
     async (univers, carte) => {
-      const vraies = await sharp(join(PUBLIC, carte.src)).metadata()
+      const vraies = await sharp(
+        join(PUBLIC, decouper(carte.src).chemin),
+      ).metadata()
       expect(
         { width: vraies.width, height: vraies.height },
         `${univers} : ${carte.src} mesure ${vraies.width}×${vraies.height}, ` +
