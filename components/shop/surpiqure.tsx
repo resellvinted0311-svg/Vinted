@@ -4,7 +4,20 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { coudre } from '@/lib/design/couture'
 
 /**
- * La surpiqûre qui borde la barre de navigation.
+ * La surpiqûre.
+ *
+ * ---------------------------------------------------------------------------
+ * PLUS AUCUNE PAGE NE L'APPELLE, et c'est volontaire
+ * ---------------------------------------------------------------------------
+ * Elle bordait le bas de la barre de navigation et les deux arêtes du bandeau
+ * de réassurance. La boutique a demandé qu'on la retire des deux : posées l'une
+ * sous l'autre, les trois lignes pointillées se lisaient comme un bruit dans
+ * les cent premiers pixels de la vitrine.
+ *
+ * Le composant reste — le fil est un motif de la charte, pas un accident, et
+ * ce qu'il documente ci-dessous (pourquoi il se redessine au lieu de s'étirer)
+ * est le genre de raisonnement qu'on ne retrouve pas en le réécrivant. Le
+ * remettre en service tient en une balise.
  *
  * ---------------------------------------------------------------------------
  * Pourquoi elle se REDESSINE au lieu de s'étirer

@@ -1632,18 +1632,14 @@
     }
 
     /*
-      La couture disparaît avec le fond.
+      Il y avait ici une règle qui effaçait la couture du bord bas tant que la
+      barre était posée sur la photographie : un fil tendu en travers de
+      l'image, sans fond à ourler, n'aurait rien séparé.
 
-      Elle ferme le bord bas de la barre — l'ourlet entre la barre et la page.
-      Tant que la barre n'a pas de fond, il n'y a pas d'ourlet : le fil resterait
-      tendu en travers de la photographie, à trois centimètres du haut, sans
-      rien séparer.
+      La couture elle-même a été retirée de la barre depuis. La règle n'avait
+      donc plus de cible — et une règle qui vise une classe absente ne signale
+      jamais rien : elle attend simplement que quelqu'un réintroduise le nom
+      par hasard.
     */
-    html:not([data-barre-descendue])
-      body:has(.bandeau-sous-barre)
-      .nav-plein:not(:hover, :focus-within)
-      .nav-bar__couture {
-      opacity: 0;
-    }
   }
 }

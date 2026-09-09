@@ -5,7 +5,6 @@ import { AccountNav } from './account-nav'
 import { CartCountBadge } from './cart-count-badge'
 import { FavoritesCountBadge } from './favorites-count-badge'
 import { HeaderSearch } from './header-search'
-import { Surpiqure } from './surpiqure'
 import { IconeFavoris, IconePanier } from './icones'
 
 /**
@@ -105,30 +104,20 @@ export async function SiteHeader() {
   return (
     <header className="nav-plein sticky top-0 z-50">
       {/*
-        La couture ferme le BORD BAS de la barre.
+        IL N'Y A PLUS DE COUTURE au bord bas de la barre — retirée à la demande
+        de la boutique.
 
-        Une barre pleine largeur n'a pas de côtés : elle touche les deux bords
-        de la fenêtre, et un cadre y dessinerait deux traits verticaux qui ne
-        délimitent rien. Reste sa seule arête réelle, celle du bas, là où la
-        barre rencontre la page. C'est la couture d'un ourlet plutôt que celle
-        d'une ceinture, et elle remplace le filet d'un pixel qu'on aurait mis
-        sinon — un trait régulier, précisément ce que la charte écarte partout
-        ailleurs.
+        Elle fermait l'arête entre la barre et la page, à la place du filet d'un
+        pixel que la charte écarte partout ailleurs. Ce qu'elle faisait ne
+        disparaît pas pour autant : l'ombre courte de `.nav-plein` marque déjà
+        cette arête, et elle a l'avantage de ne se voir qu'une fois le contenu
+        engagé sous la barre, là où la séparation sert vraiment.
+
+        Elle est retirée POUR TOUTES LES PAGES, et non pour la seule vitrine :
+        la barre est le même composant partout, et une couture qui apparaît
+        selon la page ne se lit pas comme une intention mais comme un défaut
+        d'affichage. Si elle doit revenir ailleurs, c'est ce bloc qu'on remet.
       */}
-      <div
-        aria-hidden
-        className="nav-bar__couture pointer-events-none absolute inset-x-0 bottom-0 h-[9px] transition-opacity duration-150 ease-out"
-      >
-        <Surpiqure
-          forme="ligne"
-          ton="clair"
-          retrait={0}
-          desordre={0.55}
-          graine={41}
-          hauteurDeReference={9}
-        />
-      </div>
-
       <div className="nav-bar relative px-4 py-4 sm:px-6 sm:py-5 lg:px-10">
         {/*
           La signature sans sa baseline : une barre de navigation porte le nom

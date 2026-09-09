@@ -1,5 +1,4 @@
 import { getTranslations } from 'next-intl/server'
-import { Surpiqure } from '@/components/shop/surpiqure'
 
 /**
  * Le bandeau de réassurance, sous le visuel d'arrivée.
@@ -55,42 +54,25 @@ export async function ReassuranceBand() {
   const faits = [t('claimUnique'), t('claimShipped'), t('claimReturn')] as const
 
   return (
-    <section className="gradient-accent relative ruled-t ruled-b text-ink-inverse">
+    <section className="gradient-accent ruled-t ruled-b text-ink-inverse">
       {/*
-        Les deux coutures sont posées à l'intérieur des bords, à la distance
-        où tombe une surpiqûre de vêtement — assez près du bord pour dire
-        qu'elle le retient, assez loin pour ne pas se confondre avec lui.
+        LES DEUX COUTURES SONT RETIRÉES — demande de la boutique.
 
-        Elles ne rentrent pas dans le flux : le bandeau garde exactement la
-        hauteur de son texte, et la couture ne la modifie pas.
+        Elles longeaient les bords haut et bas du bandeau, à la distance où
+        tombe une surpiqûre de vêtement. Posées juste sous la barre de
+        navigation, qui en portait une elle aussi, elles faisaient trois lignes
+        pointillées dans les cent premiers pixels de la vitrine : le motif
+        cessait d'être une signature pour devenir un bruit.
+
+        Les bords ne disparaissent pas pour autant : `ruled-t` et `ruled-b`
+        tiennent toujours les deux arêtes du bandeau, et le lavis d'accent le
+        détache du blanc de la page.
+
+        `relative` est parti avec elles : il n'existait que pour leur servir de
+        repère de positionnement. Un contexte de positionnement laissé derrière
+        soi ne se voit jamais — jusqu'au jour où un élément posé en absolu se
+        cale dessus au lieu de la page, et où l'on cherche pourquoi.
       */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[9px]"
-      >
-        <Surpiqure
-          forme="ligne"
-          ton="clair"
-          retrait={0}
-          graine={17}
-          desordre={0.55}
-          hauteurDeReference={9}
-        />
-      </div>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-[9px]"
-      >
-        <Surpiqure
-          forme="ligne"
-          ton="clair"
-          retrait={0}
-          graine={83}
-          desordre={0.55}
-          hauteurDeReference={9}
-        />
-      </div>
-
       <ul className="mx-auto flex max-w-[var(--colonne)] flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6">
         {faits.map((fait) => (
           <li key={fait} className="label-reg">
