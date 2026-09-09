@@ -11,6 +11,7 @@ import {
 } from '@/lib/db/queries/orders'
 import { OrderDetailView } from '@/components/shop/order/order-detail-view'
 import { OrderStatusPoll } from '@/components/shop/order/order-status-poll'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 /** Dépend de la session : jamais mise en cache. */
 export const dynamic = 'force-dynamic'
@@ -24,7 +25,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: 'order' })
   return {
     title: t('confirmationTitle'),
-    robots: { index: false, follow: false },
+    ...PAGE_PRIVEE,
   }
 }
 
@@ -71,9 +72,7 @@ export default async function OrderConfirmationPage({
   }
 
   const owner = await readCartOwner()
-  const order = owner
-    ? await getOrderByCheckoutSession(owner, sessionId)
-    : null
+  const order = owner ? await getOrderByCheckoutSession(owner, sessionId) : null
 
   if (!order) {
     const exists = await checkoutSessionExists(sessionId)

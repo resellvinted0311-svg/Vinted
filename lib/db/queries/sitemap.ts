@@ -44,10 +44,33 @@ export interface SitemapResource {
  */
 export const SITEMAP_MAX_ARTICLES = 45_000
 
-/** Les fiches article consultables, les plus récemment modifiées d'abord. */
+/**
+ * Les fiches article consultables ET indexables, les plus récemment modifiées
+ * d'abord.
+ *
+ * ---------------------------------------------------------------------------
+ * Le plan annonçait des pages que la fiche elle-même refuse
+ * ---------------------------------------------------------------------------
+ * `app/[locale]/(shop)/a/[slug]/page.tsx` pose `robots: { index: false }` sur
+ * toute fiche SANS VISUEL — une décision écrite, motivée : le stock arrive de
+ * l'inventaire par centaines avec titre, taille et prix seulement, et ces
+ * pages minces livrées d'un coup se comptent contre le domaine entier.
+ *
+ * Le plan de site, lui, les listait toutes. Un plan de site est une INVITATION
+ * : il dit « voici ce que je veux voir indexé ». Y mettre des pages qui
+ * répondent `noindex` revient à envoyer le robot chercher une porte fermée,
+ * puis recommencer à chaque passage — et le rapport de couverture se remplit
+ * d'« exclue par la balise noindex », alertes qui masquent les vraies.
+ *
+ * La condition est la MÊME que celle de la fiche : au moins un visuel. Elle est
+ * répétée plutôt que partagée parce qu'il n'y a rien à partager — d'un côté
+ * une clause Prisma, de l'autre la présence d'une image déjà chargée — mais le
+ * lien est écrit ici et là-bas, dans les deux sens, pour qu'un changement d'un
+ * côté fasse trouver l'autre.
+ */
 export async function listSitemapArticles(): Promise<SitemapResource[]> {
   const rows = await prisma.article.findMany({
-    where: visibleArticleWhere(),
+    where: { ...visibleArticleWhere(), images: { some: {} } },
     select: { slug: true, updatedAt: true },
     orderBy: { updatedAt: 'desc' },
     take: SITEMAP_MAX_ARTICLES,
@@ -165,5 +188,8 @@ export async function listSitemapBrands(): Promise<SitemapResource[]> {
 
   return rows
     .filter((row) => row._count.articles > 0)
-    .map((row) => ({ path: `/marque/${row.slug}`, lastModified: row.updatedAt }))
+    .map((row) => ({
+      path: `/marque/${row.slug}`,
+      lastModified: row.updatedAt,
+    }))
 }

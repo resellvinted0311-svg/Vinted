@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { isAuthConfigured } from '@/lib/config/site'
 import { PasswordResetRequestForm } from '@/components/shop/password-reset-forms'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,7 @@ export async function generateMetadata({
     title: t('reset.requestTitle'),
     // Ni indexée ni suivie : cette page n'a rien à faire dans un moteur, et
     // les liens qu'elle porte encore moins.
-    robots: { index: false, follow: false },
+    ...PAGE_PRIVEE,
   }
 }
 
@@ -63,7 +64,10 @@ export default async function PasswordResetRequestPage({
       )}
 
       <p className="mt-8 text-xs text-muted">
-        <Link href="/connexion" className="text-ink underline underline-offset-4">
+        <Link
+          href="/connexion"
+          className="text-ink underline underline-offset-4"
+        >
           {t('reset.backToSignIn')}
         </Link>
       </p>

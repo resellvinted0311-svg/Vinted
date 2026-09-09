@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { readCartOwner } from '@/lib/shop/cart'
 import { listOrders } from '@/lib/db/queries/orders'
 import { OrderRegisterRow } from '@/components/shop/order/order-register-row'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'order' })
-  return { title: t('registerTitle'), robots: { index: false, follow: false } }
+  return { title: t('registerTitle'), ...PAGE_PRIVEE }
 }
 
 /**

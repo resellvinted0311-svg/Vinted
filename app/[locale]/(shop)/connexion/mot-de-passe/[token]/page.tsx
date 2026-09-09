@@ -5,6 +5,7 @@ import { Link } from '@/lib/i18n/navigation'
 import { Notice } from '@/components/ui/notice'
 import { lookupPasswordReset } from '@/lib/auth/password-reset'
 import { PasswordResetForm } from '@/components/shop/password-reset-forms'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,7 +20,7 @@ export async function generateMetadata({
     title: t('reset.setTitle'),
     // `follow: false` compte autant qu'`index: false` ici : l'URL PORTE le
     // jeton. Une page suivie enverrait un robot le consommer.
-    robots: { index: false, follow: false },
+    ...PAGE_PRIVEE,
   }
 }
 
@@ -93,7 +94,10 @@ export default async function PasswordResetPage({
       )}
 
       <p className="mt-8 text-xs text-muted">
-        <Link href="/connexion" className="text-ink underline underline-offset-4">
+        <Link
+          href="/connexion"
+          className="text-ink underline underline-offset-4"
+        >
           {t('reset.backToSignIn')}
         </Link>
       </p>

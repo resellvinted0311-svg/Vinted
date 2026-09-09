@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { setRequestLocale, getTranslations } from 'next-intl/server'
 import { UniversePage } from '@/components/shop/universe-page'
 import { localeAlternates } from '@/lib/i18n/alternates'
+import { descriptionCourte } from '@/lib/seo/metadata'
 
 /**
  * La vitrine « homme ».
@@ -21,9 +22,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'catalogue' })
+  const tSeo = await getTranslations({ locale, namespace: 'seo' })
 
   return {
     title: t('audiences.homme'),
+    description: descriptionCourte(
+      tSeo('universe', { audience: t('audiences.homme') }),
+    ),
     alternates: localeAlternates(locale, '/homme'),
   }
 }

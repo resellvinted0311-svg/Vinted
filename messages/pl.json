@@ -1158,5 +1158,13 @@
       "problemBody": "Jeżeli podany termin został przekroczony, prosimy o wiadomość na adres z noty prawnej wraz z numerem zamówienia. U przewoźnika wszczynane jest postępowanie wyjaśniające, a za zagubioną sztukę zwracana jest pełna kwota, wraz z kosztami dostawy.",
       "emptyGrid": "Cennik dostawy nie został jeszcze uzupełniony. Żadna stawka nie jest tu wyświetlana, dopóki nie można jej odczytać ze sklepu."
     }
+  },
+  "seo": {
+    "home": "Odzież z drugiej ręki wybierana sztuka po sztuce. Każdy artykuł jest unikatowy, wyprany, sprawdzony i zmierzony: raz sprzedany, nie wraca.",
+    "catalogue": "Wszystkie dostępne obecnie rzeczy, do filtrowania według rozmiaru, marki, koloru i stanu. Rzeczywiste wymiary w centymetrach podano przy każdej z nich.",
+    "universe": "Wybór {audience}: unikatowe rzeczy z drugiej ręki, wyprane, sprawdzone i zmierzone, wysyłane z Francji.",
+    "brand": "Dostępne rzeczy marki {brand} z drugiej ręki. Każda jest jedyna w swoim rodzaju, z rzeczywistymi wymiarami i stanem opisanym wprost.",
+    "category": "{category} z drugiej ręki, sztuka po sztuce. Rzeczywiste wymiary, opisany stan, wysyłka z Francji.",
+    "legalNotice": "Tożsamość wydawcy strony i dane kontaktowe sklepu wymagane prawem."
   }
 }

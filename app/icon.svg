@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Nina &amp; Diego">
+  <!--
+    L'icône du site.
+
+    Elle manquait : sans fichier, le navigateur demande /favicon.ico, reçoit la
+    page 404 du site, et affiche l'icône générique de page blanche — dans
+    l'onglet, dans les favoris, et dans la liste d'historique. Une boutique qui
+    n'a pas d'icône est une boutique qu'on ne retrouve pas parmi vingt onglets.
+
+    Le monogramme est l'esperluette, et non les initiales : à seize pixels de
+    côté, « N&D » n'est plus qu'une tache. Un seul signe reste lisible, et
+    celui-ci est le seul du nom qui ne soit pas une lettre commune.
+
+    Le filet intérieur est la grammaire de la charte — un objet est délimité
+    par son contour, jamais par un aplat. Les trois couleurs sont les jetons du
+    site (--ink, --sand, --ink-inverse), recopiés en dur parce qu'un fichier
+    servi tel quel ne traverse pas la feuille de style.
+  -->
+  <rect width="64" height="64" rx="10" fill="#10233a" />
+  <rect
+    x="5.75"
+    y="5.75"
+    width="52.5"
+    height="52.5"
+    rx="6"
+    fill="none"
+    stroke="#cfdaea"
+    stroke-width="1.5"
+    stroke-opacity="0.55"
+  />
+  <text
+    x="32"
+    y="45.5"
+    text-anchor="middle"
+    font-family="Georgia, 'Times New Roman', Times, serif"
+    font-size="40"
+    fill="#ffffff"
+  >&amp;</text>
+</svg>

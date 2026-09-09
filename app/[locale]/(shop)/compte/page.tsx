@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Link } from '@/lib/i18n/navigation'
 import { signOutAction } from '@/lib/auth/actions'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 /**
  * Rendu dynamique explicite.
@@ -24,7 +25,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'account' })
-  return { title: t('title'), robots: { index: false, follow: false } }
+  return { title: t('title'), ...PAGE_PRIVEE }
 }
 
 export default async function AccountPage({
@@ -91,7 +92,9 @@ export default async function AccountPage({
         <h1 className="text-xl">
           {t('greeting', { name: user.firstName ?? user.email })}
         </h1>
-        {user.role === 'ADMIN' ? <Badge tone="stamp">Administration</Badge> : null}
+        {user.role === 'ADMIN' ? (
+          <Badge tone="stamp">Administration</Badge>
+        ) : null}
       </div>
 
       <ul className="mt-8 grid gap-px overflow-hidden rounded-card ruled bg-sand sm:grid-cols-2">

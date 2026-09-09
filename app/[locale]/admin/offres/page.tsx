@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
-import { getTranslations, setRequestLocale, getFormatter } from 'next-intl/server'
+import {
+  getTranslations,
+  setRequestLocale,
+  getFormatter,
+} from 'next-intl/server'
 
 import { Link } from '@/lib/i18n/navigation'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +13,7 @@ import { requireAdmin } from '@/lib/auth/session'
 import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 import { listPendingOffers } from '@/lib/db/queries/admin-offers'
 import { formatPrice, formatDate } from '@/lib/utils/format'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,7 +24,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'admin' })
-  return { title: t('offers'), robots: { index: false, follow: false } }
+  return { title: t('offers'), ...PAGE_PRIVEE }
 }
 
 /**
@@ -93,9 +98,15 @@ export default async function AdminOffersPage({
                   >
                     {offer.article.title}
                   </Link>
-                  <span className="data text-xs text-muted">{offer.article.sku}</span>
-                  {offer.article.isSold ? <Badge tone="sold">{t('sold')}</Badge> : null}
-                  {offer.lapsed ? <Badge tone="warning">{t('lapsed')}</Badge> : null}
+                  <span className="data text-xs text-muted">
+                    {offer.article.sku}
+                  </span>
+                  {offer.article.isSold ? (
+                    <Badge tone="sold">{t('sold')}</Badge>
+                  ) : null}
+                  {offer.lapsed ? (
+                    <Badge tone="warning">{t('lapsed')}</Badge>
+                  ) : null}
                 </div>
 
                 {/*
@@ -136,7 +147,9 @@ export default async function AdminOffersPage({
                 </p>
 
                 {offer.belowFloor ? (
-                  <p className="text-xs text-danger">{t('belowFloorWarning')}</p>
+                  <p className="text-xs text-danger">
+                    {t('belowFloorWarning')}
+                  </p>
                 ) : null}
 
                 <OfferResponseForm
@@ -164,7 +177,11 @@ function Figure({
   tone?: 'ink' | 'muted' | 'danger'
 }) {
   const color =
-    tone === 'ink' ? 'text-ink' : tone === 'danger' ? 'text-danger' : 'text-muted'
+    tone === 'ink'
+      ? 'text-ink'
+      : tone === 'danger'
+        ? 'text-danger'
+        : 'text-muted'
 
   return (
     <div className="flex flex-col">

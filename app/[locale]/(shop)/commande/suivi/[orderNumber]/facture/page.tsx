@@ -9,6 +9,7 @@ import { getOrder } from '@/lib/db/queries/orders'
 import { buildInvoice, LegalIdentityMissingError } from '@/lib/shop/invoice'
 import { InvoiceDocument } from '@/components/shop/order/invoice-document'
 import { PrintButton } from '@/components/shop/order/print-button'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +22,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: 'invoice' })
   return {
     title: `${t('title')} — ${orderNumber}`,
-    robots: { index: false, follow: false },
+    ...PAGE_PRIVEE,
   }
 }
 

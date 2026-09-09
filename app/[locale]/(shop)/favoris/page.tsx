@@ -9,6 +9,7 @@ import {
   ArticleGrid,
   GRID_IMAGE_SIZES,
 } from '@/components/shop/article-card'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 /** Dépend de la session boutique : jamais mis en cache. */
 export const dynamic = 'force-dynamic'
@@ -20,7 +21,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'favorites' })
-  return { title: t('title'), robots: { index: false, follow: false } }
+  return { title: t('title'), ...PAGE_PRIVEE }
 }
 
 export default async function FavoritesPage({

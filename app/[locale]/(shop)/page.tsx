@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import {
@@ -18,6 +19,8 @@ import { UniverseCards } from '@/components/shop/universe-cards'
 import { ArrivalsRail } from '@/components/shop/arrivals-rail'
 import { BranchPlate, SeedHeadPlate } from '@/components/shop/engraving'
 import { Reveal } from '@/components/motion/reveal'
+import { localeAlternates } from '@/lib/i18n/alternates'
+import { descriptionCourte } from '@/lib/seo/metadata'
 
 /**
  * Vitrine.
@@ -51,6 +54,32 @@ import { Reveal } from '@/components/motion/reveal'
  * l'échéance.
  */
 export const revalidate = 60
+
+/**
+ * L'accueil n'avait AUCUNE description à lui.
+ *
+ * Il héritait de celle de la mise en page — la baseline, cinq mots — comme
+ * toutes les autres pages du site. C'est-à-dire que la page la plus
+ * susceptible d'apparaître sur le nom de la boutique se présentait, dans les
+ * résultats, exactement comme la page cookies.
+ *
+ * Le canonique et les huit `hreflang` restaient corrects par héritage ; ils
+ * sont écrits ici quand même, par la fonction partagée, pour que la page ne
+ * dépende plus d'un réglage posé ailleurs pour être exacte.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'seo' })
+
+  return {
+    description: descriptionCourte(t('home')),
+    alternates: localeAlternates(locale, ''),
+  }
+}
 
 export default async function HomePage({
   params,

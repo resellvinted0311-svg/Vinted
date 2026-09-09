@@ -5,6 +5,8 @@ import { FavoritesProvider } from '@/components/shop/favorites-provider'
 import { NavigationProgress } from '@/components/shop/navigation-progress'
 import { SiteHeader } from '@/components/shop/site-header'
 import { SiteFooter } from '@/components/shop/site-footer'
+import { blocSite, blocOrganisation } from '@/lib/seo/structured-data'
+import { serializeJsonLd } from '@/lib/utils/json-ld'
 
 /**
  * La boutique : en-tête, contenu, pied de page.
@@ -44,9 +46,35 @@ export default async function ShopLayout({
 
   const t = await getTranslations('nav')
 
+  /*
+    Les deux blocs qui décrivent le SITE, et non une page.
+
+    Ils vivent dans la coque de la boutique plutôt que dans l'accueil : un
+    moteur n'entre pas toujours par l'accueil, et une fiche article isolée
+    n'avait, jusqu'ici, rien qui la rattache à une entité connue. Ils ne
+    couvrent en revanche pas la régie, qui n'est pas le site public.
+
+    `blocOrganisation` rend `null` tant que l'identité légale n'est pas
+    renseignée : la balise disparaît alors entièrement, plutôt que d'annoncer
+    une entreprise sans nom.
+  */
+  const organisation = blocOrganisation()
+
   return (
     <ToastProvider>
       <FavoritesProvider>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(blocSite(locale)),
+          }}
+        />
+        {organisation ? (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: serializeJsonLd(organisation) }}
+          />
+        ) : null}
         {/*
           Le fil d'attente d'une navigation, posé au-dessus de tout le reste.
 

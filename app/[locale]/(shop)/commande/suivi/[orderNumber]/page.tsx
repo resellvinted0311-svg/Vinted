@@ -6,6 +6,7 @@ import { Notice } from '@/components/ui/notice'
 import { readCartOwner } from '@/lib/shop/cart'
 import { getOrder } from '@/lib/db/queries/orders'
 import { OrderDetailView } from '@/components/shop/order/order-detail-view'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: 'order' })
   return {
     title: t('detailTitle', { orderNumber }),
-    robots: { index: false, follow: false },
+    ...PAGE_PRIVEE,
   }
 }
 

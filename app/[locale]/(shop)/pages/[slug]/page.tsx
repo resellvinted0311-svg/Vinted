@@ -9,6 +9,7 @@ import {
   type PageSlug,
 } from '@/lib/config/pages'
 import { locales, localeTags } from '@/lib/i18n/routing'
+import { descriptionCourte } from '@/lib/seo/metadata'
 import { PrivacyRegister } from '@/components/shop/privacy-register'
 import { getSettings } from '@/lib/config/settings'
 import { getShippingGrids } from '@/lib/db/queries/shipping'
@@ -49,6 +50,36 @@ const TITLE_KEY: Record<PageSlug, string> = {
   'a-propos': 'about',
 }
 
+/**
+ * La phrase qui DÉCRIT chaque page fixe, prise dans son propre texte.
+ *
+ * Ces huit pages n'avaient aucune description : elles héritaient donc de celle
+ * de la mise en page — la baseline du site, cinq mots, à l'identique sur
+ * toutes. Huit pages qui se présentent pareil sont huit pages que le moteur
+ * traite comme interchangeables.
+ *
+ * Aucune de ces phrases n'est écrite ici : chacune est la première ligne que
+ * la page affiche déjà, dans la langue affichée. C'est délibéré, et c'est ce
+ * qui les garde exactes — une description rédigée à part cesse de dire la
+ * vérité le jour où la page change, sans que rien ne le signale. Seules les
+ * mentions légales font exception : leur contenu est un tableau d'identité,
+ * pas une phrase, donc il n'y a rien à réutiliser.
+ *
+ * Le nom du fichier de messages est porté avec la clé : ces textes vivent dans
+ * quatre espaces de noms différents, et un chemin en dur ici pointerait vers
+ * la mauvaise racine.
+ */
+const DESCRIPTION_KEY: Record<PageSlug, { namespace: string; key: string }> = {
+  'mentions-legales': { namespace: 'seo', key: 'legalNotice' },
+  cgv: { namespace: 'legal', key: 'terms.intro' },
+  confidentialite: { namespace: 'privacy', key: 'intro' },
+  cookies: { namespace: 'legal', key: 'cookies.intro' },
+  livraison: { namespace: 'legal', key: 'shipping.intro' },
+  retours: { namespace: 'footer', key: 'withdrawalNotice' },
+  contact: { namespace: 'footer', key: 'contactIntro' },
+  'a-propos': { namespace: 'home', key: 'intro' },
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -63,8 +94,12 @@ export async function generateMetadata({
   )
   languages['x-default'] = `/fr/pages/${slug}`
 
+  const { namespace, key } = DESCRIPTION_KEY[slug]
+  const tDescription = await getTranslations({ locale, namespace })
+
   return {
     title: t(TITLE_KEY[slug]),
+    description: descriptionCourte(tDescription(key)),
     alternates: { canonical: `/${locale}/pages/${slug}`, languages },
   }
 }

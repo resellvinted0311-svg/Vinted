@@ -10,6 +10,7 @@ import { isStripeConfigured } from '@/lib/payments/stripe'
 import { areTermsPublished } from '@/lib/config/pages'
 import { localeTags, type Locale } from '@/lib/i18n/routing'
 import { CheckoutForm } from '@/components/shop/checkout/checkout-form'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 /** Dépend du panier et de la session : jamais mis en cache. */
 export const dynamic = 'force-dynamic'
@@ -21,7 +22,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'checkout' })
-  return { title: t('title'), robots: { index: false, follow: false } }
+  return { title: t('title'), ...PAGE_PRIVEE }
 }
 
 /**

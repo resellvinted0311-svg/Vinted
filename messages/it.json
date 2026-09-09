@@ -1158,5 +1158,13 @@
       "problemBody": "Se il termine indicato è superato, scriveteci all’indirizzo delle note legali con il numero d’ordine. Viene aperta un’indagine presso il vettore e un capo smarrito è rimborsato integralmente, spese di consegna comprese.",
       "emptyGrid": "Il listino di consegna non è ancora stato compilato. Nessuna tariffa è visualizzata qui finché non può essere letta dal negozio."
     }
+  },
+  "seo": {
+    "home": "Abbigliamento di seconda mano scelto pezzo per pezzo. Ogni capo è unico, lavato, controllato e misurato: una volta venduto, non torna.",
+    "catalogue": "Tutti i capi attualmente online, filtrabili per taglia, marca, colore e condizione. Le misure reali in centimetri sono indicate su ogni scheda.",
+    "universe": "La selezione {audience}: capi di seconda mano unici, lavati, controllati e misurati, spediti dalla Francia.",
+    "brand": "I capi {brand} disponibili di seconda mano. Ogni articolo è unico, con le sue misure reali e le condizioni descritte senza giri di parole.",
+    "category": "{category} di seconda mano, pezzo per pezzo. Misure reali, condizioni descritte, spedizione dalla Francia.",
+    "legalNotice": "Identità dell’editore del sito e recapiti legali della boutique."
   }
 }

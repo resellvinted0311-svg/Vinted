@@ -8,6 +8,7 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { listOffers } from '@/lib/db/queries/offers'
 import { offerNeedsAttention } from '@/lib/domain/offers'
 import { OfferRegisterRow } from '@/components/shop/offer/offer-register-row'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'offers' })
-  return { title: t('registerTitle'), robots: { index: false, follow: false } }
+  return { title: t('registerTitle'), ...PAGE_PRIVEE }
 }
 
 /**
@@ -71,7 +72,9 @@ export default async function AccountOffersPage({
         règle qui explique tout le reste de la page, y compris pourquoi une
         offre acceptée peut se retrouver « sans objet ».
       */}
-      <p className="mt-3 max-w-prose text-sm text-muted">{t('registerIntro')}</p>
+      <p className="mt-3 max-w-prose text-sm text-muted">
+        {t('registerIntro')}
+      </p>
 
       {ordered.length === 0 ? (
         <div className="mt-8 rounded-card ruled bg-surface p-8">

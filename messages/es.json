@@ -1158,5 +1158,13 @@
       "problemBody": "Si se supera el plazo anunciado, escríbanos a la dirección del aviso legal indicando el número de pedido. Se abre una investigación ante el transportista, y una pieza perdida se reembolsa íntegramente, gastos de envío incluidos.",
       "emptyGrid": "El baremo de envío aún no está cumplimentado. Aquí no se muestra ninguna tarifa mientras no pueda leerse desde la tienda."
     }
+  },
+  "seo": {
+    "home": "Ropa de segunda mano seleccionada pieza a pieza. Cada artículo es único, lavado, revisado y medido: una vez vendido, no vuelve.",
+    "catalogue": "Todas las piezas en línea, filtrables por talla, marca, color y estado. Las medidas reales en centímetros figuran en cada ficha.",
+    "universe": "La selección {audience}: piezas de segunda mano únicas, lavadas, revisadas y medidas, enviadas desde Francia.",
+    "brand": "Las piezas {brand} disponibles de segunda mano. Cada artículo es único, con sus medidas reales y su estado descrito sin rodeos.",
+    "category": "{category} de segunda mano, pieza a pieza. Medidas reales, estado descrito, envío desde Francia.",
+    "legalNotice": "Identidad del editor del sitio y datos legales de la tienda."
   }
 }

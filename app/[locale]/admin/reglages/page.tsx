@@ -6,6 +6,7 @@ import { requireAdmin } from '@/lib/auth/session'
 import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 import { prisma } from '@/lib/db/client'
 import { EDITABLE_SETTINGS, findMissingSettings } from '@/lib/config/settings'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'admin' })
-  return { title: t('settings.title'), robots: { index: false, follow: false } }
+  return { title: t('settings.title'), ...PAGE_PRIVEE }
 }
 
 /**

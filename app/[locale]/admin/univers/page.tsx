@@ -10,6 +10,7 @@ import {
   countUnqualified,
 } from '@/lib/db/queries/admin-audiences'
 import { AudienceWorklist } from '@/components/admin/audience-worklist'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +21,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'admin' })
-  return { title: t('audiences.title'), robots: { index: false, follow: false } }
+  return { title: t('audiences.title'), ...PAGE_PRIVEE }
 }
 
 /**
@@ -106,7 +107,10 @@ export default async function AdminAudiencesPage({
       */}
       <p className="mt-2 max-w-prose text-sm text-muted">{t('whyItMatters')}</p>
 
-      <nav className="mt-6 flex flex-wrap gap-x-4 gap-y-2" aria-label={t('filterLabel')}>
+      <nav
+        className="mt-6 flex flex-wrap gap-x-4 gap-y-2"
+        aria-label={t('filterLabel')}
+      >
         <FilterLink href={lien({})} active={categoryId === undefined}>
           {t('allCategories')}
         </FilterLink>

@@ -1158,5 +1158,13 @@
       "problemBody": "Se o prazo anunciado for ultrapassado, escreva-nos para o endereço das menções legais, indicando o número de encomenda. É aberto um inquérito junto da transportadora, e uma peça perdida é integralmente reembolsada, incluindo os custos de entrega.",
       "emptyGrid": "A tabela de entrega ainda não está preenchida. Não é aqui apresentada qualquer tarifa enquanto não puder ser lida a partir da loja."
     }
+  },
+  "seo": {
+    "home": "Roupa em segunda mão escolhida peça a peça. Cada artigo é único, lavado, verificado e medido: depois de vendido, não volta.",
+    "catalogue": "Todas as peças atualmente online, filtráveis por tamanho, marca, cor e estado. As medidas reais em centímetros constam de cada ficha.",
+    "universe": "A seleção {audience}: peças de segunda mão únicas, lavadas, verificadas e medidas, enviadas de França.",
+    "brand": "As peças {brand} disponíveis em segunda mão. Cada artigo é único, com as suas medidas reais e o estado descrito sem rodeios.",
+    "category": "{category} em segunda mão, peça a peça. Medidas reais, estado descrito, envio de França.",
+    "legalNotice": "Identidade do editor do site e contactos legais da loja."
   }
 }

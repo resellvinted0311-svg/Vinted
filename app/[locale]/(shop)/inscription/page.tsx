@@ -4,6 +4,7 @@ import { redirect, Link } from '@/lib/i18n/navigation'
 import { getCurrentUser } from '@/lib/auth/session'
 import { isAuthConfigured } from '@/lib/config/site'
 import { SignUpForm } from '@/components/shop/sign-up-form'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 /** Lit la session pour rediriger une personne déjà connectée. */
 export const dynamic = 'force-dynamic'
@@ -17,7 +18,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: 'auth' })
   return {
     title: t('signUpTitle'),
-    robots: { index: false, follow: false },
+    ...PAGE_PRIVEE,
   }
 }
 

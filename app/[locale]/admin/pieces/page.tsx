@@ -6,6 +6,7 @@ import { requireAdmin } from '@/lib/auth/session'
 import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 import { listOwnArticles } from '@/lib/db/queries/admin-articles'
 import { formatPrice, formatDate } from '@/lib/utils/format'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'admin' })
-  return { title: t('articles.title'), robots: { index: false, follow: false } }
+  return { title: t('articles.title'), ...PAGE_PRIVEE }
 }
 
 /**
@@ -83,7 +84,10 @@ export default async function AdminArticlesPage({
       ) : (
         <ul className="mt-8 divide-y divide-sand border-y-[1.5px] border-rule">
           {articles.map((article) => (
-            <li key={article.id} className="flex flex-wrap items-center gap-4 py-4">
+            <li
+              key={article.id}
+              className="flex flex-wrap items-center gap-4 py-4"
+            >
               {article.thumbnailUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

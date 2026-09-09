@@ -1158,5 +1158,13 @@
       "problemBody": "Ist die angegebene Frist überschritten, schreiben Sie uns unter Angabe der Bestellnummer an die im Impressum genannte Adresse. Beim Transportunternehmen wird ein Nachforschungsauftrag eröffnet, und ein verlorenes Stück wird vollständig erstattet, einschließlich der Versandkosten.",
       "emptyGrid": "Die Versandtariftabelle ist noch nicht hinterlegt. Hier wird kein Tarif angezeigt, solange er nicht aus dem Shop gelesen werden kann."
     }
+  },
+  "seo": {
+    "home": "Second-Hand-Kleidung, Stück für Stück ausgesucht. Jedes Teil ist ein Einzelstück, gewaschen, geprüft und vermessen: einmal verkauft, kommt es nicht wieder.",
+    "catalogue": "Alle derzeit online verfügbaren Teile, filterbar nach Größe, Marke, Farbe und Zustand. Die tatsächlichen Maße in Zentimetern stehen auf jeder Seite.",
+    "universe": "Die Auswahl {audience}: einzigartige Second-Hand-Teile, gewaschen, geprüft und vermessen, Versand aus Frankreich.",
+    "brand": "Die verfügbaren {brand}-Teile aus zweiter Hand. Jedes Stück ist ein Unikat, mit tatsächlichen Maßen und offen beschriebenem Zustand.",
+    "category": "{category} aus zweiter Hand, Stück für Stück. Tatsächliche Maße, beschriebener Zustand, Versand aus Frankreich.",
+    "legalNotice": "Identität des Seitenbetreibers und rechtliche Kontaktdaten des Shops."
   }
 }

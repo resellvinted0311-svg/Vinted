@@ -4,6 +4,7 @@ import { parseCatalogueSearchParams } from '@/lib/validation/catalogue'
 import { CatalogueView } from '@/components/shop/catalogue-view'
 import { SITE } from '@/lib/config/site'
 import { locales, localeTags } from '@/lib/i18n/routing'
+import { descriptionCourte } from '@/lib/seo/metadata'
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
 
@@ -14,6 +15,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'catalogue' })
+  const tSeo = await getTranslations({ locale, namespace: 'seo' })
 
   const languages = Object.fromEntries(
     locales.map((l) => [localeTags[l], `/${l}/catalogue`]),
@@ -22,6 +24,7 @@ export async function generateMetadata({
 
   return {
     title: t('title'),
+    description: descriptionCourte(tSeo('catalogue')),
     alternates: {
       // Canonical sans paramètres : les combinaisons de filtres ne doivent
       // pas concurrencer la page de base dans l'index.

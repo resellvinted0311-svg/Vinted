@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { InventorySync } from '@/components/admin/inventory-sync'
 import { requireAdmin } from '@/lib/auth/session'
 import { handleAdminAuthError } from '@/lib/auth/admin-guard'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'admin' })
-  return { title: t('inventory.title'), robots: { index: false, follow: false } }
+  return { title: t('inventory.title'), ...PAGE_PRIVEE }
 }
 
 /**

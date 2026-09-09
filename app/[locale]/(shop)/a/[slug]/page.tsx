@@ -79,6 +79,10 @@ export async function generateMetadata({
     // `follow` reste vrai : les liens de la fiche continuent d'irriguer le
     // catalogue. Et l'exclusion se lève d'elle-même — la première photo ajoutée
     // rend la page indexable au rendu suivant, sans rien à se rappeler.
+    //
+    // `lib/db/queries/sitemap.ts` applique la MÊME condition : le plan de site
+    // les listait toutes, donc il invitait les robots sur des pages qui leur
+    // répondent « ne m'indexe pas ». Les deux endroits doivent bouger ensemble.
     robots: { index: cover !== undefined, follow: true },
   }
 }

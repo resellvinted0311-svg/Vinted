@@ -6,6 +6,7 @@ import { Link } from '@/lib/i18n/navigation'
 import { getCurrentUser } from '@/lib/auth/session'
 import { isAuthConfigured } from '@/lib/config/site'
 import { SignInForm } from '@/components/shop/sign-in-form'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 /** Lit la session pour rediriger une personne déjà connectée. */
 export const dynamic = 'force-dynamic'
@@ -20,7 +21,7 @@ export async function generateMetadata({
   return {
     title: t('signInTitle'),
     // Une page de connexion n'a rien à faire dans un index.
-    robots: { index: false, follow: false },
+    ...PAGE_PRIVEE,
   }
 }
 
@@ -47,8 +48,8 @@ export default async function SignInPage({
       {!isAuthConfigured() ? (
         <p className="mt-6 rounded-card border-[1.5px] border-warning bg-paper-raised p-4 text-base text-muted">
           L’authentification n’est pas configurée sur ce déploiement : la
-          variable d’environnement <code>AUTH_SECRET</code> est absente.
-          La navigation et le catalogue fonctionnent normalement.
+          variable d’environnement <code>AUTH_SECRET</code> est absente. La
+          navigation et le catalogue fonctionnent normalement.
         </p>
       ) : null}
 

@@ -1158,5 +1158,13 @@
       "problemBody": "Si le délai annoncé est dépassé, écrivez-nous à l’adresse des mentions légales avec le numéro de commande. Une enquête est ouverte auprès du transporteur, et une pièce perdue est remboursée intégralement, frais de livraison compris.",
       "emptyGrid": "Le barème de livraison n’est pas encore renseigné. Aucun tarif n’est affiché ici tant qu’il ne peut pas être lu depuis la boutique."
     }
+  },
+  "seo": {
+    "home": "Des vêtements de seconde main chinés pièce par pièce. Chaque article est unique, lavé, contrôlé et mesuré : une fois vendu, il ne revient pas.",
+    "catalogue": "Toutes les pièces actuellement en ligne, à filtrer par taille, marque, couleur et état. Les mesures réelles en centimètres figurent sur chaque fiche.",
+    "universe": "La sélection {audience} : des pièces de seconde main uniques, lavées, contrôlées et mesurées, expédiées depuis la France.",
+    "brand": "Les pièces {brand} disponibles en seconde main. Chaque article est unique, avec ses mesures réelles et son état décrit sans détour.",
+    "category": "{category} en seconde main, pièce par pièce. Mesures réelles, état décrit, expédition depuis la France.",
+    "legalNotice": "Identité de l’éditeur du site et coordonnées légales de la boutique."
   }
 }

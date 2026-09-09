@@ -6,6 +6,7 @@ import { getBrandBySlug } from '@/lib/db/queries/taxonomy'
 import { CatalogueView } from '@/components/shop/catalogue-view'
 import { Breadcrumbs } from '@/components/shop/breadcrumbs'
 import { locales, localeTags } from '@/lib/i18n/routing'
+import { descriptionCourte } from '@/lib/seo/metadata'
 
 type Params = Promise<{ locale: string; brand: string }>
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
@@ -19,6 +20,8 @@ export async function generateMetadata({
   const brand = await getBrandBySlug(slug)
   if (!brand) return {}
 
+  const tSeo = await getTranslations({ locale, namespace: 'seo' })
+
   const languages = Object.fromEntries(
     locales.map((l) => [localeTags[l], `/${l}/marque/${slug}`]),
   )
@@ -26,6 +29,7 @@ export async function generateMetadata({
 
   return {
     title: brand.name,
+    description: descriptionCourte(tSeo('brand', { brand: brand.name })),
     alternates: { canonical: `/${locale}/marque/${slug}`, languages },
   }
 }

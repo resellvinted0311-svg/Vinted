@@ -8,6 +8,7 @@ import {
   MarketingConsentForm,
   EraseAccountForm,
 } from '@/components/shop/my-data-forms'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 /** Lit la session et l'état du consentement : jamais mis en cache. */
 export const dynamic = 'force-dynamic'
@@ -19,7 +20,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'privacy' })
-  return { title: t('myData.title'), robots: { index: false, follow: false } }
+  return { title: t('myData.title'), ...PAGE_PRIVEE }
 }
 
 /**

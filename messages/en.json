@@ -1158,5 +1158,13 @@
       "problemBody": "If the stated time has been exceeded, write to us at the address in the legal notice, quoting the order number. An enquiry is opened with the carrier, and a lost item is refunded in full, including delivery charges.",
       "emptyGrid": "The delivery rate table has not yet been filled in. No charge is displayed here for as long as it cannot be read from the shop."
     }
+  },
+  "seo": {
+    "home": "Second-hand clothing sourced piece by piece. Every item is unique, washed, checked and measured: once sold, it does not come back.",
+    "catalogue": "Every piece currently online, filterable by size, brand, colour and condition. Real measurements in centimetres are given on each listing.",
+    "universe": "The {audience} selection: unique second-hand pieces, washed, checked and measured, shipped from France.",
+    "brand": "The {brand} pieces available second-hand. Every item is unique, with its real measurements and its condition described plainly.",
+    "category": "{category} second-hand, piece by piece. Real measurements, condition described, shipped from France.",
+    "legalNotice": "The site publisher’s identity and the shop’s legal contact details."
   }
 }

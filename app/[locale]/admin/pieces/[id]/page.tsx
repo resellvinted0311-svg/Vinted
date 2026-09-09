@@ -9,13 +9,17 @@ import {
   getOwnArticle,
   listLeafCategories,
 } from '@/lib/db/queries/admin-articles'
-import { availableListingActions, isEditable } from '@/lib/domain/article-listing'
+import {
+  availableListingActions,
+  isEditable,
+} from '@/lib/domain/article-listing'
 import { MAX_IMAGES } from '@/lib/validation/sync'
 import { ArticleForm } from '@/components/admin/article-form'
 import { ArticleImages } from '@/components/admin/article-images'
 import { ArticleListingForm } from '@/components/admin/article-listing-form'
 import { formatPrice } from '@/lib/utils/format'
 import { Notice } from '@/components/ui/notice'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +30,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'admin' })
-  return { title: t('articles.title'), robots: { index: false, follow: false } }
+  return { title: t('articles.title'), ...PAGE_PRIVEE }
 }
 
 /** Les centimes, tels qu'ils se saisissent : en euros, avec la virgule. */

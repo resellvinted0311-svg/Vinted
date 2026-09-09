@@ -9,6 +9,7 @@ import { CartLineRow } from '@/components/shop/cart-line-row'
 import { CartRemoveButton } from '@/components/shop/cart-remove-button'
 import { BlockedLinesNotice } from '@/components/shop/blocked-lines-notice'
 import { TotalsSheet } from '@/components/shop/totals-sheet'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 /** Dépend de la session boutique : jamais mis en cache. */
 export const dynamic = 'force-dynamic'
@@ -40,7 +41,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: 'cart' })
   // Le `noindex` est aussi posé par le middleware, en en-tête HTTP. Les deux :
   // l'un couvre la page rendue, l'autre couvre tout ce qui passe par là.
-  return { title: t('title'), robots: { index: false, follow: false } }
+  return { title: t('title'), ...PAGE_PRIVEE }
 }
 
 /**

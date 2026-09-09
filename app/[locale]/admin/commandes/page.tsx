@@ -7,6 +7,7 @@ import { requireAdmin } from '@/lib/auth/session'
 import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 import { listOrdersToFulfil } from '@/lib/db/queries/admin-orders'
 import { formatPrice, formatDate } from '@/lib/utils/format'
+import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'admin' })
-  return { title: t('orders'), robots: { index: false, follow: false } }
+  return { title: t('orders'), ...PAGE_PRIVEE }
 }
 
 /**
@@ -153,7 +154,9 @@ export default async function AdminOrdersPage({
                   */}
                   {order.customerNote ? (
                     <div className="mt-3 border-t border-sand pt-3">
-                      <p className="label-reg text-muted">{t('customerNote')}</p>
+                      <p className="label-reg text-muted">
+                        {t('customerNote')}
+                      </p>
                       <p className="mt-1 whitespace-pre-line text-sm text-ink">
                         {order.customerNote}
                       </p>

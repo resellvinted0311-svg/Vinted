@@ -9,6 +9,8 @@ import { ArticleCard, ArticleGrid, GRID_IMAGE_SIZES } from './article-card'
 import { CatalogueFiltersPanel } from './catalogue-filters'
 import { LoadMore } from './load-more'
 import { ActiveFilterChips } from './active-filter-chips'
+import { blocListe } from '@/lib/seo/structured-data'
+import { serializeJsonLd } from '@/lib/utils/json-ld'
 
 /**
  * Vue catalogue partagée.
@@ -177,8 +179,41 @@ export async function CatalogueView({
     ? filtersToSearchParams(filters, sort, page.nextCursor).toString()
     : null
 
+  /*
+    La grille, déclarée comme une LISTE ORDONNÉE de fiches.
+
+    Sans ce bloc, une page de rayon n'était pour un moteur qu'une suite de
+    liens dans une page — rien ne disait que ces liens FORMENT le contenu de la
+    page, ni dans quel ordre. C'est la forme sommaire/détail : la liste ne
+    porte que des adresses, chaque fiche pointée portant déjà son `Product`.
+
+    Ne sont listées que les pièces AVEC VISUEL, exactement comme le plan de
+    site : la fiche sans photo se met elle-même en `noindex`, et pointer une
+    liste vers une page qui refuse d'être indexée est une invitation sans
+    porte derrière.
+
+    Le bloc suit le premier lot seulement. « Voir la suite » ajoute des fiches
+    sans recharger la page : les décrire ici demanderait de réémettre le bloc
+    depuis le client, où il ne serait plus lu par personne — les moteurs
+    lisent le HTML rendu au serveur.
+  */
+  const listeStructuree = blocListe(
+    locale,
+    page.items
+      .filter((article) => article.images.length > 0)
+      .map((a) => a.slug),
+  )
+
   return (
     <div className="mx-auto max-w-[var(--colonne)] px-4 pb-24 pt-8 sm:px-6">
+      {listeStructuree ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(listeStructuree),
+          }}
+        />
+      ) : null}
       {/* En-tête de registre : le titre, puis le décompte détaché sous un
           filet plein. Le nombre est une donnée d'inventaire, il est donc
           composé comme telle et non comme un argument. */}

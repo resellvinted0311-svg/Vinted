@@ -8,6 +8,7 @@ import { Breadcrumbs } from '@/components/shop/breadcrumbs'
 import { CategoryBanner } from '@/components/shop/category-banner'
 import { bannerFor } from '@/lib/design/category-banners'
 import { locales, localeTags } from '@/lib/i18n/routing'
+import { descriptionCourte } from '@/lib/seo/metadata'
 
 type Params = Promise<{ locale: string; slug: string[] }>
 type SearchParams = Promise<Record<string, string | string[] | undefined>>
@@ -21,6 +22,8 @@ export async function generateMetadata({
   const category = await getCategoryByPath(slug, locale)
   if (!category) return {}
 
+  const tSeo = await getTranslations({ locale, namespace: 'seo' })
+
   const path = `/${locale}/c/${slug.join('/')}`
   const languages = Object.fromEntries(
     locales.map((l) => [localeTags[l], `/${l}/c/${slug.join('/')}`]),
@@ -29,7 +32,19 @@ export async function generateMetadata({
 
   return {
     title: category.seoTitle ?? category.name,
-    description: category.seoDescription ?? undefined,
+    /*
+      Le repli n'est PAS `undefined`.
+
+      Sans description, la page héritait de celle de la mise en page — la
+      baseline du site, cinq mots identiques sur toutes les pages. Un moteur
+      qui voit la même description sur trente rayons n'en garde aucune : il
+      compose l'extrait à partir du contenu de la page, c'est-à-dire ici d'une
+      grille de vignettes. La description rédigée à la main reste prioritaire ;
+      celle-ci prend le relais tant qu'il n'y en a pas.
+    */
+    description:
+      category.seoDescription ??
+      descriptionCourte(tSeo('category', { category: category.name })),
     alternates: { canonical: path, languages },
   }
 }

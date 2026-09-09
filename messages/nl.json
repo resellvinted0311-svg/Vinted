@@ -1158,5 +1158,13 @@
       "problemBody": "Is de aangekondigde termijn verstreken, schrijf ons dan op het adres uit de wettelijke vermeldingen, met het bestelnummer erbij. Er wordt een onderzoek bij de vervoerder geopend, en een verloren stuk wordt volledig terugbetaald, verzendkosten inbegrepen.",
       "emptyGrid": "Het tarievenschema voor de levering is nog niet ingevuld. Hier wordt geen enkel tarief weergegeven zolang het niet uit de winkel kan worden gelezen."
     }
+  },
+  "seo": {
+    "home": "Tweedehands kleding, stuk voor stuk uitgezocht. Elk artikel is uniek, gewassen, gecontroleerd en opgemeten: eenmaal verkocht, komt het niet terug.",
+    "catalogue": "Alle stukken die nu online staan, te filteren op maat, merk, kleur en staat. De echte maten in centimeters staan op elke pagina.",
+    "universe": "De selectie {audience}: unieke tweedehands stukken, gewassen, gecontroleerd en opgemeten, verzonden vanuit Frankrijk.",
+    "brand": "De beschikbare tweedehands stukken van {brand}. Elk artikel is uniek, met de echte maten en de staat zonder omwegen beschreven.",
+    "category": "{category} tweedehands, stuk voor stuk. Echte maten, staat beschreven, verzending vanuit Frankrijk.",
+    "legalNotice": "Identiteit van de uitgever van de site en de wettelijke contactgegevens van de winkel."
   }
 }
