@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db/client'
 import { redactStripeEvent } from '@/lib/payments/webhook-payload'
 import { stripe, isStripeConfigured } from '@/lib/payments/stripe'
 import { markOrderPaid, expireOrder } from '@/lib/shop/fulfilment'
+import { invaliderPiecesParId } from '@/lib/cache/invalidation'
 import { logger } from '@/lib/observability/logger'
 import { captureException } from '@/lib/observability/sentry'
 
@@ -195,8 +196,24 @@ async function handle(event: Stripe.Event): Promise<Record<string, unknown>> {
   }
 
   if (event.type === 'checkout.session.expired') {
-    const released = await expireOrder(orderId)
-    return { expired: released }
+    const resultat = await expireOrder(orderId)
+
+    /*
+      Les pièces rendues au catalogue sortent du cache TOUT DE SUITE.
+
+      Leur fiche affiche encore « en cours d'achat » : c'est une pièce
+      disponible que le site présente comme prise. Sur un stock à exemplaire
+      unique, c'est l'information qui fait renoncer.
+
+      Après la transaction, jamais dedans : `revalidatePath` n'est pas défait
+      par un `ROLLBACK`.
+    */
+    await invaliderPiecesParId(resultat.releasedArticleIds)
+
+    return {
+      expired: resultat.cancelled,
+      released: resultat.releasedArticleIds.length,
+    }
   }
 
   // checkout.session.completed
@@ -222,6 +239,21 @@ async function handle(event: Stripe.Event): Promise<Record<string, unknown>> {
     // vente de trois heures plus tard.
     paidAt: new Date(event.created * 1000),
   })
+
+  /*
+    LA VENTE. C'est le cas qui a motivé toute l'invalidation à la demande.
+
+    Sans elle, la fiche d'une pièce encaissée continuait d'afficher « ajouter
+    au panier » pendant une minute, et l'accueil de la compter dans ses
+    derniers arrivages. Personne ne pouvait l'acheter deux fois — le verrou de
+    stock est pris au paiement — mais quelqu'un pouvait la mettre au panier et
+    ne l'apprendre qu'à la caisse.
+
+    Placée AVANT le signalement d'un éventuel remboursement : ces deux gestes
+    sont indépendants, et purger le cache ne doit pas attendre qu'une remontée
+    d'erreur soit partie.
+  */
+  await invaliderPiecesParId(result.soldArticleIds)
 
   if (result.unfulfillableArticleIds.length > 0) {
     // L'argent est pris et une pièce est partie ailleurs. Consigné bruyamment :

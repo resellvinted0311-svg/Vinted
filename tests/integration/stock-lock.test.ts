@@ -133,7 +133,10 @@ describe('exclusion mutuelle', () => {
     await new Promise((resolve) => setTimeout(resolve, 300))
     attendreB.resolve()
 
-    const [resultatA, resultatB] = await Promise.all([transactionA, transactionB])
+    const [resultatA, resultatB] = await Promise.all([
+      transactionA,
+      transactionB,
+    ])
 
     expect(resultatA.ok).toBe(true)
     expect(resultatB.ok).toBe(false)
@@ -160,7 +163,10 @@ describe('exclusion mutuelle', () => {
               ttlMinutes: 15,
             }),
           )
-          .catch(() => ({ ok: false as const, unavailableArticleIds: [articleId] })),
+          .catch(() => ({
+            ok: false as const,
+            unavailableArticleIds: [articleId],
+          })),
       ),
     )
 
@@ -406,7 +412,7 @@ describe('balayage des réservations échues', () => {
       data: { reservedUntil: new Date(Date.now() - 60_000) },
     })
 
-    expect(await releaseExpiredStockLocks()).toBe(1)
-    expect(await releaseExpiredStockLocks()).toBe(0)
+    expect(await releaseExpiredStockLocks()).toHaveLength(1)
+    expect(await releaseExpiredStockLocks()).toHaveLength(0)
   })
 })

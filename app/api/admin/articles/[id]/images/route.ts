@@ -4,6 +4,7 @@ import { requireAdmin, AuthorizationError } from '@/lib/auth/session'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { addArticleImage } from '@/lib/articles/images'
 import { logger } from '@/lib/observability/logger'
+import { invaliderPiecesParId } from '@/lib/cache/invalidation'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -115,6 +116,21 @@ export async function POST(
       { status },
     )
   }
+
+  /*
+    La photo change la fiche, et la PREMIÈRE change davantage.
+
+    Une fiche sans visuel se met elle-même en `noindex` et le plan de site
+    l'écarte — décision écrite, motivée par l'arrivée en masse de pièces sans
+    photo. La première photographie lève cette exclusion : la fiche redevient
+    indexable et le plan de site doit l'annoncer.
+
+    Sans purge, la fiche restait vide une minute et le plan de site l'ignorait
+    une heure. On ne distingue pas la première photo des suivantes : la
+    purge coûte le même prix, et une condition de plus serait une condition de
+    plus à maintenir juste.
+  */
+  await invaliderPiecesParId([id])
 
   return NextResponse.json({
     imageId: result.imageId,

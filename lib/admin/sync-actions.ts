@@ -10,6 +10,7 @@ import {
   PullNotConfiguredError,
   type PullReport,
 } from '@/lib/sync/pull'
+import { invaliderVitrine } from '@/lib/cache/invalidation'
 
 /**
  * Lancer une synchronisation d'inventaire depuis la régie.
@@ -88,6 +89,21 @@ export async function pullInventaireAction(): Promise<AdminSyncState> {
      * fait, et on relancerait sans savoir.
      */
     const report = await pullInventaire({ budgetMs: 40_000 })
+
+    /*
+      La vitrine sort du cache : cet import vient d'écrire dans le catalogue.
+
+      Seule la vitrine, et pas les fiches une par une : un passage peut créer
+      ou mettre à jour des centaines de pièces, et `PullReport` ne rend pas
+      leurs slugs — il compte. Purger l'accueil, l'index des marques et le plan
+      de site couvre ce qu'on peut couvrir sans changer la forme du rapport ;
+      les fiches individuelles se rafraîchissent à leur échéance de soixante
+      secondes, ce qui est le comportement d'avant et non une régression.
+
+      Après `pullInventaire`, donc après ses transactions, et dans une Server
+      Action : les deux conditions pour que la purge soit légale et honnête.
+    */
+    invaliderVitrine()
 
     // Une entrée par PASSAGE, et sans aucun chiffre d'affaires ni prix : qui a
     // lancé une écriture de masse sur le catalogue, et quand.

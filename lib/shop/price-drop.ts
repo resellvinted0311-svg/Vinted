@@ -110,9 +110,9 @@ import { enqueueSyncEvents } from '@/lib/sync/outbound'
 export async function applyDuePriceDrops(
   now = new Date(),
   schedule?: AutoDropStage[],
-): Promise<number> {
+): Promise<string[]> {
   const stages = schedule ?? (await getAutoDropSchedule())
-  if (stages.length === 0) return 0
+  if (stages.length === 0) return []
 
   const firstStageDays = Math.min(...stages.map((stage) => stage.days))
   const oldEnough = new Date(now.getTime() - firstStageDays * DAY_MS)
@@ -139,7 +139,17 @@ export async function applyDuePriceDrops(
     orderBy: { publishedAt: 'asc' },
   })
 
-  let dropped = 0
+  /*
+    Les IDENTIFIANTS des pièces baissées, et plus seulement leur nombre.
+
+    Un prix qui change rend fausse la fiche en cache, et l'accueil avec elle.
+    L'appelant — la tâche planifiée — a besoin de savoir LESQUELLES purger.
+
+    La purge ne se fait pas ici : chaque baisse vit dans sa propre transaction,
+    et `revalidatePath` n'est pas défait par un `ROLLBACK`. On renvoie, et
+    l'appelant purge une fois tout écrit.
+  */
+  const baissees: string[] = []
 
   for (const article of candidates) {
     if (!article.publishedAt) continue
@@ -208,8 +218,8 @@ export async function applyDuePriceDrops(
       return true
     })
 
-    if (applied) dropped += 1
+    if (applied) baissees.push(article.id)
   }
 
-  return dropped
+  return baissees
 }

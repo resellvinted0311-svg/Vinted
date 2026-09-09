@@ -190,7 +190,7 @@ export async function releaseStockLocks(
  * Ne touche pas les articles vendus : leur `reservedUntil` a beau être passé,
  * ils ne redeviennent pas disponibles.
  */
-export async function releaseExpiredStockLocks(): Promise<number> {
+export async function releaseExpiredStockLocks(): Promise<string[]> {
   // La libération et sa remontée tiennent dans UNE transaction. Séparées, une
   // panne entre les deux laisserait la pièce libre ici et réservée dans
   // l'inventaire de l'application, sans que rien ne le signale — et l'écart ne
@@ -214,7 +214,20 @@ export async function releaseExpiredStockLocks(): Promise<number> {
       occurredAt: new Date(),
     })
 
-    return released.length
+    /*
+      Les IDENTIFIANTS, et plus seulement leur nombre.
+
+      Une pièce qui redevient disponible change ce qu'affiche sa fiche — « en
+      cours d'achat » disparaît — et la fiche est en cache. L'appelant, ici la
+      tâche planifiée, a besoin de savoir LESQUELLES pour les purger ; un
+      compte ne le lui dit pas.
+
+      L'invalidation ne se fait pas ici : `revalidatePath` n'est pas défait par
+      un `ROLLBACK`, et cette instruction vit dans une transaction. Purger
+      depuis l'intérieur ferait régénérer la page sur un état qui pourrait
+      n'avoir jamais existé.
+    */
+    return released.map((row) => row.id)
   })
 }
 

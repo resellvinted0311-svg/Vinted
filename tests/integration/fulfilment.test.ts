@@ -42,8 +42,13 @@ afterAll(async () => {
   await prisma.$disconnect()
 })
 
-async function makeArticle(suffix: string, status: 'AVAILABLE' | 'RESERVED' | 'SOLD' = 'RESERVED') {
-  const category = await prisma.category.findFirstOrThrow({ select: { id: true } })
+async function makeArticle(
+  suffix: string,
+  status: 'AVAILABLE' | 'RESERVED' | 'SOLD' = 'RESERVED',
+) {
+  const category = await prisma.category.findFirstOrThrow({
+    select: { id: true },
+  })
 
   return prisma.article.create({
     data: {
@@ -131,7 +136,12 @@ describe('marquer une commande payée', () => {
 
     const sold = await prisma.article.findUniqueOrThrow({
       where: { id: article.id },
-      select: { status: true, soldAt: true, reservedById: true, reservedUntil: true },
+      select: {
+        status: true,
+        soldAt: true,
+        reservedById: true,
+        reservedUntil: true,
+      },
     })
     expect(sold.status).toBe('SOLD')
     expect(sold.soldAt).not.toBeNull()
@@ -146,7 +156,11 @@ describe('marquer une commande payée', () => {
     const article = await makeArticle('a2')
     const order = await makeOrder('002', [article.id])
 
-    await markOrderPaid({ orderId: order.id, paymentIntentId: 'pi_1', paidAt: PAID_AT })
+    await markOrderPaid({
+      orderId: order.id,
+      paymentIntentId: 'pi_1',
+      paidAt: PAID_AT,
+    })
 
     const replay = await markOrderPaid({
       orderId: order.id,
@@ -205,10 +219,18 @@ describe('marquer une commande payée', () => {
     const taken = await makeArticle('a5', 'SOLD')
     const order = await makeOrder('004', [taken.id])
 
-    await markOrderPaid({ orderId: order.id, paymentIntentId: 'pi_3', paidAt: PAID_AT })
+    await markOrderPaid({
+      orderId: order.id,
+      paymentIntentId: 'pi_3',
+      paidAt: PAID_AT,
+    })
 
     const logged = await prisma.auditLog.findFirst({
-      where: { entity: 'Order', entityId: order.id, action: 'order.unfulfillable_lines' },
+      where: {
+        entity: 'Order',
+        entityId: order.id,
+        action: 'order.unfulfillable_lines',
+      },
       select: { after: true },
     })
 
@@ -219,7 +241,11 @@ describe('marquer une commande payée', () => {
 
   it('refuse une commande inexistante plutôt que d’échouer en silence', async () => {
     await expect(
-      markOrderPaid({ orderId: 'inexistante', paymentIntentId: null, paidAt: PAID_AT }),
+      markOrderPaid({
+        orderId: 'inexistante',
+        paymentIntentId: null,
+        paidAt: PAID_AT,
+      }),
     ).rejects.toThrow()
   })
 })
@@ -229,7 +255,7 @@ describe('expiration d’une commande', () => {
     const article = await makeArticle('b1')
     const order = await makeOrder('101', [article.id])
 
-    expect(await expireOrder(order.id)).toBe(true)
+    expect((await expireOrder(order.id)).cancelled).toBe(true)
 
     const released = await prisma.article.findUniqueOrThrow({
       where: { id: article.id },
@@ -253,8 +279,12 @@ describe('expiration d’une commande', () => {
     const article = await makeArticle('b2')
     const order = await makeOrder('102', [article.id])
 
-    await markOrderPaid({ orderId: order.id, paymentIntentId: 'pi_4', paidAt: PAID_AT })
-    expect(await expireOrder(order.id)).toBe(false)
+    await markOrderPaid({
+      orderId: order.id,
+      paymentIntentId: 'pi_4',
+      paidAt: PAID_AT,
+    })
+    expect((await expireOrder(order.id)).cancelled).toBe(false)
 
     const after = await prisma.order.findUniqueOrThrow({
       where: { id: order.id },
@@ -295,8 +325,8 @@ describe('balayage des commandes fantômes', () => {
       data: { createdAt: new Date(Date.now() - 4 * 3_600_000) },
     })
 
-    const cancelled = await expireStaleOrders(120)
-    expect(cancelled).toBeGreaterThanOrEqual(1)
+    const balayage = await expireStaleOrders(120)
+    expect(balayage.cancelled).toBeGreaterThanOrEqual(1)
 
     const after = await prisma.order.findUniqueOrThrow({
       where: { id: order.id },
@@ -335,7 +365,11 @@ describe('balayage des commandes fantômes', () => {
   it('ne touche pas à une commande déjà payée, même ancienne', async () => {
     const article = await makeArticle('c3')
     const order = await makeOrder('203', [article.id])
-    await markOrderPaid({ orderId: order.id, paymentIntentId: 'pi_9', paidAt: PAID_AT })
+    await markOrderPaid({
+      orderId: order.id,
+      paymentIntentId: 'pi_9',
+      paidAt: PAID_AT,
+    })
     await prisma.order.update({
       where: { id: order.id },
       data: { createdAt: new Date(Date.now() - 30 * 24 * 3_600_000) },
@@ -360,7 +394,7 @@ describe('paiement arrivé après une annulation', () => {
     const article = await makeArticle('d1')
     const order = await makeOrder('301', [article.id])
 
-    expect(await expireOrder(order.id)).toBe(true)
+    expect((await expireOrder(order.id)).cancelled).toBe(true)
 
     const result = await markOrderPaid({
       orderId: order.id,
@@ -402,7 +436,7 @@ describe('le stock ne se libère jamais à l’aveugle', () => {
       },
     })
 
-    expect(await expireOrder(abandoned.id)).toBe(true)
+    expect((await expireOrder(abandoned.id)).cancelled).toBe(true)
 
     const still = await prisma.article.findUniqueOrThrow({
       where: { id: article.id },
@@ -446,7 +480,7 @@ describe('le stock ne se libère jamais à l’aveugle', () => {
     const article = await makeArticle('e3')
     const order = await makeOrder('403', [article.id], null)
 
-    expect(await expireOrder(order.id)).toBe(true)
+    expect((await expireOrder(order.id)).cancelled).toBe(true)
 
     const still = await prisma.article.findUniqueOrThrow({
       where: { id: article.id },
@@ -466,7 +500,11 @@ describe('transitions concurrentes', () => {
     const order = await makeOrder('501', [article.id], OWNER)
 
     const [paid, expired] = await Promise.all([
-      markOrderPaid({ orderId: order.id, paymentIntentId: 'pi_12', paidAt: PAID_AT }),
+      markOrderPaid({
+        orderId: order.id,
+        paymentIntentId: 'pi_12',
+        paidAt: PAID_AT,
+      }),
       expireOrder(order.id),
     ])
 
@@ -477,7 +515,7 @@ describe('transitions concurrentes', () => {
 
     // Exactement une des deux transitions a eu lieu, et l'état est cohérent :
     // jamais « payée » et « annulée » à la fois.
-    expect([paid.applied, expired]).toContain(true)
+    expect([paid.applied, expired.cancelled]).toContain(true)
 
     if (after.status === 'PAID') {
       expect(after.paidAt).not.toBeNull()

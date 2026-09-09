@@ -4,6 +4,7 @@ import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { startCheckoutSchema } from '@/lib/validation/checkout'
 import { prepareCheckout, type CheckoutFailure } from '@/lib/shop/checkout'
+import { invaliderPiecesParId } from '@/lib/cache/invalidation'
 
 /**
  * Ouverture du tunnel de commande.
@@ -117,6 +118,21 @@ export async function startCheckoutAction(
         : {}),
     }
   }
+
+  /*
+    Les pièces réservées sortent du cache.
+
+    Le verrou vient de faire passer ces pièces en « en cours d'achat », et leur
+    fiche est en cache : sans purge, elle continue d'afficher « ajouter au
+    panier » pendant une minute sur une pièce que quelqu'un est en train de
+    payer. La deuxième personne l'ajoute, arrive à la caisse, et se fait
+    refuser — un aller-retour évitable sur un stock à exemplaire unique.
+
+    Ici et pas dans `prepareCheckout` : celui-ci écrit dans des transactions,
+    et `revalidatePath` n'est pas défait par un `ROLLBACK`. Une action serveur
+    est par ailleurs l'un des deux seuls contextes où l'appel est légal.
+  */
+  await invaliderPiecesParId(result.lockedArticleIds)
 
   return {
     status: 'ready',

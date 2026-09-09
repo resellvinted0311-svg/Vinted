@@ -101,6 +101,28 @@ export interface WorkerReport {
   claimed: number
   done: number
   failed: number
+  /**
+   * Pièces dont les visuels viennent d'arriver, par leur identifiant.
+   *
+   * ---------------------------------------------------------------------------
+   * Pourquoi la file doit rendre cette liste
+   * ---------------------------------------------------------------------------
+   * Le travail `article.images` est le seul de la file qui change une page
+   * PUBLIQUE, et il la change beaucoup : il attache les photographies, et il
+   * PUBLIE la pièce si le jeu est complet. C'est le moment où une fiche entre
+   * au catalogue et cesse d'être en `noindex` — la fiche sans visuel s'exclut
+   * elle-même de l'index, par une décision écrite.
+   *
+   * Or ce travail tourne dans la tâche planifiée, longtemps après l'import qui
+   * l'a inscrit. Sans cette liste, la fiche restait en cache SANS PHOTO
+   * jusqu'à son échéance, et le plan de site continuait d'ignorer une pièce
+   * devenue indexable.
+   *
+   * La file ne purge pas elle-même : `runJobs` est aussi appelée par
+   * `runJobNow`, hors de tout gestionnaire de route pour ce qui est des
+   * e-mails, et `revalidatePath` y lèverait. Elle renvoie, l'appelant décide.
+   */
+  articleIdsAvecVisuels: string[]
 }
 
 export async function runJobs(
@@ -115,6 +137,7 @@ export async function runJobs(
   let claimed = 0
   let done = 0
   let failed = 0
+  const articleIdsAvecVisuels: string[] = []
 
   while (Date.now() < deadline) {
     const jobs = await claimJobs(workerId, CHUNK, now)
@@ -124,7 +147,8 @@ export async function runJobs(
 
     for (const job of jobs) {
       try {
-        await runOne(job)
+        const touche = await runOne(job)
+        if (touche) articleIdsAvecVisuels.push(touche)
         await completeJob(job.id)
         done += 1
       } catch (error) {
@@ -144,14 +168,18 @@ export async function runJobs(
           // e-mail qui ne partira jamais, et personne ne s'en apercevrait.
           await captureException(error, {
             event: 'jobs.exhausted',
-            fields: { jobType: job.type, jobId: job.id, attempts: job.attempts },
+            fields: {
+              jobType: job.type,
+              jobId: job.id,
+              attempts: job.attempts,
+            },
           })
         }
       }
     }
   }
 
-  return { claimed, done, failed }
+  return { claimed, done, failed, articleIdsAvecVisuels }
 }
 
 /**
@@ -210,39 +238,72 @@ export async function runJobNow(id: string): Promise<boolean> {
   }
 }
 
-async function runOne(job: JobRecord): Promise<void> {
+/**
+ * L'identifiant de pièce porté par la charge utile d'un travail `article.images`.
+ *
+ * `fetchArticleImages` valide déjà cette charge et LÈVE si elle est illisible :
+ * arrivé ici, on sait qu'elle porte un `articleId`. On la relit quand même
+ * défensivement plutôt que de la forcer — la file est de la donnée persistée,
+ * qu'une version antérieure du code a pu écrire autrement.
+ */
+function articleIdDuTravail(payload: unknown): string | null {
+  if (typeof payload !== 'object' || payload === null) return null
+  const brut = (payload as { articleId?: unknown }).articleId
+  return typeof brut === 'string' && brut.length > 0 ? brut : null
+}
+
+/**
+ * Exécute un travail, et rend l'identifiant de la pièce qu'il a rendue
+ * publique — `null` pour tous les autres travaux.
+ *
+ * Seul `article.images` renvoie quelque chose : c'est le seul type de la file
+ * qui change une page en cache.
+ */
+async function runOne(job: JobRecord): Promise<string | null> {
   switch (job.type) {
     case 'order.confirmation':
-      return runOrderEmail(job, sendOrderConfirmation)
+      await runOrderEmail(job, sendOrderConfirmation)
+      return null
     case 'order.notify-shop':
-      return runOrderEmail(job, sendShopNotification)
+      await runOrderEmail(job, sendShopNotification)
+      return null
     case 'order.shipped':
-      return runShipmentNotice(job)
+      await runShipmentNotice(job)
+      return null
     case 'offer.acknowledge':
-      return runOfferEmail(job, sendOfferAcknowledgement)
+      await runOfferEmail(job, sendOfferAcknowledgement)
+      return null
     case 'offer.notify-shop':
-      return runOfferEmail(job, sendOfferShopNotice)
+      await runOfferEmail(job, sendOfferShopNotice)
+      return null
     // La réponse du vendeur emprunte le MÊME gabarit que l'accusé de dépôt :
     // il se compose déjà à partir du statut relu de l'offre, donc il dit
     // « acceptée » ou « refusée » sans rien avoir à lui apprendre.
     case 'offer.respond':
-      return runOfferEmail(job, sendOfferAcknowledgement)
+      await runOfferEmail(job, sendOfferAcknowledgement)
+      return null
     case 'auth.password-reset':
-      return runPasswordResetEmail(job)
+      await runPasswordResetEmail(job)
+      return null
     case 'sync.notify':
       // Une pièce effacée ou détachée de l'application renvoie `false` : le
       // travail est terminé, pas en échec. Tout le reste — application
       // indisponible, réponse non `2xx` — lève, et la file reprend selon
       // l'échelle annoncée au contrat.
       await runSyncNotify(job.payload)
-      return
-    case 'article.images':
-      // La valeur de retour ne sert qu'au diagnostic : ce qui compte est que
-      // le travail ne lève pas. Une pièce introuvable renvoie `null` et le
+      return null
+    case 'article.images': {
+      // La valeur de retour ne servait qu'au diagnostic : ce qui compte est
+      // que le travail ne lève pas. Une pièce introuvable renvoie `null` et le
       // travail est marqué terminé — réessayer cinq fois de télécharger les
       // photos d'un article effacé ne le fera pas réapparaître.
-      await fetchArticleImages(job.payload)
-      return
+      //
+      // Elle sert maintenant à une seconde chose : signaler que la fiche de
+      // cette pièce vient de changer, pour que l'appelant la purge du cache.
+      // Une pièce introuvable ne rend donc rien à purger, ce qui est exact.
+      const rapport = await fetchArticleImages(job.payload)
+      return rapport ? articleIdDuTravail(job.payload) : null
+    }
     default:
       // Type inconnu : probablement un travail inscrit par une version plus
       // récente du code, sur un déploiement en cours de bascule. On le laisse

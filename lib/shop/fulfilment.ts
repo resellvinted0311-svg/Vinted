@@ -292,10 +292,17 @@ export async function markOrderPaid(input: {
  * payable ne perd pas la vente — `markOrderPaid` rouvre une commande annulée —
  * mais produirait un aller-retour d'états inutile dans l'historique.
  */
+export interface StaleOrdersResult {
+  /** Commandes réellement annulées pendant ce passage. */
+  cancelled: number
+  /** Pièces rendues au catalogue, toutes commandes confondues. */
+  releasedArticleIds: string[]
+}
+
 export async function expireStaleOrders(
   graceMinutes: number,
   now = new Date(),
-): Promise<number> {
+): Promise<StaleOrdersResult> {
   const cutoff = new Date(now.getTime() - graceMinutes * 60_000)
 
   const stale = await prisma.order.findMany({
@@ -307,12 +314,34 @@ export async function expireStaleOrders(
   })
 
   let cancelled = 0
+  const releasedArticleIds: string[] = []
+
   for (const order of stale) {
-    if (await expireOrder(order.id)) cancelled += 1
+    const resultat = await expireOrder(order.id)
+    if (!resultat.cancelled) continue
+    cancelled += 1
+    releasedArticleIds.push(...resultat.releasedArticleIds)
   }
 
-  return cancelled
+  return { cancelled, releasedArticleIds }
 }
+
+/**
+ * Ce qu'une expiration a réellement fait.
+ *
+ * Le booléen d'avant ne disait que « la commande a-t-elle été annulée ». Il
+ * manquait la seconde moitié : QUELLES pièces sont retournées au catalogue.
+ * Leur fiche est en cache et elle affiche « en cours d'achat » ; sans la
+ * liste, l'appelant ne peut pas la purger.
+ */
+export interface ExpiryResult {
+  /** Faux si la commande avait déjà quitté l'attente de paiement. */
+  cancelled: boolean
+  /** Pièces réellement rendues au catalogue, par leur identifiant. */
+  releasedArticleIds: string[]
+}
+
+const RIEN_EXPIRE: ExpiryResult = { cancelled: false, releasedArticleIds: [] }
 
 /**
  * Abandonne une commande jamais payée et rend son stock.
@@ -320,8 +349,12 @@ export async function expireStaleOrders(
  * Ne touche jamais une commande déjà payée : un événement d'expiration peut
  * arriver APRÈS un paiement réussi, et il ne doit surtout pas défaire une
  * vente. La transition conditionnelle le garantit même en cas de simultanéité.
+ *
+ * N'invalide rien elle-même : `revalidatePath` n'est pas annulé par un
+ * `ROLLBACK`, et tout ce corps vit dans une transaction. Elle RENVOIE les
+ * pièces libérées, et l'appelant purge après validation.
  */
-export async function expireOrder(orderId: string): Promise<boolean> {
+export async function expireOrder(orderId: string): Promise<ExpiryResult> {
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
       where: { id: orderId },
@@ -332,7 +365,7 @@ export async function expireOrder(orderId: string): Promise<boolean> {
       },
     })
 
-    if (!order) return false
+    if (!order) return RIEN_EXPIRE
 
     // La transition EN PREMIER. Si un paiement vient de passer cette commande
     // en PAID, zéro ligne revient et l'on sort sans avoir touché au stock.
@@ -343,13 +376,15 @@ export async function expireOrder(orderId: string): Promise<boolean> {
       cancelledAt: new Date(),
     })
 
-    if (!moved) return false
+    if (!moved) return RIEN_EXPIRE
 
     // Sans propriétaire connu — commandes antérieures à cette colonne — on ne
     // libère RIEN. Libérer à l'aveugle risquerait de remettre en vente une
     // pièce que quelqu'un d'autre est en train de payer ; le balayage des
     // verrous expirés s'en chargera, lui, sans ce risque.
-    if (!order.lockOwnerId) return true
+    if (!order.lockOwnerId) {
+      return { cancelled: true, releasedArticleIds: [] }
+    }
 
     const articleIds = order.items.map((item) => item.articleId)
 
@@ -379,7 +414,10 @@ export async function expireOrder(orderId: string): Promise<boolean> {
       occurredAt: new Date(),
     })
 
-    return true
+    return {
+      cancelled: true,
+      releasedArticleIds: released.map((row) => row.id),
+    }
   })
 }
 

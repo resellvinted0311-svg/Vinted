@@ -6,6 +6,10 @@ import { expireStaleOrders } from '@/lib/shop/fulfilment'
 import { expireStaleOffers } from '@/lib/shop/offers'
 import { applyDuePriceDrops } from '@/lib/shop/price-drop'
 import { runJobs } from '@/lib/jobs/worker'
+import {
+  invaliderPiecesParId,
+  invaliderVitrine,
+} from '@/lib/cache/invalidation'
 import { captureException } from '@/lib/observability/sentry'
 import { logger } from '@/lib/observability/logger'
 import {
@@ -161,6 +165,54 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
   })()
 
+  /*
+    Ce que ce passage vient de rendre FAUX dans le cache, purgé maintenant.
+
+    ---------------------------------------------------------------------------
+    Pourquoi ici, et pas dans chacune des fonctions ci-dessus
+    ---------------------------------------------------------------------------
+    Les quatre travaux qui touchent au stock écrivent tous dans des
+    transactions. `revalidatePath` n'est pas défait par un `ROLLBACK` : purgé
+    depuis l'intérieur, on ferait régénérer une fiche sur un état qui pourrait
+    n'avoir jamais existé. Elles renvoient donc ce qu'elles ont touché, et la
+    purge a lieu ici — après, une seule fois, dans un gestionnaire de route où
+    `revalidatePath` est légal.
+
+    Les quatre listes sont réunies avant l'appel : la vitrine est purgée une
+    fois pour tout le passage, et une pièce touchée par deux travaux n'est
+    purgée qu'une fois.
+
+    Un travail en échec ne rend rien à purger — c'est exact : il n'a rien
+    écrit non plus.
+  */
+  const piecesChangees = [
+    ...(locks.status === 'fulfilled' ? locks.value : []),
+    ...(orders.status === 'fulfilled' ? orders.value.releasedArticleIds : []),
+    ...(drops.status === 'fulfilled' ? drops.value : []),
+    ...(jobs.status === 'fulfilled' ? jobs.value.articleIdsAvecVisuels : []),
+  ]
+
+  const fichesPurgees =
+    piecesChangees.length > 0
+      ? await invaliderPiecesParId(piecesChangees)
+      : /*
+          Aucune pièce touchée : la vitrine est purgée QUAND MÊME.
+
+          `expireStaleOffers` fait expirer des offres, et une offre expirée
+          rouvre la négociation sur la fiche. Elle ne renvoie pas d'articles —
+          elle travaille sur la table des offres — mais la fiche qu'elle
+          concerne est en cache. Purger la vitrine ne la couvre pas ; ce serait
+          une invalidation qui ment sur ce qu'elle protège, donc on n'en dit
+          rien de plus et le cas reste couvert par l'échéance de soixante
+          secondes.
+
+          Ce qui est purgé ici est plus simple : l'accueil et le plan de site,
+          dont le contenu dépend de l'heure — un lot programmé dont la date de
+          publication vient de passer entre au catalogue sans qu'aucune
+          écriture n'ait eu lieu.
+        */
+        (invaliderVitrine(), 0)
+
   // ---------------------------------------------------------------------------
   // Chaque échec est REMONTÉ, pas seulement journalisé
   // ---------------------------------------------------------------------------
@@ -195,11 +247,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     ok: [locks, purge, orders, offers, drops, jobs].every(
       (task) => task.status === 'fulfilled',
     ),
-    releasedLocks: locks.status === 'fulfilled' ? locks.value : null,
+    releasedLocks: locks.status === 'fulfilled' ? locks.value.length : null,
     purged: purge.status === 'fulfilled' ? purge.value : null,
-    expiredOrders: orders.status === 'fulfilled' ? orders.value : null,
+    expiredOrders:
+      orders.status === 'fulfilled' ? orders.value.cancelled : null,
     expiredOffers: offers.status === 'fulfilled' ? offers.value : null,
-    priceDrops: drops.status === 'fulfilled' ? drops.value : null,
+    priceDrops: drops.status === 'fulfilled' ? drops.value.length : null,
+    // Combien de fiches ont été sorties du cache pendant ce passage. Zéro avec
+    // des pièces touchées signifie que le plafond a joué : le journal porte
+    // alors `cache.invalidation_plafonnee`.
+    fichesPurgees,
     jobs: jobs.status === 'fulfilled' ? jobs.value : null,
     inventaire: pull,
     durationMs: Date.now() - startedAt,

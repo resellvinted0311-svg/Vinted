@@ -69,8 +69,13 @@ interface ArticleSeed {
   externalId?: string | null
 }
 
-async function makeArticle(suffix: string, seed: ArticleSeed = {}): Promise<string> {
-  const category = await prisma.category.findFirstOrThrow({ select: { id: true } })
+async function makeArticle(
+  suffix: string,
+  seed: ArticleSeed = {},
+): Promise<string> {
+  const category = await prisma.category.findFirstOrThrow({
+    select: { id: true },
+  })
   const status = seed.status ?? 'AVAILABLE'
   const reserved = status === 'RESERVED'
 
@@ -128,7 +133,7 @@ describe('application du barème', () => {
     const id = await makeArticle('p1', { daysOld: 35, priceCents: 2000 })
 
     const dropped = await applyDuePriceDrops(NOW, SCHEDULE)
-    expect(dropped).toBe(1)
+    expect(dropped).toHaveLength(1)
 
     const after = await readArticle(id)
     expect(after).toMatchObject({
@@ -192,7 +197,7 @@ describe('application du barème', () => {
     })
 
     const dropped = await applyDuePriceDrops(NOW, SCHEDULE)
-    expect(dropped).toBe(0)
+    expect(dropped).toHaveLength(0)
 
     const after = await readArticle(id)
     expect(after).toMatchObject({
@@ -205,8 +210,8 @@ describe('application du barème', () => {
   it('est idempotent : un second passage ne rebaisse rien', async () => {
     const id = await makeArticle('p6', { daysOld: 35, priceCents: 2000 })
 
-    expect(await applyDuePriceDrops(NOW, SCHEDULE)).toBe(1)
-    expect(await applyDuePriceDrops(NOW, SCHEDULE)).toBe(0)
+    expect((await applyDuePriceDrops(NOW, SCHEDULE)).length).toBe(1)
+    expect((await applyDuePriceDrops(NOW, SCHEDULE)).length).toBe(0)
 
     expect((await readArticle(id)).priceCents).toBe(1800)
   })
@@ -228,14 +233,14 @@ describe('application du barème', () => {
     const id = await makeArticle('p7', { daysOld: 35, priceCents: 2000 })
 
     const dropped = await applyDuePriceDrops(NOW)
-    expect(dropped).toBe(1)
+    expect(dropped).toHaveLength(1)
     expect((await readArticle(id)).priceCents).toBe(1800)
   })
 
   it('un barème vide désactive le balayage', async () => {
     const id = await makeArticle('p8', { daysOld: 200, priceCents: 2000 })
 
-    expect(await applyDuePriceDrops(NOW, [])).toBe(0)
+    expect((await applyDuePriceDrops(NOW, [])).length).toBe(0)
     expect((await readArticle(id)).priceCents).toBe(2000)
   })
 })
@@ -267,9 +272,7 @@ describe('validation du barème', () => {
         },
       })
 
-      await expect(getAutoDropSchedule()).rejects.toThrow(
-        /autoDropSchedule/,
-      )
+      await expect(getAutoDropSchedule()).rejects.toThrow(/autoDropSchedule/)
     } finally {
       await prisma.setting.update({
         where: { key: 'autoDropSchedule' },
@@ -302,11 +305,14 @@ describe('périmètre', () => {
     // SOLD : le prix est sur une facture. RESERVED : quelqu'un paie, carte en
     // main. DRAFT : pas de date de publication, donc pas d'âge.
     const sold = await makeArticle('s3', { daysOld: 70, status: 'SOLD' })
-    const reserved = await makeArticle('s4', { daysOld: 70, status: 'RESERVED' })
+    const reserved = await makeArticle('s4', {
+      daysOld: 70,
+      status: 'RESERVED',
+    })
     const draft = await makeArticle('s5', { status: 'DRAFT' })
 
     const dropped = await applyDuePriceDrops(NOW, SCHEDULE)
-    expect(dropped).toBe(0)
+    expect(dropped).toHaveLength(0)
 
     for (const id of [sold, reserved, draft]) {
       expect((await readArticle(id)).priceCents).toBe(2000)
@@ -326,7 +332,7 @@ describe('périmètre', () => {
     })
 
     const dropped = await applyDuePriceDrops(NOW, SCHEDULE)
-    expect(dropped).toBe(0)
+    expect(dropped).toHaveLength(0)
     expect((await readArticle(id)).priceCents).toBe(4000)
   })
 })
@@ -407,7 +413,7 @@ describe('remontée de la baisse', () => {
     // personne à prévenir. La baisse, elle, doit quand même s'appliquer.
     const id = await makeArticle('e2', { daysOld: 35, priceCents: 2000 })
 
-    expect(await applyDuePriceDrops(NOW, SCHEDULE)).toBe(1)
+    expect((await applyDuePriceDrops(NOW, SCHEDULE)).length).toBe(1)
     expect((await readArticle(id)).priceCents).toBe(1800)
     expect(await prisma.job.count({ where: { type: 'sync.notify' } })).toBe(0)
   })

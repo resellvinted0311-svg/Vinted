@@ -1,12 +1,10 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import { requireAdmin } from '@/lib/auth/session'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { parseAmountToCents } from '@/lib/domain/money'
-import { routing } from '@/lib/i18n/routing'
 import {
   createArticleSchema,
   updateArticleSchema,
@@ -22,6 +20,7 @@ import {
   type ArticleWriteInput,
 } from '@/lib/articles/persistence'
 import { reorderArticleImage } from '@/lib/articles/images'
+import { invaliderFiches, invaliderPiecesParId } from '@/lib/cache/invalidation'
 
 /**
  * Le catalogue, écrit depuis la régie.
@@ -110,28 +109,26 @@ function readFields(formData: FormData) {
  * confiance à sa locale pour décider si « 1.500 » vaut un euro cinquante ou
  * mille cinq cents euros.
  */
-function toWriteInput(
-  parsed: {
-    categoryId: string
-    brandName?: string | undefined
-    condition: ArticleWriteInput['condition']
-    sizeLabel: string
-    color?: ArticleWriteInput['color']
-    material?: ArticleWriteInput['material']
-    fit?: ArticleWriteInput['fit']
-    audience?: ArticleWriteInput['audience']
-    title: string
-    description?: string | undefined
-    priceEuros: string
-    costEuros: string
-    weightGrams: number
-    allowOffers: boolean
-    autoDropEnabled: boolean
-    sourcedFrom?: string | undefined
-    internalNotes?: string | undefined
-    measurements?: Partial<Record<MeasurementKey, string>> | undefined
-  },
-): ArticleWriteInput | { invalid: string } {
+function toWriteInput(parsed: {
+  categoryId: string
+  brandName?: string | undefined
+  condition: ArticleWriteInput['condition']
+  sizeLabel: string
+  color?: ArticleWriteInput['color']
+  material?: ArticleWriteInput['material']
+  fit?: ArticleWriteInput['fit']
+  audience?: ArticleWriteInput['audience']
+  title: string
+  description?: string | undefined
+  priceEuros: string
+  costEuros: string
+  weightGrams: number
+  allowOffers: boolean
+  autoDropEnabled: boolean
+  sourcedFrom?: string | undefined
+  internalNotes?: string | undefined
+  measurements?: Partial<Record<MeasurementKey, string>> | undefined
+}): ArticleWriteInput | { invalid: string } {
   const priceCents = parseAmountToCents(parsed.priceEuros)
   if (!Number.isFinite(priceCents)) return { invalid: 'invalidPrice' }
 
@@ -166,30 +163,30 @@ function toWriteInput(
     autoDropEnabled: parsed.autoDropEnabled,
     sourcedFrom: parsed.sourcedFrom,
     internalNotes: parsed.internalNotes,
-    measurements: Object.keys(measurements).length === 0 ? undefined : measurements,
+    measurements:
+      Object.keys(measurements).length === 0 ? undefined : measurements,
   }
 }
 
 /**
  * Invalidation NOMMÉE, jamais `revalidatePath('/', 'layout')`.
  *
- * Purger toute la mise en page racine effacerait les pages prérendues du site
- * entier. Sur un chemin ouvert au public, c'est un levier de déni de service ;
- * ici l'appelant est authentifié, mais la règle vaut quand même — le catalogue
- * cesserait d'être servi depuis le cache pour rien.
+ * ---------------------------------------------------------------------------
+ * Cette fonction faisait le travail à la main, et il lui manquait une page
+ * ---------------------------------------------------------------------------
+ * Elle énumérait `/{langue}`, `/{langue}/a/{slug}` et `/{langue}/marques`.
+ * C'était juste, et incomplet : `/sitemap.xml` est mis en cache une heure et
+ * il énumère les fiches. Une pièce mise en ligne depuis la régie n'y entrait
+ * donc pas avant une heure — sur un stock qui se vend en quelques semaines,
+ * c'est du temps pris sur la seule fenêtre de découverte.
  *
- * Ce qui est réellement en cache : l'accueil et la fiche article (soixante
- * secondes), la page des marques (cinq minutes, compteurs par maison). Le
- * catalogue et les pages de catégorie lisent `searchParams` et sont donc déjà
- * rendus à chaque requête — les invalider ne coûterait rien mais ne prouverait
- * rien non plus.
+ * Elle délègue désormais à `lib/cache/invalidation.ts`, qui porte la liste des
+ * pages RÉELLEMENT en cache, mesurée et non supposée, et le raisonnement qui
+ * va avec. Deux listes de chemins à tenir à jour en parallèle finissent par
+ * diverger, et c'est déjà ce qui s'était passé.
  */
 function revalidateArticle(slug: string): void {
-  for (const locale of routing.locales) {
-    revalidatePath(`/${locale}`)
-    revalidatePath(`/${locale}/a/${slug}`)
-    revalidatePath(`/${locale}/marques`)
-  }
+  invaliderFiches([slug])
 }
 
 async function guard(action: string): Promise<{ id: string } | null> {
@@ -284,8 +281,21 @@ export async function listArticleAction(
   const result = await applyListing(parsed.data.articleId, parsed.data.action)
   if (!result.ok) return ERROR(result.reason)
 
-  const slug = formData.get('slug')
-  if (typeof slug === 'string' && slug !== '') revalidateArticle(slug)
+  /*
+    Le slug vient du SERVEUR, plus du formulaire.
+
+    Il était lu dans `formData.get('slug')` : un champ absent du POST — un
+    formulaire modifié, une soumission fabriquée, un gabarit qui oublie le
+    champ caché — et la purge n'avait tout simplement pas lieu. Silencieusement :
+    la mise en ligne réussissait, la réponse était la même, et la pièce restait
+    invisible de l'accueil jusqu'à l'échéance.
+
+    C'était aussi une donnée cliente qui décidait quelles pages purger. Le
+    plafond de débit de `guard()` limitait la casse, mais le principe est le
+    même que partout ailleurs dans ce projet : l'identité d'une ressource ne se
+    lit pas dans ce que le navigateur envoie.
+  */
+  await invaliderPiecesParId([parsed.data.articleId])
 
   return {
     status: 'listed',
@@ -306,7 +316,10 @@ export async function reorderImageAction(
   })
   if (!parsed.success) return ERROR('invalidRequest')
 
-  const result = await reorderArticleImage(parsed.data.imageId, parsed.data.action)
+  const result = await reorderArticleImage(
+    parsed.data.imageId,
+    parsed.data.action,
+  )
   if (!result.ok) return ERROR(result.reason)
 
   const slug = formData.get('slug')

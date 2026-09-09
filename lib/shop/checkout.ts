@@ -75,6 +75,16 @@ export type CheckoutResult =
       totalCents: number
       /** Secret de la session de paiement, à remettre à Stripe.js. */
       clientSecret: string
+      /**
+       * Pièces que ce passage vient de RÉSERVER.
+       *
+       * Leur fiche est en cache et elle affiche encore « ajouter au panier »
+       * sur une pièce que quelqu'un est en train de payer. L'appelant — la
+       * Server Action — les purge après coup ; ce module ne le fait pas
+       * lui-même, il écrit dans des transactions et `revalidatePath` n'est pas
+       * défait par un `ROLLBACK`.
+       */
+      lockedArticleIds: string[]
     }
   | { ok: false; failure: CheckoutFailure }
 
@@ -600,6 +610,7 @@ export async function prepareCheckoutFor(
       orderNumber: order.orderNumber,
       totalCents: amounts.totalCents,
       clientSecret: session.client_secret,
+      lockedArticleIds: lines.map((line) => line.articleId),
     }
   } catch (error) {
     // La commande existe et le stock est verrouillé, mais aucun paiement ne

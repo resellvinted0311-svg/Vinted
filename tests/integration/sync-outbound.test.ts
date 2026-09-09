@@ -2,7 +2,10 @@ import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest'
 import { createHmac } from 'node:crypto'
 import { prisma } from '@/lib/db/client'
 import { markOrderPaid } from '@/lib/shop/fulfilment'
-import { releaseExpiredStockLocks, releaseStockLocks } from '@/lib/shop/stock-lock'
+import {
+  releaseExpiredStockLocks,
+  releaseStockLocks,
+} from '@/lib/shop/stock-lock'
 import { runSyncNotify, signSyncPayload } from '@/lib/sync/webhook'
 import { enqueueSyncEvents } from '@/lib/sync/outbound'
 
@@ -264,13 +267,16 @@ describe('inscription des remontées', () => {
       },
     })
 
-    const count = await releaseExpiredStockLocks()
-    expect(count).toBe(1)
+    const liberees = await releaseExpiredStockLocks()
+    expect(liberees).toHaveLength(1)
 
     const jobs = await syncJobs()
-    expect(jobs.some((job) => (job.payload as { articleId?: string }).articleId === articleId)).toBe(
-      true,
-    )
+    expect(
+      jobs.some(
+        (job) =>
+          (job.payload as { articleId?: string }).articleId === articleId,
+      ),
+    ).toBe(true)
   })
 
   it('n’inscrit rien deux fois pour la même pièce d’un même lot', async () => {

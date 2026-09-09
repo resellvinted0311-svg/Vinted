@@ -18,6 +18,7 @@ import {
   SYNC_RATE_LIMIT,
   SYNC_RATE_WINDOW_SECONDS,
 } from '@/lib/validation/sync'
+import { invaliderFiches } from '@/lib/cache/invalidation'
 
 /**
  * Import d'inventaire depuis l'application de gestion.
@@ -33,6 +34,30 @@ import {
  * Prisma, `node:crypto` et `sharp` en aval. Le temps d'exécution y est aussi
  * plus généreux, ce qui compte sur un lot de cent pièces.
  */
+
+/**
+ * Les pièces qu'un import vient de rendre — ou de rendre à nouveau — publiques.
+ *
+ * `dryRun` en est exclu par construction : un essai à blanc n'écrit rien, donc
+ * il n'y a rien à purger. `unchanged` aussi — l'application n'a rien changé,
+ * la boutique n'a rien touché, la page en cache est toujours juste. Et
+ * `rejected` n'a pas de slug.
+ *
+ * Une pièce CRÉÉE compte autant qu'une pièce mise à jour : elle entre dans les
+ * derniers arrivages de l'accueil, dans l'index des marques et dans le plan de
+ * site, tous mis en cache.
+ */
+function slugsAPurger(results: readonly SyncResult[]): string[] {
+  const slugs: string[] = []
+  for (const result of results) {
+    if (result.action !== 'created' && result.action !== 'updated') continue
+    if (typeof result.slug === 'string' && result.slug.length > 0) {
+      slugs.push(result.slug)
+    }
+  }
+  return slugs
+}
+
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
@@ -57,7 +82,6 @@ export const maxDuration = 60
  * pièces. Le reste paie la sérialisation de la réponse et son retour.
  */
 const BUDGET_MS = maxDuration * 1000 * 0.75
-
 
 /**
  * Corps accepté, dans trois formes.
@@ -238,6 +262,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const reportees = body.articles.length - traitees
+
+    /*
+      Les fiches touchées sortent du cache avant que la réponse ne parte.
+
+      Un import est le chemin par lequel une pièce APPARAÎT : sans purge, elle
+      n'entrait dans l'accueil, dans l'index des marques et dans le plan de
+      site qu'à l'échéance — jusqu'à une heure pour le dernier. Sur un stock
+      qui se vend en quelques semaines, une heure prise sur la fenêtre de
+      découverte est une heure perdue pour de bon.
+
+      `syncArticle` écrit dans ses propres transactions, toutes validées à ce
+      point : on est après, et dans un gestionnaire de route, les deux
+      conditions pour que `revalidatePath` soit légal et honnête.
+    */
+    await invaliderFiches(slugsAPurger(results))
 
     return NextResponse.json(
       {

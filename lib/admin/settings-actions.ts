@@ -10,6 +10,7 @@ import {
   writeSettings,
   type SettingKey,
 } from '@/lib/config/settings'
+import { invaliderReglages } from '@/lib/cache/invalidation'
 
 /**
  * Les réglages métier, modifiables depuis le back-office.
@@ -229,6 +230,34 @@ export async function updateSettingsAction(
       return ERROR('invalidValue', error.key)
     }
     throw error
+  }
+
+  /*
+    Les pages en cache que ces réglages viennent de rendre fausses.
+
+    ---------------------------------------------------------------------------
+    Le pire des deux cas est la page de CGV, et il ne se rattrapait pas seul
+    ---------------------------------------------------------------------------
+    Trois réglages éditables ici — le délai de réponse à une offre, la validité
+    d'un prix accepté, la durée d'une réservation — sont AFFICHÉS dans les
+    conditions générales de vente, qui les lisent en base au rendu. Or cette
+    page porte `generateStaticParams` et AUCUN `revalidate` : elle est
+    entièrement statique, donc figée jusqu'au prochain déploiement.
+
+    Sans cette purge, changer un délai contractuel depuis la régie laissait le
+    site publier l'ancien, indéfiniment. Ce n'est pas un retard d'affichage :
+    c'est une clause de vente qui ne correspond plus à ce que la boutique
+    applique, et c'est le genre d'écart qu'on ne découvre qu'en litige.
+
+    L'accueil est purgé pour une autre raison : la photographie d'arrivée et
+    les deux visuels d'univers se règlent ici aussi, et l'accueil est en cache
+    soixante secondes.
+
+    On purge sur `changedKeys` : réenregistrer le formulaire sans rien toucher
+    ne doit pas vider le cache du site.
+  */
+  if (changedKeys.length > 0) {
+    invaliderReglages(changedKeys)
   }
 
   return { status: 'done', changed: changedKeys.length }

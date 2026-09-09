@@ -11,7 +11,12 @@ import {
   deciderAppEvent,
   type AppRow,
 } from '@/lib/sync/app-event'
-import { loadSyncContext, syncArticle } from '@/lib/sync/articles'
+import {
+  loadSyncContext,
+  syncArticle,
+  type SyncResult,
+} from '@/lib/sync/articles'
+import { invaliderFiches } from '@/lib/cache/invalidation'
 import { codeDePanne } from '@/lib/sync/pull'
 import { authenticateSync } from '@/lib/sync/auth'
 import { traduire, type LigneInventaire } from '@/lib/sync/inventaire-app'
@@ -44,6 +49,30 @@ import { traduire, type LigneInventaire } from '@/lib/sync/inventaire-app'
  * « l'application pousse » ; ceci en est la forme réalisable sans toucher à un
  * dépôt auquel on n'a pas accès.
  */
+
+/**
+ * Les pièces qu'un import vient de rendre — ou de rendre à nouveau — publiques.
+ *
+ * `dryRun` en est exclu par construction : un essai à blanc n'écrit rien, donc
+ * il n'y a rien à purger. `unchanged` aussi — l'application n'a rien changé,
+ * la boutique n'a rien touché, la page en cache est toujours juste. Et
+ * `rejected` n'a pas de slug.
+ *
+ * Une pièce CRÉÉE compte autant qu'une pièce mise à jour : elle entre dans les
+ * derniers arrivages de l'accueil, dans l'index des marques et dans le plan de
+ * site, tous mis en cache.
+ */
+function slugsAPurger(results: readonly SyncResult[]): string[] {
+  const slugs: string[] = []
+  for (const result of results) {
+    if (result.action !== 'created' && result.action !== 'updated') continue
+    if (typeof result.slug === 'string' && result.slug.length > 0) {
+      slugs.push(result.slug)
+    }
+  }
+  return slugs
+}
+
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
@@ -55,10 +84,7 @@ export const dynamic = 'force-dynamic'
  */
 export const maxDuration = 30
 
-function reponse(
-  status: number,
-  corps: Record<string, unknown>,
-): NextResponse {
+function reponse(status: number, corps: Record<string, unknown>): NextResponse {
   return NextResponse.json(corps, {
     status,
     headers: { 'Cache-Control': 'no-store' },
@@ -182,6 +208,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const context = await loadSyncContext()
     const resultat = await syncArticle(charge, 0, context, { dryRun: false })
+
+    /*
+      C'est le chemin le plus PRESSÉ des deux.
+
+      Cette route existe pour qu'une pièce ajoutée dans l'application paraisse
+      tout de suite en boutique — c'est écrit en tête de fichier. Laisser
+      l'accueil et le plan de site l'ignorer jusqu'à leur échéance contredisait
+      exactement cette promesse.
+    */
+    await invaliderFiches(slugsAPurger([resultat]))
 
     return reponse(resultat.action === 'rejected' ? 422 : 200, {
       ok: resultat.action !== 'rejected',
