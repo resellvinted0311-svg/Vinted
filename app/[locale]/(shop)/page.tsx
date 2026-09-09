@@ -10,6 +10,7 @@ import {
   getHomeHeroImageUrl,
   getUniverseImageUrls,
 } from '@/lib/config/settings'
+import { UNIVERSE_CARDS } from '@/lib/design/category-banners'
 import { HeroBanner } from '@/components/shop/hero-banner'
 import { ReassuranceBand } from '@/components/shop/reassurance-band'
 import { ShortcutGrid } from '@/components/shop/shortcut-grid'
@@ -141,7 +142,19 @@ export default async function HomePage({
           alors pas du tout. Ces cartes sont la structure du magasin, pas un
           compte rendu de son stock.
           -------------------------------------------------------------------- */}
-      <UniverseCards audiences={facets.audiences} images={universeImages} />
+      {/*
+        Le réglage de la régie l'emporte, le visuel versé au dépôt sert de
+        socle. Pas l'inverse : un socle prioritaire rendrait l'écran de
+        réglages impuissant à changer l'image, et personne ne comprendrait
+        pourquoi une photo téléversée ne s'affiche pas.
+      */}
+      <UniverseCards
+        audiences={facets.audiences}
+        images={{
+          femme: universeImages.femme ?? UNIVERSE_CARDS.femme.src,
+          homme: universeImages.homme ?? UNIVERSE_CARDS.homme.src,
+        }}
+      />
 
       <ArrivalsRail articles={latest} locale={locale} />
 

@@ -223,3 +223,74 @@ export const CATEGORY_CARDS: Readonly<Record<string, CategoryCardImage>> = {
 export function cardFor(slug: string): CategoryCardImage | null {
   return CATEGORY_CARDS[slug] ?? null
 }
+
+/**
+ * Les visuels des deux cartes d'univers, Femme et Homme.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi ils sont ici alors qu'un réglage existe déjà
+ * ---------------------------------------------------------------------------
+ * Ces deux images sont réglables depuis la régie — `universeImageFemmeUrl` et
+ * `universeImageHommeUrl` — et ce chemin-là reste le bon : c'est celui qui
+ * permet de changer une photo sans toucher au code ni redéployer.
+ *
+ * Ce qui suit n'est donc pas un remplacement, c'est un SOCLE. La boutique a
+ * choisi deux photographies et les a versées au dépôt ; sans socle, il aurait
+ * fallu les téléverser puis renseigner deux réglages dans la base de
+ * production pour qu'elles s'affichent — et jusque-là, les deux cartes
+ * seraient restées sur leur lavis, sans que rien n'indique pourquoi.
+ *
+ * L'ordre de priorité découle de ce raisonnement, et il est appliqué dans la
+ * vitrine : le réglage l'emporte quand il existe, le socle sert quand il n'y
+ * en a pas. L'inverse rendrait la régie impuissante à changer une image.
+ *
+ * ---------------------------------------------------------------------------
+ * Les noms de fichier disent le RÔLE
+ * ---------------------------------------------------------------------------
+ * `carte-femme.jpg`, pas `chat pull adidas.jpg`. Deux raisons, et la seconde
+ * est un piège :
+ *
+ *  1. Un nom qui décrit la scène devient faux à la première photo remplacée.
+ *     Le nom d'un fichier servi désigne l'emplacement qu'il occupe.
+ *
+ *  2. Un nom déposé depuis un Mac porte ses accents en forme DÉCOMPOSÉE — le
+ *     « é » de « superposés » y est un « e » suivi d'un accent combinant. Une
+ *     adresse écrite à la main dans le code emploie, elle, la forme composée.
+ *     Les deux s'affichent à l'identique et ne sont pas le même octet : le
+ *     serveur répond 404, et l'on relit vingt fois un nom qui semble juste.
+ *     `tests/domain/category-banners.test.ts` refuse d'ailleurs tout nom qui
+ *     demanderait un encodage d'URL.
+ */
+export const UNIVERSE_CARDS: Readonly<
+  Record<'femme' | 'homme', CategoryCardImage>
+> = {
+  /*
+    Femme.
+
+    Aucun cadrage à régler, et c'est la proportion qui l'explique : la carte
+    est un 3/2 dès 640 px, exactement la proportion de la source — rien n'est
+    rogné. En dessous, elle passe en 4/3 et le rognage est LATÉRAL : il reste
+    89 % de la largeur, soit [5 %, 95 %], quand le chat et le pull tiennent
+    entre 15 % et 92 %. Le centre par défaut convient donc aux deux.
+  */
+  femme: {
+    src: '/images/carte-femme.jpg',
+    width: 5992,
+    height: 3992,
+    alt: '',
+  },
+
+  /*
+    Homme.
+
+    Même géométrie, et le sujet est encore plus à l'abri : les jeans occupent
+    le tiers gauche de la source, loin des deux bandes que le 4/3 retire sur
+    les côtés.
+  */
+  homme: {
+    src: '/images/carte-homme.jpg',
+    width: 5992,
+    height: 3992,
+    alt: '',
+  },
+}

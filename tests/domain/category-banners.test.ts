@@ -5,6 +5,7 @@ import sharp from 'sharp'
 import {
   CATEGORY_BANNERS,
   CATEGORY_CARDS,
+  UNIVERSE_CARDS,
   bannerFor,
   cardFor,
   type CategoryBannerImage,
@@ -166,4 +167,49 @@ describe('les photographies choisies pour les cartes de rayon', () => {
   it('rend null pour un rayon sans photographie choisie', () => {
     expect(cardFor('rayon-qui-n-existe-pas')).toBeNull()
   })
+})
+
+describe('les visuels des deux cartes d’univers', () => {
+  /*
+    Les mêmes contrôles que pour les cartes de rayon, et pour les mêmes
+    raisons — un fichier absent ne provoque aucune erreur, des dimensions
+    fausses font sauter la page au chargement.
+
+    Un troisième contrôle compte double ici : ces deux photographies ont été
+    déposées depuis un Mac, sous des noms contenant une espace et un accent en
+    forme DÉCOMPOSÉE. Servi tel quel, un nom pareil répond 404 alors qu'il
+    paraît exact à la lecture, parce que l'accent du système et celui du code
+    ne sont pas le même octet. Le renommage est la parade ; ce test est ce qui
+    empêche de l'oublier au prochain dépôt.
+  */
+  const entrees = Object.entries(UNIVERSE_CARDS)
+
+  it('couvre les deux univers, et seulement eux', () => {
+    expect(Object.keys(UNIVERSE_CARDS).sort()).toEqual(['femme', 'homme'])
+  })
+
+  it('désignent des fichiers présents, aux noms servables', () => {
+    for (const [univers, carte] of entrees) {
+      expect(
+        existsSync(join(PUBLIC, carte.src)),
+        `« ${univers} » déclare ${carte.src}, absent de public/`,
+      ).toBe(true)
+      expect(
+        /^[a-z0-9/_.-]+$/.test(carte.src),
+        `${univers} : « ${carte.src} » contient un caractère à encoder`,
+      ).toBe(true)
+    }
+  })
+
+  it.each(entrees)(
+    'annonce pour « %s » les dimensions réelles du fichier',
+    async (univers, carte) => {
+      const vraies = await sharp(join(PUBLIC, carte.src)).metadata()
+      expect(
+        { width: vraies.width, height: vraies.height },
+        `${univers} : ${carte.src} mesure ${vraies.width}×${vraies.height}, ` +
+          `mais la table annonce ${carte.width}×${carte.height}`,
+      ).toEqual({ width: carte.width, height: carte.height })
+    },
+  )
 })
