@@ -1,7 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { getFavoriteArticleIds, toggleFavorite } from '@/lib/shop/favorites'
+import { toggleFavorite } from '@/lib/shop/favorites'
+import { useSessionBoutique } from './session-provider'
 
 interface FavoritesContextValue {
   ids: ReadonlySet<string>
@@ -29,31 +30,41 @@ export function useFavorites(): FavoritesContextValue {
  *
  * Une seule requête ramène l'ensemble des identifiants : chaque vignette lit
  * ensuite ce Set, plutôt que d'interroger le serveur pour elle-même.
+ *
+ * ---------------------------------------------------------------------------
+ * La liste ne vient plus d'une Server Action à elle
+ * ---------------------------------------------------------------------------
+ * Elle venait de `getFavoriteArticleIds()`, appelée ici au montage. C'était un
+ * quatrième aller-retour réseau par chargement de page publique, pour une
+ * session que `/api/session` venait de décoder trois lignes plus haut, et une
+ * table que la même réponse pouvait lire d'un coup.
+ *
+ * Les identifiants voyagent donc avec l'état de session. La Server Action
+ * reste en place : la page « Mes favoris » l'utilise, et c'est le seul chemin
+ * possible depuis un formulaire sans JavaScript.
  */
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
+  const { etat, resolu } = useSessionBoutique()
   const [ids, setIds] = React.useState<ReadonlySet<string>>(new Set())
-  const [loaded, setLoaded] = React.useState(false)
 
+  /*
+    La liste du serveur remplace la locale, elle ne fusionne pas avec elle.
+
+    Fusionner garderait indéfiniment un cœur coché dont le serveur a refusé la
+    bascule — l'état optimiste survivrait à son démenti. Le serveur fait
+    autorité ; c'est déjà la règle de `toggle` ci-dessous.
+
+    La dépendance est la LISTE elle-même : le fournisseur la relit à chaque
+    changement d'adresse, et une nouvelle réponse doit alors s'appliquer.
+  */
+  const favoris = etat?.favoriteIds
   React.useEffect(() => {
-    let cancelled = false
+    if (favoris) setIds(new Set(favoris))
+  }, [favoris])
 
-    getFavoriteArticleIds()
-      .then((list) => {
-        if (!cancelled) {
-          setIds(new Set(list))
-          setLoaded(true)
-        }
-      })
-      .catch(() => {
-        // Un échec ne doit pas bloquer la navigation : on affiche
-        // « non favori », l'action reste possible.
-        if (!cancelled) setLoaded(true)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // Un échec de lecture ne bloque pas la navigation : on affiche
+  // « non favori », et l'action reste possible.
+  const loaded = resolu
 
   const toggle = React.useCallback(async (articleId: string) => {
     // Mise à jour optimiste : l'état bascule immédiatement, puis on

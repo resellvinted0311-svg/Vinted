@@ -119,6 +119,27 @@ export const publicCategorySelect = {
  * et reste très en deçà des champs privés que ce fichier a pour rôle de tenir
  * hors des réponses publiques (voir PRIVATE_ARTICLE_FIELDS).
  */
+/**
+ * La traduction telle qu'une VIGNETTE en a besoin : le titre, et c'est tout.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce que la grille chargeait pour afficher un titre
+ * ---------------------------------------------------------------------------
+ * Elle réutilisait le sélecteur de la FICHE, qui ramène la description
+ * entière. Multiplié par huit langues et par trente pièces, un affichage de
+ * catalogue transportait deux cent quarante descriptions complètes depuis la
+ * base pour en afficher zéro : la vignette ne lit que `translation.title`.
+ *
+ * Les trois autres champs — `description`, `isMachineTranslated`,
+ * `isFallback` — servent à la fiche, qui doit pouvoir DIRE que son texte est
+ * traduit automatiquement ou pas traduit du tout. Une grille n'affiche pas ces
+ * mentions ; elle n'a donc pas à charger de quoi les écrire.
+ */
+export const publicArticleCardTranslationSelect = {
+  locale: true,
+  title: true,
+} satisfies Prisma.ArticleTranslationSelect
+
 export const publicArticleCardSelect = {
   id: true,
   sku: true,
@@ -159,8 +180,36 @@ export const publicArticleCardSelect = {
     orderBy: { position: 'asc' },
     take: 2,
   },
-  translations: { select: publicArticleTranslationSelect },
+  translations: { select: publicArticleCardTranslationSelect },
 } satisfies Prisma.ArticleSelect
+
+/**
+ * Le même sélecteur, borné aux DEUX lignes de traduction qui peuvent servir.
+ *
+ * Une pièce porte huit lignes de traduction, écrites d'emblée à l'import.
+ * `pickTranslation` en retient une seule : celle de la langue affichée, à
+ * défaut le français. Les six autres traversaient la base, le réseau et la
+ * sérialisation pour être jetées au rendu.
+ *
+ * Le filtre est posé ici plutôt que dans chaque requête pour la raison qui a
+ * fait naître ce fichier : une règle recopiée à quatre endroits finit par
+ * diverger, et le jour où elle diverge, c'est en silence.
+ *
+ * Le repli français est CONSERVÉ dans la sélection. Le retirer paraîtrait plus
+ * économe et casserait la mention « cette fiche n'est pas traduite » : sans la
+ * ligne française, une pièce dont la langue demandée manque n'aurait plus
+ * aucun titre à afficher, et la vignette retomberait sur sa référence
+ * d'inventaire.
+ */
+export function publicArticleCardSelectFor(locale: string) {
+  return {
+    ...publicArticleCardSelect,
+    translations: {
+      select: publicArticleCardTranslationSelect,
+      where: { locale: { in: [locale, 'fr'] } },
+    },
+  } satisfies Prisma.ArticleSelect
+}
 
 /** Fiche article complète. Toujours sans coût d'achat ni plancher. */
 export const publicArticleDetailSelect = {

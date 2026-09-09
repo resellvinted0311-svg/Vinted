@@ -49,3 +49,45 @@ export async function readFavoriteCount(
 
   return prisma.guestFavorite.count({ where: { sessionToken: token } })
 }
+
+/**
+ * Les identifiants des pièces en favoris, pour la même identité déjà résolue.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi cette lecture rejoint l'état de session
+ * ---------------------------------------------------------------------------
+ * Les vignettes ont besoin de la LISTE, pas du nombre : chacune doit savoir si
+ * son cœur est plein. Cette liste venait jusqu'ici de `getFavoriteArticleIds`,
+ * un export de `favorites.ts` — donc une Server Action, donc un aller-retour
+ * réseau supplémentaire à chaque chargement de page, qui recommençait le
+ * décodage de session que `/api/session` venait de faire.
+ *
+ * Servie ici, elle voyage avec le reste de l'état de session, dans la même
+ * réponse et sur la même identité. Le décompte s'en déduit — `ids.length` —
+ * ce qui supprime au passage la requête de comptage : la liste des favoris
+ * d'une personne se compte en dizaines, jamais en milliers, et ramener les
+ * identifiants coûte moins qu'un aller-retour de plus.
+ *
+ * La Server Action reste en place : la page « Mes favoris » l'utilise, et elle
+ * est le seul chemin possible depuis un formulaire sans JavaScript.
+ */
+export async function readFavoriteIds(
+  user: CurrentUser | null,
+): Promise<string[]> {
+  if (user) {
+    const rows = await prisma.favorite.findMany({
+      where: { userId: user.id },
+      select: { articleId: true },
+    })
+    return rows.map((row) => row.articleId)
+  }
+
+  const token = await readShopSessionToken()
+  if (!token) return []
+
+  const rows = await prisma.guestFavorite.findMany({
+    where: { sessionToken: token },
+    select: { articleId: true },
+  })
+  return rows.map((row) => row.articleId)
+}

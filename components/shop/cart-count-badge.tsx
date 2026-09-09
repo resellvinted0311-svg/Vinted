@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils/cn'
 import { CART_CHANGED_EVENT, type CartChangedDetail } from './cart-events'
+import { useSessionBoutique } from './session-provider'
 
 /**
  * Compteur du panier, dans l'en-tête.
@@ -17,7 +18,9 @@ import { CART_CHANGED_EVENT, type CartChangedDetail } from './cart-events'
  * le HTML prérendu pour tout le monde.
  *
  * Le décompte vient donc de `/api/session`, après hydratation, comme l'état de
- * session lui-même.
+ * session lui-même — mais il ne l'appelle plus lui-même : trois composants de
+ * l'en-tête le faisaient chacun de leur côté, soit trois requêtes identiques
+ * par chargement de page. `SessionProvider` fait la lecture pour les trois.
  *
  * ---------------------------------------------------------------------------
  * Rien n'est compté dans le navigateur
@@ -29,46 +32,33 @@ import { CART_CHANGED_EVENT, type CartChangedDetail } from './cart-events'
  */
 export function CartCountBadge({ className }: { className?: string }) {
   const t = useTranslations('nav')
-  const [count, setCount] = useState<number | null>(null)
+  const { etat } = useSessionBoutique()
+
+  /*
+    DEUX sources, et l'ordre entre elles compte.
+
+    Le fournisseur donne le nombre qu'avait le serveur au chargement de la
+    page. L'événement donne celui que le serveur vient de compter après un
+    ajout ou un retrait — plus récent, donc prioritaire tant qu'on reste sur la
+    même page.
+
+    L'état local part donc du fournisseur et n'est ensuite écrasé que par
+    l'événement. Sans ce dernier, ajouter une pièce ne changerait le compteur
+    qu'à la navigation suivante.
+  */
+  const [apresEvenement, setApresEvenement] = useState<number | null>(null)
 
   useEffect(() => {
-    const controller = new AbortController()
-
-    async function load() {
-      try {
-        const response = await fetch('/api/session', {
-          signal: controller.signal,
-          cache: 'no-store',
-        })
-        if (!response.ok) return
-        const body: unknown = await response.json()
-        if (
-          typeof body === 'object' &&
-          body !== null &&
-          'cartCount' in body &&
-          typeof body.cartCount === 'number'
-        ) {
-          setCount(body.cartCount)
-        }
-      } catch {
-        // Panne réseau ou navigation en cours : l'en-tête reste sans compteur
-        // plutôt que d'en afficher un faux.
-      }
-    }
-
-    void load()
-
     function onChanged(event: Event) {
       const detail = (event as CustomEvent<CartChangedDetail>).detail
-      if (typeof detail?.count === 'number') setCount(detail.count)
+      if (typeof detail?.count === 'number') setApresEvenement(detail.count)
     }
 
     window.addEventListener(CART_CHANGED_EVENT, onChanged)
-    return () => {
-      controller.abort()
-      window.removeEventListener(CART_CHANGED_EVENT, onChanged)
-    }
+    return () => window.removeEventListener(CART_CHANGED_EVENT, onChanged)
   }, [])
+
+  const count = apresEvenement ?? etat?.cartCount ?? null
 
   // Tant que le décompte est inconnu, rien : une pastille « 0 » qui saute à
   // « 2 » après coup est plus déroutante qu'une absence.

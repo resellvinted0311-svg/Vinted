@@ -1,13 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Link, usePathname } from '@/lib/i18n/navigation'
+import { Link } from '@/lib/i18n/navigation'
 import { IconeCompte } from './icones'
-
-interface SessionState {
-  signedIn: boolean
-}
+import { useSessionBoutique } from './session-provider'
 
 /**
  * Entrée « compte » de la barre de navigation.
@@ -35,6 +31,11 @@ interface SessionState {
  *
  * Mesuré : avec ce découpage, /fr répond `x-nextjs-cache: HIT`.
  *
+ * Elle ne la lit plus elle-même pour autant. Ce composant appelait
+ * `/api/session` dans son propre effet, comme les deux compteurs voisins et le
+ * fournisseur de favoris : quatre allers-retours pour la même session à chaque
+ * chargement de page. `SessionProvider` la lit une fois pour les quatre.
+ *
  * Tant que l'état n'est pas connu, on réserve la largeur plutôt que d'afficher
  * « Se connecter » puis de le remplacer : cela éviterait un décalage de mise
  * en page (CLS).
@@ -42,36 +43,11 @@ interface SessionState {
 export function AccountNav({ classeOutil }: { classeOutil: string }) {
   const t = useTranslations('nav')
   const tAuth = useTranslations('auth')
-  const pathname = usePathname()
-  const [session, setSession] = useState<SessionState | null>(null)
-
-  // L'état est relu à chaque changement d'URL, et pas seulement au montage.
-  //
-  // Ce composant vit dans le layout : il survit aux navigations côté client.
-  // Avec une dépendance vide, il resterait bloqué sur l'état observé lors du
-  // tout premier rendu — après une connexion, la barre continuerait d'afficher
-  // « Se connecter » jusqu'au prochain rechargement complet.
-  useEffect(() => {
-    const controller = new AbortController()
-
-    fetch('/api/session', {
-      signal: controller.signal,
-      cache: 'no-store',
-    })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: SessionState | null) => {
-        if (data) setSession({ signedIn: data.signedIn })
-      })
-      .catch(() => {
-        // Un échec réseau ne doit pas casser la barre : on retombe sur l'état
-        // déconnecté, qui reste utilisable.
-        setSession({ signedIn: false })
-      })
-
-    return () => {
-      controller.abort()
-    }
-  }, [pathname])
+  // La relecture à chaque changement d'adresse a lieu dans le fournisseur :
+  // ce composant vit dans le layout et survit aux navigations, donc un état
+  // figé au premier rendu afficherait « Se connecter » après une connexion,
+  // jusqu'au prochain rechargement complet.
+  const { etat, resolu } = useSessionBoutique()
 
   /*
     Tant que l'état est inconnu, on RÉSERVE la place au lieu de l'occuper.
@@ -82,15 +58,18 @@ export function AccountNav({ classeOutil }: { classeOutil: string }) {
     exactement le carré de l'outil. Les quatre outils gardent donc leur
     alignement du premier rendu au dernier, sans le moindre saut.
   */
-  if (session === null) {
+  if (!resolu) {
     return <span aria-hidden className={classeOutil} />
   }
 
-  const libelle = session.signedIn ? t('account') : tAuth('signIn')
+  // Réponse arrivée mais illisible — plafond de débit, panne : on montre
+  // l'état déconnecté, qui reste entièrement utilisable.
+  const connecte = etat?.signedIn ?? false
+  const libelle = connecte ? t('account') : tAuth('signIn')
 
   return (
     <Link
-      href={session.signedIn ? '/compte' : '/connexion'}
+      href={connecte ? '/compte' : '/connexion'}
       className={classeOutil}
       title={libelle}
     >

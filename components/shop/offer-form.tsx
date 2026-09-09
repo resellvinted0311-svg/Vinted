@@ -13,6 +13,7 @@ import {
   submitOfferAction,
   type OfferActionState,
 } from '@/lib/shop/offer-actions'
+import { useSessionBoutique } from './session-provider'
 
 /**
  * Proposer un prix.
@@ -47,16 +48,37 @@ import {
 
 const INITIAL: OfferActionState = { status: 'idle' }
 
-export function OfferForm({
-  articleId,
-  /** Connectée : l'adresse vient du compte, on ne la redemande pas. */
-  signedIn,
-}: {
-  articleId: string
-  signedIn: boolean
-}) {
+export function OfferForm({ articleId }: { articleId: string }) {
   const t = useTranslations('article.offer')
   const locale = useLocale()
+
+  /*
+    Connectée : l'adresse vient du compte, on ne la redemande pas.
+
+    ---------------------------------------------------------------------------
+    Pourquoi cet état est lu ICI et non passé par la page
+    ---------------------------------------------------------------------------
+    Il l'était : la fiche article appelait `getCurrentUser()` pour cette seule
+    valeur. Or un accès aux cookies bascule la ROUTE ENTIÈRE en rendu
+    dynamique. La fiche déclarait `export const revalidate = 60` — une
+    régénération toutes les soixante secondes — et cette ligne ne servait à
+    rien : chaque affichage de chaque pièce était rendu à la demande, avec ses
+    requêtes de traduction, d'images, de catégorie et de pièces similaires.
+    Sur un catalogue de pièces uniques, ce sont les pages les plus nombreuses
+    et les plus indexées du site.
+
+    Le compromis assumé : tant que la réponse n'est pas arrivée, on affiche le
+    formulaire de VISITEUR — champ e-mail présent. Une personne connectée le
+    voit donc un instant avant qu'il disparaisse. C'est le seul sens qui soit
+    sans danger : afficher d'abord le formulaire « connectée » cacherait le
+    champ à un visiteur, qui ne pourrait plus recevoir la réponse.
+
+    L'affichage seul est en jeu : l'action serveur, elle, établit l'identité
+    elle-même et n'exige une adresse que d'un vrai visiteur. Un envoi parti
+    pendant ce court instant reste donc traité correctement.
+  */
+  const { etat } = useSessionBoutique()
+  const signedIn = etat?.signedIn ?? false
 
   const [state, formAction] = useActionState(submitOfferAction, INITIAL)
   const [amount, setAmount] = useState('')

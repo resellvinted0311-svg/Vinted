@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { prisma } from '@/lib/db/client'
-import { publicArticleCardSelect } from '@/lib/db/selectors'
+import { publicArticleCardSelectFor } from '@/lib/db/selectors'
 import { visibleArticleWhere } from '@/lib/db/visibility'
 import { getFavoriteArticleIds } from '@/lib/shop/favorites'
 import {
@@ -45,7 +45,7 @@ export default async function FavoritesPage({
       ? []
       : await prisma.article.findMany({
           where: { id: { in: ids }, ...visibleArticleWhere() },
-          select: publicArticleCardSelect,
+          select: publicArticleCardSelectFor(locale),
           orderBy: { publishedAt: 'desc' },
         })
 

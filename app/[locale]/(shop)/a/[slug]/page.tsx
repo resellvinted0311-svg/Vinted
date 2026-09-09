@@ -5,7 +5,6 @@ import { Link } from '@/lib/i18n/navigation'
 import { getArticleBySlug, getSimilarArticles } from '@/lib/db/queries/articles'
 import { getCategoryPath } from '@/lib/db/queries/taxonomy'
 import { isReservationLive } from '@/lib/db/visibility'
-import { getCurrentUser } from '@/lib/auth/session'
 import { OfferForm } from '@/components/shop/offer-form'
 import {
   pickTranslation,
@@ -31,8 +30,45 @@ import { serializeJsonLd, absoluteImageUrl } from '@/lib/utils/json-ld'
 
 type Params = Promise<{ locale: string; slug: string }>
 
-/** L'état d'un article change à chaque vente : régénération courte. */
+/**
+ * L'état d'un article change à chaque vente : régénération courte.
+ *
+ * ---------------------------------------------------------------------------
+ * Cette ligne ne servait à rien, et rien ne le disait
+ * ---------------------------------------------------------------------------
+ * La page appelait `getCurrentUser()` — pour une seule valeur, passée au
+ * formulaire d'offre : faut-il demander une adresse e-mail. Or un accès aux
+ * cookies bascule la ROUTE ENTIÈRE en rendu dynamique. Le `revalidate` était
+ * donc mort : aucune fiche n'était jamais mise en cache, et chaque affichage
+ * de chaque pièce repayait ses requêtes de traductions, d'images, de catégorie
+ * et de pièces similaires.
+ *
+ * Sur un catalogue de pièces uniques, ces pages sont les plus nombreuses du
+ * site et celles qui portent le référencement. Le formulaire d'offre lit
+ * maintenant l'état de session côté client, comme l'en-tête, et la fiche
+ * redevient ce que cette ligne annonce.
+ */
 export const revalidate = 60
+
+/**
+ * Aucune fiche n'est prérendue à la construction — et cette fonction doit
+ * exister quand même.
+ *
+ * Sans elle, Next classe un segment dynamique en « rendu à la demande » : la
+ * page est recalculée à CHAQUE requête et n'entre jamais dans le cache de
+ * route, quelle que soit la valeur de `revalidate`. Mesuré : la réponse
+ * portait `Cache-Control: no-store`, et la seule présence de cette fonction —
+ * même vide — la fait passer à `s-maxage=60`.
+ *
+ * La liste est volontairement vide plutôt que peuplée du catalogue entier :
+ * prérendre plusieurs centaines de pièces multipliées par huit langues
+ * allongerait la construction pour des pages dont la plupart ne seront jamais
+ * demandées. Chaque fiche est donc rendue à sa première visite, puis servie
+ * depuis le cache pendant soixante secondes.
+ */
+export function generateStaticParams(): { slug: string }[] {
+  return []
+}
 
 export async function generateMetadata({
   params,
@@ -138,10 +174,6 @@ export default async function ArticlePage({ params }: { params: Params }) {
     // donne l'impression d'un site cassé.
     !isSold &&
     !isReserved
-
-  // Sans compte, le formulaire demande une adresse : c'est la seule voie par
-  // laquelle la réponse du vendeur peut arriver.
-  const signedIn = (await getCurrentUser()) !== null
 
   // JSON-LD : la disponibilité reflète l'état réel, y compris SoldOut.
   const jsonLd = {
@@ -280,7 +312,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
 
               {offersOpen ? (
                 <div className="mt-2 border-t border-sand pt-4">
-                  <OfferForm articleId={article.id} signedIn={signedIn} />
+                  <OfferForm articleId={article.id} />
                 </div>
               ) : article.allowOffers && article.offersOpenAt ? (
                 <p className="text-xs text-muted">

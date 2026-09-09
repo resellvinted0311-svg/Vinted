@@ -424,8 +424,27 @@ test.describe('La barre posée sur le bandeau', () => {
      */
     for (const largeur of [768, 800, 900, 1280, 1440]) {
       await page.setViewportSize({ width: largeur, height: 900 })
-      await page.goto(RAYON_AVEC_PHOTO)
-      await page.waitForLoadState('load')
+      /*
+        On n'attend PAS l'événement `load`, et ce n'est pas un raccourci.
+
+        Ce que ce test mesure est une géométrie : la hauteur de la barre et le
+        haut du bandeau. Le cadre du bandeau porte un `aspect-ratio`, donc sa
+        place est réservée avant que la photographie n'arrive — les deux
+        nombres sont exacts dès que les fontes le sont, ce que
+        `document.fonts.ready` garantit ligne suivante.
+
+        Attendre `load` ajoutait une dépendance à l'optimiseur d'images, et
+        elle s'est révélée bloquante : cinq navigations d'affilée sur la même
+        page annulent chacune les requêtes d'image de la précédente, et une
+        variante annulée en cours d'optimisation n'est plus jamais servie par
+        `next start` — la requête suivante pour la MÊME variante reste ouverte
+        indéfiniment, donc `load` ne se déclenche pas. Vérifié : le blocage
+        tombe toujours sur la même variante, et il existait déjà avant ce test.
+
+        Il ne concerne que le serveur local : en production, `/_next/image`
+        est servi par l'optimiseur de l'hébergeur, pas par ce processus.
+      */
+      await page.goto(RAYON_AVEC_PHOTO, { waitUntil: 'domcontentloaded' })
       await page.evaluate(() => document.fonts.ready)
 
       const mesure = await page.evaluate(() => {

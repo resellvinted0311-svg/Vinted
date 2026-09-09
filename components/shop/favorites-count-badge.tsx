@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { usePathname } from '@/lib/i18n/navigation'
 import { cn } from '@/lib/utils/cn'
+import { useSessionBoutique } from './session-provider'
 
 /**
  * Compteur des favoris, dans l'en-tête.
@@ -16,7 +15,9 @@ import { cn } from '@/lib/utils/cn'
  * dans leur arbre de rendu les rendrait toutes dynamiques, et figerait un
  * « 0 » dans le HTML prérendu pour tout le monde.
  *
- * Le décompte vient donc de `/api/session`, après hydratation.
+ * Le décompte vient donc de `/api/session`, après hydratation — par
+ * `SessionProvider`, qui fait cette lecture une fois pour les trois outils de
+ * l'en-tête au lieu de trois requêtes identiques.
  *
  * ---------------------------------------------------------------------------
  * Relu à chaque navigation, et pourquoi c'est nécessaire ICI
@@ -47,37 +48,10 @@ import { cn } from '@/lib/utils/cn'
  */
 export function FavoritesCountBadge({ className }: { className?: string }) {
   const t = useTranslations('nav')
-  const pathname = usePathname()
-  const [count, setCount] = useState<number | null>(null)
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    async function charger() {
-      try {
-        const reponse = await fetch('/api/session', {
-          signal: controller.signal,
-          cache: 'no-store',
-        })
-        if (!reponse.ok) return
-        const corps: unknown = await reponse.json()
-        if (
-          typeof corps === 'object' &&
-          corps !== null &&
-          'favoriteCount' in corps &&
-          typeof corps.favoriteCount === 'number'
-        ) {
-          setCount(corps.favoriteCount)
-        }
-      } catch {
-        // Panne réseau ou navigation en cours : l'en-tête reste sans compteur
-        // plutôt que d'en afficher un faux.
-      }
-    }
-
-    void charger()
-    return () => controller.abort()
-  }, [pathname])
+  // La relecture à chaque changement d'adresse — le rattrapage décrit
+  // ci-dessus — a lieu dans le fournisseur, une fois pour tout l'en-tête.
+  const { etat } = useSessionBoutique()
+  const count = etat?.favoriteCount ?? null
 
   // Tant que le décompte est inconnu, rien : une pastille « 0 » qui saute à
   // « 2 » après coup est plus déroutante qu'une absence.

@@ -4,7 +4,7 @@ import { cache } from 'react'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
 import {
-  publicArticleCardSelect,
+  publicArticleCardSelectFor,
   publicArticleDetailSelect,
   type PublicArticleCard,
   type PublicArticleDetail,
@@ -101,9 +101,7 @@ function whereClauses(
   }
 
   if (filters.sizes.length > 0 && skipDimension !== 'sizes') {
-    clauses.push(
-      Prisma.sql`a."sizeNormalized" = ANY(${filters.sizes}::text[])`,
-    )
+    clauses.push(Prisma.sql`a."sizeNormalized" = ANY(${filters.sizes}::text[])`)
   }
 
   if (filters.conditions.length > 0 && skipDimension !== 'conditions') {
@@ -192,11 +190,36 @@ export async function listArticles({
   const cte = categoryCte(filters.categorySlugs)
   const where = andAll(clauses)
 
+  /*
+    Le TOTAL voyage avec la page, quand il peut.
+
+    Il faisait l'objet d'une requête à lui : le même CTE récursif, la même
+    jointure de traductions, la même clause WHERE, rejoués en entier pour
+    obtenir un seul nombre. Deuxième aller-retour à chaque affichage de
+    catalogue, de rayon, de marque et de vitrine — c'est-à-dire sur presque
+    toutes les pages de la boutique.
+
+    `count(*) OVER ()` le donne dans la MÊME requête : la fenêtre est calculée
+    sur l'ensemble filtré avant que `LIMIT` ne s'applique, donc le nombre est
+    le total, pas la taille de la page. Le travail en base est le même ; c'est
+    le trajet réseau qui disparaît.
+
+    UNIQUEMENT en l'absence de curseur, et ce n'est pas une optimisation
+    partielle par paresse : avec un curseur, la clause `(tri, id) > (…)` fait
+    partie du WHERE, la fenêtre compterait donc ce qui RESTE et non le total.
+    Le comptage séparé est conservé pour ce cas — le plus rare, puisqu'il
+    n'arrive qu'au « voir la suite » et sur une adresse partagée. La valeur
+    renvoyée garde ainsi exactement le même sens dans les deux cas.
+  */
+  const totalDansLaPage = decoded === null
+
   // On demande un élément de plus que la page : sa présence indique qu'il
   // existe une suite, sans avoir à compter quoi que ce soit.
-  const rows = await prisma.$queryRaw<{ id: string }[]>`
+  const rows = await prisma.$queryRaw<{ id: string; total: bigint | null }[]>`
     ${cte}
-    SELECT a.id
+    SELECT
+      a.id,
+      ${totalDansLaPage ? Prisma.sql`count(*) OVER ()` : Prisma.sql`NULL::bigint`} AS total
     FROM "Article" a
     JOIN "ArticleTranslation" t
       ON t."articleId" = a.id AND t.locale = ${locale}
@@ -210,22 +233,25 @@ export async function listArticles({
   const pageRows = hasMore ? rows.slice(0, limit) : rows
   const ids = pageRows.map((row) => row.id)
 
-  const countClauses = whereClauses(filters, locale)
+  const compterAPart = !totalDansLaPage
+
   const [totalRows, articles] = await Promise.all([
-    prisma.$queryRaw<{ count: bigint }[]>`
-      ${categoryCte(filters.categorySlugs)}
-      SELECT count(*)::bigint AS count
-      FROM "Article" a
-      JOIN "ArticleTranslation" t
-        ON t."articleId" = a.id AND t.locale = ${locale}
-      LEFT JOIN "Brand" b ON b.id = a."brandId"
-      WHERE ${andAll(countClauses)}
-    `,
+    compterAPart
+      ? prisma.$queryRaw<{ count: bigint }[]>`
+          ${categoryCte(filters.categorySlugs)}
+          SELECT count(*)::bigint AS count
+          FROM "Article" a
+          JOIN "ArticleTranslation" t
+            ON t."articleId" = a.id AND t.locale = ${locale}
+          LEFT JOIN "Brand" b ON b.id = a."brandId"
+          WHERE ${andAll(whereClauses(filters, locale))}
+        `
+      : Promise.resolve([] as { count: bigint }[]),
     ids.length === 0
       ? Promise.resolve([] as PublicArticleCard[])
       : prisma.article.findMany({
           where: { id: { in: ids } },
-          select: publicArticleCardSelect,
+          select: publicArticleCardSelectFor(locale),
         }),
   ])
 
@@ -242,7 +268,9 @@ export async function listArticles({
   return {
     items,
     nextCursor,
-    totalCount: Number(totalRows[0]?.count ?? 0),
+    totalCount: compterAPart
+      ? Number(totalRows[0]?.count ?? 0)
+      : Number(rows[0]?.total ?? 0),
   }
 }
 
@@ -376,13 +404,62 @@ export async function getFacets(
    * empreinte.
    */
   const branches = [
-    facetBranch(filters, locale, 'categorySlugs', 'categories', Prisma.sql`c.slug`, Prisma.sql`ct.name`),
-    facetBranch(filters, locale, 'brandSlugs', 'brands', Prisma.sql`b.slug`, Prisma.sql`b.name`),
-    facetBranch(filters, locale, 'sizes', 'sizes', Prisma.sql`a."sizeNormalized"`, Prisma.sql`a."sizeLabel"`),
-    facetBranch(filters, locale, 'conditions', 'conditions', Prisma.sql`a.condition::text`, Prisma.sql`a.condition::text`),
-    facetBranch(filters, locale, 'colors', 'colors', Prisma.sql`a.color`, Prisma.sql`a.color`),
-    facetBranch(filters, locale, 'materials', 'materials', Prisma.sql`a.material`, Prisma.sql`a.material`),
-    facetBranch(filters, locale, 'audiences', 'audiences', Prisma.sql`a.audience`, Prisma.sql`a.audience`),
+    facetBranch(
+      filters,
+      locale,
+      'categorySlugs',
+      'categories',
+      Prisma.sql`c.slug`,
+      Prisma.sql`ct.name`,
+    ),
+    facetBranch(
+      filters,
+      locale,
+      'brandSlugs',
+      'brands',
+      Prisma.sql`b.slug`,
+      Prisma.sql`b.name`,
+    ),
+    facetBranch(
+      filters,
+      locale,
+      'sizes',
+      'sizes',
+      Prisma.sql`a."sizeNormalized"`,
+      Prisma.sql`a."sizeLabel"`,
+    ),
+    facetBranch(
+      filters,
+      locale,
+      'conditions',
+      'conditions',
+      Prisma.sql`a.condition::text`,
+      Prisma.sql`a.condition::text`,
+    ),
+    facetBranch(
+      filters,
+      locale,
+      'colors',
+      'colors',
+      Prisma.sql`a.color`,
+      Prisma.sql`a.color`,
+    ),
+    facetBranch(
+      filters,
+      locale,
+      'materials',
+      'materials',
+      Prisma.sql`a.material`,
+      Prisma.sql`a.material`,
+    ),
+    facetBranch(
+      filters,
+      locale,
+      'audiences',
+      'audiences',
+      Prisma.sql`a.audience`,
+      Prisma.sql`a.audience`,
+    ),
     // Les bornes de prix : une seule ligne, sans compteur, et SANS
     // `skipDimension` — l'amplitude annoncée sous le curseur doit être celle
     // de la sélection courante, pas d'une sélection qu'on n'a pas faite.
@@ -522,7 +599,7 @@ export async function getSimilarArticles(
 
   const articles = await prisma.article.findMany({
     where: { id: { in: ids } },
-    select: publicArticleCardSelect,
+    select: publicArticleCardSelectFor(locale),
   })
 
   const byId = new Map(articles.map((entry) => [entry.id, entry]))

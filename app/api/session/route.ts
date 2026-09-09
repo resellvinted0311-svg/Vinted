@@ -4,7 +4,7 @@ import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { getCurrentUser } from '@/lib/auth/session'
 import { cartOwnerFor, readCartCount } from '@/lib/shop/cart'
-import { readFavoriteCount } from '@/lib/shop/favorites-count'
+import { readFavoriteIds } from '@/lib/shop/favorites-count'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -58,19 +58,35 @@ export async function GET() {
   // Mesuré : six requêtes sur la table des comptes par appel, contre trois
   // maintenant.
   /*
-    Les deux compteurs sont lus EN PARALLÈLE.
+    Les deux lectures se font EN PARALLÈLE.
 
-    Ils ne dépendent pas l'un de l'autre, et cette route est appelée à chaque
-    chargement de page du site — les enchaîner ajouterait un aller-retour de
-    base de données au chemin critique de l'en-tête, pour rien.
+    Elles ne dépendent pas l'une de l'autre, et cette route est appelée à
+    chaque chargement de page du site — les enchaîner ajouterait un
+    aller-retour de base de données au chemin critique de l'en-tête, pour rien.
 
     L'identité est passée aux deux, jamais relue : voir le commentaire
-    ci-dessus, et celui de `readFavoriteCount`.
+    ci-dessus, et celui de `readFavoriteIds`.
   */
-  const [cartCount, favoriteCount] = await Promise.all([
+  const [cartCount, favoriteIds] = await Promise.all([
     readCartCount(await cartOwnerFor(user)),
-    readFavoriteCount(user),
+    readFavoriteIds(user),
   ])
+
+  /*
+    La LISTE des favoris voyage avec l'état de session, et le décompte s'en
+    déduit.
+
+    Elle venait d'ailleurs : `getFavoriteArticleIds`, une Server Action que
+    `FavoritesProvider` appelait au montage. Chaque chargement de page payait
+    donc DEUX allers-retours pour la même session — celui-ci, puis le sien —
+    et deux décodages de session pour deux lectures de la même table.
+
+    Le décompte n'est plus compté par la base : `favoriteIds.length` dit la
+    même chose sans seconde requête. La liste des favoris d'une personne se
+    compte en dizaines ; ramener les identifiants coûte moins qu'un
+    aller-retour supplémentaire.
+  */
+  const favoriteCount = favoriteIds.length
 
   const body = user
     ? {
@@ -79,6 +95,7 @@ export async function GET() {
         role: user.role,
         cartCount,
         favoriteCount,
+        favoriteIds,
       }
     : {
         signedIn: false as const,
@@ -86,6 +103,7 @@ export async function GET() {
         role: null,
         cartCount,
         favoriteCount,
+        favoriteIds,
       }
 
   return publicJson(body, {

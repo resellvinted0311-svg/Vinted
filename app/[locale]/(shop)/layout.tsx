@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import { ToastProvider } from '@/components/ui/toast'
 import { FavoritesProvider } from '@/components/shop/favorites-provider'
+import { SessionProvider } from '@/components/shop/session-provider'
 import { NavigationProgress } from '@/components/shop/navigation-progress'
 import { SiteHeader } from '@/components/shop/site-header'
 import { SiteFooter } from '@/components/shop/site-footer'
@@ -62,43 +63,51 @@ export default async function ShopLayout({
 
   return (
     <ToastProvider>
-      <FavoritesProvider>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: serializeJsonLd(blocSite(locale)),
-          }}
-        />
-        {organisation ? (
+      {/*
+        L'ordre compte : `FavoritesProvider` LIT l'état de session pour en
+        tirer la liste des favoris, il doit donc être à l'intérieur.
+      */}
+      <SessionProvider>
+        <FavoritesProvider>
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: serializeJsonLd(organisation) }}
+            dangerouslySetInnerHTML={{
+              __html: serializeJsonLd(blocSite(locale)),
+            }}
           />
-        ) : null}
-        {/*
+          {organisation ? (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: serializeJsonLd(organisation),
+              }}
+            />
+          ) : null}
+          {/*
           Le fil d'attente d'une navigation, posé au-dessus de tout le reste.
 
           Il vit dans la mise en page et non dans une page : il doit survivre
           au changement de page, puisque c'est précisément ce changement qu'il
           annonce.
         */}
-        <NavigationProgress />
+          <NavigationProgress />
 
-        <a
-          href="#contenu"
-          className="skip-link rounded-input ruled bg-surface px-3 py-2 text-base"
-        >
-          {t('skipToContent')}
-        </a>
+          <a
+            href="#contenu"
+            className="skip-link rounded-input ruled bg-surface px-3 py-2 text-base"
+          >
+            {t('skipToContent')}
+          </a>
 
-        <SiteHeader />
+          <SiteHeader />
 
-        <main id="contenu" className="flex-1">
-          {children}
-        </main>
+          <main id="contenu" className="flex-1">
+            {children}
+          </main>
 
-        <SiteFooter />
-      </FavoritesProvider>
+          <SiteFooter />
+        </FavoritesProvider>
+      </SessionProvider>
     </ToastProvider>
   )
 }
