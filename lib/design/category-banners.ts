@@ -108,16 +108,22 @@ export const CATEGORY_BANNERS: Readonly<Record<string, CategoryBannerImage>> = {
 
     Vérifié sur la page servie, de la fenêtre la plus basse à la plus haute :
 
-      1440×600   cadre 5.45/1   bande source [42 %, 70 %]
-      1440×700   cadre 4.68/1   bande source [39 %, 71 %]
+      1440×600   cadre 4.14/1   bande source [37 %, 73 %]
+      1440×700   cadre 3.67/1   bande source [34 %, 75 %]
       1440×900   cadre 3.00/1   bande source [29 %, 79 %]
       1440×1200  cadre 2.35/1   bande source [21 %, 85 %]
       390×844    cadre 1.70/1   bande source [ 7 %, 95 %]
 
-    Le visage (44-55 %) tient dans les cinq, y compris sur la fenêtre la plus
-    basse, où il ne reste que trois points de marge au-dessus. C'est le point
-    du réglage. Ce qui saute sur cette fenêtre-là, c'est le haut du bras levé
-    et la naissance des cheveux — un bras coupé par le haut du cadre se lit
+    Le rapport est celui de la BOÎTE ENTIÈRE, bande cachée sous la barre
+    comprise. Les deux premières lignes ont d'abord été écrites sur la seule
+    partie qui dépasse en dessous — 5.45/1 et 4.68/1 — et c'était faux : sur
+    ces pages la barre est transparente, elle laisse voir la photographie au
+    lieu de la masquer. L'erreur allait dans le sens prudent, elle annonçait
+    moins d'image qu'il n'y en a, mais un relevé faux ne sert plus de relevé.
+
+    Le visage (44-55 %) tient dans les cinq fenêtres, avec sept points de
+    marge au-dessus sur la plus basse. C'est le point du réglage. Ce qui saute
+    là, c'est le haut du bras levé — un bras coupé par le haut du cadre se lit
     comme un cadrage, un visage coupé se lit comme une erreur.
 
     Le côté ne joue aucun rôle et reste à 50 % : le cadre est toujours plus
@@ -157,6 +163,50 @@ export const CATEGORY_BANNERS: Readonly<Record<string, CategoryBannerImage>> = {
   jupes: {
     src: '/images/bandeau-jupes.jpg',
     cadrage: '50% 58%',
+    alt: '',
+  },
+
+  /*
+    Accessoires.
+
+    Une nature morte, et non une silhouette : une planche posée sur des pavés,
+    portant bijoux, figues et piments. Cela change ce qu'il faut tenir dans le
+    cadre — non plus un visage, mais un OBJET ENTIER, dont on n'a pas le droit
+    de couper les bords sans que la composition parte en morceaux.
+
+    Positions relevées sur la source (5992×3992) :
+
+      22 %  bord haut de la planche      29-77 %  les bijoux
+      89 %  bord bas de la planche       0-22 %   les pavés, au-dessus
+
+    54 % ancre au milieu des bijoux, et non au milieu de la planche : c'est ce
+    qu'on vend, et les deux ne coïncident pas — la planche est posée en biais,
+    son coin bas déborde plus loin que le dernier pendentif.
+
+    Mesuré sur la page servie, de la fenêtre la plus basse à la plus haute :
+
+      1440×600   cadre 4.14/1   bande source [34 %, 71 %]
+      1440×900   cadre 3.00/1   bande source [27 %, 77 %]
+      1440×1200  cadre 2.35/1   bande source [20 %, 83 %]
+      390×844    cadre 1.70/1   bande source [ 6 %, 94 %]
+
+    La fenêtre basse ne montre qu'une bande centrale de bijoux, et c'est le
+    bon compromis : elle reste lisible comme un étalage, là où descendre
+    l'ancre aurait fait entrer du pavé vide par le haut.
+
+    Le rapport du cadre est celui de la BOÎTE ENTIÈRE, bande cachée sous la
+    barre comprise, et non de ce qui dépasse en dessous. Sur ces pages, la
+    barre est transparente : elle laisse voir la photographie au lieu de la
+    masquer, et la boîte entière est donc bien ce qu'on regarde.
+
+    Le côté n'a rien à régler, comme partout ailleurs : le cadre est toujours
+    plus large que le 3/2 de la source, donc seul le haut et le bas sont
+    rognés. Les pavés vides de la moitié gauche restent visibles — c'est là que
+    se pose le titre.
+  */
+  accessoires: {
+    src: '/images/bandeau-accessoires.jpg',
+    cadrage: '50% 54%',
     alt: '',
   },
 }
