@@ -29,7 +29,7 @@ export async function SiteFooter() {
     // composé et sous quelles règles. C'est exactement ce que contient ce pied
     // de page — d'où le traitement en bloc réglé plutôt qu'en bandeau coloré.
     <footer className="ruled-t">
-      <div className="mx-auto max-w-[80rem] px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-[var(--colonne)] px-4 py-10 sm:px-6">
         <div className="grid gap-8 sm:grid-cols-3">
           <div>
             <p className="font-display text-lg font-bold uppercase tracking-tight text-ink">

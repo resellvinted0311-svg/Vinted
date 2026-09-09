@@ -202,7 +202,7 @@ export async function HeroBanner({ imageUrl }: { imageUrl: string | null }) {
           porte en général le sujet, et le bas le ciel ou le sol — c'est là que
           l'encre se lit.
         */}
-        <div className="mx-auto flex h-full max-w-[80rem] flex-col justify-end gap-5 px-4 pb-10 pt-16 sm:px-6 lg:pb-14">
+        <div className="mx-auto flex h-full max-w-[var(--colonne)] flex-col justify-end gap-5 px-4 pb-10 pt-16 sm:px-6 lg:pb-14">
           <h1 className="type-hero max-w-3xl font-display font-bold uppercase text-ink">
             {t('heroTitle')}
           </h1>

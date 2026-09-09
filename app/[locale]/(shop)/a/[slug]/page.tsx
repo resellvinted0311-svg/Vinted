@@ -2,15 +2,16 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
-import {
-  getArticleBySlug,
-  getSimilarArticles,
-} from '@/lib/db/queries/articles'
+import { getArticleBySlug, getSimilarArticles } from '@/lib/db/queries/articles'
 import { getCategoryPath } from '@/lib/db/queries/taxonomy'
 import { isReservationLive } from '@/lib/db/visibility'
 import { getCurrentUser } from '@/lib/auth/session'
 import { OfferForm } from '@/components/shop/offer-form'
-import { pickTranslation, ArticleCard, ArticleGrid } from '@/components/shop/article-card'
+import {
+  pickTranslation,
+  ArticleCard,
+  ArticleGrid,
+} from '@/components/shop/article-card'
 import { ArticleGallery } from '@/components/shop/article-gallery'
 import { MeasurementsTable } from '@/components/shop/measurements-table'
 import { FavoriteButton } from '@/components/shop/favorite-button'
@@ -58,7 +59,9 @@ export async function generateMetadata({
       title: translation?.title ?? article.sku,
       description: translation?.description.slice(0, 300),
       type: 'website',
-      images: cover ? [{ url: cover.url, width: cover.width, height: cover.height }] : [],
+      images: cover
+        ? [{ url: cover.url, width: cover.width, height: cover.height }]
+        : [],
     },
     twitter: {
       card: 'summary_large_image',
@@ -95,7 +98,10 @@ export default async function ArticlePage({ params }: { params: Params }) {
   const translation = pickTranslation(article.translations, locale)
   const isSold = article.status === 'SOLD'
   const isReserved = isReservationLive(article)
-  const discount = discountPercent(article.priceCents, article.comparePriceCents)
+  const discount = discountPercent(
+    article.priceCents,
+    article.comparePriceCents,
+  )
 
   const [similar, categoryPath] = await Promise.all([
     getSimilarArticles(
@@ -114,7 +120,8 @@ export default async function ArticlePage({ params }: { params: Params }) {
   const categoryName =
     article.category.translations.find((entry) => entry.locale === locale)
       ?.name ??
-    article.category.translations.find((entry) => entry.locale === 'fr')?.name ??
+    article.category.translations.find((entry) => entry.locale === 'fr')
+      ?.name ??
     article.category.slug
 
   const offersOpen =
@@ -143,7 +150,9 @@ export default async function ArticlePage({ params }: { params: Params }) {
       ? { brand: { '@type': 'Brand', name: article.brand.name } }
       : {}),
     ...(article.color ? { color: tCat(`colors.${article.color}`) } : {}),
-    ...(article.material ? { material: tCat(`materials.${article.material}`) } : {}),
+    ...(article.material
+      ? { material: tCat(`materials.${article.material}`) }
+      : {}),
     size: article.sizeLabel,
     // La clé est OMISE quand il n'y a aucun visuel, jamais laissée à `[]`.
     // `image` est requis pour un résultat enrichi Product : un tableau vide
@@ -179,7 +188,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
   }
 
   return (
-    <div className="mx-auto max-w-[80rem] px-4 pb-24 pt-6 sm:px-6">
+    <div className="mx-auto max-w-[var(--colonne)] px-4 pb-24 pt-6 sm:px-6">
       <Breadcrumbs
         locale={locale}
         items={[
@@ -199,7 +208,9 @@ export default async function ArticlePage({ params }: { params: Params }) {
         <div className="flex flex-col gap-6">
           <div>
             <p className="label-reg text-muted">{categoryName}</p>
-            <h1 className="mt-2 text-2xl">{translation?.title ?? article.sku}</h1>
+            <h1 className="mt-2 text-2xl">
+              {translation?.title ?? article.sku}
+            </h1>
 
             {article.brand ? (
               <Link
@@ -262,10 +273,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
                   Une OFFRE ne réserve rien non plus, et pour la même
                   raison : le formulaire le dit avant l'envoi, pas dans une
                   note après coup. */}
-              <AddToCartButton
-                articleId={article.id}
-                label={t('addToCart')}
-              />
+              <AddToCartButton articleId={article.id} label={t('addToCart')} />
 
               {offersOpen ? (
                 <div className="mt-2 border-t border-sand pt-4">
@@ -314,7 +322,9 @@ export default async function ArticlePage({ params }: { params: Params }) {
               mention qui use la confiance dans toutes les autres.
             */}
             {translation?.isMachineTranslated ? (
-              <p className="mt-2 text-xs text-muted">{t('machineTranslated')}</p>
+              <p className="mt-2 text-xs text-muted">
+                {t('machineTranslated')}
+              </p>
             ) : translation?.isFallback ? (
               <p className="mt-2 text-xs text-muted">{t('notTranslated')}</p>
             ) : null}
@@ -336,10 +346,15 @@ export default async function ArticlePage({ params }: { params: Params }) {
             faire joli, et celles qui manquent ne sont pas affichées.
           */}
           <section>
-            <h2 className="border-b border-sand pb-2 text-lg">{t('details')}</h2>
+            <h2 className="border-b border-sand pb-2 text-lg">
+              {t('details')}
+            </h2>
 
             <dl className="mt-1">
-              <Row label={t('condition')} note={tc(`${article.condition}.help`)}>
+              <Row
+                label={t('condition')}
+                note={tc(`${article.condition}.help`)}
+              >
                 {tc(`${article.condition}.label`)}
               </Row>
 

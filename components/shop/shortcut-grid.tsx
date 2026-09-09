@@ -56,7 +56,7 @@ export async function ShortcutGrid({
   const shown = entries.slice(0, limit)
 
   return (
-    <section className="mx-auto max-w-[80rem] px-4 py-10 sm:px-6 sm:py-14">
+    <section className="mx-auto max-w-[var(--colonne)] px-4 py-10 sm:px-6 sm:py-14">
       <Reveal>
         <div className="ruled-signature flex flex-wrap items-end justify-between gap-4 pb-4">
           <h2 className="text-gradient type-section font-display font-bold uppercase">
@@ -79,7 +79,10 @@ export async function ShortcutGrid({
           <Reveal key={entry.value} delay={Math.min(index, 6) * 40}>
             <li>
               <Link
-                href={{ pathname: '/catalogue', query: { [param]: entry.value } }}
+                href={{
+                  pathname: '/catalogue',
+                  query: { [param]: entry.value },
+                }}
                 className="lift flex min-h-[72px] flex-col justify-center gap-1 rounded-card ruled bg-paper-raised px-4 py-3"
               >
                 <span className="font-display text-lg font-bold uppercase leading-none tracking-tight text-ink">

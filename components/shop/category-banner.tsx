@@ -18,8 +18,15 @@ import { BarreSurImage } from './barre-sur-image'
  *
  * Une page de rayon a le propos inverse. Quelqu'un qui clique « Jeans » veut
  * voir des jeans, pas une image de jeans. Le bandeau annonce l'endroit où l'on
- * vient d'arriver, puis s'efface : d'où un 3/1, et un plafond en unités de
- * fenêtre pour que les premières pièces restent visibles sans défiler.
+ * vient d'arriver, puis s'efface : d'où une proportion large et un plafond en
+ * unités de fenêtre pour que les premières pièces restent visibles sans
+ * défiler.
+ *
+ * La géométrie exacte vit dans `.bandeau-cadre`, côté feuille de style, et non
+ * dans des classes utilitaires : le bandeau doit pouvoir grandir quand il passe
+ * sous la barre de navigation, et une utilitaire l'emporte sur toute règle de
+ * composant quel que soit le sélecteur. Elle a été relevée de 30 % à la demande
+ * de la boutique — proportion, plancher et plafond ensemble.
  *
  * C'est la règle que `phase0.spec.ts` tient depuis le début, et elle protège
  * les ventes : un bandeau qui remplit la fenêtre ne montre aucune pièce, et un
@@ -64,11 +71,12 @@ export function CategoryBanner({
   /**
    * Le point de l'image qui reste ANCRÉ une fois l'image recadrée.
    *
-   * Attention au piège : la proportion du cadre n'est PAS le 3/1 annoncé plus
-   * bas. `max-h-[34svh]` mord presque toujours avant, et le cadre va du 6/1
-   * au 2.2/1 selon la fenêtre — ce qui fait varier du simple au triple la part
-   * de la photographie qu'on voit. Un cadrage choisi en visant une bande n'est
-   * donc juste que sur la fenêtre où il a été choisi.
+   * Attention au piège : la proportion du cadre n'est PAS celle qui est
+   * déclarée. Le plafond en unités de fenêtre mord presque toujours avant, et
+   * le cadre va du 4,5/1 au 1,7/1 selon la fenêtre — ce qui fait varier du
+   * simple au triple la part de la photographie qu'on voit. Un cadrage choisi
+   * en visant une bande n'est donc juste que sur la fenêtre où il a été
+   * choisi.
    *
    * `lib/design/category-banners.ts` explique comment poser cette valeur pour
    * qu'elle tienne sur toutes les fenêtres.
@@ -184,7 +192,7 @@ export function CategoryBanner({
           du cadre qui portera le sujet.
         */}
         <div
-          className="mx-auto flex h-full max-w-[80rem] flex-col justify-end gap-2 px-4 pb-6 sm:px-6 sm:pb-8"
+          className="mx-auto flex h-full max-w-[var(--colonne)] flex-col justify-end gap-2 px-4 pb-6 sm:px-6 sm:pb-8"
           // L'ombre ne sert QUE s'il y a une photographie derrière. Sur le
           // lavis, le contraste est connu et bon : une ombre n'y ajouterait
           // qu'une salissure autour des lettres.

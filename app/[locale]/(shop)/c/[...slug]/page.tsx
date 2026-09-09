@@ -77,7 +77,7 @@ export default async function CategoryPage({
         alt={bandeau?.alt ?? ''}
       />
 
-      <div className="mx-auto max-w-[80rem] px-4 pt-6 sm:px-6">
+      <div className="mx-auto max-w-[var(--colonne)] px-4 pt-6 sm:px-6">
         <Breadcrumbs
           items={[
             { href: '/catalogue', label: t('catalogue') },

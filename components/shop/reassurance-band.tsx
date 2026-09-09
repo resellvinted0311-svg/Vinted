@@ -52,11 +52,7 @@ import { Surpiqure } from '@/components/shop/surpiqure'
 export async function ReassuranceBand() {
   const t = await getTranslations('home')
 
-  const faits = [
-    t('claimUnique'),
-    t('claimShipped'),
-    t('claimReturn'),
-  ] as const
+  const faits = [t('claimUnique'), t('claimShipped'), t('claimReturn')] as const
 
   return (
     <section className="gradient-accent relative ruled-t ruled-b text-ink-inverse">
@@ -95,7 +91,7 @@ export async function ReassuranceBand() {
         />
       </div>
 
-      <ul className="mx-auto flex max-w-[80rem] flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6">
+      <ul className="mx-auto flex max-w-[var(--colonne)] flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6">
         {faits.map((fait) => (
           <li key={fait} className="label-reg">
             {fait}

@@ -100,7 +100,7 @@ export function CategoryCards({
     .join('&')
 
   return (
-    <section className="mx-auto max-w-[80rem] px-4 py-10 sm:px-6 sm:py-14">
+    <section className="mx-auto max-w-[var(--colonne)] px-4 py-10 sm:px-6 sm:py-14">
       <Reveal>
         <div className="ruled-signature pb-4">
           <h2 className="text-gradient type-section font-display font-bold uppercase">

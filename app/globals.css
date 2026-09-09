@@ -250,6 +250,25 @@
      visuelle qu'on veut pouvoir changer en un seul endroit. */
   --rule-width: 1.5px;
 
+  /* --- Largeur de la colonne de contenu -----------------------------------
+     La page tient dans cette largeur, et TOUT s'y aligne : le fil d'Ariane, le
+     titre du bandeau, la grille de pièces, les bandes éditoriales, le
+     colophon. C'est ce qui fait que la page se lit sur une seule verticale.
+
+     La valeur était écrite en dur, dix-huit fois, dans seize fichiers. Elle
+     est passée de 80 à 88 rem — les fiches du catalogue gagnent environ 11 %
+     de largeur, ce qui était la demande — et l'occasion a servi à ne plus
+     avoir qu'une source : un élargissement futur qui n'atteindrait que
+     dix-sept endroits sur dix-huit désalignerait la page sans rien casser,
+     donc sans que rien ne le signale.
+
+     Conséquence assumée, mesurée sur un écran de 1440 : la marge latérale
+     passe de 104 à 40 px. La page frôle les bords — c'est le prix de fiches
+     plus larges à nombre de colonnes constant, et il a été accepté en
+     connaissance de cause. À 1440 exactement, le contenu s'aligne d'ailleurs
+     sur le nom de la boutique dans la barre. */
+  --colonne: 88rem;
+
   /* --- Hauteur de la barre de navigation ---------------------------------
      Une CONSTANTE, et c'est ce qui la rend utilisable.
 
@@ -1014,10 +1033,10 @@
           boutique dans la photographie.
 
        3. Le cadre REND la bande mangée. Sans cela le bandeau perdrait
-          quatre-vingt-quatre pixels sur trois cents, soit un bon quart de la
-          photographie et la moitié de l'air au-dessus du titre. Le plafond et
-          le plancher grandissent donc de la même constante : ce qui passe sous
-          la barre est ajouté en bas.
+          quatre-vingt-quatre pixels sur quatre cents, soit un cinquième de la
+          photographie et la moitié de l'air au-dessus du titre. Ce qui passe
+          sous la barre est ajouté en bas, par un rembourrage, et le mécanisme
+          est décrit à l'endroit où il est écrit.
      ========================================================================== */
   .bandeau-cadre {
     position: relative;
@@ -1027,10 +1046,20 @@
       Trois règles se disputent cette hauteur, et l'ordre compte : le plancher
       l'emporte toujours sur le plafond, et la proportion ne s'applique
       qu'entre les deux. C'est pourquoi le plancher reste modeste.
+
+      LES TROIS ONT ÉTÉ RELEVÉES DE 30 %, à la demande de la boutique, et il
+      fallait bien les trois. Selon la fenêtre, ce n'est pas la même qui
+      décide : la proportion gouverne entre 768 et 1020 px, le plafond au-delà,
+      le plancher sur les fenêtres basses. N'en relever qu'une aurait donné un
+      bandeau plus grand sur certains écrans et inchangé sur les autres —
+      exactement le genre d'écart qu'on ne voit pas depuis sa propre machine.
+
+      La proportion s'écrit « 3 pour 1,3 » plutôt que 2,31 pour 1 : le rapport
+      d'origine reste lisible, et le facteur avec lui.
     */
-    aspect-ratio: 3 / 1;
-    min-height: 11rem;
-    max-height: 34svh;
+    aspect-ratio: 3 / 1.3;
+    min-height: 14.3rem;
+    max-height: 44svh;
   }
 
   @media (min-width: 768px) {

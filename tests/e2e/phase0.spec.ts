@@ -582,6 +582,47 @@ test.describe('La barre posée sur le bandeau', () => {
   })
 })
 
+test.describe('La colonne de contenu', () => {
+  test('est bornée, et bornée à la valeur du jeton', async ({ page }) => {
+    /**
+     * Ce test garde une PANNE SILENCIEUSE, pas une largeur.
+     *
+     * La colonne était écrite en dur dix-huit fois ; elle vient d'être
+     * centralisée dans le jeton `--colonne`, lu par les classes utilitaires
+     * sous la forme `max-w-[var(--colonne)]`. C'est là que se cache le piège :
+     * une classe utilitaire dont la valeur ne résout pas ne produit AUCUNE
+     * règle, sans erreur, sans avertissement. Le jeton renommé ou supprimé, la
+     * borne disparaît — et le site s'étale sur toute la largeur de l'écran,
+     * fiches comprises, sans que rien ne casse ni qu'aucun test ne tombe.
+     *
+     * On mesure donc dans une fenêtre PLUS LARGE que la borne : c'est la seule
+     * façon de distinguer « la colonne est bornée » de « la fenêtre est trop
+     * étroite pour qu'on le voie ».
+     */
+    await page.setViewportSize({ width: 1800, height: 900 })
+    await page.goto('/fr/catalogue')
+    await page.waitForLoadState('load')
+
+    const mesure = await page.evaluate(() => {
+      const racine = getComputedStyle(document.documentElement)
+      const rem = parseFloat(racine.fontSize)
+      const jeton = racine.getPropertyValue('--colonne').trim()
+      const colonne = document.querySelector('main .mx-auto')
+      return {
+        largeur: Math.round(colonne!.getBoundingClientRect().width),
+        attendue: Math.round(parseFloat(jeton) * rem),
+        jeton,
+      }
+    })
+
+    expect(mesure.jeton, 'le jeton --colonne a disparu').not.toBe('')
+    expect(
+      mesure.largeur,
+      `la colonne fait ${mesure.largeur}px pour un jeton de ${mesure.attendue}px : la borne ne s’applique plus`,
+    ).toBe(mesure.attendue)
+  })
+})
+
 test.describe('Le visuel d’arrivée', () => {
   for (const [nom, viewport, plafond] of [
     ['bureau', { width: 1280, height: 800 }, 0.8],

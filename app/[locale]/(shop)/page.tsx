@@ -75,25 +75,28 @@ export default async function HomePage({
   */
   const [latest, total, facets, heroImageUrl, universeImages] =
     await Promise.all([
-    // Huit pièces, et plus neuf : la vitrine ne prélève plus la première pour
-    // en faire la pièce du moment. « Ajouté cette semaine » en montre huit.
-    getLatestArticles(locale, 8),
-    countListedArticles(),
-    // Les facettes du catalogue SANS filtre : elles donnent les tailles et les
-    // catégories avec leurs effectifs réels, en une seule série de requêtes.
-    // Les recompter ici avec des requêtes maison ferait diverger les nombres
-    // de l'accueil de ceux du catalogue, et c'est le genre d'écart qu'on ne
-    // remarque jamais soi-même.
-    getFacets(EMPTY_FILTERS, locale),
-    getHomeHeroImageUrl(),
-    getUniverseImageUrls(),
-  ])
+      // Huit pièces, et plus neuf : la vitrine ne prélève plus la première pour
+      // en faire la pièce du moment. « Ajouté cette semaine » en montre huit.
+      getLatestArticles(locale, 8),
+      countListedArticles(),
+      // Les facettes du catalogue SANS filtre : elles donnent les tailles et les
+      // catégories avec leurs effectifs réels, en une seule série de requêtes.
+      // Les recompter ici avec des requêtes maison ferait diverger les nombres
+      // de l'accueil de ceux du catalogue, et c'est le genre d'écart qu'on ne
+      // remarque jamais soi-même.
+      getFacets(EMPTY_FILTERS, locale),
+      getHomeHeroImageUrl(),
+      getUniverseImageUrls(),
+    ])
 
   // Les trois étapes forment une vraie séquence — on chine, on prépare, on
   // expédie — donc la numérotation porte une information. Ailleurs, un numéro
   // décoratif serait du remplissage.
   const steps = [
-    { title: t('howItWorks.sourcingTitle'), body: t('howItWorks.sourcingBody') },
+    {
+      title: t('howItWorks.sourcingTitle'),
+      body: t('howItWorks.sourcingBody'),
+    },
     {
       title: t('howItWorks.selectionTitle'),
       body: t('howItWorks.selectionBody'),
@@ -106,7 +109,7 @@ export default async function HomePage({
 
   if (latest.length === 0) {
     return (
-      <section className="mx-auto max-w-[80rem] px-4 py-24 sm:px-6">
+      <section className="mx-auto max-w-[var(--colonne)] px-4 py-24 sm:px-6">
         <div className="rounded-card ruled bg-surface p-10">
           <h1 className="type-section font-display font-bold uppercase">
             {tSite('tagline')}
@@ -183,7 +186,7 @@ export default async function HomePage({
             unique, la gravure traverserait le texte des étapes. */}
         <SeedHeadPlate className="pointer-events-none absolute -left-28 top-0 h-full w-auto select-none text-engraving opacity-[0.18] sm:-left-10 sm:opacity-30" />
 
-        <div className="relative mx-auto max-w-[80rem] px-4 py-16 sm:px-6 sm:py-24">
+        <div className="relative mx-auto max-w-[var(--colonne)] px-4 py-16 sm:px-6 sm:py-24">
           <Reveal>
             {/* Le dégradé descend dans les TITRES DE SECTION. Il ne tenait
                 jusqu'ici que le bouton principal et deux filets : la teinte du
@@ -256,7 +259,7 @@ export default async function HomePage({
       <section className="gradient-accent relative overflow-hidden ruled-t text-ink-inverse">
         <BranchPlate className="pointer-events-none absolute -right-10 -top-16 h-[150%] w-auto select-none text-ink-inverse opacity-20" />
 
-        <div className="relative mx-auto max-w-[80rem] px-4 py-20 sm:px-6 sm:py-28">
+        <div className="relative mx-auto max-w-[var(--colonne)] px-4 py-20 sm:px-6 sm:py-28">
           <Reveal>
             <p className="label-reg">{tSite('tagline')}</p>
 

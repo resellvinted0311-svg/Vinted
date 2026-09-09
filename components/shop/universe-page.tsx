@@ -1,5 +1,8 @@
 import { getTranslations } from 'next-intl/server'
-import { getCategoryCovers, hasSortedAudiences } from '@/lib/db/queries/articles'
+import {
+  getCategoryCovers,
+  hasSortedAudiences,
+} from '@/lib/db/queries/articles'
 import { listShowcaseCategories } from '@/lib/db/queries/taxonomy'
 import { parseCatalogueSearchParams } from '@/lib/validation/catalogue'
 import { audiencesFor } from '@/lib/domain/vocabulary'
@@ -82,7 +85,7 @@ export async function UniversePage({
 
   return (
     <>
-      <div className="mx-auto max-w-[80rem] px-4 pt-6 sm:px-6">
+      <div className="mx-auto max-w-[var(--colonne)] px-4 pt-6 sm:px-6">
         <Breadcrumbs
           locale={locale}
           items={[

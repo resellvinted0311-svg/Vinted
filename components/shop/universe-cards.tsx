@@ -61,7 +61,7 @@ export async function UniverseCards({
   }))
 
   return (
-    <section className="mx-auto max-w-[80rem] px-4 py-10 sm:px-6 sm:py-14">
+    <section className="mx-auto max-w-[var(--colonne)] px-4 py-10 sm:px-6 sm:py-14">
       <Reveal>
         {/*
           Le titre est là pour les lecteurs d'écran et pour la structure du

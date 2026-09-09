@@ -30,7 +30,7 @@ export async function ArrivalsRail({
 
   return (
     <section className="py-16 sm:py-24 lg:py-8">
-      <div className="mx-auto max-w-[80rem] px-4 sm:px-6">
+      <div className="mx-auto max-w-[var(--colonne)] px-4 sm:px-6">
         <Reveal>
           <div className="ruled-signature flex flex-wrap items-end justify-between gap-4 pb-4">
             <h2 className="text-gradient type-section font-display font-bold uppercase">
