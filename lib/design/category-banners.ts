@@ -85,34 +85,49 @@ export interface CategoryBannerImage {
  */
 export const CATEGORY_BANNERS: Readonly<Record<string, CategoryBannerImage>> = {
   /*
-    Pulls et sweats.
+    Pulls et sweats. SECONDE PRISE, posée à la demande de la boutique.
 
-    Positions relevées à la règle sur la source (5992×3992) :
+    Le fichier garde son nom : il désigne un RÔLE — le bandeau du rayon des
+    pulls — et non un numéro de prise. Un `bandeau-pull-2.jpg` aurait porté
+    une information vraie le jour du dépôt et fausse à la troisième photo, et
+    aurait laissé traîner l'ancienne, non référencée, dans le déploiement.
 
-      28 %  main levée        30 %  haut des cheveux     38-55 %  visage
-      48-58 %  col roulé      55-85 %  corps du pull     80-87 %  bordure rayée
+    Même scène que la précédente, mais cadrée PLUS LARGE : la personne est plus
+    petite, décalée vers la droite, et le mur vert occupe toute la gauche. Un
+    cadrage se remesure donc entièrement — reprendre l'ancien chiffre aurait
+    décapité le sujet, ce qui est exactement ce qui s'est produit la première
+    fois.
 
-    54 % pose donc l'ancre sur le col — c'est-à-dire sur la charnière entre la
-    personne et le vêtement, les deux choses à montrer.
+    Positions relevées sur la source (5992×3992) :
+
+      34 %  main levée        37 %  haut des cheveux     44-55 %  visage
+      54-59 %  col roulé      55-91 %  corps du pull     89-95 %  bordure rayée
+
+    58 % pose l'ancre sur le col — la charnière entre la personne et le
+    vêtement, les deux choses à montrer.
 
     Vérifié sur la page servie, de la fenêtre la plus basse à la plus haute :
 
-      1440×700   cadre 6.03/1   bande source [40 %, 65 %]
-      1440×900   cadre 4.69/1   bande source [37 %, 69 %]
-      1440×1200  cadre 3.52/1   bande source [31 %, 74 %]
-      390×844    cadre 2.20/1   bande source [17 %, 85 %]
+      1440×600   cadre 5.45/1   bande source [42 %, 70 %]
+      1440×700   cadre 4.68/1   bande source [39 %, 71 %]
+      1440×900   cadre 3.00/1   bande source [29 %, 79 %]
+      1440×1200  cadre 2.35/1   bande source [21 %, 85 %]
+      390×844    cadre 1.70/1   bande source [ 7 %, 95 %]
 
-    Le visage (38-55 %) tient dans les quatre. C'était le point : sur la plus
-    basse — celle qui montre le moins — la chevelure est effleurée en haut du
-    cadre, mais le visage reste entier.
+    Le visage (44-55 %) tient dans les cinq, y compris sur la fenêtre la plus
+    basse, où il ne reste que trois points de marge au-dessus. C'est le point
+    du réglage. Ce qui saute sur cette fenêtre-là, c'est le haut du bras levé
+    et la naissance des cheveux — un bras coupé par le haut du cadre se lit
+    comme un cadrage, un visage coupé se lit comme une erreur.
 
-    Le réglage précédent était 48 %, choisi pour garder aussi la chevelure sur
-    toutes les fenêtres. Remonté à la demande : 54 % montre davantage de pull,
-    au prix de ce haut de tête sur la seule fenêtre la plus basse.
+    Le côté ne joue aucun rôle et reste à 50 % : le cadre est toujours plus
+    large que le 3/2 de la source — de 1.70/1 sur téléphone à 5.45/1 sur une
+    fenêtre basse —, si bien que `cover` ne rogne QUE la hauteur. Toute la
+    largeur de la photographie est montrée, sur toutes les fenêtres.
   */
   'pulls-sweats': {
     src: '/images/bandeau-pull.jpg',
-    cadrage: '50% 54%',
+    cadrage: '50% 58%',
     // Décorative : le titre « Pulls et sweats » est juste à côté, dans le
     // bandeau, et le dit déjà.
     alt: '',
