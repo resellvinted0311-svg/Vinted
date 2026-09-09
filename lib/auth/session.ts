@@ -152,17 +152,54 @@ export const getCurrentUser = cache(async function getCurrentUser(): Promise<Cur
   }
 })
 
+/**
+ * Pourquoi l'accès est refusé — la donnée, séparée de la phrase.
+ *
+ * `authentication-required` : aucune session valide. `admin-only` : une
+ * session valide, mais pas le rôle.
+ */
+export type AuthorizationReason = 'authentication-required' | 'admin-only'
+
+/**
+ * Un refus d'accès, avec son MOTIF lisible par le code.
+ *
+ * ---------------------------------------------------------------------------
+ * Le défaut que `reason` remplace
+ * ---------------------------------------------------------------------------
+ * Cette classe ne portait qu'un message, et l'appelant distinguait les deux
+ * refus par `error.message.includes('Authentification')`. Deux conséquences
+ * qu'aucun test ne rattrapait :
+ *
+ *  - reformuler la phrase — corriger une faute, la traduire, retirer le mot
+ *    « Authentification » — envoyait silencieusement le visiteur non connecté
+ *    sur un 404 au lieu de la page de connexion. Rien n'échoue, rien ne
+ *    signale : la page d'administration devient simplement introuvable pour
+ *    qui vient de perdre son cookie ;
+ *  - la comparaison est SENSIBLE À LA CASSE et à l'accent. « authentification »
+ *    en minuscule ne correspondait déjà plus.
+ *
+ * Le motif est une valeur fermée. Le message reste, pour les journaux : il dit
+ * la même chose à un humain, mais ce n'est plus lui qui décide.
+ */
 export class AuthorizationError extends Error {
-  constructor(message: string) {
+  readonly reason: AuthorizationReason
+
+  constructor(reason: AuthorizationReason, message: string) {
     super(message)
     this.name = 'AuthorizationError'
+    this.reason = reason
   }
 }
 
 /** Exige une session valide. À appeler au début de chaque action protégée. */
 export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser()
-  if (!user) throw new AuthorizationError('Authentification requise.')
+  if (!user) {
+    throw new AuthorizationError(
+      'authentication-required',
+      'Authentification requise.',
+    )
+  }
   return user
 }
 
@@ -177,7 +214,10 @@ export async function requireUser(): Promise<CurrentUser> {
 export async function requireAdmin(): Promise<CurrentUser> {
   const user = await requireUser()
   if (user.role !== 'ADMIN') {
-    throw new AuthorizationError('Accès réservé à l’administration.')
+    throw new AuthorizationError(
+      'admin-only',
+      'Accès réservé à l’administration.',
+    )
   }
   return user
 }

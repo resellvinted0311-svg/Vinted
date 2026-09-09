@@ -48,12 +48,16 @@ import { AuthorizationError } from './session'
  */
 export function handleAdminAuthError(error: unknown, locale: string): never {
   if (error instanceof AuthorizationError) {
-    // Les deux refus se distinguent par leur message, seul élément que
-    // `AuthorizationError` porte. Un code d'erreur serait plus solide ; il
-    // faudrait le poser dans `lib/auth/session.ts`, qui est partagé avec des
-    // chemins non administratifs — à faire le jour où un troisième cas
-    // apparaît.
-    if (error.message.includes('Authentification')) {
+    /*
+      Les deux refus se distinguent par leur MOTIF, pas par leur phrase.
+
+      C'était l'inverse : `error.message.includes('Authentification')`. Une
+      reformulation du message — une faute corrigée, une traduction, une
+      minuscule — aurait envoyé le visiteur sans session sur un 404 au lieu de
+      la page de connexion, sans qu'aucun test ni aucun journal ne le signale.
+      Le motif est désormais une valeur fermée, posée à la levée.
+    */
+    if (error.reason === 'authentication-required') {
       redirect(`/${locale}/connexion?suite=/admin`)
     }
     notFound()

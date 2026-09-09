@@ -9,7 +9,6 @@
     "discover": "Odkrywaj",
     "openSearch": "Otwórz wyszukiwanie",
     "closeSearch": "Zamknij wyszukiwanie",
-    "searchPlaceholder": "Ubranie, marka, materiał…",
     "favoritesCount": "{count} rzeczy w ulubionych",
     "cartCount": "{count} rzeczy w koszyku",
     "home": "Strona główna",
@@ -22,17 +21,13 @@
     "cart": "Koszyk",
     "favorites": "Ulubione",
     "search": "Szukaj",
-    "openMenu": "Otwórz menu",
-    "closeMenu": "Zamknij menu",
     "skipToContent": "Przejdź do treści",
     "language": "Język"
   },
   "home": {
     "intro": "Odzież z drugiej ręki wybierana sztuka po sztuce. Każdy przedmiot jest jedyny w swoim rodzaju: po sprzedaży nie wraca.",
-    "newArrivals": "Ostatnio dodane",
     "seeAll": "Zobacz cały katalog",
     "shopByCategory": "Według kategorii",
-    "shopByBrand": "Według marki",
     "emptyCatalogue": "Obecnie nie ma żadnych przedmiotów.",
     "emptyCatalogueHint": "Pierwsze sztuki pojawią się wkrótce.",
     "howItWorks": {
@@ -45,16 +40,11 @@
       "shippingBody": "Wysyłka w ciągu 48 godzin roboczych z Francji, do punktu odbioru lub pod wskazany adres."
     },
     "registerCount": "{count, plural, =0 {Brak sztuk w rejestrze} one {# sztuka w rejestrze} few {# sztuki w rejestrze} many {# sztuk w rejestrze} other {# sztuki w rejestrze}}",
-    "registerNote": "Jedna sztuka, jeden egzemplarz. Numer, materiał, waga i wymiary są podane przy każdym produkcie.",
-    "featured": "Rzecz chwili",
-    "featuredCta": "Zobacz tę sztukę",
     "arrivals": "Właśnie weszło",
     "browseTitle": "Wejdź do katalogu",
     "browseBody": "Wszystkie sztuki online, z filtrami: rozmiar, materiał, stan, kolor, cena.",
     "browseCta": "Otwórz katalog",
-    "indexCategories": "Indeks kategorii",
     "claimUnique": "Jeden egzemplarz każdej sztuki",
-    "claimMeasured": "Rzeczywiste wymiary przy każdym produkcie",
     "claimShipped": "Wysyłka w ciągu 48 godzin roboczych",
     "heroTitle": "Odzież z drugiej ręki, wybierana sztuka po sztuce",
     "heroCta": "Zobacz dostępne sztuki",
@@ -210,15 +200,12 @@
         "unknown": "Nie udało się zapisać oferty."
       }
     },
-    "askQuestion": "Zadaj pytanie",
     "similar": "Podobne przedmioty",
     "similarAvailable": "Te sztuki są dostępne",
     "sold": "Sprzedane",
     "soldHint": "Ta sztuka została sprzedana. Była jedyna w swoim rodzaju i nie wróci.",
     "reserved": "W trakcie zakupu",
     "reservedHint": "Ktoś finalizuje zakup. Jeśli zamówienie nie dojdzie do skutku, przedmiot znów będzie dostępny.",
-    "shippingEstimate": "Dostawa",
-    "shippingFrom": "Od {price}",
     "machineTranslated": "Ten opis został przetłumaczony automatycznie.",
     "generatedDescription": "Ten opis został utworzony automatycznie na podstawie zapisanych cech tego przedmiotu.",
     "notTranslated": "Ta karta nie została jeszcze przetłumaczona: jest wyświetlana po francusku.",
@@ -485,8 +472,7 @@
     "label": "Szukaj przedmiotu",
     "placeholder": "Marka, kategoria, materiał",
     "submit": "Szukaj",
-    "resultsFor": "Wyniki dla „{query}”",
-    "noSuggestions": "Brak podpowiedzi."
+    "resultsFor": "Wyniki dla „{query}”"
   },
   "brands": {
     "title": "Marki",
@@ -1049,7 +1035,6 @@
       "errors": {
         "confirmationRequired": "Wpisz EFFACER, aby potwierdzić.",
         "rateLimited": "Zbyt wiele żądań. Spróbuj za godzinę.",
-        "unknownAccount": "Nie znaleziono konta.",
         "invalidInput": "Nieprawidłowe żądanie.",
         "passwordRequired": "Wpisz hasło, aby potwierdzić.",
         "passwordIncorrect": "Nieprawidłowe hasło.",

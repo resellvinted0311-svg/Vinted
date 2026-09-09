@@ -9,7 +9,6 @@
     "discover": "Scopri",
     "openSearch": "Apri la ricerca",
     "closeSearch": "Chiudi la ricerca",
-    "searchPlaceholder": "Un capo, un marchio, un tessuto…",
     "favoritesCount": "{count} capi nei preferiti",
     "cartCount": "{count} capi nel carrello",
     "home": "Home",
@@ -22,17 +21,13 @@
     "cart": "Carrello",
     "favorites": "Preferiti",
     "search": "Cerca",
-    "openMenu": "Apri il menu",
-    "closeMenu": "Chiudi il menu",
     "skipToContent": "Vai al contenuto",
     "language": "Lingua"
   },
   "home": {
     "intro": "Abbigliamento di seconda mano selezionato pezzo per pezzo. Ogni capo è unico: una volta venduto, non torna.",
-    "newArrivals": "Ultimi arrivi",
     "seeAll": "Vedi tutto il catalogo",
     "shopByCategory": "Per categoria",
-    "shopByBrand": "Per marchio",
     "emptyCatalogue": "Nessun capo online al momento.",
     "emptyCatalogueHint": "I primi pezzi arrivano presto.",
     "howItWorks": {
@@ -45,16 +40,11 @@
       "shippingBody": "Spedizione entro 48 ore lavorative dalla Francia, in punto di ritiro o a domicilio."
     },
     "registerCount": "{count, plural, =0 {Nessun capo nel registro} one {# capo nel registro} other {# capi nel registro}}",
-    "registerNote": "Un capo, un esemplare. Riferimento, materiale, peso e misure sono indicati su ogni scheda.",
-    "featured": "Il capo del momento",
-    "featuredCta": "Vedi il capo",
     "arrivals": "Appena arrivati",
     "browseTitle": "Entra nel catalogo",
     "browseBody": "Tutti i capi online, con i filtri: taglia, materiale, condizione, colore, prezzo.",
     "browseCta": "Apri il catalogo",
-    "indexCategories": "Indice delle categorie",
     "claimUnique": "Un esemplare di ogni capo",
-    "claimMeasured": "Misure reali su ogni scheda",
     "claimShipped": "Spedizione entro 48 ore lavorative",
     "heroTitle": "Abbigliamento di seconda mano, scelto pezzo per pezzo",
     "heroCta": "Vedi i capi disponibili",
@@ -210,15 +200,12 @@
         "unknown": "Non è stato possibile registrare l’offerta."
       }
     },
-    "askQuestion": "Fai una domanda",
     "similar": "Capi simili",
     "similarAvailable": "Questi capi sono disponibili",
     "sold": "Venduto",
     "soldHint": "Questo capo è stato venduto. Era un pezzo unico e non tornerà.",
     "reserved": "In corso di acquisto",
     "reservedHint": "Qualcuno sta completando il proprio acquisto. Se l’ordine non va a buon fine, il capo tornerà disponibile.",
-    "shippingEstimate": "Spedizione",
-    "shippingFrom": "A partire da {price}",
     "machineTranslated": "Questa descrizione è stata tradotta automaticamente.",
     "generatedDescription": "Descrizione generata automaticamente dalle caratteristiche registrate di questo capo.",
     "notTranslated": "Questa scheda non è ancora tradotta: è mostrata in francese.",
@@ -485,8 +472,7 @@
     "label": "Cerca un capo",
     "placeholder": "Marchio, categoria, materiale",
     "submit": "Cerca",
-    "resultsFor": "Risultati per «{query}»",
-    "noSuggestions": "Nessun suggerimento."
+    "resultsFor": "Risultati per «{query}»"
   },
   "brands": {
     "title": "Marchi",
@@ -1049,7 +1035,6 @@
       "errors": {
         "confirmationRequired": "Digiti EFFACER per confermare.",
         "rateLimited": "Troppe richieste. Riprovi tra un’ora.",
-        "unknownAccount": "Account non trovato.",
         "invalidInput": "Richiesta non valida.",
         "passwordRequired": "Inserisci la password per confermare.",
         "passwordIncorrect": "Password errata.",

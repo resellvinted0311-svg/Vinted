@@ -9,7 +9,6 @@
     "discover": "Découvrir",
     "openSearch": "Ouvrir la recherche",
     "closeSearch": "Fermer la recherche",
-    "searchPlaceholder": "Un vêtement, une marque, une matière…",
     "favoritesCount": "{count} pièces en favoris",
     "cartCount": "{count} pièces au panier",
     "home": "Accueil",
@@ -22,17 +21,13 @@
     "cart": "Panier",
     "favorites": "Favoris",
     "search": "Rechercher",
-    "openMenu": "Ouvrir le menu",
-    "closeMenu": "Fermer le menu",
     "skipToContent": "Aller au contenu",
     "language": "Langue"
   },
   "home": {
     "intro": "Des vêtements de seconde main sélectionnés pièce par pièce. Chaque article est unique : une fois vendu, il ne revient pas.",
-    "newArrivals": "Derniers arrivages",
     "seeAll": "Voir tout le catalogue",
     "shopByCategory": "Par catégorie",
-    "shopByBrand": "Par marque",
     "emptyCatalogue": "Aucun article en ligne pour le moment.",
     "emptyCatalogueHint": "Les premières pièces arrivent bientôt.",
     "howItWorks": {
@@ -45,16 +40,11 @@
       "shippingBody": "Expédition sous 48 heures ouvrées depuis la France, en point relais ou à domicile."
     },
     "registerCount": "{count, plural, =0 {Aucune pièce au registre} one {# pièce au registre} other {# pièces au registre}}",
-    "registerNote": "Une pièce, un exemplaire. Référence, matière, poids et mesures figurent sur chaque fiche.",
-    "featured": "La pièce du moment",
-    "featuredCta": "Voir la pièce",
     "arrivals": "Ce qui vient d’entrer",
     "browseTitle": "Entrer dans le catalogue",
     "browseBody": "Toutes les pièces en ligne, avec les filtres : taille, matière, état, couleur, prix.",
     "browseCta": "Ouvrir le catalogue",
-    "indexCategories": "Index des catégories",
     "claimUnique": "Un exemplaire de chaque pièce",
-    "claimMeasured": "Mesures réelles sur chaque fiche",
     "claimShipped": "Expédition sous 48 heures ouvrées",
     "heroTitle": "Vêtements d’occasion, chinés pièce par pièce",
     "heroCta": "Voir les pièces disponibles",
@@ -210,15 +200,12 @@
         "unknown": "La proposition n’a pas pu être enregistrée."
       }
     },
-    "askQuestion": "Poser une question",
     "similar": "Articles similaires",
     "similarAvailable": "Ces pièces sont disponibles",
     "sold": "Vendu",
     "soldHint": "Cette pièce est partie. Elle était unique, elle ne reviendra pas.",
     "reserved": "En cours d’achat",
     "reservedHint": "Quelqu’un est en train de finaliser son achat. Si la commande n’aboutit pas, l’article redeviendra disponible.",
-    "shippingEstimate": "Livraison",
-    "shippingFrom": "À partir de {price}",
     "machineTranslated": "Cette description a été traduite automatiquement.",
     "generatedDescription": "Description établie automatiquement à partir des caractéristiques enregistrées de cette pièce.",
     "notTranslated": "Cette fiche n’est pas encore traduite : elle est affichée en français.",
@@ -485,8 +472,7 @@
     "label": "Rechercher un article",
     "placeholder": "Marque, catégorie, matière",
     "submit": "Rechercher",
-    "resultsFor": "Résultats pour « {query} »",
-    "noSuggestions": "Aucune suggestion."
+    "resultsFor": "Résultats pour « {query} »"
   },
   "brands": {
     "title": "Marques",
@@ -1049,7 +1035,6 @@
       "errors": {
         "confirmationRequired": "Tapez EFFACER pour confirmer.",
         "rateLimited": "Trop de demandes. Réessayez dans une heure.",
-        "unknownAccount": "Compte introuvable.",
         "invalidInput": "Demande invalide.",
         "passwordRequired": "Saisissez votre mot de passe pour confirmer.",
         "passwordIncorrect": "Mot de passe incorrect.",

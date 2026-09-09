@@ -218,9 +218,31 @@ test.describe('Catalogue', () => {
 
     const more = page.getByRole('link', { name: 'Voir la suite' })
     if ((await more.count()) === 0) {
-      // Le jeu d'essai ne dépasse pas un lot pour cette marque : le défaut ne
-      // peut pas se produire, et le dire vaut mieux qu'un test vert muet.
-      test.skip(true, 'moins d’un lot de pièces pour cette marque')
+      /*
+        CE TEST NE S'EXÉCUTE JAMAIS AUJOURD'HUI, et il faut le dire en clair.
+
+        Un lot vaut `PAGE_SIZE` = 30 pièces. Le jeu d'essai en compte 42 en
+        tout, dont 13 au maximum pour une même marque : aucune page de marque
+        n'a de second lot, donc « Voir la suite » n'existe pas, donc le corps
+        vérifié ci-dessous est mort. Le rapport le liste comme ignoré — il ne
+        se fait pas passer pour vert — mais un test ignoré à chaque exécution
+        ne garde rien.
+
+        Ce qu'il faudrait pour le réveiller : que le semis donne à UNE marque
+        plus de trente pièces en ligne. C'est une modification du jeu de
+        démonstration, qui déplacerait les compteurs de facettes de plusieurs
+        autres tests — elle appartient au propriétaire du jeu de données, pas à
+        une correction de test.
+
+        En attendant, ce qui suit la condition reste écrit et juste : le jour
+        où la donnée le permet, la vérification tourne sans qu'on ait à s'en
+        souvenir.
+      */
+      test.skip(
+        true,
+        'aucune marque du jeu d’essai n’atteint un second lot (max 13 pièces ' +
+          'pour 30 par lot) : la pagination de marque n’est pas exerçable ici',
+      )
       return
     }
 
@@ -959,48 +981,25 @@ test.describe('Univers', () => {
     await expect.poll(() => resultCount(page)).toBeLessThan(avant)
   })
 
-  test('le filtre garde la position de défilement', async ({ page }, infos) => {
+  test('le filtre garde la position de défilement', async ({ page }) => {
     /*
-      DÉFAUT CONNU SUR TÉLÉPHONE, enregistré et non masqué.
+      CE TEST A ÉTÉ DÉSACTIVÉ SUR TÉLÉPHONE PENDANT UN TEMPS, et il ne l'est
+      plus : le défaut qu'il décrivait est corrigé.
 
-      `test.fixme` déclare un défaut CONNU et NON CORRIGÉ : le test ne
-      s'exécute pas sur téléphone, le rapport le liste comme tel, et personne
-      ne peut le confondre avec un test qui passe.
+      Il portait un `test.fixme` et une piste soupçonnée — la gestion du focus
+      à la navigation — qui s'est révélée fausse. La cause réelle est
+      l'ANCRAGE DE DÉFILEMENT du navigateur : il choisissait une vignette
+      comme repère, et se rabattait sur le conteneur quand le filtrage
+      remplaçait toute la grille. `.grille-articles { overflow-anchor: none }`
+      dans `app/globals.css` porte la mesure et le raisonnement.
 
-      `test.fail` a été essayé d'abord — plus fort, puisqu'il exige que le
-      défaut soit encore là et alerte le jour où il disparaît. Il a été
-      retiré parce que le défaut est INTERMITTENT : le test passait parfois,
-      et un `test.fail` qui passe est compté comme un échec. La suite virait
-      au rouge une fois sur deux, sur un aléa. Un rouge aléatoire finit
-      toujours par être ignoré, et il emporte avec lui les vrais rouges.
+      La leçon, écrite ici parce que c'est ici qu'on la relira : une
+      désactivation accompagnée d'une hypothèse non vérifiée se transmet comme
+      un fait. Celle-ci a fait chercher du côté du focus pendant que la cause
+      était dans une correction automatique du moteur de rendu.
 
-      Ce qui est mesuré, sur la page servie, en 412×915 :
-
-        défilement à 400 · ouverture du volet → 400 · après le filtre → 7
-
-      Donc l'ouverture du volet est SAINE — elle l'était moins il y a une
-      heure, la case masquée en `sr-only` remontait la page à chaque
-      ouverture, et c'est ce test qui l'a fait apparaître. Ce qui reste est la
-      navigation elle-même : le routeur est pourtant appelé avec
-      `scroll: false`, et le document ne se recharge pas — le test voisin le
-      prouve. Deux pistes écartées par la mesure : le rabattement sur une page
-      devenue plus courte (le maximum reste à 4 062, bien au-delà de 400) et
-      l'effondrement transitoire de la grille (une hauteur minimale a été
-      posée, sans effet).
-
-      La piste restante est la gestion du FOCUS à la navigation : la case qui
-      vient d'être cochée vit désormais dans un élément en position fixe, et
-      la valeur d'arrivée — sept pixels, et non zéro — ressemble à un
-      déplacement vers un point d'entrée du document plutôt qu'à une remise à
-      zéro. À creuser à part, sur du temps dédié.
-
-      Sur écran large le comportement est correct, et le test l'exige.
+      Le test tourne désormais sur les deux formats.
     */
-    test.fixme(
-      infos.project.name === 'mobile',
-      'défaut connu : sur téléphone, appliquer un filtre depuis le volet ' +
-        'ramène la page à son sommet (mesuré 400 → 7)',
-    )
 
     // Un panneau de filtres se lit en bas de colonne : renvoyer en haut de
     // page à chaque case cochée oblige à redescendre pour cocher la suivante.

@@ -1,23 +1,32 @@
 @import 'tailwindcss';
 
 /* ===========================================================================
-   Nina & Diego — jetons de design « Registre », teinte DENIM
+   Nina & Diego — jetons de design « Registre », papier BLANC et encre bleue
 
    Chaque pièce est unique : le site l'assume et se tient comme un registre
    d'atelier plutôt que comme une vitrine. Filets pleins, numéro d'inventaire
    visible, données composées en chasse fixe — et des fiches aux angles
    adoucis, qui empêchent le registre de virer au formulaire administratif.
 
-   La structure n'a pas bougé ; la TEINTE, si — trois fois. Crème écru, puis
-   crème rosé, et maintenant du DENIM : le fond du site est une toile de jean,
-   tissée fil par fil par `scripts/tisser-denim.mjs`, et l'encre est blanche.
-   Ce qui portait la charte — le contour plein, la donnée affichée, le
-   mouvement sobre — est inchangé : une charte tient à sa grammaire, pas à sa
-   gamme.
+   La structure n'a pas bougé ; la TEINTE, si — quatre fois. Crème écru, puis
+   crème rosé, puis une toile de jean tissée fil par fil, et aujourd'hui du
+   papier blanc avec une encre bleue. Ce qui portait la charte — le contour
+   plein, la donnée affichée, le mouvement sobre — est inchangé : une charte
+   tient à sa grammaire, pas à sa gamme.
 
-   Cette teinte-ci inverse deux réflexes, et c'est ce qui la rend piégeuse :
-   une fiche s'ASSOMBRIT au lieu de blanchir, et un lavis d'accent ÉCLAIRCIT
-   la page au lieu de l'assombrir. Les deux sont expliqués à leur place.
+   CET EN-TÊTE A MENTI PENDANT DEUX REFONTES. Il annonçait le denim comme la
+   teinte courante alors que le fond est blanc depuis, et décrivait un accent
+   « rose et cuivre » que plus aucun jeton ne porte. Un commentaire faux est
+   pire qu'un commentaire absent : on le lit, on le croit, et on écrit la règle
+   suivante contre une palette qui n'existe plus. Les explications
+   HISTORIQUES — « il a été en denim, voici pourquoi telle règle s'inverse » —
+   sont conservées à leur place : elles disent d'où vient une décision, pas ce
+   qu'est le site.
+
+   La palette actuelle inverse deux réflexes par rapport au denim, et c'est ce
+   qui la rend piégeuse à relire : une fiche BLANCHIT au lieu de s'assombrir,
+   et un accent s'ASSOMBRIT au lieu d'éclaircir. Les deux sont expliqués à leur
+   place.
 
    L'écologie ne passe pas par le symbole mais par la traçabilité : référence,
    matière, poids, date d'entrée sont affichés parce qu'ils sont réels.
@@ -28,10 +37,10 @@
    de feuille dans un bouton, pas de pictogramme de recyclage, pas de dégradé
    vert. Voir components/shop/engraving.tsx.
 
-   Le dégradé rose-cuivre ne contredit pas cet amendement : ce qu'il interdit,
+   Le dégradé d'accent ne contredit pas cet amendement : ce qu'il interdit,
    c'est le vert et le vocabulaire écologique de façade. La gravure, elle, a
-   quitté le vert pour une terre rosée — un végétal vert au milieu d'une
-   palette rose et cuivre était le seul élément qui n'appartenait à rien.
+   quitté le vert pour le bleu de la palette — un végétal vert au milieu d'une
+   gamme bleue était le seul élément qui n'appartenait à rien.
    =========================================================================== */
 
 :root {
@@ -136,8 +145,13 @@
   --focus-ring: #1d3a63;
 
   /* --- Dégradés ----------------------------------------------------------
-     UN parcours de teintes — rose vers cuivre — décliné en cinq intensités, et
-     pas une de plus. Ce qui change d'une déclinaison à l'autre, c'est la
+     UN parcours de teintes — bleu d'encre vers bleu de toile, soit `--stamp`
+     vers `--mark` — décliné en cinq intensités, et pas une de plus.
+
+     Il a été rose vers cuivre, et ces deux mots sont restés écrits ici bien
+     après que les jetons soient passés au bleu. Les valeurs, elles, sont
+     nommées et non recopiées : elles n'ont jamais pu diverger. Seul le
+     commentaire l'a fait. Ce qui change d'une déclinaison à l'autre, c'est la
      force, jamais la route : deux dégradés qui ne suivent pas le même chemin
      se lisent comme deux identités.
 
@@ -171,7 +185,9 @@
     var(--mark) 60%,
     transparent 100%
   );
-  /* Translucide depuis que la toile passe dessous : opaque, il l'effaçait. */
+  /* Translucide : il habille un fond sans le remplacer. La raison d'origine
+     était la toile de denim qui passait dessous, qu'un lavis opaque effaçait ;
+     la toile est partie, la translucidité reste utile sur le lavis de page. */
   --gradient-wash: linear-gradient(
     148deg,
     color-mix(in oklab, var(--stamp) 15%, transparent) 0%,
@@ -405,43 +421,32 @@
 
   body {
     /*
-      Le fond du site EST le dégradé, et non plus un crème uni.
+      Le fond du site est un LAVIS, pas un aplat.
 
-      C'est le même parcours rose → cuivre que les cadres de fiche, à la même
-      dilution : la teinte cesse d'être un accent posé par endroits pour devenir
-      la matière du papier. Les sections n'ont donc plus de fond propre — elles
-      laissent passer celui-ci, et ce sont les filets qui les séparent. C'est ce
-      qui a fait disparaître la ligne horizontale qu'on voyait sous la barre de
+      C'est le même parcours que les cadres de fiche, encore éclairci : la
+      teinte cesse d'être un accent posé par endroits pour devenir la matière
+      du papier. Les sections n'ont donc pas de fond propre — elles laissent
+      passer celui-ci, et ce sont les filets qui les séparent. C'est ce qui a
+      fait disparaître la ligne horizontale qu'on voyait sous la barre de
       navigation : elle n'était pas un trait, mais la couture entre deux fonds
       légèrement différents.
 
-      La couleur de fond RESTE déclarée sous l'image : si le dégradé ne peint
-      pas — impression, contraste élevé, moteur ancien — la page garde un
-      papier, pas un blanc d'écran.
+      La couleur de fond RESTE déclarée sous le lavis : s'il ne peint pas —
+      impression, contraste élevé, moteur ancien — la page garde un papier, pas
+      un blanc d'écran.
 
-      Le dégradé s'étend sur toute la HAUTEUR DU DOCUMENT, pas sur la fenêtre.
-      Il se traverse donc en descendant : rose en haut, cuivre en bas. Le fixer
-      à la fenêtre (`background-attachment: fixed`) aurait figé la même image à
-      chaque écran, au prix d'un repeint à chaque défilement sur mobile.
-    */
-    /*
-      LA TOILE. Une vraie image de denim tissée, répétée sur toute la page.
+      Le lavis s'étend sur toute la HAUTEUR DU DOCUMENT, pas sur la fenêtre. Il
+      se traverse donc en descendant. Le fixer à la fenêtre
+      (`background-attachment: fixed`) aurait figé la même image à chaque
+      écran, au prix d'un repeint à chaque défilement sur mobile.
 
-      Elle est produite par `scripts/tisser-denim.mjs` — armure sergé 3/1, fils
-      irréguliers, teinture inégale — et pas par des dégradés CSS. Un
-      `repeating-linear-gradient` donne des rayures régulières ; il ne donne
-      jamais du tissu, et l'écart se voit au premier coup d'œil.
-
-      `background-color` reste déclarée SOUS l'image, et ce n'est pas une
-      formalité : c'est la couleur MOYENNE de la toile. Elle est servie pendant
-      le chargement des 132 kio de l'image, à l'impression, et sur tout moteur
-      qui refuse le WebP. Sans elle, la page est blanche le temps du
-      téléchargement, avec du texte blanc dessus — donc vide.
-
-      Le lavis d'accent passe PAR-DESSUS la toile, très dilué : il donne la
-      descente de teinte d'un bout à l'autre du document sans effacer le
-      tissage. L'ordre compte — l'image d'abord dans la pile, donc écrite en
-      second.
+      Ici se trouvait un second commentaire, plus long, qui décrivait LA TOILE
+      de denim tissée par `scripts/tisser-denim.mjs` comme le fond courant —
+      immédiatement suivi, trois lignes plus bas, du commentaire qui explique
+      qu'elle a été retirée. Deux descriptions contradictoires de la même
+      déclaration, l'une au présent et fausse. Celle qui décrit un état mort
+      est partie ; celle qui dit ce qu'on a PERDU en la retirant reste, parce
+      qu'elle explique le choix qui l'a remplacée.
     */
     background-color: var(--paper);
 
@@ -652,7 +657,7 @@
       `background-clip: text` découpe le fond du BLOC, pas des lettres. Un
       titre de bloc occupe toute la largeur disponible : « Catalogue » y tient
       sur quinze pour cent, et l'on ne voit donc que les quinze premiers pour
-      cent du dégradé — un rose plat. Le défaut est invisible à la relecture du
+      cent du dégradé — un aplat de la première teinte. Le défaut est invisible à la relecture du
       code : la règle est bien appliquée, la couleur est bien la bonne, il
       manque juste tout le reste du parcours.
 
@@ -861,7 +866,7 @@
   /*
     Pas de filet de couleur sous la barre.
 
-    Il y en avait un : deux pixels de dégradé rose → cuivre, tendus d'un bout à
+    Il y en avait un : deux pixels de dégradé d'accent, tendus d'un bout à
     l'autre. C'est exactement la forme d'une jauge, et une jauge posée en haut
     de l'écran en permanence se lit comme un indicateur de progression — la
     barre semblait mesurer quelque chose. La teinte porte des surfaces
@@ -1279,6 +1284,43 @@
     molette, la navigation clavier et la barre de défilement sont ceux du
     navigateur, gratuitement et sans bogue.
   */
+  /*
+    LA GRILLE N'EST PAS UNE ANCRE DE DÉFILEMENT.
+
+    ---------------------------------------------------------------------------
+    Le défaut, et ce qu'il a fallu pour le trouver
+    ---------------------------------------------------------------------------
+    Sur téléphone, cocher un filtre depuis le volet renvoyait la page à son
+    sommet : mesuré, quatre cents pixels de défilement devenaient vingt. Un
+    panneau de filtres se lit en bas de colonne — il fallait donc redescendre
+    après chaque case cochée. Le défaut était enregistré comme connu, avec un
+    test désactivé sur téléphone et une piste soupçonnée — la gestion du focus
+    — qui était fausse.
+
+    La cause est l'ANCRAGE DE DÉFILEMENT (`overflow-anchor`), une correction
+    automatique du navigateur : il choisit un élément visible, et ajuste le
+    défilement pour que cet élément ne bouge pas quand la page change de
+    hauteur. C'est ce qui empêche une image chargée en retard de faire sauter
+    le texte qu'on lit.
+
+    Ici, l'élément choisi est une vignette — et le filtrage REMPLACE toute la
+    grille. L'ancre disparaît en cours de route, le navigateur se rabat sur ce
+    qui reste, c'est-à-dire le conteneur, dont le haut est presque en haut du
+    document. Il « préserve » alors une position qui n'a plus de sens.
+
+    Vérifié en coupant l'ancrage : 400 → 400 au lieu de 400 → 20. Le
+    défilement doux et le focus, eux, ne changent rien — mesurés tous les deux.
+
+    La règle ne vaut QUE pour la grille. Ailleurs l'ancrage rend service, et le
+    reste de la page en profite : après filtrage la position monte de soixante
+    pixels, exactement la hauteur des pastilles de filtres actifs qui viennent
+    d'apparaître au-dessus. C'est l'ancrage qui fonctionne, pas un reste de
+    défaut.
+  */
+  .grille-articles {
+    overflow-anchor: none;
+  }
+
   .rail {
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
@@ -1382,8 +1424,8 @@
 
     Le lavis dit autre chose : le cadre appartient à la boutique, il est tenu,
     la photographie viendra. Et il est DILUÉ dans le fond de fiche, jamais
-    saturé : un aplat rose plein ferait ressortir les pièces sans photo plus
-    que celles qui en ont une, ce qui est exactement l'inverse de ce qu'on veut.
+    saturé : un aplat de teinte pleine ferait ressortir les pièces sans photo
+    plus que celles qui en ont une, ce qui est exactement l'inverse de ce qu'on veut.
   */
   .wash-accent {
     /*

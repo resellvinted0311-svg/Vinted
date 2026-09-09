@@ -54,7 +54,10 @@ export async function ArticleCard({
   const ta = await getTranslations('article')
   const translation = pickTranslation(article.translations, locale)
   const cover = article.images[0]
-  const discount = discountPercent(article.priceCents, article.comparePriceCents)
+  const discount = discountPercent(
+    article.priceCents,
+    article.comparePriceCents,
+  )
 
   /*
     ---------------------------------------------------------------------------
@@ -187,7 +190,7 @@ export async function ArticleCard({
  */
 export function ArticleGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-5">
+    <div className="grille-articles grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-5">
       {children}
     </div>
   )

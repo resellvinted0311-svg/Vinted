@@ -77,21 +77,25 @@ utiles à la recherche de ces champs.
 
 L'accueil **n'ouvre pas** sur une grille filtrable. C'est la structure de tous
 les sites de vêtements, et c'est précisément ce dont la boutique doit se
-distinguer. Il ouvre sur une pièce, en grand, avec son relevé complet — ce
-qu'une boutique où chaque article est unique peut montrer et qu'un catalogue de
-tailles multiples ne peut pas.
+distinguer.
 
-La descente est une séquence : la pièce du moment, le bandeau de faits,
-l'arrivage en rail horizontal, la méthode, l'index typographique, puis l'entrée
-du catalogue. Celle-ci vit **en bas de page** : le rayon est une destination
+Il ouvrait sur UNE pièce, en grand, avec son relevé complet. Ce parti pris a
+été remplacé sur décision du propriétaire par un grand visuel paysage : la
+séquence est le visuel, le bandeau de faits, les deux univers, l'arrivage en
+rail horizontal, l'entrée par taille, l'entrée par catégorie, la méthode, puis
+le catalogue. Celui-ci vit **en bas de page** : le rayon est une destination
 qu'on choisit, pas la porte d'entrée.
 
 ### Direction artistique — « Registre »
 
 Une pièce, un exemplaire : le site se tient comme un registre d'atelier plutôt
-que comme une vitrine. Toile écrue chaude, contours pleins de 1,5 px, fiches à
-angles adoucis (12 px), grotesque serrée en capitales pour les titres, chasse
-fixe pour toute donnée — référence, matière, poids, mesures, dates.
+que comme une vitrine. Papier blanc et encre bleue, contours pleins de 1,5 px,
+fiches à angles adoucis (12 px), grotesque serrée en capitales pour les titres,
+chasse fixe pour toute donnée — référence, matière, poids, mesures, dates.
+
+La teinte a changé quatre fois — crème écru, crème rosé, toile de jean, papier
+blanc — sans que la grammaire bouge. `app/globals.css` porte l'historique de
+chaque inversion à l'endroit où elle compte.
 
 L'écologie se démontre par la **traçabilité**, pas par le symbole : ce qui est
 affiché d'une pièce, c'est ce qu'elle est. Aucun vert n'existe dans l'interface.
@@ -107,15 +111,17 @@ Trois gestes de mouvement, définis une seule fois dans `app/globals.css` :
 `.lift` et `.card-pick` ne s'appliquent que sous `@media (hover: hover)` : sur
 écran tactile, `:hover` reste collé après le tap.
 
-Trois gestes de mouvement s'y ajoutent, dans `components/motion/` :
+Un geste s'y ajoute, dans `components/motion/` :
 
 | Composant | Effet | Garde-fou |
 |---|---|---|
-| `Reveal` | apparition au défilement, une seule fois | rendu **visible** côté serveur ; le script escamote puis révèle. Sans JavaScript ou sans `IntersectionObserver`, rien n'est masqué |
-| `PointerDrift` | dérive du visuel sous la souris | pointeurs fins uniquement, écriture cadencée par `requestAnimationFrame` |
-| `Marquee` | bandeau défilant | CSS pur, aucun script ; le second exemplaire est `aria-hidden` |
+| `Reveal` | apparition au défilement, une seule fois | rendu **visible** côté serveur ; le script escamote puis révèle. Sans JavaScript ou sans `IntersectionObserver`, rien n'est masqué. `as="li"` porte l'animation sans imposer un `<div>` au milieu d'une liste |
 
-`prefers-reduced-motion` neutralise les trois.
+Ce tableau en annonçait TROIS. `Marquee` n'a jamais existé dans le dépôt, et
+`PointerDrift` n'était monté nulle part — il a été supprimé plutôt que décrit.
+Une documentation qui promet des composants absents fait chercher longtemps.
+
+`prefers-reduced-motion` le neutralise.
 
 **Amendement au brief §11** (13/08/2026). Le brief interdisait toute imagerie
 végétale. L'interdit est levé sur un point : la gravure au trait, à grande
@@ -127,9 +133,19 @@ recyclage, les dégradés verts et les textures kraft.
 ### Rendu et cache
 
 Les pages publiques restent prérendues : c'est ce qui porte le référencement
-et la cible LCP. L'état de session est résolu côté client par `AccountNav`,
-parce que lire les cookies dans le layout basculerait toutes les routes en
-rendu dynamique. Les pages de compte sont explicitement dynamiques.
+et la cible LCP. L'état de session est résolu côté client par
+`SessionProvider`, parce que lire les cookies dans le layout basculerait toutes
+les routes en rendu dynamique. Il fait **une** lecture de `/api/session` et la
+distribue à l'entrée « compte », aux deux compteurs et aux favoris ; les quatre
+l'ont chacun demandée de leur côté jusqu'à ce que la mesure le montre.
+
+Une fiche article est un segment dynamique : elle exporte `generateStaticParams`
+— une liste **vide** — parce que sans cette fonction Next la classe « rendue à
+la demande » et ne la met dans aucun cache, quelle que soit la valeur de
+`revalidate`.
+
+Les pages de compte, le panier et le tunnel sont explicitement dynamiques, et
+posent `noindex` sans canonique ni hreflang (`lib/seo/metadata.ts`).
 
 ## Banc d'essai du catalogue
 

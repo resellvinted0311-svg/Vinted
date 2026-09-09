@@ -9,7 +9,6 @@
     "discover": "Entdecken",
     "openSearch": "Suche öffnen",
     "closeSearch": "Suche schließen",
-    "searchPlaceholder": "Ein Kleidungsstück, eine Marke, ein Stoff…",
     "favoritesCount": "{count} Teile in Favoriten",
     "cartCount": "{count} Teile im Warenkorb",
     "home": "Startseite",
@@ -22,17 +21,13 @@
     "cart": "Warenkorb",
     "favorites": "Favoriten",
     "search": "Suchen",
-    "openMenu": "Menü öffnen",
-    "closeMenu": "Menü schließen",
     "skipToContent": "Zum Inhalt springen",
     "language": "Sprache"
   },
   "home": {
     "intro": "Second-Hand-Kleidung, Stück für Stück ausgewählt. Jedes Teil ist ein Einzelstück: einmal verkauft, kommt es nicht zurück.",
-    "newArrivals": "Neu eingetroffen",
     "seeAll": "Gesamten Katalog ansehen",
     "shopByCategory": "Nach Kategorie",
-    "shopByBrand": "Nach Marke",
     "emptyCatalogue": "Derzeit sind keine Artikel online.",
     "emptyCatalogueHint": "Die ersten Stücke folgen in Kürze.",
     "howItWorks": {
@@ -45,16 +40,11 @@
       "shippingBody": "Versand innerhalb von 48 Werkstunden aus Frankreich, an eine Paketstation oder an Ihre Adresse."
     },
     "registerCount": "{count, plural, =0 {Keine Stücke im Register} one {# Stück im Register} other {# Stücke im Register}}",
-    "registerNote": "Ein Stück, ein Exemplar. Referenz, Material, Gewicht und Maße stehen auf jeder Produktseite.",
-    "featured": "Das Stück des Augenblicks",
-    "featuredCta": "Stück ansehen",
     "arrivals": "Gerade eingetroffen",
     "browseTitle": "In den Katalog",
     "browseBody": "Alle Stücke online, mit Filtern: Größe, Material, Zustand, Farbe, Preis.",
     "browseCta": "Katalog öffnen",
-    "indexCategories": "Kategorienverzeichnis",
     "claimUnique": "Ein Exemplar von jedem Stück",
-    "claimMeasured": "Echte Maße auf jeder Produktseite",
     "claimShipped": "Versand innerhalb von 48 Werkstunden",
     "heroTitle": "Secondhand-Kleidung, Stück für Stück ausgesucht",
     "heroCta": "Verfügbare Stücke ansehen",
@@ -210,15 +200,12 @@
         "unknown": "Das Angebot konnte nicht erfasst werden."
       }
     },
-    "askQuestion": "Frage stellen",
     "similar": "Ähnliche Artikel",
     "similarAvailable": "Diese Stücke sind verfügbar",
     "sold": "Verkauft",
     "soldHint": "Dieses Stück ist weg. Es war ein Einzelstück und kommt nicht zurück.",
     "reserved": "Wird gerade gekauft",
     "reservedHint": "Jemand schließt gerade seinen Kauf ab. Kommt die Bestellung nicht zustande, wird der Artikel wieder verfügbar.",
-    "shippingEstimate": "Lieferung",
-    "shippingFrom": "Ab {price}",
     "machineTranslated": "Diese Beschreibung wurde maschinell übersetzt.",
     "generatedDescription": "Diese Beschreibung wurde automatisch aus den erfassten Merkmalen dieses Stücks erstellt.",
     "notTranslated": "Dieser Artikel ist noch nicht übersetzt: Er wird auf Französisch angezeigt.",
@@ -485,8 +472,7 @@
     "label": "Artikel suchen",
     "placeholder": "Marke, Kategorie, Material",
     "submit": "Suchen",
-    "resultsFor": "Ergebnisse für „{query}“",
-    "noSuggestions": "Keine Vorschläge."
+    "resultsFor": "Ergebnisse für „{query}“"
   },
   "brands": {
     "title": "Marken",
@@ -1049,7 +1035,6 @@
       "errors": {
         "confirmationRequired": "Geben Sie EFFACER ein, um zu bestätigen.",
         "rateLimited": "Zu viele Anfragen. Versuchen Sie es in einer Stunde erneut.",
-        "unknownAccount": "Konto nicht gefunden.",
         "invalidInput": "Ungültige Anfrage.",
         "passwordRequired": "Geben Sie zur Bestätigung Ihr Passwort ein.",
         "passwordIncorrect": "Falsches Passwort.",

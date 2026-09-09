@@ -9,7 +9,6 @@
     "discover": "Discover",
     "openSearch": "Open search",
     "closeSearch": "Close search",
-    "searchPlaceholder": "A garment, a brand, a fabric…",
     "favoritesCount": "{count} items in favourites",
     "cartCount": "{count} items in basket",
     "home": "Home",
@@ -22,17 +21,13 @@
     "cart": "Basket",
     "favorites": "Favourites",
     "search": "Search",
-    "openMenu": "Open menu",
-    "closeMenu": "Close menu",
     "skipToContent": "Skip to content",
     "language": "Language"
   },
   "home": {
     "intro": "Second-hand clothing selected piece by piece. Every item is unique: once sold, it does not come back.",
-    "newArrivals": "Latest arrivals",
     "seeAll": "See all items",
     "shopByCategory": "By category",
-    "shopByBrand": "By brand",
     "emptyCatalogue": "No items online at the moment.",
     "emptyCatalogueHint": "The first pieces are coming soon.",
     "howItWorks": {
@@ -45,16 +40,11 @@
       "shippingBody": "Dispatched within 48 working hours from France, to a pickup point or to your address."
     },
     "registerCount": "{count, plural, =0 {No pieces in the register} one {# piece in the register} other {# pieces in the register}}",
-    "registerNote": "One piece, one copy. Reference, material, weight and measurements appear on every listing.",
-    "featured": "Piece of the moment",
-    "featuredCta": "View this piece",
     "arrivals": "Just arrived",
     "browseTitle": "Enter the catalogue",
     "browseBody": "Every piece online, with filters: size, material, condition, colour, price.",
     "browseCta": "Open the catalogue",
-    "indexCategories": "Category index",
     "claimUnique": "One copy of every piece",
-    "claimMeasured": "Real measurements on every listing",
     "claimShipped": "Shipped within 48 working hours",
     "heroTitle": "Second-hand clothes, sourced piece by piece",
     "heroCta": "See available pieces",
@@ -210,15 +200,12 @@
         "unknown": "The offer could not be recorded."
       }
     },
-    "askQuestion": "Ask a question",
     "similar": "Similar items",
     "similarAvailable": "These pieces are available",
     "sold": "Sold",
     "soldHint": "This piece has gone. It was unique, and it will not come back.",
     "reserved": "Being purchased",
     "reservedHint": "Someone is completing their purchase. If the order does not go through, the item will become available again.",
-    "shippingEstimate": "Delivery",
-    "shippingFrom": "From {price}",
     "machineTranslated": "This description was translated automatically.",
     "generatedDescription": "This description was generated automatically from the item’s recorded characteristics.",
     "notTranslated": "This item has not been translated yet: it is shown in French.",
@@ -485,8 +472,7 @@
     "label": "Search for an item",
     "placeholder": "Brand, category, material",
     "submit": "Search",
-    "resultsFor": "Results for “{query}”",
-    "noSuggestions": "No suggestions."
+    "resultsFor": "Results for “{query}”"
   },
   "brands": {
     "title": "Brands",
@@ -1049,7 +1035,6 @@
       "errors": {
         "confirmationRequired": "Type EFFACER to confirm.",
         "rateLimited": "Too many requests. Try again in an hour.",
-        "unknownAccount": "Account not found.",
         "invalidInput": "Invalid request.",
         "passwordRequired": "Enter your password to confirm.",
         "passwordIncorrect": "Incorrect password.",
