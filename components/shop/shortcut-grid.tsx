@@ -76,23 +76,21 @@ export async function ShortcutGrid({
 
       <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {shown.map((entry, index) => (
-          <Reveal key={entry.value} delay={Math.min(index, 6) * 40}>
-            <li>
-              <Link
-                href={{
-                  pathname: '/catalogue',
-                  query: { [param]: entry.value },
-                }}
-                className="lift flex min-h-[72px] flex-col justify-center gap-1 rounded-card ruled bg-paper-raised px-4 py-3"
-              >
-                <span className="font-display text-lg font-bold uppercase leading-none tracking-tight text-ink">
-                  {entry.label}
-                </span>
-                <span className="data label-reg text-muted">
-                  {t('pieceCount', { count: entry.count })}
-                </span>
-              </Link>
-            </li>
+          <Reveal as="li" key={entry.value} delay={Math.min(index, 6) * 40}>
+            <Link
+              href={{
+                pathname: '/catalogue',
+                query: { [param]: entry.value },
+              }}
+              className="lift flex min-h-[72px] flex-col justify-center gap-1 rounded-card ruled bg-paper-raised px-4 py-3"
+            >
+              <span className="font-display text-lg font-bold uppercase leading-none tracking-tight text-ink">
+                {entry.label}
+              </span>
+              <span className="data label-reg text-muted">
+                {t('pieceCount', { count: entry.count })}
+              </span>
+            </Link>
           </Reveal>
         ))}
       </ul>

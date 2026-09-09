@@ -226,7 +226,12 @@
     "uniquePiece": "Einzelstück",
     "weight": "Versandgewicht",
     "addedOn": "Am {date} ins Register aufgenommen",
-    "identification": "Identifikation"
+    "identification": "Identifikation",
+    "gallery": {
+      "zoomIn": "Foto {index} von {total} vergrößern",
+      "zoomOut": "Foto {index} von {total} verkleinern",
+      "thumbnail": "Foto {index} von {total} ansehen"
+    }
   },
   "cart": {
     "title": "Warenkorb",

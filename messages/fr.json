@@ -226,7 +226,12 @@
     "uniquePiece": "Exemplaire unique",
     "weight": "Poids expédié",
     "addedOn": "Entrée au registre le {date}",
-    "identification": "Identification"
+    "identification": "Identification",
+    "gallery": {
+      "zoomIn": "Agrandir la photo {index} sur {total}",
+      "zoomOut": "Réduire la photo {index} sur {total}",
+      "thumbnail": "Voir la photo {index} sur {total}"
+    }
   },
   "cart": {
     "title": "Panier",

@@ -189,7 +189,26 @@ export async function CatalogueView({
         {intro && !hideHeading ? (
           <p className="max-w-2xl text-base text-muted">{intro}</p>
         ) : null}
-        <p className="data label-reg text-muted">
+        {/*
+          Le décompte est une RÉGION VIVANTE, et c'est ce qui rend le filtrage
+          perceptible sans les yeux.
+
+          Filtrer passe par un `router.push` sur le MÊME chemin : l'annonceur
+          de route de Next se déclenche sur le changement de chemin, il ne dit
+          donc rien ici, et le titre du document ne bouge pas non plus.
+          « Voir la suite » n'change même pas l'adresse. Sans cette région, on
+          cochait un filtre et il ne se passait rien d'audible — la grille
+          changeait en silence.
+
+          `polite` et non `assertive` : l'annonce attend une pause, elle ne
+          coupe pas la lecture en cours. Le texte entier est réannoncé
+          (`atomic`) parce que « 12 » seul ne veut rien dire.
+        */}
+        <p
+          aria-live="polite"
+          aria-atomic="true"
+          className="data label-reg text-muted"
+        >
           {t('results', { count: page.totalCount })}
         </p>
 
@@ -367,9 +386,19 @@ export async function CatalogueView({
           <h2 className="type-section font-display text-xl font-bold uppercase text-ink">
             {t('filtersHeading')}
           </h2>
+          {/*
+            Les DEUX étiquettes du volet portent la marque de focus, comme
+            celle qui l'ouvre.
+
+            La case est un pixel transparent : son anneau ne se voit pas, et
+            c'est l'étiquette qui l'affiche à sa place. Seul le bouton
+            d'ouverture le faisait — or il disparaît dès que le volet s'ouvre.
+            Une personne au clavier tabulait donc dans un volet ouvert sans
+            plus rien voir du tout de sa position.
+          */}
           <label
             htmlFor="nd-filtres"
-            className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-input text-sm text-muted hover:text-ink"
+            className={`flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-input text-sm text-muted hover:text-ink peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--focus-ring)]`}
           >
             <span className="sr-only">{t('closeFilters')}</span>
             <span aria-hidden className="text-2xl leading-none">
@@ -408,7 +437,7 @@ export async function CatalogueView({
         <div className="sticky bottom-0 border-t border-sand bg-paper px-5 py-4">
           <label
             htmlFor="nd-filtres"
-            className="bouton-filtres flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-full text-base font-semibold"
+            className={`bouton-filtres flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-full text-base font-semibold peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--focus-ring)]`}
           >
             {t('seeResults')}
           </label>

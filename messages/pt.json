@@ -226,7 +226,12 @@
     "uniquePiece": "Exemplar único",
     "weight": "Peso de envio",
     "addedOn": "Registado a {date}",
-    "identification": "Identificação"
+    "identification": "Identificação",
+    "gallery": {
+      "zoomIn": "Ampliar a foto {index} de {total}",
+      "zoomOut": "Reduzir a foto {index} de {total}",
+      "thumbnail": "Ver a foto {index} de {total}"
+    }
   },
   "cart": {
     "title": "Cesto",

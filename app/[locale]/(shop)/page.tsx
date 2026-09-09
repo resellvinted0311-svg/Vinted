@@ -213,22 +213,25 @@ export default async function HomePage({
 
           <ol className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-6">
             {steps.map((step, index) => (
-              <Reveal key={step.title} delay={index * 110}>
-                <li className="flex flex-col">
-                  {/* Chiffre en contour : un graphisme fait de type. */}
-                  <span
-                    aria-hidden
-                    className="type-outline data font-display text-[4.5rem] font-bold leading-none tracking-tight"
-                  >
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <span
-                    aria-hidden
-                    className="mt-4 block h-[1.5px] w-full bg-rule"
-                  />
-                  <h3 className="mt-5 text-lg">{step.title}</h3>
-                  <p className="mt-2 text-base text-muted">{step.body}</p>
-                </li>
+              <Reveal
+                as="li"
+                key={step.title}
+                delay={index * 110}
+                className="flex flex-col"
+              >
+                {/* Chiffre en contour : un graphisme fait de type. */}
+                <span
+                  aria-hidden
+                  className="type-outline data font-display text-[4.5rem] font-bold leading-none tracking-tight"
+                >
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span
+                  aria-hidden
+                  className="mt-4 block h-[1.5px] w-full bg-rule"
+                />
+                <h3 className="mt-5 text-lg">{step.title}</h3>
+                <p className="mt-2 text-base text-muted">{step.body}</p>
               </Reveal>
             ))}
           </ol>

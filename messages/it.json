@@ -226,7 +226,12 @@
     "uniquePiece": "Esemplare unico",
     "weight": "Peso spedito",
     "addedOn": "Registrato il {date}",
-    "identification": "Identificazione"
+    "identification": "Identificazione",
+    "gallery": {
+      "zoomIn": "Ingrandisci la foto {index} di {total}",
+      "zoomOut": "Riduci la foto {index} di {total}",
+      "thumbnail": "Vedi la foto {index} di {total}"
+    }
   },
   "cart": {
     "title": "Carrello",

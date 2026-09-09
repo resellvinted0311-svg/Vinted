@@ -226,7 +226,12 @@
     "uniquePiece": "One of one",
     "weight": "Shipped weight",
     "addedOn": "Added to the register on {date}",
-    "identification": "Identification"
+    "identification": "Identification",
+    "gallery": {
+      "zoomIn": "Zoom in on photo {index} of {total}",
+      "zoomOut": "Zoom out of photo {index} of {total}",
+      "thumbnail": "View photo {index} of {total}"
+    }
   },
   "cart": {
     "title": "Basket",

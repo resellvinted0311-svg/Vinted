@@ -84,10 +84,22 @@ export function HeaderSearch({
         <span className="sr-only">{libelleOuvrir}</span>
       </label>
 
+      {/*
+        La marque de focus est portée par LES DEUX étiquettes, pas seulement
+        par celle d'ouverture.
+
+        La case qui reçoit réellement le focus est un pixel transparent : son
+        propre anneau ne se voit pas. Tant que le panneau était fermé,
+        l'étiquette d'ouverture affichait la marque à sa place — mais elle
+        passe en `peer-checked:hidden` dès qu'on ouvre, et l'étiquette de
+        fermeture, elle, n'en portait aucune. Résultat : une fois la recherche
+        ouverte, le focus existait toujours et ne se voyait plus du tout. Au
+        clavier, on ne savait plus où l'on était.
+      */}
       <label
         htmlFor="nd-recherche"
         title={libelleFermer}
-        className={`${classeOutil} hidden cursor-pointer peer-checked:flex`}
+        className={`${classeOutil} hidden cursor-pointer peer-checked:flex peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--focus-ring)]`}
       >
         <span aria-hidden className="text-2xl leading-none">
           ×

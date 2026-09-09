@@ -27,14 +27,31 @@ export function Reveal({
   delay = 0,
   /** Sens d'arrivée. `up` par défaut ; `left`/`right` pour un contrepoint. */
   from = 'up',
+  /**
+   * La balise rendue. `div` par défaut, `li` dans une liste.
+   *
+   * Elle existe parce que ce composant CASSAIT des listes. Rendu entre un
+   * `<ul>` et ses `<li>`, son `<div>` retirait au conteneur son rôle de
+   * liste : un lecteur d'écran cessait d'annoncer « liste de douze éléments »
+   * puis « élément trois sur douze », et la navigation par listes — un
+   * raccourci courant — ne trouvait plus rien. Quatre listes du site étaient
+   * dans ce cas, dont la suite numérotée d'étapes de la vitrine, où l'ordre
+   * porte du sens.
+   *
+   * Le remède aurait pu être de déplacer la révélation à l'intérieur du
+   * `<li>` ; il aurait déplacé la boîte animée, donc les classes de mise en
+   * page. Changer la balise ne déplace rien.
+   */
+  as: Balise = 'div',
   className,
 }: {
   children: React.ReactNode
   delay?: number
   from?: 'up' | 'left' | 'right'
+  as?: 'div' | 'li'
   className?: string
 }) {
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLElement>(null)
   const [armed, setArmed] = useState(false)
   const [shown, setShown] = useState(false)
 
@@ -78,14 +95,14 @@ export function Reveal({
   }, [])
 
   return (
-    <div
-      ref={ref}
+    <Balise
+      ref={ref as React.RefObject<HTMLDivElement & HTMLLIElement>}
       className={cn('reveal', className)}
       data-reveal={armed ? (shown ? 'in' : 'out') : undefined}
       data-reveal-from={from}
       style={delay > 0 ? { transitionDelay: `${delay}ms` } : undefined}
     >
       {children}
-    </div>
+    </Balise>
   )
 }

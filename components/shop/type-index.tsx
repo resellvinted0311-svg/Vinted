@@ -39,24 +39,27 @@ export function TypeIndex({
 
       <ul>
         {entries.map((entry, index) => (
-          <Reveal key={entry.href} delay={Math.min(index, 6) * 45}>
-            <li className="border-b border-sand">
-              <Link
-                href={entry.href}
-                className="group flex items-baseline gap-4 py-3 sm:py-4"
-              >
-                <span
-                  aria-hidden
-                  className="h-[1.5px] w-0 shrink-0 self-center bg-mark transition-[width] duration-200 ease-out group-hover:w-8"
-                />
-                <span className="font-display text-xl font-bold uppercase leading-none tracking-tight text-ink transition-colors duration-200 ease-out group-hover:text-stamp sm:text-2xl">
-                  {entry.label}
-                </span>
-                <span className="data ml-auto shrink-0 text-xs text-muted">
-                  {String(entry.count).padStart(2, '0')}
-                </span>
-              </Link>
-            </li>
+          <Reveal
+            as="li"
+            key={entry.href}
+            delay={Math.min(index, 6) * 45}
+            className="border-b border-sand"
+          >
+            <Link
+              href={entry.href}
+              className="group flex items-baseline gap-4 py-3 sm:py-4"
+            >
+              <span
+                aria-hidden
+                className="h-[1.5px] w-0 shrink-0 self-center bg-mark transition-[width] duration-200 ease-out group-hover:w-8"
+              />
+              <span className="font-display text-xl font-bold uppercase leading-none tracking-tight text-ink transition-colors duration-200 ease-out group-hover:text-stamp sm:text-2xl">
+                {entry.label}
+              </span>
+              <span className="data ml-auto shrink-0 text-xs text-muted">
+                {String(entry.count).padStart(2, '0')}
+              </span>
+            </Link>
           </Reveal>
         ))}
       </ul>

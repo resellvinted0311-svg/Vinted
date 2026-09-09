@@ -226,7 +226,12 @@
     "uniquePiece": "Uniek exemplaar",
     "weight": "Verzendgewicht",
     "addedOn": "Opgenomen in het register op {date}",
-    "identification": "Identificatie"
+    "identification": "Identificatie",
+    "gallery": {
+      "zoomIn": "Foto {index} van {total} vergroten",
+      "zoomOut": "Foto {index} van {total} verkleinen",
+      "thumbnail": "Foto {index} van {total} bekijken"
+    }
   },
   "cart": {
     "title": "Winkelmand",

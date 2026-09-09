@@ -76,10 +76,9 @@ export function SearchBox({
     // Temporisation : sans elle, chaque frappe déclencherait une requête
     // plein texte.
     const timer = setTimeout(() => {
-      fetch(
-        `/api/search?q=${encodeURIComponent(trimmed)}&locale=${locale}`,
-        { signal: controller.signal },
-      )
+      fetch(`/api/search?q=${encodeURIComponent(trimmed)}&locale=${locale}`, {
+        signal: controller.signal,
+      })
         .then((response) => (response.ok ? response.json() : null))
         .then((data: { suggestions: Suggestion[] } | null) => {
           if (data) {
@@ -186,26 +185,42 @@ export function SearchBox({
           className="absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-card ruled bg-surface shadow-[4px_4px_0_var(--rule)]"
         >
           {suggestions.map((suggestion, index) => (
+            /*
+              L'OPTION EST LA LIGNE ELLE-MÊME. Elle contenait un `<button>`,
+              et c'était deux défauts en un.
+
+              Un élément `role="option"` ne doit pas contenir de descendant
+              interactif : le calcul de son nom et de son rôle devient
+              indéfini, et le lecteur d'écran n'annonce plus de façon fiable
+              ce qui est sélectionné.
+
+              Surtout, un bouton est nativement focalisable. La tabulation
+              depuis le champ parcourait donc les suggestions une par une, au
+              lieu de sortir de la zone de recherche — alors que le motif
+              implémenté juste au-dessus est l'autre, le bon : le focus reste
+              dans le champ, les flèches déplacent la sélection, et
+              `aria-activedescendant` dit laquelle est active. Les deux
+              mécanismes se contredisaient.
+
+              La ligne garde son `onClick` : cliquer une option n'a jamais eu
+              besoin d'un bouton, et le clavier passe par le champ.
+            */
             <li
               key={`${suggestion.type}-${suggestion.href}`}
               id={`${listId}-option-${index}`}
               role="option"
               aria-selected={index === active}
+              onMouseEnter={() => setActive(index)}
+              onClick={() => go(suggestion)}
+              className={cn(
+                'flex min-h-[44px] cursor-pointer items-center justify-between gap-3 px-3 text-left text-base',
+                index === active ? 'bg-paper-raised' : 'bg-surface',
+              )}
             >
-              <button
-                type="button"
-                onMouseEnter={() => setActive(index)}
-                onClick={() => go(suggestion)}
-                className={cn(
-                  'flex w-full min-h-[44px] items-center justify-between gap-3 px-3 text-left text-base',
-                  index === active ? 'bg-paper-raised' : 'bg-surface',
-                )}
-              >
-                <span className="truncate text-ink">{suggestion.label}</span>
-                <span className="label-reg shrink-0 text-muted">
-                  {suggestion.detail ?? ''}
-                </span>
-              </button>
+              <span className="truncate text-ink">{suggestion.label}</span>
+              <span className="label-reg shrink-0 text-muted">
+                {suggestion.detail ?? ''}
+              </span>
             </li>
           ))}
         </ul>

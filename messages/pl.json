@@ -226,7 +226,12 @@
     "uniquePiece": "Jedyny egzemplarz",
     "weight": "Waga wysyłki",
     "addedOn": "Wpisano do rejestru {date}",
-    "identification": "Identyfikacja"
+    "identification": "Identyfikacja",
+    "gallery": {
+      "zoomIn": "Powiększ zdjęcie {index} z {total}",
+      "zoomOut": "Pomniejsz zdjęcie {index} z {total}",
+      "thumbnail": "Zobacz zdjęcie {index} z {total}"
+    }
   },
   "cart": {
     "title": "Koszyk",

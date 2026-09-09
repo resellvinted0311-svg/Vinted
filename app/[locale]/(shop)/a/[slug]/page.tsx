@@ -201,7 +201,6 @@ export default async function ArticlePage({ params }: { params: Params }) {
       <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-12">
         <ArticleGallery
           images={article.images}
-          title={translation?.title ?? article.sku}
           soldLabel={isSold ? t('sold') : null}
         />
 

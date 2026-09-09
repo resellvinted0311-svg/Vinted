@@ -111,24 +111,22 @@ export function CategoryCards({
 
       <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
         {entries.map((entry, index) => (
-          <Reveal key={entry.slug} delay={Math.min(index, 6) * 40}>
-            <li>
-              <PictureCard
-                // Le CHEMIN, pas le slug. La route vérifie que le chemin
-                // annoncé correspond à la hiérarchie réelle : `/c/t-shirts`
-                // était rejeté en 404 parce que la catégorie vit sous
-                // « Hauts ». Voir `ShowcaseCategory.path`.
-                href={
-                  univers === ''
-                    ? `/c/${entry.path.join('/')}`
-                    : `/c/${entry.path.join('/')}?${univers}`
-                }
-                title={entry.name}
-                image={visuel(entry.slug, covers)}
-                ratio="aspect-[4/5]"
-                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-              />
-            </li>
+          <Reveal as="li" key={entry.slug} delay={Math.min(index, 6) * 40}>
+            <PictureCard
+              // Le CHEMIN, pas le slug. La route vérifie que le chemin
+              // annoncé correspond à la hiérarchie réelle : `/c/t-shirts`
+              // était rejeté en 404 parce que la catégorie vit sous
+              // « Hauts ». Voir `ShowcaseCategory.path`.
+              href={
+                univers === ''
+                  ? `/c/${entry.path.join('/')}`
+                  : `/c/${entry.path.join('/')}?${univers}`
+              }
+              title={entry.name}
+              image={visuel(entry.slug, covers)}
+              ratio="aspect-[4/5]"
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            />
           </Reveal>
         ))}
       </ul>
