@@ -1424,7 +1424,7 @@
     il vit hors du conteneur centré, il recalcule lui-même la gouttière.
   */
   .bleed-right {
-    padding-left: max(1rem, calc((100vw - 80rem) / 2 + 1rem));
+    padding-left: max(1rem, calc((100vw - var(--colonne)) / 2 + 1rem));
     /*
       Indispensable, et facile à oublier : l'accrochage aligne l'élément sur le
       bord du CADRE de défilement, pas sur le bord du contenu. Sans
@@ -1432,13 +1432,16 @@
       le chargement et la première fiche vient se coller au bord de l'écran —
       la marge est bien appliquée, elle est simplement dépassée.
     */
-    scroll-padding-left: max(1rem, calc((100vw - 80rem) / 2 + 1rem));
+    scroll-padding-left: max(1rem, calc((100vw - var(--colonne)) / 2 + 1rem));
   }
 
   @media (min-width: 640px) {
     .bleed-right {
-      padding-left: max(1.5rem, calc((100vw - 80rem) / 2 + 1.5rem));
-      scroll-padding-left: max(1.5rem, calc((100vw - 80rem) / 2 + 1.5rem));
+      padding-left: max(1.5rem, calc((100vw - var(--colonne)) / 2 + 1.5rem));
+      scroll-padding-left: max(
+        1.5rem,
+        calc((100vw - var(--colonne)) / 2 + 1.5rem)
+      );
     }
   }
 

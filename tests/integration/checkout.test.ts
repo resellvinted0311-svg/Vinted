@@ -196,11 +196,20 @@ describe('ouverture d’un paiement', () => {
     expect(order.status).toBe('PENDING_PAYMENT')
     expect(order.subtotalCents).toBe(2500)
     expect(order.stripeSessionId).toBe('cs_test_1')
-    // AUCUNE preuve d'acceptation tant que les conditions générales ne sont
-    // pas rédigées — et elles ne le sont pas : la page affiche « contenu
-    // rédigé en Phase 7 ». Ce test exigeait l'inverse, et exigeait donc que la
-    // boutique constitue la preuve écrite qu'une personne a accepté un
-    // document inexistant. Voir lib/config/pages.ts.
+    /*
+      AUCUNE preuve d'acceptation tant que les conditions ne sont pas
+      publiées, et la RAISON a changé sans que l'assertion bouge.
+
+      Elle était : les conditions ne sont pas rédigées. Elles le sont
+      désormais. Ce qui manque ici, c'est le VENDEUR : l'environnement de test
+      ne pose aucune identité d'entreprise, donc `areTermsPublished` reste
+      faux, donc rien n'est horodaté.
+
+      Ce n'est pas un hasard commode, c'est la propriété qu'on veut tenir : une
+      acceptation ne s'enregistre que si l'acheteur a pu lire un texte ET
+      savoir auprès de qui il s'engage. Le test d'à côté couvre l'autre
+      branche, celle où les deux conditions sont réunies.
+    */
     expect(order.cgvVersion).toBeNull()
     expect(order.cgvAcceptedAt).toBeNull()
     // Coût transporteur réel : privé, gardé pour le suivi de marge.

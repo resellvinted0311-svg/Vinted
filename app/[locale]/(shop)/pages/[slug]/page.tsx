@@ -10,6 +10,9 @@ import {
 } from '@/lib/config/pages'
 import { locales, localeTags } from '@/lib/i18n/routing'
 import { PrivacyRegister } from '@/components/shop/privacy-register'
+import { getSettings } from '@/lib/config/settings'
+import { getShippingGrids } from '@/lib/db/queries/shipping'
+import { formatPrice } from '@/lib/utils/format'
 
 /**
  * Pages éditoriales et légales.
@@ -64,6 +67,67 @@ export async function generateMetadata({
   }
 }
 
+/**
+ * Le barème de livraison, mis à plat pour l'affichage.
+ *
+ * Les zones et les tarifs sont deux tables : un tarif porte un code de zone,
+ * pas son nom. On les rapproche ici plutôt que dans le rendu, pour que la page
+ * n'ait qu'à parcourir une liste — et pour que l'ordre d'affichage soit celui,
+ * délibéré, de la position des zones, et non celui où la base les a rendues.
+ */
+async function lireLeBareme() {
+  const { zones, rates } = await getShippingGrids()
+
+  const parCode = new Map(zones.map((zone) => [zone.code, zone]))
+
+  return rates
+    .map((rate, index) => {
+      const zone = parCode.get(rate.zoneCode)
+      return {
+        // Un tarif n'a pas d'identifiant dans la grille de domaine : la clé de
+        // rendu se compose de ce qui le distingue vraiment.
+        id: `${rate.zoneCode}-${rate.serviceCode}-${rate.maxWeightGrams}-${index}`,
+        zoneName: zone?.name ?? rate.zoneCode,
+        zonePosition: zone?.position ?? Number.MAX_SAFE_INTEGER,
+        freeFrom: zone?.freeShippingThresholdCents ?? null,
+        label: rate.label,
+        maxWeightGrams: rate.maxWeightGrams,
+        priceCents: rate.priceCents,
+        deliveryDaysMin: rate.deliveryDaysMin,
+        deliveryDaysMax: rate.deliveryDaysMax,
+      }
+    })
+    .sort(
+      (a, b) =>
+        a.zonePosition - b.zonePosition ||
+        a.maxWeightGrams - b.maxWeightGrams ||
+        a.priceCents - b.priceCents,
+    )
+}
+
+/**
+ * Les sections des conditions générales, dans l'ordre où elles se lisent.
+ *
+ * La liste est ici et non dans les messages : c'est une structure, pas un
+ * texte, et elle doit être la même dans les huit langues. Une traduction qui
+ * oublierait une section la ferait disparaître de cette langue-là seulement.
+ */
+const SECTIONS_CGV = [
+  'scope',
+  'seller',
+  'pieces',
+  'prices',
+  'offers',
+  'order',
+  'payment',
+  'delivery',
+  'withdrawal',
+  'warranty',
+  'claims',
+  'data',
+  'law',
+] as const
+
 export default async function StaticPage({ params }: { params: Params }) {
   const { locale, slug } = await params
   setRequestLocale(locale)
@@ -72,6 +136,29 @@ export default async function StaticPage({ params }: { params: Params }) {
 
   const t = await getTranslations('footer')
   const th = await getTranslations('home')
+  const tl = await getTranslations('legal')
+
+  /*
+    Les deux lectures ci-dessous sont CONDITIONNÉES au slug rendu.
+
+    Ces pages sont prérendues une par langue, soit soixante-quatre rendus : y
+    lire les réglages et le barème sans condition, ce serait cent
+    vingt-huit requêtes de build pour deux pages qui en ont besoin. Le prérendu
+    a déjà échoué une fois sur un manque de connexions à la base, et c'est
+    exactement de cette façon que le nombre de requêtes enfle sans qu'on le
+    remarque.
+  */
+  const reglages =
+    slug === 'cgv'
+      ? await getSettings([
+          'cgvVersion',
+          'offerResponseHours',
+          'acceptedOfferValidityHours',
+          'reservationTtlMinutes',
+        ])
+      : null
+
+  const tarifs = slug === 'livraison' ? await lireLeBareme() : []
 
   return (
     <article className="mx-auto max-w-[46rem] px-4 pb-24 pt-12 sm:px-6">
@@ -226,7 +313,196 @@ export default async function StaticPage({ params }: { params: Params }) {
           )
         ) : null}
 
-        {slug === 'confidentialite' ? <PrivacyRegister locale={locale} /> : null}
+        {slug === 'cgv' ? (
+          hasLegalIdentity() ? (
+            <>
+              {/*
+                La VERSION affichée est celle que le tunnel enregistre.
+
+                Elle vient du même réglage, lu au même endroit. Deux sources
+                auraient divergé au premier changement de texte, et la preuve
+                aurait alors désigné une version que personne n'a jamais pu
+                lire — exactement le défaut qu'on a passé du temps à fermer.
+              */}
+              <p className="text-xs text-muted" data-numeric>
+                {tl('terms.version', { version: reglages?.cgvVersion ?? '' })}
+              </p>
+
+              <p>{tl('terms.intro')}</p>
+
+              {SECTIONS_CGV.map((cle) => (
+                <section key={cle} className="mt-4 flex flex-col gap-2">
+                  <h2 className="text-lg">{tl(`terms.${cle}Title`)}</h2>
+                  <p className="text-muted">
+                    {tl(`terms.${cle}Body`, {
+                      response: reglages?.offerResponseHours ?? 0,
+                      validity: reglages?.acceptedOfferValidityHours ?? 0,
+                      reservation: reglages?.reservationTtlMinutes ?? 0,
+                    })}
+                  </p>
+                </section>
+              ))}
+            </>
+          ) : (
+            /*
+              Le même refus que sur les mentions légales, pour une raison plus
+              lourde encore : des conditions de vente sans vendeur identifié
+              n'engagent personne, et les afficher laisserait croire le
+              contraire à l'acheteur comme à la boutique.
+            */
+            <p className="rounded-card border-[1.5px] border-warning bg-paper-raised p-4 text-muted">
+              Les conditions générales sont rédigées, mais elles ne sont pas
+              publiées tant que l’identité de l’entreprise n’est pas renseignée
+              (LEGAL_COMPANY_NAME, LEGAL_SIRET, LEGAL_ADDRESS, LEGAL_EMAIL) : un
+              contrat de vente désigne un vendeur. Aucune acceptation n’est
+              enregistrée d’ici là.
+            </p>
+          )
+        ) : null}
+
+        {slug === 'cookies' ? (
+          <>
+            <p>{tl('cookies.intro')}</p>
+
+            {/*
+              Un tableau, et non une liste de paragraphes : trois témoins,
+              trois colonnes identiques, c'est un tableau. Il défile
+              horizontalement dans son propre cadre plutôt que d'élargir la
+              page sur un téléphone.
+            */}
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[34rem] border-collapse text-sm">
+                <thead>
+                  <tr className="text-left text-muted">
+                    <th className="border-b border-sand pb-2 pr-4 font-normal">
+                      {tl('cookies.tableName')}
+                    </th>
+                    <th className="border-b border-sand pb-2 pr-4 font-normal">
+                      {tl('cookies.tableRole')}
+                    </th>
+                    <th className="border-b border-sand pb-2 font-normal">
+                      {tl('cookies.tableLife')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(['session', 'auth', 'locale'] as const).map((cle) => (
+                    <tr key={cle} className="align-top">
+                      <td className="border-b border-sand py-3 pr-4">
+                        {tl(`cookies.${cle}Name`)}
+                      </td>
+                      <td className="border-b border-sand py-3 pr-4 text-muted">
+                        {tl(`cookies.${cle}Role`)}
+                      </td>
+                      <td className="border-b border-sand py-3 text-muted">
+                        {tl(`cookies.${cle}Life`)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <h2 className="mt-6 text-lg">{tl('cookies.manageTitle')}</h2>
+            <p className="text-muted">{tl('cookies.manageBody')}</p>
+          </>
+        ) : null}
+
+        {slug === 'livraison' ? (
+          <>
+            <p>{tl('shipping.intro')}</p>
+
+            {/*
+              Le barème est LU dans la base, jamais recopié.
+
+              Une page de livraison écrite à la main se désynchronise du
+              premier changement de tarif, et le défaut est invisible : la page
+              reste jolie, elle annonce simplement un prix que le panier ne
+              pratique plus. Ici, les deux ne peuvent pas diverger — c'est la
+              même table.
+            */}
+            {tarifs.length > 0 ? (
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[40rem] border-collapse text-sm">
+                  <thead>
+                    <tr className="text-left text-muted">
+                      <th className="border-b border-sand pb-2 pr-4 font-normal">
+                        {tl('shipping.tableZone')}
+                      </th>
+                      <th className="border-b border-sand pb-2 pr-4 font-normal">
+                        {tl('shipping.tableService')}
+                      </th>
+                      <th className="border-b border-sand pb-2 pr-4 font-normal">
+                        {tl('shipping.tableWeight')}
+                      </th>
+                      <th className="border-b border-sand pb-2 pr-4 font-normal">
+                        {tl('shipping.tablePrice')}
+                      </th>
+                      <th className="border-b border-sand pb-2 font-normal">
+                        {tl('shipping.tableDelay')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tarifs.map((tarif) => (
+                      <tr key={tarif.id} className="align-top">
+                        <td className="border-b border-sand py-3 pr-4">
+                          {tarif.zoneName}
+                          {tarif.freeFrom !== null ? (
+                            <>
+                              <br />
+                              <span className="text-xs text-success">
+                                {tl('shipping.freeFrom', {
+                                  amount: formatPrice(tarif.freeFrom, locale),
+                                })}
+                              </span>
+                            </>
+                          ) : null}
+                        </td>
+                        <td className="border-b border-sand py-3 pr-4 text-muted">
+                          {tarif.label}
+                        </td>
+                        <td
+                          className="border-b border-sand py-3 pr-4 text-muted"
+                          data-numeric
+                        >
+                          {(tarif.maxWeightGrams / 1000).toLocaleString(locale)}
+                          &nbsp;kg
+                        </td>
+                        <td
+                          className="border-b border-sand py-3 pr-4"
+                          data-numeric
+                        >
+                          {formatPrice(tarif.priceCents, locale)}
+                        </td>
+                        <td className="border-b border-sand py-3 text-muted">
+                          {tl('shipping.days', {
+                            min: tarif.deliveryDaysMin,
+                            max: tarif.deliveryDaysMax,
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="rounded-card border-[1.5px] border-warning bg-paper-raised p-4 text-muted">
+                {tl('shipping.emptyGrid')}
+              </p>
+            )}
+
+            <h2 className="mt-6 text-lg">{tl('shipping.dispatchTitle')}</h2>
+            <p className="text-muted">{tl('shipping.dispatchBody')}</p>
+
+            <h2 className="mt-6 text-lg">{tl('shipping.problemTitle')}</h2>
+            <p className="text-muted">{tl('shipping.problemBody')}</p>
+          </>
+        ) : null}
+
+        {slug === 'confidentialite' ? (
+          <PrivacyRegister locale={locale} />
+        ) : null}
 
         {/* La même liste décide de cette mention ET de l'enregistrement d'une
             acceptation dans le tunnel de commande : on ne peut pas rédiger les

@@ -1,31 +1,27 @@
+import { hasLegalIdentity } from '@/lib/config/site'
+
 /**
- * Pages statiques dont le contenu n'est pas encore rédigé.
+ * Les pages statiques du site, et l'état de leur contenu.
  *
  * ---------------------------------------------------------------------------
- * Pourquoi cette liste existe
+ * Ce que ce fichier a évité, et qu'il continue d'éviter
  * ---------------------------------------------------------------------------
- * Leur URL, leur place dans la navigation et leurs liens sont en place dès
- * maintenant, pour que le référencement ne change plus ensuite. Mais elles
- * n'ont pas de texte, et il faut que le code le SACHE — pas seulement que la
- * page l'affiche.
- *
- * Le cas qui l'a rendu nécessaire : le tunnel de commande exigeait
- * l'acceptation des conditions générales et enregistrait `cgvVersion` avec un
- * horodatage, comme PREUVE. Or la page correspondante affichait « Contenu
- * rédigé en Phase 7 ». On constituait donc la preuve écrite qu'une personne
- * avait accepté un document qui n'existe pas.
+ * Le tunnel de commande exigeait l'acceptation des conditions générales et
+ * enregistrait `cgvVersion` avec un horodatage, comme PREUVE. Or la page
+ * correspondante affichait « Contenu rédigé en Phase 7 ». On constituait donc
+ * la preuve écrite qu'une personne avait accepté un document qui n'existe pas.
  *
  * Ce n'est pas une preuve incomplète, c'est une preuve fausse : produite dans
  * un litige, elle se retourne contre celui qui l'invoque.
  *
- * ---------------------------------------------------------------------------
- * Une seule liste, deux effets
- * ---------------------------------------------------------------------------
- * La page affiche son avertissement à partir d'ici, et le tunnel décide à
- * partir d'ici s'il enregistre une acceptation. Le jour où les conditions
- * générales seront écrites, retirer `cgv` de cette liste suffira : la mention
- * disparaît et la preuve commence à être constituée, sans qu'on puisse faire
- * l'un sans l'autre.
+ * D'où le principe tenu ici : une seule source décide à la fois de ce que la
+ * page AFFICHE et de ce que le tunnel ENREGISTRE. On ne peut pas publier un
+ * texte sans que les preuves commencent à être constituées, ni constituer des
+ * preuves sans que le texte soit publié.
+ *
+ * Les conditions générales, la page cookies et la page livraison ont depuis
+ * été écrites. La condition qui reste est ailleurs, et elle est expliquée sur
+ * `areTermsPublished` : un contrat suppose un vendeur identifié.
  */
 /**
  * Les pages éditoriales et légales servies par `/pages/[slug]`.
@@ -66,7 +62,19 @@ export function isPageSlug(value: string): value is PageSlug {
   return (PAGE_SLUGS as readonly string[]).includes(value)
 }
 
-export const PLACEHOLDER_PAGES = ['cgv', 'cookies', 'livraison'] as const
+/**
+ * LA LISTE EST VIDE : les trois pages ont été rédigées.
+ *
+ * Elle reste en place, et ce n'est pas de la nostalgie. C'est le mécanisme qui
+ * a évité de constituer une preuve d'acceptation contre un document
+ * inexistant ; il resservira au prochain texte ajouté au site avant d'être
+ * écrit, et une liste vide dit cela mieux qu'une liste supprimée.
+ *
+ * Attention : « rédigées » ne veut pas dire « opposables ». Des conditions de
+ * vente désignent un vendeur, et un vendeur sans identité n'engage personne.
+ * C'est `areTermsPublished` ci-dessous qui tient cette seconde condition.
+ */
+export const PLACEHOLDER_PAGES = [] as const
 
 export function isPlaceholderPage(slug: string): boolean {
   return (PLACEHOLDER_PAGES as readonly string[]).includes(slug)
@@ -78,7 +86,27 @@ export function isPlaceholderPage(slug: string): boolean {
  * Tant que la réponse est non, aucune acceptation n'est horodatée. La case
  * reste dans le tunnel — un tunnel écrit sans elle serait à reprendre
  * entièrement — mais elle dit ce qu'elle est.
+ *
+ * ---------------------------------------------------------------------------
+ * DEUX conditions, et la seconde a été ajoutée en écrivant le texte
+ * ---------------------------------------------------------------------------
+ * La première est que les conditions existent. C'est désormais le cas.
+ *
+ * La seconde est que le VENDEUR existe. Des conditions générales sont un
+ * contrat entre un acheteur et quelqu'un ; tant que le nom, l'immatriculation
+ * et l'adresse de ce quelqu'un ne sont pas renseignés, la page l'annonce au
+ * lieu d'afficher le texte — c'est déjà la règle des mentions légales et du
+ * formulaire de rétractation.
+ *
+ * Horodater une acceptation dans cet état reproduirait exactement le défaut
+ * qu'on avait corrigé, à un cran de subtilité près : la preuve désignerait un
+ * document réel, mais accepté auprès d'un vendeur que rien n'identifie. Elle
+ * ne vaudrait pas davantage.
+ *
+ * Conséquence pratique : renseigner l'identité de l'entreprise en variables
+ * d'environnement publie les conditions et déclenche la constitution des
+ * preuves, sans qu'aucun code ne change.
  */
 export function areTermsPublished(): boolean {
-  return !isPlaceholderPage('cgv')
+  return !isPlaceholderPage('cgv') && hasLegalIdentity()
 }

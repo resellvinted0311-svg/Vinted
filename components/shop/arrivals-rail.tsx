@@ -29,7 +29,22 @@ export async function ArrivalsRail({
   if (articles.length === 0) return null
 
   return (
-    <section className="py-16 sm:py-24 lg:py-8">
+    /*
+      `overflow-x: clip` ferme un débordement TRANSITOIRE, et il fallait
+      d'abord comprendre qu'il l'était.
+
+      Le rail arrive par la droite : tant qu'il n'est pas révélé, il porte un
+      `translate3d(26px, 0, 0)` qui le pousse au-delà du bord de la fenêtre. La
+      page gagnait donc une barre de défilement horizontale de quelques pixels,
+      qui disparaissait une fois l'animation terminée — d'où des mesures
+      incohérentes d'un rechargement à l'autre, 4 px puis 8 puis 14, selon
+      l'instant où l'on regardait.
+
+      `clip` et non `hidden` : `hidden` fabriquerait un conteneur de
+      défilement, ce qui casse `position: sticky` sur les ancêtres — la barre
+      de navigation en dépend. `clip` coupe sans rien créer.
+    */
+    <section className="overflow-x-clip py-16 sm:py-24 lg:py-8">
       <div className="mx-auto max-w-[var(--colonne)] px-4 sm:px-6">
         <Reveal>
           <div className="ruled-signature flex flex-wrap items-end justify-between gap-4 pb-4">
