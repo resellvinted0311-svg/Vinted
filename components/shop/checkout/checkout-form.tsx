@@ -115,9 +115,13 @@ export function CheckoutForm({
   if (state.status === 'ready') {
     return (
       <div className="flex flex-col gap-6">
-        <Notice tone="success" role="status" title={t('orderRegistered', {
-          orderNumber: state.orderNumber,
-        })}>
+        <Notice
+          tone="success"
+          role="status"
+          title={t('orderRegistered', {
+            orderNumber: state.orderNumber,
+          })}
+        >
           <p className="flex items-baseline justify-between gap-4">
             <span>{t('totalDue')}</span>
             <span data-numeric className="text-lg text-ink">
@@ -226,13 +230,16 @@ export function CheckoutForm({
       <Volet ordinal="04" title={t('payment')} hint={t('cardOnly')}>
         <div className="flex flex-col gap-4">
           {/*
-            La case reste, même quand les conditions ne sont pas encore
-            rédigées : un tunnel écrit sans elle serait à reprendre en entier.
-            Mais elle dit ce qu'elle est. Faire cocher « j'accepte les
-            conditions » devant une page qui annonce « contenu rédigé en
-            phase 7 » est un consentement sans objet — et le serveur, de son
-            côté, n'en enregistre aucune preuve tant que le document n'existe
-            pas.
+            La case est là, et elle a désormais un objet : les conditions
+            générales sont rédigées.
+
+            Elle y était déjà avant qu'elles ne le soient — un tunnel écrit
+            sans elle aurait été à reprendre en entier — et le serveur, lui,
+            n'enregistrait aucune preuve tant que le document n'existait pas.
+            Cette précaution n'a pas disparu : elle porte maintenant sur
+            l'identité du vendeur, sans laquelle un contrat ne désigne
+            personne. La règle vit dans `areTermsPublished`, jamais recopiée
+            ici.
           */}
           <Checkbox
             name="acceptsTerms"

@@ -79,6 +79,33 @@ function signInUrl(request: NextRequest, error: string): URL {
 }
 
 /**
+ * Le plafond qui manquait : TOUTES les routes d'Auth.js, pas seulement
+ * l'ouverture de session.
+ *
+ * Seul `signin` était compté. Or `GET /api/auth/session` fait, avec la
+ * stratégie « session en base », deux requêtes PostgreSQL par appel — la
+ * session puis l'utilisateur. Cette route était donc un moyen simple de faire
+ * travailler la base autant qu'on veut, sans compte et sans passer par une
+ * page, avec un seul jeton de session valide et une boucle.
+ *
+ * Le plafond est HAUT : cent vingt appels par minute et par origine. Il ne
+ * gêne aucun usage réel — même une visite qui rafraîchit sa session à chaque
+ * page en est loin — et il coupe la boucle.
+ *
+ * `sensitive: false` est délibéré : si le compteur partagé tombe, on préfère
+ * laisser passer plutôt que d'empêcher tout le monde de se connecter. Une
+ * panne de compteur ne doit pas devenir une panne d'authentification.
+ */
+async function throttleAuthRoute(): Promise<boolean> {
+  return checkRateLimit({
+    key: `auth-route:${await clientFingerprint()}`,
+    limit: 120,
+    windowSeconds: 60,
+    sensitive: false,
+  })
+}
+
+/**
  * Les deux mêmes compteurs que le formulaire, sur la route brute.
  *
  * Ils sont volontairement identiques à ceux de `magicLinkAction` : deux
@@ -163,6 +190,24 @@ export async function POST(
 ): Promise<Response> {
   const { nextauth } = await context.params
 
+  /*
+    L'ouverture de session est EXCLUE du plafond général, et ce n'est pas un
+    oubli.
+
+    Elle a son propre compteur, bien plus serré — cinq envois par quart d'heure
+    — et surtout une réponse en cas de refus qui est INDISCERNABLE d'un envoi
+    réussi : dire « trop de tentatives » ici rétablirait l'oracle que le
+    formulaire ferme, on saurait qu'une adresse vient d'être sollicitée.
+
+    Poser un 429 devant elle aurait donc dégradé une propriété acquise pour
+    ajouter une protection que son propre compteur rend inutile : cinq est
+    très en dessous de cent vingt, le compteur serré se déclenche toujours en
+    premier.
+  */
+  if (nextauth[0] !== 'signin' && !(await throttleAuthRoute())) {
+    return new NextResponse('Trop de requêtes', { status: 429 })
+  }
+
   // ---------------------------------------------------------------------------
   // Le rappel du lien magique n'existe QU'EN GET
   // ---------------------------------------------------------------------------
@@ -200,6 +245,10 @@ export async function GET(
   context: { params: Promise<{ nextauth: string[] }> },
 ): Promise<Response> {
   const { nextauth } = await context.params
+
+  if (!(await throttleAuthRoute())) {
+    return new NextResponse('Trop de requêtes', { status: 429 })
+  }
 
   // Rappel du lien magique : il faut la preuve posée par la page de
   // confirmation. Un GET amené devant une victime ne l'a pas.

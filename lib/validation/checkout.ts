@@ -82,9 +82,16 @@ export const startCheckoutSchema = z.object({
   /**
    * Acceptation des CGV.
    *
-   * Le schéma l'exige dès maintenant pour que le tunnel ne soit jamais écrit
-   * sans elle. La case reste inactive tant que les CGV ne sont pas rédigées
-   * (phase 7), et aucun encaissement réel n'a lieu d'ici là.
+   * `z.literal(true)` : une commande sans acceptation est refusée par le
+   * schéma, donc avant d'atteindre la moindre écriture.
+   *
+   * Ce commentaire affirmait que « la case reste inactive tant que les CGV ne
+   * sont pas rédigées, et qu'aucun encaissement réel n'a lieu d'ici là ». Les
+   * deux moitiés étaient fausses, et la seconde dangereusement : la case est
+   * active depuis toujours, et le tunnel encaisse. Ce qui était vrai, et qui
+   * l'est encore, c'est que la PREUVE d'acceptation n'est horodatée que si le
+   * document existe et si le vendeur est identifié — voir `areTermsPublished`
+   * dans lib/config/pages.ts, où la règle est écrite une seule fois.
    */
   acceptsTerms: z.literal(true),
 })

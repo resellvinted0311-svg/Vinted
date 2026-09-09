@@ -23,6 +23,19 @@ export const PRIVATE_ARTICLE_FIELDS = [
    * `reservedUntil` reste public pour cette raison.
    */
   'reservedById',
+
+  /**
+   * Le plancher de négociation, ajouté après coup — et c'était une vraie
+   * omission.
+   *
+   * Tout le reste du code s'applique à le cacher : il décide du refus
+   * automatique d'une offre, et une acheteuse qui le connaît propose ce
+   * montant exactement, jamais un centime de plus. Il ne figurait pourtant pas
+   * dans cette liste, qui est la SEULE source du filet d'exécution : la
+   * discrétion reposait donc entièrement sur des sélecteurs écrits à la main,
+   * sans rien pour rattraper un oubli.
+   */
+  'minOfferCents',
 ] as const
 
 export const PRIVATE_ORDER_ITEM_FIELDS = ['costCentsSnapshot'] as const

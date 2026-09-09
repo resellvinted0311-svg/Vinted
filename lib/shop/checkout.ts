@@ -161,7 +161,11 @@ async function readCheckoutLines(
           publishedAt: true,
           reservedById: true,
           reservedUntil: true,
-          images: { select: { url: true }, orderBy: { position: 'asc' }, take: 1 },
+          images: {
+            select: { url: true },
+            orderBy: { position: 'asc' },
+            take: 1,
+          },
           translations: { select: { locale: true, title: true } },
         },
       },
@@ -300,7 +304,10 @@ export async function prepareCheckoutFor(
     if (blockedArticleIds.length > 0) {
       return {
         ok: false as const,
-        failure: { reason: 'blocked-lines' as const, articleIds: blockedArticleIds },
+        failure: {
+          reason: 'blocked-lines' as const,
+          articleIds: blockedArticleIds,
+        },
       }
     }
     if (lines.length === 0) {
@@ -350,7 +357,10 @@ export async function prepareCheckoutFor(
     if (!quote.ok) {
       return {
         ok: false as const,
-        failure: { reason: 'shipping-unavailable' as const, failure: quote.failure },
+        failure: {
+          reason: 'shipping-unavailable' as const,
+          failure: quote.failure,
+        },
       }
     }
 
@@ -417,7 +427,9 @@ export async function prepareCheckoutFor(
       where: {
         status: 'PENDING_PAYMENT',
         lockOwnerId: owner.lockOwnerId,
-        items: { some: { articleId: { in: lines.map((line) => line.articleId) } } },
+        items: {
+          some: { articleId: { in: lines.map((line) => line.articleId) } },
+        },
       },
       select: { id: true, stripeSessionId: true },
     })
@@ -452,7 +464,8 @@ export async function prepareCheckoutFor(
         // Coût transporteur réel : privé, il ne sort d'aucune réponse publique.
         shippingCostCents: option.carrierCostCents,
 
-        shippingAddress: input.shippingAddress as unknown as Prisma.InputJsonValue,
+        shippingAddress:
+          input.shippingAddress as unknown as Prisma.InputJsonValue,
         billingAddress: billing as unknown as Prisma.InputJsonValue,
 
         shippingCarrierCode: option.carrierCode,
@@ -468,7 +481,9 @@ export async function prepareCheckoutFor(
         // que les CGV ne sont pas rédigées ». C'était faux : la case est
         // active, le schéma exige `acceptsTerms: true`, et ces deux lignes
         // écrivaient `cgvVersion: '2026-01'` avec un horodatage alors que la
-        // page correspondante affiche « Contenu rédigé en Phase 7 ».
+        // page correspondante affichait « Contenu rédigé en Phase 7 ». Les
+        // conditions ont depuis été écrites ; la condition qui reste est que
+        // le vendeur soit identifié.
         //
         // On constituait donc la preuve écrite qu'une personne avait accepté
         // un document inexistant. Ce n'est pas une preuve incomplète, c'est
@@ -590,7 +605,11 @@ export async function prepareCheckoutFor(
     // La commande existe et le stock est verrouillé, mais aucun paiement ne
     // pourra jamais s'y rattacher. On défait proprement plutôt que de laisser
     // une pièce immobilisée jusqu'à l'expiration du verrou.
-    await releaseCheckout(order.id, owner.lockOwnerId, lines.map((l) => l.articleId))
+    await releaseCheckout(
+      order.id,
+      owner.lockOwnerId,
+      lines.map((l) => l.articleId),
+    )
     throw error
   }
 }
@@ -663,7 +682,9 @@ function buildLineItems(
         name: line.title,
         // Stripe refuse une URL vide : on n'envoie le tableau que s'il y a
         // réellement une image, et seulement en absolu.
-        ...(line.imageUrl.startsWith('http') ? { images: [line.imageUrl] } : {}),
+        ...(line.imageUrl.startsWith('http')
+          ? { images: [line.imageUrl] }
+          : {}),
       },
     },
   }))

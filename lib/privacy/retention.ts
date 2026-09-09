@@ -104,12 +104,37 @@ export async function purgeExpiredPersonalData(
       prisma.userToken.deleteMany({ where: { expiresAt: { lt: now } } }),
     ])
 
-  // Favoris de visiteurs : rattachés au cookie de session boutique. Passé sa
-  // durée de vie, plus personne ne peut les retrouver — pas même la personne
-  // concernée. Les conserver n'aurait aucune utilité pour elle.
-  const guestFavorites = await prisma.guestFavorite.deleteMany({
-    where: { createdAt: { lt: guestCutoff } },
-  })
+  /*
+    Favoris de visiteurs : la purge porte sur la SESSION, pas sur la ligne.
+
+    Elle portait sur la ligne — `createdAt < cutoff` — et cela supprimait les
+    favoris de visiteuses ACTIVES. Le cookie qui les porte est glissant : sa
+    durée de vie repart de zéro à chaque emploi, si bien qu'une personne
+    revenant chaque semaine garde son cookie indéfiniment tout en perdant,
+    jour après jour, les pièces qu'elle avait mises de côté un mois plus tôt.
+    Le panier avait déjà été traité pour cette raison exacte, en poussant
+    `updatedAt` à chaque ajout ; les favoris ne l'avaient pas été.
+
+    On supprime donc les favoris d'une session dont AUCUN favori n'est récent.
+    L'unité de conservation devient la session — ce qui est aussi l'unité
+    d'identification, donc l'unité qui a un sens pour la personne concernée.
+
+    Écrit en SQL parce que la condition porte sur un agrégat par session, ce
+    que `deleteMany` ne sait pas exprimer. `NOT EXISTS` plutôt qu'un
+    `HAVING max(...)` : PostgreSQL s'arrête à la première ligne récente
+    trouvée, au lieu de calculer un maximum sur toutes.
+  */
+  const guestFavorites = {
+    count: await prisma.$executeRaw`
+      DELETE FROM "GuestFavorite" g
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM "GuestFavorite" r
+        WHERE r."sessionToken" = g."sessionToken"
+          AND r."createdAt" >= ${guestCutoff}
+      )
+    `,
+  }
 
   // Paniers de visiteurs sans compte, sans activité. Ceux d'un compte
   // survivent : la personne les retrouvera à sa prochaine connexion.

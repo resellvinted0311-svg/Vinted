@@ -20,7 +20,9 @@ import { formatPrice } from '@/lib/utils/format'
  * La page de confidentialité fait exception : elle est rendue depuis le
  * registre des traitements (`lib/config/privacy.ts`), donc elle est exacte dès
  * maintenant — le site collecte des adresses e-mail aujourd'hui, il doit dire
- * aujourd'hui ce qu'il en fait. Les CGV et la page cookies restent en Phase 7.
+ * aujourd'hui ce qu'il en fait. Les CGV, la page cookies et la page livraison
+ * ont depuis été écrites, et la page de livraison suit le même principe : son
+ * barème est LU dans la base, pas recopié.
  *
  * Règle tenue dès maintenant : aucune mention légale n'est inventée. Tant que
  * l'identité de l'entreprise n'est pas renseignée en variables
@@ -504,15 +506,25 @@ export default async function StaticPage({ params }: { params: Params }) {
           <PrivacyRegister locale={locale} />
         ) : null}
 
-        {/* La même liste décide de cette mention ET de l'enregistrement d'une
-            acceptation dans le tunnel de commande : on ne peut pas rédiger les
-            conditions sans que la preuve commence à être constituée, ni
-            l'inverse. Voir lib/config/pages.ts. */}
+        {/*
+          Le garde-fou reste, et sa liste est vide.
+
+          Il affiche cet avertissement sur toute page annoncée mais pas encore
+          écrite. Les trois qui l'étaient ne le sont plus, donc il ne rend rien
+          aujourd'hui — et c'est exactement ce qu'on veut d'un garde-fou. Le
+          retirer reviendrait à parier qu'aucune page ne sera plus jamais mise
+          en ligne avant son texte ; le pari a déjà été perdu une fois, avec
+          une preuve d'acceptation constituée contre un document inexistant.
+
+          La même liste décide de cette mention ET de l'horodatage d'une
+          acceptation dans le tunnel : on ne peut pas publier un texte sans que
+          les preuves commencent, ni l'inverse. Voir lib/config/pages.ts.
+        */}
         {isPlaceholderPage(slug) ? (
           <p className="rounded-card ruled bg-paper-raised p-4 text-muted">
-            Contenu rédigé en Phase 7. La structure, les URL et les liens sont
-            en place dès maintenant pour que le référencement et la navigation
-            ne changent plus ensuite.
+            Cette page est annoncée dans la navigation mais son texte n’est pas
+            encore écrit. Sa structure, son adresse et ses liens sont en place
+            dès maintenant pour que le référencement ne change plus ensuite.
           </p>
         ) : null}
       </div>

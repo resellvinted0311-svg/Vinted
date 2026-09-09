@@ -226,9 +226,11 @@ L'article 13 porte sur le **moment** où la donnée est demandée, pas sur
 l'existence d'une page quelque part. La mention figure donc sous le formulaire
 d'inscription, avec le lien vers la page complète.
 
-La page `/pages/confidentialite` n'est plus un texte d'attente : elle est
-rendue depuis le registre. Les CGV et la page cookies restent en phase 7 — elles
-n'ont pas d'objet tant que rien n'est vendu ni déposé.
+La page `/pages/confidentialite` n'est pas un texte d'attente : elle est rendue
+depuis le registre. Les CGV, la page cookies et la page livraison sont écrites
+elles aussi, dans les huit langues. Les conditions ne deviennent toutefois
+opposables — et leur acceptation horodatée — qu'une fois l'identité de
+l'entreprise renseignée : un contrat de vente désigne un vendeur.
 
 ---
 

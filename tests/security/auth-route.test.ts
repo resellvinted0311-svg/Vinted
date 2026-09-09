@@ -33,7 +33,8 @@ import { join } from 'node:path'
  *    accepte le JSON. Changer un en-tête suffisait à envoyer sans limite.
  */
 
-process.env.AUTH_SECRET = 'secret-de-test-suffisamment-long-pour-un-hmac-de-lien'
+process.env.AUTH_SECRET =
+  'secret-de-test-suffisamment-long-pour-un-hmac-de-lien'
 process.env.NEXT_PUBLIC_SITE_URL = 'https://boutique.test'
 
 /** Ce qui a réellement atteint `@auth/core`. */
@@ -130,7 +131,10 @@ describe('rappel du lien magique', () => {
     // pire des raisons — plus personne ne peut se connecter.
     confirmed = true
 
-    await ROUTE.GET(new NextRequest(CALLBACK) as never, params('callback', 'magic-link'))
+    await ROUTE.GET(
+      new NextRequest(CALLBACK) as never,
+      params('callback', 'magic-link'),
+    )
 
     expect(reached).toHaveLength(1)
     expect(reached[0]!.method).toBe('GET')
@@ -254,6 +258,55 @@ describe('les autres routes ne sont pas gênées', () => {
     )
 
     expect(reached).toHaveLength(1)
+  })
+})
+
+describe('le plafond général des routes d’authentification', () => {
+  /**
+   * Ce qui était ouvert, et ce que le plafond ferme.
+   *
+   * Seule l'ouverture de session était comptée. `GET /api/auth/session` fait
+   * pourtant DEUX requêtes PostgreSQL par appel — la session, puis
+   * l'utilisateur — puisque les sessions vivent en base. C'était donc un
+   * moyen simple de faire travailler la base autant qu'on veut, avec un seul
+   * cookie valide et une boucle, sans compte et sans passer par une page.
+   */
+  it('refuse la lecture de session au-delà du plafond', async () => {
+    allowNext = false
+
+    const response = await ROUTE.GET(
+      new NextRequest('https://boutique.test/api/auth/session') as never,
+      params('session'),
+    )
+
+    expect(response.status).toBe(429)
+    expect(reached, 'la requête a atteint la base malgré le plafond').toEqual(
+      [],
+    )
+  })
+
+  it('N’applique PAS ce plafond à l’ouverture de session', async () => {
+    /*
+      L'exclusion est délibérée, et c'est une propriété de sécurité.
+
+      L'envoi du lien magique a son propre compteur, bien plus serré, dont le
+      refus est INDISCERNABLE d'un envoi réussi — sans quoi on saurait qu'une
+      adresse vient d'être sollicitée. Un 429 posé devant lui rétablirait cet
+      oracle. Le compteur serré se déclenche de toute façon vingt-quatre fois
+      plus tôt.
+    */
+    allowNext = false
+
+    const response = await ROUTE.POST(
+      new NextRequest('https://boutique.test/api/auth/signin/magic-link', {
+        method: 'POST',
+        body: new URLSearchParams({ email: 'cible@exemple.fr' }),
+      }) as never,
+      params('signin', 'magic-link'),
+    )
+
+    expect(response.status).not.toBe(429)
+    expect(response.headers.get('location')).toContain('lien=envoye')
   })
 })
 

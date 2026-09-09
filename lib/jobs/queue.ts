@@ -2,6 +2,7 @@ import 'server-only'
 
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
+import { redactText } from '@/lib/observability/redact'
 
 /**
  * File de travaux différés.
@@ -272,7 +273,12 @@ export async function claimJobs(
 export async function completeJob(id: string): Promise<void> {
   await prisma.job.update({
     where: { id },
-    data: { completedAt: new Date(), lockedAt: null, lockedBy: null, lastError: null },
+    data: {
+      completedAt: new Date(),
+      lockedAt: null,
+      lockedBy: null,
+      lastError: null,
+    },
   })
 }
 
@@ -314,10 +320,7 @@ export async function failJob(
   error: string,
   attempts = 1,
 ): Promise<void> {
-  const index = Math.min(
-    Math.max(attempts, 1),
-    RETRY_DELAYS_MINUTES.length,
-  ) - 1
+  const index = Math.min(Math.max(attempts, 1), RETRY_DELAYS_MINUTES.length) - 1
   const delayMinutes = RETRY_DELAYS_MINUTES[index] ?? 120
 
   // L'échéance est calculée PAR LA BASE. C'est la même horloge que celle qui
@@ -327,9 +330,16 @@ export async function failJob(
     UPDATE "Job"
     SET "lockedAt" = NULL,
         "lockedBy" = NULL,
-        -- Tronqué : un message d'erreur de bibliothèque peut faire des
-        -- milliers de caractères, et seul son début renseigne.
-        "lastError" = ${error.slice(0, 500)},
+        -- Caviardé PUIS tronqué, et l'ordre compte : caviarder après la
+        -- coupure laisserait passer une adresse coupée en deux, que le motif
+        -- ne reconnaît plus.
+        --
+        -- Le même objet d'erreur est déjà caviardé quand il part vers le
+        -- journal ou Sentry ; il ne l'était pas ici, alors que cette colonne
+        -- vit trente jours en base. Or une erreur Prisma cite volontiers la
+        -- valeur qui a violé une contrainte — c'est-à-dire, sur cette
+        -- boutique, une adresse e-mail.
+        "lastError" = ${redactText(error).slice(0, 500)},
         "runAt" = now() + make_interval(mins => ${delayMinutes}::int),
         "updatedAt" = now()
     WHERE "id" = ${id}
