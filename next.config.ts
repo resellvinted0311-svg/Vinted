@@ -103,16 +103,33 @@ const nextConfig: NextConfig = {
      *
      * Cette boutique n'a que trois grilles — deux, trois et quatre colonnes —
      * une galerie de fiche et un bandeau pleine largeur. Les largeurs
-     * ci-dessous couvrent ces cinq cas, densité double comprise. Au-delà de
-     * 2 048 px, on servirait plus de pixels que le grand côté de la source ne
-     * peut en fournir : l'optimiseur agrandirait, ce qui coûte du poids sans
-     * rien ajouter à l'image.
+     * ci-dessous couvrent ces cinq cas, densité double comprise.
+     *
+     * ---------------------------------------------------------------------------
+     * 2 560 et 3 200 ONT ÉTÉ AJOUTÉS, et c'est la correction d'un vrai défaut
+     * ---------------------------------------------------------------------------
+     * La liste s'arrêtait à 2 048 px, au motif qu'au-delà on servirait plus de
+     * pixels que la source ne peut en fournir. Ce motif valait pour les
+     * photographies rangées chez le prestataire, bornées à 2 096 px à la
+     * livraison — il ne vaut pas pour un BANDEAU PLEINE LARGEUR servi depuis
+     * le dépôt, dont la source fait nativement 5 992 px de large.
+     *
+     * Le défaut se mesure : sur un écran de 1 440 px à densité double, le
+     * bandeau occupe 2 880 px réels, le navigateur ne trouvait rien au-dessus
+     * de 2 048 dans la liste, et l'agrandissait d'un facteur 1,4. D'où une
+     * image molle — signalée par la boutique, et invisible sur un écran à
+     * densité simple, c'est-à-dire sur la moitié des machines de travail.
+     *
+     * 2 560 couvre 1 280 px en densité double, 3 200 couvre 1 600. Ces deux
+     * largeurs ne sont demandées que par les images en `sizes="100vw"` : les
+     * grilles, elles, réclament au plus 828 px par vignette et ne fabriquent
+     * donc aucune variante de plus.
      *
      * `deviceSizes` sert aux images en `sizes` relatif à la fenêtre ;
      * `imageSizes`, à celles dont la largeur est fixe — les vignettes de
      * navigation de la galerie, notamment.
      */
-    deviceSizes: [640, 828, 1080, 1280, 1600, 2048],
+    deviceSizes: [640, 828, 1080, 1280, 1600, 2048, 2560, 3200],
     imageSizes: [64, 128, 256, 384],
 
     /**

@@ -32,7 +32,7 @@
  */
 
 /**
- * Largeur maximale servie.
+ * Largeur servie PAR DÉFAUT, quand l'appelant n'en demande pas d'autre.
  *
  * Deux mille quatre-vingt-seize pixels : le double de la plus grande largeur
  * d'affichage prévue (1 048 px pour une galerie plein écran sur grand
@@ -40,6 +40,23 @@
  * différence n'est plus visible et le poids, lui, continue de croître.
  */
 export const MAX_DELIVERY_WIDTH = 2096
+
+/**
+ * Le plafond ABSOLU, qu'aucune demande ne dépasse.
+ *
+ * Il existe parce que la valeur ci-dessus a été calculée pour une galerie de
+ * fiche — au plus 1 048 px d'affichage — et qu'un BANDEAU PLEINE LARGEUR n'est
+ * pas cette image-là : sur un écran de 1 600 px à densité double, il occupe
+ * 3 200 pixels réels. Servi à 2 096, il est agrandi d'un facteur 1,5 par le
+ * navigateur, et cela se voit — c'est le défaut que la boutique a signalé.
+ *
+ * Deux plafonds plutôt qu'un seul relevé, et la raison est comptable : chaque
+ * variante de largeur est une transformation facturée chez le prestataire.
+ * Relever le défaut aurait fait payer 3 200 px pour toutes les photographies
+ * de pièces, dont aucune ne s'affiche à plus du tiers de cette largeur. Seuls
+ * les deux visuels pleine largeur demandent explicitement davantage.
+ */
+export const MAX_DELIVERY_WIDTH_PLEINE_LARGEUR = 3200
 
 /**
  * Reconnaît une adresse de livraison Cloudinary, image OU vidéo.
@@ -99,7 +116,10 @@ export interface DeliveryOptions {
  * adresse d'un autre hôte. Ne jamais bricoler une adresse qu'on ne comprend
  * pas : au mieux elle cesse de répondre, au pire elle répond autre chose.
  */
-export function deliveryUrl(url: string, options: DeliveryOptions = {}): string {
+export function deliveryUrl(
+  url: string,
+  options: DeliveryOptions = {},
+): string {
   const correspondance = CLOUDINARY.exec(url)
   if (!correspondance) return url
 
@@ -111,9 +131,17 @@ export function deliveryUrl(url: string, options: DeliveryOptions = {}): string 
 
   if (DEJA_TRANSFORMEE.test(reste)) return url
 
+  /*
+    Le plafond appliqué dépend de ce qui est DEMANDÉ, et non l'inverse.
+
+    Sans demande, on borne à la largeur de galerie. Avec une demande, on la
+    respecte jusqu'au plafond absolu : c'est ce qui permet à un bandeau pleine
+    largeur d'obtenir ses 3 200 px sans que toutes les photographies de pièces
+    ne se mettent à en coûter autant.
+  */
   const largeur = Math.min(
     Math.max(Math.round(options.width ?? MAX_DELIVERY_WIDTH), 1),
-    MAX_DELIVERY_WIDTH,
+    MAX_DELIVERY_WIDTH_PLEINE_LARGEUR,
   )
 
   /*
@@ -147,13 +175,20 @@ export function deliveryUrl(url: string, options: DeliveryOptions = {}): string 
  * n'a alors pas d'affiche à poser, ce qui vaut mieux qu'une adresse inventée
  * qui répondrait 404.
  */
-export function videoPosterUrl(url: string, options: DeliveryOptions = {}): string | null {
+export function videoPosterUrl(
+  url: string,
+  options: DeliveryOptions = {},
+): string | null {
   if (!isVideoUrl(url)) return null
 
   const correspondance = CLOUDINARY.exec(url)
   if (!correspondance) return null
 
-  const [, prefixe, reste] = correspondance as unknown as [string, string, string]
+  const [, prefixe, reste] = correspondance as unknown as [
+    string,
+    string,
+    string,
+  ]
   if (DEJA_TRANSFORMEE.test(reste)) return null
 
   const largeur = Math.min(

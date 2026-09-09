@@ -4,6 +4,7 @@ import {
   isVideoUrl,
   videoPosterUrl,
   MAX_DELIVERY_WIDTH,
+  MAX_DELIVERY_WIDTH_PLEINE_LARGEUR,
 } from '@/lib/providers/storage/delivery'
 
 /**
@@ -39,12 +40,41 @@ describe('l’adresse de livraison', () => {
     )
   })
 
-  it('borne la largeur demandée au plafond', () => {
+  it('borne la largeur demandée au plafond absolu', () => {
     // Un appelant qui demanderait la pleine résolution obtiendrait l'original,
     // c'est-à-dire précisément ce qu'on veut éviter.
     expect(deliveryUrl(ORIGINAL, { width: 99_999 })).toContain(
-      `w_${MAX_DELIVERY_WIDTH}`,
+      `w_${MAX_DELIVERY_WIDTH_PLEINE_LARGEUR}`,
     )
+  })
+
+  it('sert la largeur de galerie tant que rien n’est demandé', () => {
+    /*
+      LES DEUX PLAFONDS NE SONT PAS INTERCHANGEABLES, et ce test tient
+      justement leur écart.
+
+      Le plafond par défaut a été calculé pour une galerie de fiche ; le
+      plafond absolu, plus haut, existe pour les deux visuels pleine largeur,
+      qui occupent jusqu'à 3 200 pixels réels sur un écran dense.
+
+      Si l'un venait à prendre la valeur de l'autre, rien ne casserait : soit
+      toutes les photographies de pièces se mettraient à coûter une
+      transformation de 3 200 px pour s'afficher à 400, soit les bandeaux
+      redeviendraient mous. Deux dérives silencieuses, opposées, qu'aucune page
+      ne signale.
+    */
+    expect(deliveryUrl(ORIGINAL)).toContain(`w_${MAX_DELIVERY_WIDTH}`)
+    expect(MAX_DELIVERY_WIDTH_PLEINE_LARGEUR).toBeGreaterThan(
+      MAX_DELIVERY_WIDTH,
+    )
+  })
+
+  it('respecte une largeur intermédiaire entre les deux plafonds', () => {
+    // C'est le cas d'usage réel du second plafond : le bandeau demande
+    // explicitement 3 200, et doit les obtenir.
+    expect(
+      deliveryUrl(ORIGINAL, { width: MAX_DELIVERY_WIDTH_PLEINE_LARGEUR }),
+    ).toContain(`w_${MAX_DELIVERY_WIDTH_PLEINE_LARGEUR}`)
   })
 
   it('accepte une largeur plus petite, et la respecte', () => {
@@ -157,10 +187,14 @@ describe('la reconnaissance d’une vidéo', () => {
     // Cloudinary sert volontiers une vidéo sans suffixe, et une image peut
     // parfaitement s'appeler « .mp4.jpg ». L'extension ment ; le chemin, non.
     expect(
-      isVideoUrl('https://res.cloudinary.com/nina-diego/video/upload/v1/vitrine/film'),
+      isVideoUrl(
+        'https://res.cloudinary.com/nina-diego/video/upload/v1/vitrine/film',
+      ),
     ).toBe(true)
     expect(
-      isVideoUrl('https://res.cloudinary.com/nina-diego/image/upload/v1/a/x.mp4.jpg'),
+      isVideoUrl(
+        'https://res.cloudinary.com/nina-diego/image/upload/v1/a/x.mp4.jpg',
+      ),
     ).toBe(false)
   })
 

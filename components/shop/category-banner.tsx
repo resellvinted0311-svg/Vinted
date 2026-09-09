@@ -3,6 +3,7 @@ import {
   deliveryUrl,
   isVideoUrl,
   videoPosterUrl,
+  MAX_DELIVERY_WIDTH_PLEINE_LARGEUR,
 } from '@/lib/providers/storage/delivery'
 import { HeroVideo } from './hero-video'
 import { BarreSurImage } from './barre-sur-image'
@@ -82,6 +83,22 @@ export function CategoryBanner({
    * qu'elle tienne sur toutes les fenêtres.
    */
   cadrage = '50% 50%',
+  /**
+   * Agrandissement de la photographie DANS son cadre, 1 = taille naturelle.
+   *
+   * `object-fit: cover` remplit déjà le cadre : l'image n'y flotte jamais, et
+   * le seul moyen de rapprocher le sujet est de l'agrandir au-delà de ce
+   * remplissage. Le débordement est rogné par le cadre, qui masque ce qui
+   * dépasse.
+   *
+   * L'agrandissement part du POINT D'ANCRAGE, pas du centre : sans cela, un
+   * cadrage soigneusement posé à 58 % se déplacerait à chaque changement de
+   * valeur, et il faudrait rerégler les deux ensemble.
+   *
+   * Il ne coûte pas de netteté ici : les sources font 5 992 px de large pour
+   * un cadre servi à 3 200 au plus, soit près du double de ce qu'on affiche.
+   */
+  zoom = 1,
   /** Description de l'image ; vide si elle est décorative. */
   alt = '',
 }: {
@@ -89,6 +106,7 @@ export function CategoryBanner({
   intro?: string | null
   imageUrl?: string | null
   cadrage?: string
+  zoom?: number
   alt?: string
 }) {
   // Une vidéo et une photographie occupent le même cadre : servir une vidéo
@@ -120,7 +138,9 @@ export function CategoryBanner({
 
         {imageUrl && estVideo ? (
           <HeroVideo
-            src={deliveryUrl(imageUrl)}
+            src={deliveryUrl(imageUrl, {
+              width: MAX_DELIVERY_WIDTH_PLEINE_LARGEUR,
+            })}
             poster={affiche ?? ''}
             className="absolute inset-0 -z-10 h-full w-full object-cover"
           />
@@ -128,7 +148,9 @@ export function CategoryBanner({
 
         {imageUrl && !estVideo ? (
           <Image
-            src={deliveryUrl(imageUrl)}
+            src={deliveryUrl(imageUrl, {
+              width: MAX_DELIVERY_WIDTH_PLEINE_LARGEUR,
+            })}
             alt={alt}
             fill
             priority
@@ -147,7 +169,12 @@ export function CategoryBanner({
               ignoré, ce qui est exactement le genre de défaut qu'on ne voit
               qu'en comparant deux captures.
             */
-            style={{ objectPosition: cadrage }}
+            style={{
+              objectPosition: cadrage,
+              ...(zoom === 1
+                ? {}
+                : { transform: `scale(${zoom})`, transformOrigin: cadrage }),
+            }}
           />
         ) : null}
 

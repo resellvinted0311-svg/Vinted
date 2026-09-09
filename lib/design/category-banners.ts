@@ -67,6 +67,25 @@ export interface CategoryBannerImage {
   cadrage: string
 
   /**
+   * Agrandissement de la photographie dans son cadre. Absent = taille
+   * naturelle.
+   *
+   * `cover` remplit déjà le cadre : la seule façon de rapprocher le sujet est
+   * de l'agrandir au-delà de ce remplissage, et de laisser le cadre rogner ce
+   * qui dépasse. C'est ce que fait ce facteur.
+   *
+   * Il s'applique DEPUIS L'ANCRE, pas depuis le centre : le point posé par
+   * `cadrage` reste donc où il est, et les deux réglages ne se dérèglent pas
+   * l'un l'autre. Sans cela, chaque retouche du zoom demanderait de reprendre
+   * le cadrage, et inversement.
+   *
+   * Il ne coûte pas de netteté tant qu'il reste modeste : les sources font
+   * 5 992 px de large pour un cadre servi à 3 200 au plus. Au-delà de 1,8, on
+   * commencerait à agrandir de vrais pixels.
+   */
+  zoom?: number
+
+  /**
    * Description de l'image pour qui ne la voit pas.
    *
    * Vide quand l'image est purement décorative — c'est le cas d'un bandeau de
@@ -230,6 +249,17 @@ export const CATEGORY_BANNERS: Readonly<Record<string, CategoryBannerImage>> = {
   accessoires: {
     src: '/images/bandeau-accessoires.jpg?v=2',
     cadrage: '50% 58%',
+    /*
+      Un cran d'agrandissement, demandé par la boutique.
+
+      1,15 rapproche l'étalage sans rien perdre de la planche : à 1440×900 la
+      bande source passe de [29 %, 79 %] à [33 %, 75 %] en hauteur et se
+      resserre de 6,5 % de chaque côté, or les bijoux tiennent entre 32 et
+      72 % en hauteur et n'approchent aucun des deux bords latéraux. C'est le
+      dernier cran qui garde la planche entière : au-delà, son coin haut sort
+      du cadre sur les fenêtres basses.
+    */
+    zoom: 1.15,
     alt: '',
   },
 }

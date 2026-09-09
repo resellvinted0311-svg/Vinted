@@ -74,6 +74,7 @@ export default async function CategoryPage({
         intro={category.editorialBody}
         imageUrl={bandeau?.src ?? null}
         cadrage={bandeau?.cadrage ?? '50% 50%'}
+        zoom={bandeau?.zoom ?? 1}
         alt={bandeau?.alt ?? ''}
       />
 

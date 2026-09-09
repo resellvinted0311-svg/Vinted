@@ -5,6 +5,7 @@ import {
   deliveryUrl,
   isVideoUrl,
   videoPosterUrl,
+  MAX_DELIVERY_WIDTH_PLEINE_LARGEUR,
 } from '@/lib/providers/storage/delivery'
 import { HeroVideo } from './hero-video'
 
@@ -150,7 +151,9 @@ export async function HeroBanner({ imageUrl }: { imageUrl: string | null }) {
 
         {imageUrl && estVideo ? (
           <HeroVideo
-            src={deliveryUrl(imageUrl)}
+            src={deliveryUrl(imageUrl, {
+              width: MAX_DELIVERY_WIDTH_PLEINE_LARGEUR,
+            })}
             poster={affiche ?? ''}
             className="absolute inset-0 -z-10 h-full w-full object-cover"
           />
@@ -162,7 +165,9 @@ export async function HeroBanner({ imageUrl }: { imageUrl: string | null }) {
             // retélécharge l'original — jusqu'à six mille pixels — pour chaque
             // largeur et chaque format qu'il fabrique, sur la vue qui porte
             // justement le LCP.
-            src={deliveryUrl(imageUrl)}
+            src={deliveryUrl(imageUrl, {
+              width: MAX_DELIVERY_WIDTH_PLEINE_LARGEUR,
+            })}
             alt=""
             fill
             priority
