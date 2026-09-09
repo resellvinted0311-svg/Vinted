@@ -11,7 +11,10 @@ import { PAGE_SIZE } from '@/lib/domain/catalogue'
  */
 
 async function resultCount(page: Page): Promise<number> {
-  const text = await page.getByText(/\d+ articles?|Aucun article/).first().textContent()
+  const text = await page
+    .getByText(/\d+ articles?|Aucun article/)
+    .first()
+    .textContent()
   const match = text?.match(/(\d+)/)
   return match ? Number(match[1]) : 0
 }
@@ -92,8 +95,12 @@ test.describe('Catalogue', () => {
 
     // La case de la marque filtrée doit être cochée au chargement : c'est ce
     // qui rend l'URL réellement partageable.
-    await expect(page.locator('input[name="marque"][value="levis"]').first()).toBeChecked()
-    await expect(page.locator('select[name="tri"]').first()).toHaveValue('prix_asc')
+    await expect(
+      page.locator('input[name="marque"][value="levis"]').first(),
+    ).toBeChecked()
+    await expect(page.locator('select[name="tri"]').first()).toHaveValue(
+      'prix_asc',
+    )
   })
 
   test('trie par prix croissant', async ({ page }) => {
@@ -149,9 +156,11 @@ test.describe('Catalogue', () => {
     // partagent légitimement le même intitulé (« Chemise Uniqlo »), seul le
     // slug est unique.
     const hrefs = () =>
-      page.locator('article h3 a').evaluateAll((links) =>
-        links.map((link) => (link as HTMLAnchorElement).pathname),
-      )
+      page
+        .locator('article h3 a')
+        .evaluateAll((links) =>
+          links.map((link) => (link as HTMLAnchorElement).pathname),
+        )
 
     const premier = await hrefs()
     expect(premier.length).toBe(PAGE_SIZE)
@@ -297,6 +306,43 @@ test.describe('Catalogue sans JavaScript', () => {
   // Exigence explicite du brief : « filtres appliqués sans JS ».
   test.use({ javaScriptEnabled: false })
 
+  test('le cœur des favoris range vraiment la pièce', async ({ page }) => {
+    /**
+     * La dernière commande de la boutique qui ne marchait pas sans script.
+     *
+     * Le bouton était un `onClick` : il restait actif à l'écran, on cliquait,
+     * et il ne se passait rien — le pire des deux mondes, puisque rien
+     * n'annonçait que la commande était hors service.
+     *
+     * Il est devenu un formulaire visant une action serveur. Ce test tient les
+     * deux moitiés de la promesse : la pièce est RANGÉE, et on le VOIT — la
+     * redirection mène aux favoris, où elle figure. Vérifier l'écriture sans
+     * vérifier le retour laisserait passer un ajout invisible, qui ne vaut pas
+     * mieux qu'un bouton mort.
+     */
+    await page.goto('/fr/catalogue')
+
+    const coeur = page.locator('form button[aria-pressed]').first()
+    await expect(
+      coeur,
+      'le cœur des favoris a disparu de la grille',
+    ).toBeVisible()
+
+    await coeur.click()
+    await page.waitForLoadState('load')
+
+    await expect(page, 'sans script, le cœur n’a mené nulle part').toHaveURL(
+      /\/fr\/favoris$/,
+    )
+
+    // Et la pièce y est : une grille vide signifierait que la redirection
+    // fonctionne et que l'enregistrement, lui, n'a pas eu lieu.
+    await expect(
+      page.locator('main a[href*="/fr/a/"]').first(),
+      'la page des favoris est vide après l’ajout',
+    ).toBeVisible()
+  })
+
   test('le formulaire de filtres fonctionne en HTML pur', async ({ page }) => {
     await page.goto('/fr/catalogue')
     const before = await resultCount(page)
@@ -366,7 +412,9 @@ test.describe('Catalogue sans JavaScript', () => {
 
     // Même traitement, et pour la même raison mesurée : tout ce qui vit dans
     // le volet déclenche la même boucle d'« instabilité » chez l'outil.
-    const appliquer = page.getByRole('button', { name: 'Appliquer les filtres' })
+    const appliquer = page.getByRole('button', {
+      name: 'Appliquer les filtres',
+    })
     await appliquer.evaluate((el) =>
       el.scrollIntoView({ block: 'center', behavior: 'auto' }),
     )
@@ -384,7 +432,9 @@ test.describe('Catalogue sans JavaScript', () => {
     await page.locator('article h3 a').first().click()
 
     await expect(page.getByRole('heading', { name: 'Mesures' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Description' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Description' }),
+    ).toBeVisible()
   })
 })
 
@@ -401,13 +451,18 @@ test.describe('Fiche article', () => {
     // L'état ne doit pas être qu'une étiquette : le brief demande d'expliquer
     // ce que recouvre le niveau.
     await expect(
-      page.getByText(
-        /Jamais porté|Porté quelques fois|Porté régulièrement|Usure visible/,
-      ).first(),
+      page
+        .getByText(
+          /Jamais porté|Porté quelques fois|Porté régulièrement|Usure visible/,
+        )
+        .first(),
     ).toBeVisible()
   })
 
-  test('un article vendu reste accessible et le dit', async ({ page, request }) => {
+  test('un article vendu reste accessible et le dit', async ({
+    page,
+    request,
+  }) => {
     const response = await request.get('/fr/catalogue')
     expect(response.status()).toBe(200)
 
@@ -424,10 +479,7 @@ test.describe('Fiche article', () => {
     // conséquence pour le référencement, mais le test doit viser le bon
     // chemin.
     await page.goto('/fr/catalogue')
-    const href = await page
-      .locator('article h3 a')
-      .first()
-      .getAttribute('href')
+    const href = await page.locator('article h3 a').first().getAttribute('href')
     expect(href).toBeTruthy()
     await page.goto(href!)
 
@@ -465,7 +517,9 @@ test.describe('Recherche', () => {
     await expect(page).toHaveURL(/\/fr\/(a|c|marque)\//)
   })
 
-  test('la recherche fonctionne aussi en soumission directe', async ({ page }) => {
+  test('la recherche fonctionne aussi en soumission directe', async ({
+    page,
+  }) => {
     await page.goto('/fr/catalogue?q=chemise')
     await expect(page.getByText(/Résultats pour/)).toBeVisible()
     expect(await resultCount(page)).toBeGreaterThan(0)
@@ -552,12 +606,22 @@ test.describe('Recherche', () => {
 })
 
 test.describe('Favoris', () => {
-  test('sont conservés sans compte, via le serveur', async ({ page, context }) => {
+  test('sont conservés sans compte, via le serveur', async ({
+    page,
+    context,
+  }) => {
     await page.goto('/fr/catalogue')
 
-    await page.locator('article').first().getByRole('button', { name: 'Ajouter aux favoris' }).click()
+    await page
+      .locator('article')
+      .first()
+      .getByRole('button', { name: 'Ajouter aux favoris' })
+      .click()
     await expect(
-      page.locator('article').first().getByRole('button', { name: 'Retirer des favoris' }),
+      page
+        .locator('article')
+        .first()
+        .getByRole('button', { name: 'Retirer des favoris' }),
     ).toBeVisible()
 
     // Le favori doit survivre à un rechargement complet : s'il vivait en
@@ -571,9 +635,13 @@ test.describe('Favoris', () => {
     // noms sont acceptés ici pour que le test tienne dans les deux modes.
     const cookies = await context.cookies()
     const session = cookies.find(
-      (cookie) => cookie.name === 'ND_SESSION' || cookie.name === '__Host-ND_SESSION',
+      (cookie) =>
+        cookie.name === 'ND_SESSION' || cookie.name === '__Host-ND_SESSION',
     )
-    expect(session, 'le panier/favoris invité doit vivre dans un cookie httpOnly').toBeDefined()
+    expect(
+      session,
+      'le panier/favoris invité doit vivre dans un cookie httpOnly',
+    ).toBeDefined()
     expect(session!.httpOnly).toBe(true)
 
     // Et il doit être signé : 32 caractères, un point, 22 caractères. Toute
@@ -592,7 +660,9 @@ test.describe('Multilingue', () => {
   ] as const) {
     test(`le catalogue ${locale} rend dans sa langue`, async ({ page }) => {
       await page.goto(`/${locale}/catalogue`)
-      await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible()
+      await expect(
+        page.getByRole('heading', { name: heading, exact: true }),
+      ).toBeVisible()
       await expect(page.locator('article').first()).toBeVisible()
     })
   }
@@ -603,8 +673,16 @@ test.describe('Étanchéité', () => {
     for (const url of ['/fr/catalogue', '/fr']) {
       await page.goto(url)
       const html = await page.content()
-      for (const field of ['costCents', 'floorPriceCents', 'internalNotes', 'sourcedFrom']) {
-        expect(html, `${field} ne doit pas apparaître sur ${url}`).not.toContain(field)
+      for (const field of [
+        'costCents',
+        'floorPriceCents',
+        'internalNotes',
+        'sourcedFrom',
+      ]) {
+        expect(
+          html,
+          `${field} ne doit pas apparaître sur ${url}`,
+        ).not.toContain(field)
       }
     }
   })
@@ -626,7 +704,9 @@ test.describe('Ce que les moteurs lisent', () => {
    * nouvelle route — les ferait rediriger vers `/fr/sitemap.xml`, qui n'existe
    * pas. Le plan disparaîtrait sans qu'aucune page du site ne change.
    */
-  test('robots.txt est servi et désigne le plan de site', async ({ request }) => {
+  test('robots.txt est servi et désigne le plan de site', async ({
+    request,
+  }) => {
     const reponse = await request.get('/robots.txt')
     expect(reponse.status()).toBe(200)
 
@@ -638,7 +718,9 @@ test.describe('Ce que les moteurs lisent', () => {
     expect(texte).not.toContain('/panier')
   })
 
-  test('le plan de site est servi, et ses adresses répondent', async ({ request }) => {
+  test('le plan de site est servi, et ses adresses répondent', async ({
+    request,
+  }) => {
     const reponse = await request.get('/sitemap.xml')
     expect(reponse.status()).toBe(200)
 
@@ -656,7 +738,9 @@ test.describe('Ce que les moteurs lisent', () => {
     const echantillon = [...adresses.slice(0, 3), adresses.at(-1)!]
     for (const adresse of echantillon) {
       const page = await request.get(adresse)
-      expect(page.status(), `${adresse} est annoncée mais ne répond pas`).toBe(200)
+      expect(page.status(), `${adresse} est annoncée mais ne répond pas`).toBe(
+        200,
+      )
     }
   })
 })
@@ -761,11 +845,12 @@ test.describe('Univers', () => {
 
     const liens = await page
       .locator('a[href*="/c/"]')
-      .evaluateAll((ancres) =>
-        ancres.map((a) => a.getAttribute('href') ?? ''),
-      )
+      .evaluateAll((ancres) => ancres.map((a) => a.getAttribute('href') ?? ''))
 
-    expect(liens.length, 'aucune carte de rayon sur la vitrine').toBeGreaterThan(0)
+    expect(
+      liens.length,
+      'aucune carte de rayon sur la vitrine',
+    ).toBeGreaterThan(0)
 
     const casses: string[] = []
     for (const lien of liens) {
@@ -954,14 +1039,19 @@ test.describe('Univers', () => {
       défilement existent — au lieu de la supposer.
     */
     await expect
-      .poll(() =>
-        page.evaluate(
-          () => document.documentElement.scrollHeight - window.innerHeight,
-        ), { timeout: 15_000 })
+      .poll(
+        () =>
+          page.evaluate(
+            () => document.documentElement.scrollHeight - window.innerHeight,
+          ),
+        { timeout: 15_000 },
+      )
       .toBeGreaterThan(500)
 
     await page.evaluate(() => window.scrollTo(0, 400))
-    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100)
+    await expect
+      .poll(() => page.evaluate(() => window.scrollY))
+      .toBeGreaterThan(100)
     const avant = await page.evaluate(() => window.scrollY)
 
     const filtres = page.locator('[data-testid="filtres"]')
@@ -997,7 +1087,9 @@ test.describe('Univers', () => {
     ).toBeGreaterThanOrEqual(attendu - 4)
   })
 
-  test('les deux univers sont annoncés au plan de site', async ({ request }) => {
+  test('les deux univers sont annoncés au plan de site', async ({
+    request,
+  }) => {
     const xml = await (await request.get('/sitemap.xml')).text()
     expect(xml).toContain('/fr/femme')
     expect(xml).toContain('/fr/homme')

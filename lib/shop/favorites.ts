@@ -6,7 +6,21 @@ import { articleIdSchema } from '@/lib/validation/shop'
 import { getCurrentUser } from '@/lib/auth/session'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
-import { ensureShopSessionToken, readShopSessionToken } from '@/lib/shop/session-token'
+import {
+  ensureShopSessionToken,
+  readShopSessionToken,
+} from '@/lib/shop/session-token'
+import { redirect } from 'next/navigation'
+import { z } from 'zod'
+import { locales, defaultLocale } from '@/lib/i18n/routing'
+
+/**
+ * La langue, validée contre la liste FERMÉE des langues du site.
+ *
+ * C'est ce qui empêche la valeur du formulaire de composer une adresse : elle
+ * ne peut être que l'une des huit, ou rien.
+ */
+const localeSchema = z.enum(locales as unknown as [string, ...string[]])
 
 /**
  * Favoris.
@@ -108,7 +122,8 @@ export async function toggleFavorite(
     where: { id, ...visibleArticleWhere() },
     select: { id: true },
   })
-  if (!article) return { ok: false, isFavorite: false, reason: 'unknown-article' }
+  if (!article)
+    return { ok: false, isFavorite: false, reason: 'unknown-article' }
 
   const user = await getCurrentUser()
 
@@ -146,4 +161,67 @@ export async function toggleFavorite(
     data: { sessionToken: token, articleId: id },
   })
   return { ok: true, isFavorite: true }
+}
+
+/**
+ * Mettre en favori SANS JavaScript.
+ *
+ * ---------------------------------------------------------------------------
+ * Le trou que cette fonction ferme
+ * ---------------------------------------------------------------------------
+ * La boutique fonctionne script coupé — c'est une garantie tenue par des
+ * tests, et elle couvre le catalogue, les filtres, la recherche et le tunnel
+ * d'achat. Le cœur des favoris était la seule commande à y échapper : un
+ * `onClick` sur un bouton, donc rien du tout sans script. Le bouton restait
+ * pourtant actif à l'écran, ce qui est le pire des deux mondes — on clique, et
+ * il ne se passe rien qu'aucun message n'explique.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi elle REDIRIGE vers les favoris, et pas vers la page d'où l'on vient
+ * ---------------------------------------------------------------------------
+ * Sans script, l'état des cœurs de la grille n'est pas connu du serveur : il
+ * est chargé après coup par le fournisseur de favoris, côté navigateur. Un
+ * retour sur la même page afficherait donc un cœur vide sur une pièce qu'on
+ * vient d'ajouter — l'ajout aurait bien eu lieu, et rien ne le dirait.
+ *
+ * Le rendre visible autrement supposerait de lire les favoris pendant le rendu
+ * de chaque grille, ce qui rendrait dynamiques le catalogue et les pages de
+ * rayon, aujourd'hui prérendues. On paierait la performance de toutes les
+ * visites pour l'affichage d'un cœur chez les rares visiteurs sans script.
+ *
+ * La redirection vers la liste des favoris règle la question sans rien coûter
+ * aux autres : on clique sur le cœur, on arrive sur ses favoris, et la pièce y
+ * est. C'est une réponse lisible, et elle est exacte.
+ *
+ * ---------------------------------------------------------------------------
+ * La destination est CONSTANTE, et c'est une décision de sécurité
+ * ---------------------------------------------------------------------------
+ * Rien de ce que le formulaire envoie ne compose l'adresse de redirection : la
+ * langue est validée contre la liste fermée des langues du site, et le chemin
+ * est écrit ici. Accepter une adresse de retour depuis le formulaire aurait
+ * ouvert une redirection arbitraire — le motif d'hameçonnage classique, où un
+ * lien vers un domaine de confiance renvoie ailleurs. Un export de ce fichier
+ * étant une adresse HTTP publique, l'attaquant n'aurait même pas eu besoin de
+ * passer par une page de la boutique.
+ */
+export async function toggleFavoriteFromForm(
+  formData: FormData,
+): Promise<void> {
+  const articleId = formData.get('articleId')
+  const locale = formData.get('locale')
+
+  // Zod sur les deux entrées, comme partout ailleurs : ce sont des données du
+  // réseau, pas des arguments d'appel.
+  const article = articleIdSchema.safeParse(
+    typeof articleId === 'string' ? articleId : '',
+  )
+  const langue = localeSchema.safeParse(
+    typeof locale === 'string' ? locale : '',
+  )
+
+  // Une entrée invalide ne dit rien de plus qu'un échec : on renvoie sur les
+  // favoris, qui est de toute façon la page utile ici.
+  if (article.success) await toggleFavorite(article.data)
+
+  redirect(`/${langue.success ? langue.data : defaultLocale}/favoris`)
 }
