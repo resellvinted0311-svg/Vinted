@@ -745,6 +745,33 @@
         }
       }
     },
+    "shipping": {
+      "title": "Tariffe di spedizione",
+      "intro": "I costi che i vostri corrieri vi fatturano, per zona e per fascia di peso. Esistono solo in questa base di dati — mai nel codice, mai nel repository.",
+      "costNotMargin": "Indicate qui il COSTO che vi applica il corriere, non il prezzo fatturato all’acquirente. Quest’ultimo deriva dalla maggiorazione di spedizione, impostata in Impostazioni. Confonderli fatturerebbe due volte il vostro margine.",
+      "save": "Salvare",
+      "saved": "{count, plural, =0 {Niente da salvare.} one {Una tariffa salvata.} other {# tariffe salvate.}}",
+      "freeShipping": "Spedizione gratuita da",
+      "freeShippingHint": "In euro. Lasciate vuoto se la spedizione non è mai gratuita su questa zona.",
+      "freeShippingNever": "mai gratuita",
+      "noRates": "Nessuna tariffa su questa zona: è servita ma non vi si può consegnare nulla.",
+      "noZones": "Nessuna zona di spedizione esiste nella base di dati. La bottega non serve dunque alcun paese, la lista della cassa è vuota, e nessuno può ordinare. Le zone sono create dal seed — non si inseriscono qui.",
+      "upTo": "fino a {weight}",
+      "deliveryDays": "{min}–{max} giorni",
+      "costFor": "Costo {service}, fino a {weight}",
+      "activeFor": "Proporre {service} fino a {weight}",
+      "columns": {
+        "service": "Servizio",
+        "weight": "Peso",
+        "cost": "Costo (€)",
+        "active": "Proposto"
+      },
+      "errors": {
+        "rateLimited": "Troppi salvataggi di seguito. Riprovate tra poco.",
+        "invalidRequest": "Il modulo è incompleto. Ricaricate la pagina e ricominciate.",
+        "invalidValue": "Un importo non è accettato. Inserite euro, per esempio 4,20."
+      }
+    },
     "articles": {
       "title": "Capi",
       "intro": "Pieces created here. Those imported from the app are not listed: the next import would overwrite any correction.",

@@ -745,6 +745,33 @@
         }
       }
     },
+    "shipping": {
+      "title": "Stawki wysyłki",
+      "intro": "Koszty, które naliczają Państwu przewoźnicy, według strefy i przedziału wagowego. Istnieją wyłącznie w tej bazie — nigdy w kodzie, nigdy w repozytorium.",
+      "costNotMargin": "Proszę wpisać tutaj KOSZT, który nalicza przewoźnik, a nie cenę naliczaną kupującej. Ta wynika z narzutu na wysyłkę, ustawianego w Ustawieniach. Pomylenie obu naliczyłoby Państwa marżę dwukrotnie.",
+      "save": "Zapisz",
+      "saved": "{count, plural, =0 {Nie ma czego zapisać.} one {Zapisano jedną stawkę.} few {Zapisano # stawki.} many {Zapisano # stawek.} other {Zapisano # stawek.}}",
+      "freeShipping": "Darmowa wysyłka od",
+      "freeShippingHint": "W euro. Proszę zostawić puste, jeśli wysyłka w tej strefie nigdy nie jest darmowa.",
+      "freeShippingNever": "nigdy darmowa",
+      "noRates": "Brak stawki w tej strefie: jest obsługiwana, ale nic nie da się do niej dostarczyć.",
+      "noZones": "W bazie nie istnieje żadna strefa wysyłki. Sklep nie obsługuje więc żadnego kraju, lista przy kasie jest pusta i nikt nie może złożyć zamówienia. Strefy tworzy seed — nie wprowadza się ich tutaj.",
+      "upTo": "do {weight}",
+      "deliveryDays": "{min}–{max} dni",
+      "costFor": "Koszt {service}, do {weight}",
+      "activeFor": "Oferuj {service} do {weight}",
+      "columns": {
+        "service": "Usługa",
+        "weight": "Waga",
+        "cost": "Koszt (€)",
+        "active": "Oferowane"
+      },
+      "errors": {
+        "rateLimited": "Zbyt wiele zapisów pod rząd. Proszę spróbować za chwilę.",
+        "invalidRequest": "Formularz jest niekompletny. Proszę przeładować stronę i zacząć od nowa.",
+        "invalidValue": "Kwota nie jest akceptowana. Proszę podać euro, na przykład 4,20."
+      }
+    },
     "articles": {
       "title": "Sztuki",
       "intro": "Pieces created here. Those imported from the app are not listed: the next import would overwrite any correction.",

@@ -745,6 +745,33 @@
         }
       }
     },
+    "shipping": {
+      "title": "Tarifas de envio",
+      "intro": "Os custos que as suas transportadoras lhe faturam, por zona e por escalão de peso. Só existem nesta base de dados — nunca no código, nunca no repositório.",
+      "costNotMargin": "Indique aqui o CUSTO que a transportadora lhe cobra, não o preço faturado à compradora. Este decorre da majoração de envio, definida em Definições. Confundi-los faturaria duas vezes a sua margem.",
+      "save": "Guardar",
+      "saved": "{count, plural, =0 {Nada a guardar.} one {Uma tarifa guardada.} other {# tarifas guardadas.}}",
+      "freeShipping": "Envio grátis a partir de",
+      "freeShippingHint": "Em euros. Deixe vazio se o envio nunca for gratuito nesta zona.",
+      "freeShippingNever": "nunca gratuito",
+      "noRates": "Nenhuma tarifa nesta zona: é servida mas nada lhe pode ser entregue.",
+      "noZones": "Não existe nenhuma zona de envio na base de dados. A loja não serve portanto nenhum país, a lista do pagamento está vazia, e ninguém pode encomendar. As zonas são criadas pelo seed — não se introduzem aqui.",
+      "upTo": "até {weight}",
+      "deliveryDays": "{min}–{max} dias",
+      "costFor": "Custo {service}, até {weight}",
+      "activeFor": "Propor {service} até {weight}",
+      "columns": {
+        "service": "Serviço",
+        "weight": "Peso",
+        "cost": "Custo (€)",
+        "active": "Proposto"
+      },
+      "errors": {
+        "rateLimited": "Demasiados registos seguidos. Tente de novo dentro de momentos.",
+        "invalidRequest": "O formulário está incompleto. Recarregue a página e recomece.",
+        "invalidValue": "Um montante não é aceite. Introduza euros, por exemplo 4,20."
+      }
+    },
     "articles": {
       "title": "Peças",
       "intro": "Pieces created here. Those imported from the app are not listed: the next import would overwrite any correction.",

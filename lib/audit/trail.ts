@@ -61,6 +61,22 @@ export type AuditAction =
    */
   | 'settings.updated'
   /**
+   * Un tarif de port, ou un seuil de gratuité, modifié depuis la régie.
+   *
+   * Consigné pour la même raison que `settings.updated`, et c'est le même
+   * chiffre vu de l'autre côté : le coût transporteur croisé avec la
+   * majoration réglée donne au centime près ce que la boutique encaisse sur
+   * chaque colis. Quand un port facturé paraîtra faux, il faudra pouvoir dire
+   * quel tarif était en vigueur ce jour-là.
+   *
+   * Une entrée PAR ligne modifiée, `entityId` portant son identifiant. Et
+   * jamais le montant : recopier un coût transporteur dans une table conservée
+   * dix ans dupliquerait précisément ce que cet écran sert à garder hors du
+   * dépôt.
+   */
+  | 'shipping_rate.updated'
+  | 'shipping_zone.updated'
+  /**
    * Une synchronisation d'inventaire lancée à la main depuis la régie.
    *
    * Consignée parce qu'elle écrit en masse dans le catalogue : elle crée des
@@ -120,7 +136,9 @@ const MAX_ITEMS = 100
 function cleanScalar(value: AuditValue): AuditValue {
   if (typeof value !== 'string') return value
   const cleaned = redactText(value)
-  return cleaned.length > MAX_LENGTH ? `${cleaned.slice(0, MAX_LENGTH)}…` : cleaned
+  return cleaned.length > MAX_LENGTH
+    ? `${cleaned.slice(0, MAX_LENGTH)}…`
+    : cleaned
 }
 
 /**
@@ -135,7 +153,9 @@ function cleanScalar(value: AuditValue): AuditValue {
  * `email` a parfaitement sa place — c'est sa VALEUR qui n'en a pas. Le filtre
  * de forme s'en charge.
  */
-function cleanPayload(payload: AuditPayload | undefined): Prisma.InputJsonValue | undefined {
+function cleanPayload(
+  payload: AuditPayload | undefined,
+): Prisma.InputJsonValue | undefined {
   if (!payload) return undefined
 
   const output: Record<string, AuditValue | AuditValue[]> = {}

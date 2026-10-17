@@ -745,6 +745,33 @@
         }
       }
     },
+    "shipping": {
+      "title": "Verzendtarieven",
+      "intro": "De kosten die uw vervoerders u aanrekenen, per zone en gewichtsklasse. Ze bestaan alleen in deze databank — nooit in de code, nooit in de repository.",
+      "costNotMargin": "Vul hier de KOSTPRIJS in die de vervoerder u aanrekent, niet de prijs die de koper betaalt. Die volgt uit de verzendtoeslag, in te stellen bij Instellingen. De twee verwarren zou uw marge tweemaal aanrekenen.",
+      "save": "Opslaan",
+      "saved": "{count, plural, =0 {Niets op te slaan.} one {Eén tarief opgeslagen.} other {# tarieven opgeslagen.}}",
+      "freeShipping": "Gratis verzending vanaf",
+      "freeShippingHint": "In euro. Laat leeg als verzending nooit gratis is op deze zone.",
+      "freeShippingNever": "nooit gratis",
+      "noRates": "Geen tarief op deze zone: ze wordt bediend maar er kan niets worden geleverd.",
+      "noZones": "Er bestaat geen enkele verzendzone in de databank. De winkel bedient dus geen enkel land, de lijst bij het afrekenen is leeg, en niemand kan bestellen. Zones worden door de seed aangemaakt — ze worden hier niet ingevoerd.",
+      "upTo": "tot {weight}",
+      "deliveryDays": "{min}–{max} dagen",
+      "costFor": "Kostprijs {service}, tot {weight}",
+      "activeFor": "{service} aanbieden tot {weight}",
+      "columns": {
+        "service": "Dienst",
+        "weight": "Gewicht",
+        "cost": "Kostprijs (€)",
+        "active": "Aangeboden"
+      },
+      "errors": {
+        "rateLimited": "Te veel opslagbewerkingen na elkaar. Probeer het zo meteen opnieuw.",
+        "invalidRequest": "Het formulier is onvolledig. Herlaad de pagina en begin opnieuw.",
+        "invalidValue": "Een bedrag wordt niet aanvaard. Voer euro in, bijvoorbeeld 4,20."
+      }
+    },
     "articles": {
       "title": "Stukken",
       "intro": "Pieces created here. Those imported from the app are not listed: the next import would overwrite any correction.",

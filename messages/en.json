@@ -745,6 +745,33 @@
         }
       }
     },
+    "shipping": {
+      "title": "Shipping rates",
+      "intro": "The costs your carriers charge you, by zone and weight bracket. They exist only in this database — never in the code, never in the repository.",
+      "costNotMargin": "Enter the COST the carrier charges you, not the price billed to the buyer. That one follows from the shipping markup, set in Settings. Confusing the two would bill your margin twice.",
+      "save": "Save",
+      "saved": "{count, plural, =0 {Nothing to save.} one {One rate saved.} other {# rates saved.}}",
+      "freeShipping": "Free shipping from",
+      "freeShippingHint": "In euros. Leave empty if shipping is never free on this zone.",
+      "freeShippingNever": "never free",
+      "noRates": "No rate on this zone: it is served but nothing can be delivered there.",
+      "noZones": "No shipping zone exists in the database. The shop therefore serves no country, the checkout list is empty, and nobody can place an order. Zones are created by the seed — they are not entered here.",
+      "upTo": "up to {weight}",
+      "deliveryDays": "{min}–{max} days",
+      "costFor": "Cost {service}, up to {weight}",
+      "activeFor": "Offer {service} up to {weight}",
+      "columns": {
+        "service": "Service",
+        "weight": "Weight",
+        "cost": "Cost (€)",
+        "active": "Offered"
+      },
+      "errors": {
+        "rateLimited": "Too many saves in a row. Try again in a moment.",
+        "invalidRequest": "The form is incomplete. Reload the page and start again.",
+        "invalidValue": "An amount is not accepted. Enter euros, for example 4.20."
+      }
+    },
     "articles": {
       "title": "Pieces",
       "intro": "Pieces created here. Those imported from the app are not listed: the next import would overwrite any correction.",

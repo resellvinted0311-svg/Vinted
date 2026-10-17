@@ -402,6 +402,40 @@ test.describe('Les réglages métier', () => {
       main(page).getByText('aucun import n’est accepté', { exact: false }),
     ).toBeVisible()
 
+    /*
+      LES TARIFS DE PORT, sur le chemin.
+
+      `prisma/seed-data/shipping.ts` annonce que ses montants sont fictifs et
+      que « les vrais tarifs vivent dans la table ShippingRate de la base de
+      production ». Rien ne permettait de les y écrire : la boutique facturait
+      des prix de port inventés, et le seul chemin vers un prix juste passait
+      par l'édition d'un fichier d'un dépôt public.
+
+      Vérifié ICI et non dans un test à part, à cause de la règle d'en-tête de
+      ce fichier : chaque test n'ouvre qu'UNE session. Une neuvième connexion
+      sur le compte d'administration faisait franchir la limite de dix par
+      quart d'heure, et la suite entière tombait — ce qui est arrivé.
+    */
+    await adminNav(page).getByRole('link', { name: 'Tarifs de port' }).click()
+    await expect(page).toHaveURL(/\/fr\/admin\/livraison/)
+    await expect(
+      main(page).getByRole('heading', { name: 'Tarifs de port' }),
+    ).toBeVisible()
+    // Le coût transporteur, et non le prix facturé : les confondre ferait
+    // appliquer la majoration par-dessus, donc facturer deux fois la marge.
+    await expect(
+      main(page).getByText('COÛT que vous paie le transporteur', {
+        exact: false,
+      }),
+    ).toBeVisible()
+    // Un champ réellement modifiable : un écran qui affiche la grille sans
+    // permettre de la corriger serait le même cul-de-sac sous une autre forme.
+    await expect(
+      main(page)
+        .getByLabel(/^Coût .*, jusqu’à 500 g$/)
+        .first(),
+    ).toBeEditable()
+
     await adminNav(page).getByRole('link', { name: 'Réglages' }).click()
     await expect(page).toHaveURL(/\/fr\/admin\/reglages/)
 

@@ -745,6 +745,33 @@
         }
       }
     },
+    "shipping": {
+      "title": "Tarifs de port",
+      "intro": "Les coûts que vous facturent vos transporteurs, par zone et par palier de poids. Ils n’existent que dans cette base — jamais dans le code, jamais dans le dépôt.",
+      "costNotMargin": "Saisissez ici le COÛT que vous paie le transporteur, pas le prix facturé à l’acheteuse. Celui-ci en découle par la majoration du port, réglée dans Réglages. Confondre les deux ferait facturer deux fois votre marge.",
+      "save": "Enregistrer",
+      "saved": "{count, plural, =0 {Aucun changement à enregistrer.} one {Un tarif enregistré.} other {# tarifs enregistrés.}}",
+      "freeShipping": "Port offert à partir de",
+      "freeShippingHint": "En euros. Laissez vide si le port n’est jamais offert sur cette zone.",
+      "freeShippingNever": "jamais offert",
+      "noRates": "Aucun tarif sur cette zone : elle est desservie mais rien n’y est livrable.",
+      "noZones": "Aucune zone d’expédition n’existe en base. La boutique ne dessert donc aucun pays, la liste du tunnel de commande est vide, et personne ne peut passer commande. Les zones se créent par le seed — elles ne se saisissent pas ici.",
+      "upTo": "jusqu’à {weight}",
+      "deliveryDays": "{min}–{max} jours",
+      "costFor": "Coût {service}, jusqu’à {weight}",
+      "activeFor": "Proposer {service} jusqu’à {weight}",
+      "columns": {
+        "service": "Service",
+        "weight": "Poids",
+        "cost": "Coût (€)",
+        "active": "Proposé"
+      },
+      "errors": {
+        "rateLimited": "Trop d’enregistrements coup sur coup. Réessayez dans un moment.",
+        "invalidRequest": "Le formulaire est incomplet. Rechargez la page et recommencez.",
+        "invalidValue": "Un montant n’est pas accepté. Saisissez des euros, par exemple 4,20."
+      }
+    },
     "articles": {
       "title": "Pièces",
       "intro": "Les pièces créées ici. Celles importées depuis l’application n’y figurent pas : le prochain import écraserait toute correction.",

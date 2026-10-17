@@ -1,5 +1,9 @@
 import { NextIntlClientProvider } from 'next-intl'
-import { getTranslations, getMessages, setRequestLocale } from 'next-intl/server'
+import {
+  getTranslations,
+  getMessages,
+  setRequestLocale,
+} from 'next-intl/server'
 
 import { Link } from '@/lib/i18n/navigation'
 import { SITE } from '@/lib/config/site'
@@ -90,6 +94,9 @@ export default async function AdminLayout({
     { href: '/admin/commandes', label: t('orders') },
     { href: '/admin/offres', label: t('offers') },
     { href: '/admin/reglages', label: t('settings.title') },
+    // Juste après les réglages : les deux écrans décident ensemble de ce qui
+    // est facturé pour un colis — le coût transporteur ici, la majoration là.
+    { href: '/admin/livraison', label: t('shipping.title') },
   ] as const
 
   return (

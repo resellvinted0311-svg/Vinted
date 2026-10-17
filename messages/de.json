@@ -745,6 +745,33 @@
         }
       }
     },
+    "shipping": {
+      "title": "Versandtarife",
+      "intro": "Die Kosten, die Ihre Transporteure Ihnen berechnen, nach Zone und Gewichtsstufe. Sie bestehen nur in dieser Datenbank — nie im Code, nie im Repository.",
+      "costNotMargin": "Tragen Sie hier die KOSTEN ein, die der Transporteur Ihnen berechnet, nicht den der Käuferin berechneten Preis. Dieser ergibt sich aus dem Versandaufschlag, einzustellen unter Einstellungen. Beides zu verwechseln würde Ihre Marge doppelt berechnen.",
+      "save": "Speichern",
+      "saved": "{count, plural, =0 {Nichts zu speichern.} one {Ein Tarif gespeichert.} other {# Tarife gespeichert.}}",
+      "freeShipping": "Versandfrei ab",
+      "freeShippingHint": "In Euro. Leer lassen, wenn der Versand auf dieser Zone nie frei ist.",
+      "freeShippingNever": "nie versandfrei",
+      "noRates": "Kein Tarif auf dieser Zone: sie wird bedient, aber es kann nichts geliefert werden.",
+      "noZones": "In der Datenbank besteht keine Versandzone. Der Laden bedient also kein Land, die Liste an der Kasse ist leer, und niemand kann bestellen. Zonen werden vom Seed angelegt — sie werden hier nicht eingegeben.",
+      "upTo": "bis {weight}",
+      "deliveryDays": "{min}–{max} Tage",
+      "costFor": "Kosten {service}, bis {weight}",
+      "activeFor": "{service} bis {weight} anbieten",
+      "columns": {
+        "service": "Dienst",
+        "weight": "Gewicht",
+        "cost": "Kosten (€)",
+        "active": "Angeboten"
+      },
+      "errors": {
+        "rateLimited": "Zu viele Speicherungen hintereinander. Versuchen Sie es gleich erneut.",
+        "invalidRequest": "Das Formular ist unvollständig. Laden Sie die Seite neu und beginnen Sie erneut.",
+        "invalidValue": "Ein Betrag wird nicht akzeptiert. Geben Sie Euro ein, zum Beispiel 4,20."
+      }
+    },
     "articles": {
       "title": "Stücke",
       "intro": "Pieces created here. Those imported from the app are not listed: the next import would overwrite any correction.",
