@@ -19,6 +19,8 @@ const expired = vi.hoisted(() => vi.fn())
 
 vi.mock('@/lib/payments/stripe', () => ({
   isStripeConfigured: () => true,
+  // Aucune variable manquante : la doublure décrit un déploiement configuré.
+  missingStripeKeys: () => [],
   stripe: () => ({
     checkout: { sessions: { create: created, expire: expired } },
   }),
@@ -61,7 +63,9 @@ async function cleanup(): Promise<void> {
     where: { article: { sku: { startsWith: PREFIX } } },
   })
   await prisma.orderItem.deleteMany({
-    where: { order: { orderNumber: { startsWith: 'CMD-' }, email: INPUT.email } },
+    where: {
+      order: { orderNumber: { startsWith: 'CMD-' }, email: INPUT.email },
+    },
   })
   await prisma.order.deleteMany({ where: { email: INPUT.email } })
   await prisma.cartItem.deleteMany({ where: { cart: { sessionToken: TOKEN } } })
@@ -84,8 +88,13 @@ afterAll(async () => {
   await prisma.$disconnect()
 })
 
-async function makeArticle(suffix: string, priceCents: number): Promise<string> {
-  const category = await prisma.category.findFirstOrThrow({ select: { id: true } })
+async function makeArticle(
+  suffix: string,
+  priceCents: number,
+): Promise<string> {
+  const category = await prisma.category.findFirstOrThrow({
+    select: { id: true },
+  })
 
   const article = await prisma.article.create({
     data: {
@@ -201,7 +210,12 @@ describe('résolution du prix négocié', () => {
 
     // Sans échéance, une pièce resterait négociée à un prix décidé il y a six
     // mois, sur un coût d'achat et une grille de port qui ont changé depuis.
-    const found = await readNegotiatedPrices(prisma, OWNER, [articleId], new Date())
+    const found = await readNegotiatedPrices(
+      prisma,
+      OWNER,
+      [articleId],
+      new Date(),
+    )
     expect(found.size).toBe(0)
   })
 
@@ -209,21 +223,39 @@ describe('résolution du prix négocié', () => {
     const articleId = await makeArticle('r3', 3800)
     const offerId = await acceptedOffer(articleId, 3000)
 
-    for (const status of ['PENDING', 'REJECTED', 'EXPIRED', 'VOIDED', 'CONSUMED'] as const) {
+    for (const status of [
+      'PENDING',
+      'REJECTED',
+      'EXPIRED',
+      'VOIDED',
+      'CONSUMED',
+    ] as const) {
       await prisma.offer.update({ where: { id: offerId }, data: { status } })
-      const found = await readNegotiatedPrices(prisma, OWNER, [articleId], new Date())
+      const found = await readNegotiatedPrices(
+        prisma,
+        OWNER,
+        [articleId],
+        new Date(),
+      )
       expect(found.size, status).toBe(0)
     }
   })
 
   it('ignore l’offre de quelqu’un d’autre', async () => {
     const articleId = await makeArticle('r4', 3800)
-    await acceptedOffer(articleId, 3000, { sessionToken: 'jeton-de-quelqu-un-dautre' })
+    await acceptedOffer(articleId, 3000, {
+      sessionToken: 'jeton-de-quelqu-un-dautre',
+    })
 
     // Sinon un prix négocié par une personne profiterait à qui ouvre la même
     // fiche — sur un stock unitaire, ce serait la vendre à qui n'a rien
     // demandé, au prix de qui a négocié.
-    const found = await readNegotiatedPrices(prisma, OWNER, [articleId], new Date())
+    const found = await readNegotiatedPrices(
+      prisma,
+      OWNER,
+      [articleId],
+      new Date(),
+    )
     expect(found.size).toBe(0)
   })
 })

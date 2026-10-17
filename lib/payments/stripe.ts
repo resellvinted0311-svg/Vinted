@@ -26,9 +26,65 @@ import Stripe from 'stripe'
  */
 let client: Stripe | null = null
 
-/** Le paiement est-il configuré sur ce déploiement ? */
+/**
+ * Les trois variables qu'une vente traverse, dans l'ordre où elle les
+ * rencontre.
+ *
+ * Elles sont vérifiées ENSEMBLE, et c'est le cœur de ce fichier : chacune sert
+ * à une étape différente, et il n'existe aucune étape qui puisse se passer des
+ * deux autres.
+ *
+ *  - `STRIPE_SECRET_KEY` ouvre la session de paiement, côté serveur ;
+ *  - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` affiche le cadre de saisie de carte,
+ *    côté navigateur ;
+ *  - `STRIPE_WEBHOOK_SECRET` permet de VÉRIFIER l'appel signé qui marque la
+ *    commande payée. Sans elle, la route de rappel refuse tout.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi n'en vérifier qu'une était un vrai défaut, pas une imprécision
+ * ---------------------------------------------------------------------------
+ * Le garde ne regardait que la clé secrète. Deux configurations partielles
+ * plausibles — on pose les variables une par une — passaient donc le garde :
+ *
+ *  - clé secrète SEULE : le bouton « Commander » restait actif, la commande
+ *    était créée, le stock verrouillé TRENTE MINUTES, et c'est seulement
+ *    ensuite que le cadre de paiement affichait une panne. Une pièce
+ *    disparaissait de la boutique pour une vente qui ne pouvait pas aboutir.
+ *  - clé secrète et clé publique, SANS secret de rappel : le pire des deux.
+ *    La carte est débitée, Stripe appelle la route de rappel, la route refuse
+ *    faute de secret, et la commande ne devient JAMAIS payée. De l'argent
+ *    encaissé en face d'une commande qui reste « en attente de paiement ».
+ *
+ * Le garde couvre maintenant les trois. La conséquence est que la boutique
+ * refuse AVANT d'écrire quoi que ce soit, au lieu de refuser après — ce qui
+ * est la seule différence qui compte pour la pièce et pour l'acheteuse.
+ */
+const VARIABLES_STRIPE = [
+  'STRIPE_SECRET_KEY',
+  'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+  'STRIPE_WEBHOOK_SECRET',
+] as const
+
+/**
+ * Les variables manquantes, nommées.
+ *
+ * Pour les journaux et pour l'écran d'état : « paiement non configuré » envoie
+ * relire trois pages de documentation, « STRIPE_WEBHOOK_SECRET manquante »
+ * envoie poser une variable.
+ */
+export function missingStripeKeys(): string[] {
+  return VARIABLES_STRIPE.filter((nom) => !process.env[nom]?.trim())
+}
+
+/**
+ * Une vente peut-elle aller jusqu'au bout sur ce déploiement ?
+ *
+ * C'est la question que posent les appelants — le bouton de commande,
+ * l'ouverture de session, la route de rappel — et c'est donc à celle-là que
+ * cette fonction répond. Pas « une clé est-elle posée ».
+ */
 export function isStripeConfigured(): boolean {
-  return Boolean(process.env.STRIPE_SECRET_KEY)
+  return missingStripeKeys().length === 0
 }
 
 export class StripeNotConfiguredError extends Error {

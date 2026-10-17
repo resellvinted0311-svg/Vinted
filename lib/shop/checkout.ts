@@ -27,7 +27,7 @@ import { enqueueSyncEvents } from '@/lib/sync/outbound'
 import { payablePriceCents } from '@/lib/domain/offers'
 import { readNegotiatedPrices } from '@/lib/shop/negotiated-price'
 import { evaluateCartLine, isPurchasable } from '@/lib/domain/cart'
-import { isStripeConfigured, stripe } from '@/lib/payments/stripe'
+import { missingStripeKeys, stripe } from '@/lib/payments/stripe'
 import type { StartCheckoutInput } from '@/lib/validation/checkout'
 
 /**
@@ -270,7 +270,28 @@ export async function prepareCheckout(
 ): Promise<CheckoutResult> {
   // Avant tout verrou et toute écriture : sans paiement configuré, ouvrir une
   // commande immobiliserait du stock pour rien.
-  if (!isStripeConfigured()) {
+  //
+  // « Configuré » veut dire les TROIS variables, pas seulement la clé secrète.
+  // Le raisonnement est dans `lib/payments/stripe.ts`, et il se résume ainsi :
+  // avec deux clés sur trois, la carte est débitée et la commande ne devient
+  // jamais payée.
+  const manquantes = missingStripeKeys()
+  if (manquantes.length > 0) {
+    /*
+      Journalisé ICI et pas dans le garde : le garde est appelé à chaque
+      affichage du bon de commande, et le journal se remplirait de la même
+      ligne. Ici, on est sur une tentative de commande — une par personne qui
+      a cliqué, ce qui est exactement la fréquence à laquelle on veut
+      l'apprendre.
+
+      Les NOMS des variables, jamais leurs valeurs : une clé secrète dans un
+      journal est une clé publiée.
+    */
+    logger.error('checkout.paiement_non_configure', {
+      // Joint en une chaîne : `LogValue` n'accepte que des scalaires, et c'est
+      // délibéré côté journal — un objet libre y ferait passer n'importe quoi.
+      manquantes: manquantes.join(', '),
+    })
     return { ok: false, failure: { reason: 'payment-not-configured' } }
   }
 

@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeEach, afterAll, beforeAll, vi } from 'vitest'
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterAll,
+  beforeAll,
+  vi,
+} from 'vitest'
 import { NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/db/client'
@@ -20,22 +28,37 @@ const WEBHOOK_SECRET = 'whsec_test_secret_pour_signature_locale'
 const PREFIX = 'HOOK-'
 const OWNER = 'jeton-test'
 
-let savedKey: string | undefined
-let savedHook: string | undefined
+/*
+  Les TROIS variables, pas seulement les deux que cette route lit.
+
+  `isStripeConfigured()` répond désormais à « une vente peut-elle aller
+  jusqu'au bout », ce qui inclut la clé publique du navigateur : une boutique
+  qui n'affiche pas de cadre de saisie n'encaissera jamais, et la route n'a
+  aucune raison de traiter des événements pour elle. Décrire ici un
+  déploiement à moitié configuré ferait donc répondre 500 à tout — c'est ce
+  que ces tests ont constaté quand le garde s'est resserré.
+*/
+const VARIABLES = [
+  'STRIPE_SECRET_KEY',
+  'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+  'STRIPE_WEBHOOK_SECRET',
+] as const
+
+const sauvegarde = new Map<string, string | undefined>()
 
 beforeAll(() => {
-  savedKey = process.env.STRIPE_SECRET_KEY
-  savedHook = process.env.STRIPE_WEBHOOK_SECRET
+  for (const nom of VARIABLES) sauvegarde.set(nom, process.env[nom])
   process.env.STRIPE_SECRET_KEY = 'sk_test_factice'
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = 'pk_test_factice'
   process.env.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET
   __resetStripeClientForTests()
 })
 
 afterAll(async () => {
-  if (savedKey === undefined) delete process.env.STRIPE_SECRET_KEY
-  else process.env.STRIPE_SECRET_KEY = savedKey
-  if (savedHook === undefined) delete process.env.STRIPE_WEBHOOK_SECRET
-  else process.env.STRIPE_WEBHOOK_SECRET = savedHook
+  for (const [nom, valeur] of sauvegarde) {
+    if (valeur === undefined) delete process.env[nom]
+    else process.env[nom] = valeur
+  }
 
   __resetStripeClientForTests()
   await cleanup()
@@ -49,14 +72,18 @@ async function cleanup(): Promise<void> {
   await prisma.orderItem.deleteMany({
     where: { order: { orderNumber: { startsWith: PREFIX } } },
   })
-  await prisma.order.deleteMany({ where: { orderNumber: { startsWith: PREFIX } } })
+  await prisma.order.deleteMany({
+    where: { orderNumber: { startsWith: PREFIX } },
+  })
   await prisma.article.deleteMany({ where: { sku: { startsWith: PREFIX } } })
 }
 
 beforeEach(cleanup)
 
 async function makeOrderWithArticle(suffix: string) {
-  const category = await prisma.category.findFirstOrThrow({ select: { id: true } })
+  const category = await prisma.category.findFirstOrThrow({
+    select: { id: true },
+  })
 
   const article = await prisma.article.create({
     data: {
@@ -111,7 +138,10 @@ async function makeOrderWithArticle(suffix: string) {
 }
 
 /** Construit un événement signé exactement comme Stripe le fait. */
-function signedRequest(event: Record<string, unknown>, secret = WEBHOOK_SECRET) {
+function signedRequest(
+  event: Record<string, unknown>,
+  secret = WEBHOOK_SECRET,
+) {
   const payload = JSON.stringify(event)
   const header = Stripe.webhooks.generateTestHeaderString({ payload, secret })
 
@@ -149,10 +179,13 @@ function completedEvent(input: {
 
 describe('signature', () => {
   it('refuse une requête sans signature', async () => {
-    const request = new NextRequest('https://exemple.test/api/webhooks/stripe', {
-      method: 'POST',
-      body: '{}',
-    })
+    const request = new NextRequest(
+      'https://exemple.test/api/webhooks/stripe',
+      {
+        method: 'POST',
+        body: '{}',
+      },
+    )
 
     const response = await POST(request)
     expect(response.status).toBe(400)
@@ -254,7 +287,9 @@ describe('paiement confirmé', () => {
     await expect(replay.json()).resolves.toMatchObject({ duplicate: true })
 
     expect(
-      await prisma.webhookEvent.count({ where: { externalId: 'evt_test_ok2' } }),
+      await prisma.webhookEvent.count({
+        where: { externalId: 'evt_test_ok2' },
+      }),
     ).toBe(1)
   })
 
@@ -299,7 +334,9 @@ describe('paiement confirmé', () => {
     )
 
     expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toMatchObject({ skipped: 'not-paid' })
+    await expect(response.json()).resolves.toMatchObject({
+      skipped: 'not-paid',
+    })
 
     const order = await prisma.order.findUniqueOrThrow({
       where: { id: orderId },
@@ -359,7 +396,11 @@ describe('expiration', () => {
         created: 1_755_770_400,
         type: 'checkout.session.expired',
         data: {
-          object: { id: 'cs_x', object: 'checkout.session', metadata: { orderId } },
+          object: {
+            id: 'cs_x',
+            object: 'checkout.session',
+            metadata: { orderId },
+          },
         },
       }),
     )

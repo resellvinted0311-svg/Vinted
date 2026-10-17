@@ -20,6 +20,8 @@ const expired = vi.hoisted(() => vi.fn())
 
 vi.mock('@/lib/payments/stripe', () => ({
   isStripeConfigured: () => true,
+  // Aucune variable manquante : la doublure décrit un déploiement configuré.
+  missingStripeKeys: () => [],
   stripe: () => ({
     checkout: { sessions: { create: created, expire: expired } },
   }),
@@ -55,13 +57,17 @@ const INPUT: StartCheckoutInput = {
 
 async function cleanup(): Promise<void> {
   await prisma.orderItem.deleteMany({
-    where: { order: { orderNumber: { startsWith: 'CMD-' }, email: INPUT.email } },
+    where: {
+      order: { orderNumber: { startsWith: 'CMD-' }, email: INPUT.email },
+    },
   })
   await prisma.order.deleteMany({ where: { email: INPUT.email } })
   await prisma.cartItem.deleteMany({
     where: { cart: { sessionToken: { startsWith: TOKEN } } },
   })
-  await prisma.cart.deleteMany({ where: { sessionToken: { startsWith: TOKEN } } })
+  await prisma.cart.deleteMany({
+    where: { sessionToken: { startsWith: TOKEN } },
+  })
   await prisma.article.deleteMany({ where: { sku: { startsWith: PREFIX } } })
 }
 
@@ -78,8 +84,14 @@ afterAll(async () => {
   await prisma.$disconnect()
 })
 
-async function makeArticle(suffix: string, priceCents: number, weightGrams = 400) {
-  const category = await prisma.category.findFirstOrThrow({ select: { id: true } })
+async function makeArticle(
+  suffix: string,
+  priceCents: number,
+  weightGrams = 400,
+) {
+  const category = await prisma.category.findFirstOrThrow({
+    select: { id: true },
+  })
 
   const article = await prisma.article.create({
     data: {
@@ -96,7 +108,9 @@ async function makeArticle(suffix: string, priceCents: number, weightGrams = 400
       publishedAt: new Date('2026-01-01T00:00:00Z'),
       categoryId: category.id,
       translations: {
-        create: [{ locale: 'fr', title: `Pièce ${suffix}`, description: 'Essai' }],
+        create: [
+          { locale: 'fr', title: `Pièce ${suffix}`, description: 'Essai' },
+        ],
       },
     },
     select: { id: true },
@@ -136,7 +150,10 @@ async function anOption(withServicePoint = false) {
   const { getShippingConfig } = await import('@/lib/config/settings')
   const { quoteShipping } = await import('@/lib/domain/shipping')
 
-  const [grids, config] = await Promise.all([getShippingGrids(), getShippingConfig()])
+  const [grids, config] = await Promise.all([
+    getShippingGrids(),
+    getShippingConfig(),
+  ])
   const quote = quoteShipping(
     {
       destination: { countryCode: 'FR', postalCode: '59000' },
@@ -169,7 +186,10 @@ describe('ouverture d’un paiement', () => {
 
     const result = await prepareCheckoutFor(OWNER, cartId, {
       ...INPUT,
-      shipping: { carrierCode: option.carrierCode, serviceCode: option.serviceCode },
+      shipping: {
+        carrierCode: option.carrierCode,
+        serviceCode: option.serviceCode,
+      },
     })
 
     expect(result.ok).toBe(true)
@@ -232,7 +252,10 @@ describe('ouverture d’un paiement', () => {
 
     const result = await prepareCheckoutFor(OWNER, cartId, {
       ...INPUT,
-      shipping: { carrierCode: option.carrierCode, serviceCode: option.serviceCode },
+      shipping: {
+        carrierCode: option.carrierCode,
+        serviceCode: option.serviceCode,
+      },
     })
     expect(result.ok).toBe(true)
     if (!result.ok) return
@@ -269,7 +292,10 @@ describe('ouverture d’un paiement', () => {
 
     const result = await prepareCheckoutFor(OWNER, cartId, {
       ...INPUT,
-      shipping: { carrierCode: option.carrierCode, serviceCode: option.serviceCode },
+      shipping: {
+        carrierCode: option.carrierCode,
+        serviceCode: option.serviceCode,
+      },
     })
     expect(result.ok).toBe(true)
     if (!result.ok) return
@@ -298,14 +324,20 @@ describe('ouverture d’un paiement', () => {
 
     const result = await prepareCheckoutFor(OWNER, cartId, {
       ...INPUT,
-      shipping: { carrierCode: option.carrierCode, serviceCode: option.serviceCode },
+      shipping: {
+        carrierCode: option.carrierCode,
+        serviceCode: option.serviceCode,
+      },
     })
     expect(result.ok).toBe(true)
     if (!result.ok) return
 
     const order = await prisma.order.findUniqueOrThrow({
       where: { id: result.orderId },
-      select: { subtotalCents: true, items: { select: { unitPriceCents: true } } },
+      select: {
+        subtotalCents: true,
+        items: { select: { unitPriceCents: true } },
+      },
     })
     expect(order.subtotalCents).toBe(4200)
     expect(order.items[0]?.unitPriceCents).toBe(4200)
@@ -343,7 +375,11 @@ describe('refus', () => {
 
     const result = await prepareCheckoutFor(OWNER, cartId, {
       ...INPUT,
-      shippingAddress: { ...INPUT.shippingAddress, country: 'JP', postalCode: '1000001' },
+      shippingAddress: {
+        ...INPUT.shippingAddress,
+        country: 'JP',
+        postalCode: '1000001',
+      },
       shipping: { carrierCode: 'x', serviceCode: 'y' },
     })
 
@@ -363,7 +399,10 @@ describe('refus', () => {
 
     const result = await prepareCheckoutFor(OWNER, cartId, {
       ...INPUT,
-      shipping: { carrierCode: option.carrierCode, serviceCode: option.serviceCode },
+      shipping: {
+        carrierCode: option.carrierCode,
+        serviceCode: option.serviceCode,
+      },
     })
 
     expect(result.ok).toBe(false)
@@ -423,7 +462,10 @@ describe('refus', () => {
 
     const result = await prepareCheckoutFor(OWNER, cartId, {
       ...INPUT,
-      shipping: { carrierCode: option.carrierCode, serviceCode: option.serviceCode },
+      shipping: {
+        carrierCode: option.carrierCode,
+        serviceCode: option.serviceCode,
+      },
     })
 
     expect(result.ok).toBe(false)
@@ -457,7 +499,10 @@ describe('refus', () => {
 
     const result = await prepareCheckoutFor(OWNER, cartId, {
       ...INPUT,
-      shipping: { carrierCode: option.carrierCode, serviceCode: option.serviceCode },
+      shipping: {
+        carrierCode: option.carrierCode,
+        serviceCode: option.serviceCode,
+      },
     })
 
     expect(result.ok).toBe(false)
@@ -481,7 +526,10 @@ describe('panne du prestataire de paiement', () => {
     await expect(
       prepareCheckoutFor(OWNER, cartId, {
         ...INPUT,
-        shipping: { carrierCode: option.carrierCode, serviceCode: option.serviceCode },
+        shipping: {
+          carrierCode: option.carrierCode,
+          serviceCode: option.serviceCode,
+        },
       }),
     ).rejects.toThrow('Stripe injoignable')
 
@@ -510,7 +558,10 @@ describe('panne du prestataire de paiement', () => {
     await expect(
       prepareCheckoutFor(OWNER, cartId, {
         ...INPUT,
-        shipping: { carrierCode: option.carrierCode, serviceCode: option.serviceCode },
+        shipping: {
+          carrierCode: option.carrierCode,
+          serviceCode: option.serviceCode,
+        },
       }),
     ).rejects.toThrow()
 
@@ -536,12 +587,21 @@ describe('un seul paiement vivant par pièce', () => {
       serviceCode: option.serviceCode,
     }
 
-    const first = await prepareCheckoutFor(OWNER, cartId, { ...INPUT, shipping })
+    const first = await prepareCheckoutFor(OWNER, cartId, {
+      ...INPUT,
+      shipping,
+    })
     expect(first.ok).toBe(true)
     if (!first.ok) return
 
-    created.mockResolvedValueOnce({ id: 'cs_test_2', client_secret: 'cs_secret_2' })
-    const second = await prepareCheckoutFor(OWNER, cartId, { ...INPUT, shipping })
+    created.mockResolvedValueOnce({
+      id: 'cs_test_2',
+      client_secret: 'cs_secret_2',
+    })
+    const second = await prepareCheckoutFor(OWNER, cartId, {
+      ...INPUT,
+      shipping,
+    })
     expect(second.ok).toBe(true)
     if (!second.ok) return
 
