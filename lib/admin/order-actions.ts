@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth/session'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { advanceOrderSchema } from '@/lib/validation/admin'
 import { advanceOrder } from '@/lib/shop/fulfilment'
+import { pousserApresReponse } from '@/lib/jobs/push'
 
 /**
  * Faire avancer une commande : préparation, expédition, livraison.
@@ -119,6 +120,10 @@ export async function advanceOrderAction(
       result.reason === 'not-found' ? 'orderNotFound' : 'invalidTransition',
     )
   }
+
+  // L'avis d'expédition part maintenant. Vide sur les autres transitions : la
+  // mise en préparation et le constat de livraison n'envoient rien.
+  pousserApresReponse(result.emailJobIds)
 
   // La file doit refléter le geste : sans invalidation, la commande resterait
   // affichée « payée » jusqu'au prochain rechargement complet, et le bouton

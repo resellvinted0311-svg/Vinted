@@ -1,23 +1,18 @@
 'use server'
 
-import { after } from 'next/server'
-
 import { prisma } from '@/lib/db/client'
 import {
   requestPasswordResetSchema,
   resetPasswordSchema,
 } from '@/lib/validation/auth'
-import {
-  checkRateLimit,
-  rateLimitOutcome,
-} from '@/lib/security/rate-limit'
+import { checkRateLimit, rateLimitOutcome } from '@/lib/security/rate-limit'
 import { clientFingerprint } from '@/lib/security/fingerprint'
 import { pseudonymize } from '@/lib/security/pseudonymize'
 import { mailboxIdentity } from '@/lib/security/mail-identity'
 import { withTimeFloor } from '@/lib/security/timing'
 import { isAuthConfigured } from '@/lib/config/site'
 import { enqueue } from '@/lib/jobs/queue'
-import { runJobNow } from '@/lib/jobs/worker'
+import { pousserApresReponse } from '@/lib/jobs/push'
 import { consumePasswordReset, logResetRequested } from './password-reset'
 import { createDatabaseSession } from './session'
 import { adoptGuestSession } from '@/lib/shop/handover'
@@ -145,7 +140,8 @@ async function requestPasswordReset(
     // échéance qui n'existe pas.
     return {
       status: 'error',
-      messageKey: byOrigin === 'limited' ? 'rateLimited' : 'securityUnavailable',
+      messageKey:
+        byOrigin === 'limited' ? 'rateLimited' : 'securityUnavailable',
     }
   }
 
@@ -197,49 +193,9 @@ async function requestPasswordReset(
 
   logResetRequested(user.id)
 
-  runAfterResponse(jobId)
+  pousserApresReponse([jobId])
 
   return { status: 'sent' }
-}
-
-/**
- * Pousse le travail juste inscrit, une fois la réponse partie.
- *
- * ---------------------------------------------------------------------------
- * Pourquoi il ne suffit pas de laisser faire le cron
- * ---------------------------------------------------------------------------
- * Il ne passe qu’à intervalle. Pour une confirmation de commande, c'est
- * sans importance. Pour un lien de réinitialisation, c'est une éternité : la
- * personne attend devant son écran, ne voit rien arriver, et reclique. Or le
- * compteur par adresse est à trois par heure — au troisième clic elle serait
- * plafonnée en silence et n'aurait plus aucun e-mail. Fermer une fuite en
- * enfermant les gens dehors n'est pas fermer une fuite.
- *
- * ---------------------------------------------------------------------------
- * APRÈS la réponse, et c'est tout l'intérêt
- * ---------------------------------------------------------------------------
- * `after` exécute son rappel une fois la réponse écoulée, et la plateforme
- * garde la fonction en vie pour cela. Ce qui s'y passe n'entre donc pas dans le
- * temps observé par qui chronomètre — c'est ce qui permet de rendre l'e-mail
- * immédiat sans rouvrir l'écart qu'on vient de fermer.
- *
- * C'est aussi pour cela qu'on n'a PAS simplement lancé la promesse sans
- * l'attendre : sur une fonction serverless, le processus est gelé dès la
- * réponse renvoyée, et l'e-mail ne serait jamais parti — sans que personne ne
- * le sache. C'est le troisième piège décrit en tête de `lib/jobs/queue.ts`.
- */
-function runAfterResponse(jobId: string): void {
-  try {
-    after(async () => {
-      // `runJobNow` ne lève pas : voir son en-tête. Une promesse rejetée ici
-      // n'aurait personne pour la recevoir.
-      await runJobNow(jobId)
-    })
-  } catch {
-    // `after` exige un contexte de requête. Hors de là — un test, un script de
-    // maintenance — il lève, et c'est sans conséquence : le travail est inscrit,
-    // le cron le prendra. On n'accélère pas, on ne perd rien.
-  }
 }
 
 /**
@@ -293,7 +249,10 @@ export async function resetPasswordAction(
     }
   }
 
-  const outcome = await consumePasswordReset(parsed.data.token, parsed.data.password)
+  const outcome = await consumePasswordReset(
+    parsed.data.token,
+    parsed.data.password,
+  )
 
   if (!outcome.ok) {
     // Les quatre refus se disent d'une seule façon : « ce lien n'est plus

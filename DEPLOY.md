@@ -51,6 +51,9 @@ qui ouvre le nom de la base ; dans ce cas, changez le mot de passe.
 | `UPSTASH_REDIS_REST_TOKEN` | **oui en production** | idem |
 | `CRON_SECRET` | **oui** | sans elle, la route `/api/cron` refuse tout et les réservations expirées ne sont jamais libérées |
 | `SENTRY_DSN` | non, **recommandée** | sans elle, les incidents sont journalisés mais personne n'en est prévenu. Le transport est écrit à la main, sans dépendance : rien ne part qu'on n'ait mis soi-même — ni URL, ni en-tête, ni utilisateur (`lib/observability/sentry.ts`) |
+| `STRIPE_SECRET_KEY` | **oui pour vendre** | les trois variables Stripe vont ENSEMBLE : avec deux sur trois, le paiement reste éteint |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | **oui pour vendre** | affiche le cadre de saisie de carte. Absente, aucune carte ne peut être saisie |
+| `STRIPE_WEBHOOK_SECRET` | **oui pour vendre** | vérifie l'appel signé qui marque la commande payée. Absente, une carte peut être débitée sans que la commande le devienne |
 | `LOG_LEVEL` | non | `info` par défaut. `debug` pour une enquête, à retirer ensuite : le volume est sans commune mesure |
 
 \* Sans `AUTH_SECRET`, la boutique est entièrement consultable — catalogue,
@@ -105,6 +108,18 @@ déploiement avant le build** — pas échouer, refuser. Le symptôme est
 déroutant : aucun build en erreur, aucun déploiement nouveau, et une intégration
 Git qui semble pourtant connectée. La boutique est restée dix-sept jours sur le
 commit précédant l'ajout de ce fichier sans que rien ne le signale.
+
+**Les e-mails ne l'attendent plus.** Ils étaient inscrits en file et partaient
+au passage du cron : une confirmation de commande encaissée à dix heures partait
+le lendemain à trois heures du matin, et la boutique apprenait aussi tard
+qu'une pièce était à emballer. Une offre, qui expire en quarante-huit heures,
+perdait un tiers de son délai avant que quiconque ait pu lire le message.
+
+Les six e-mails qu'une personne attend — confirmation de commande, avis à la
+boutique, accusé d'offre, avis d'offre, réponse du vendeur, avis d'expédition —
+sont désormais poussés **après la réponse**, par `lib/jobs/push.ts`. La file
+reste la source de vérité : si ce chemin n'aboutit pas, le cron reprend le
+travail avec ses reprises. On accélère, on ne remplace rien.
 
 **Ce qu'une cadence lente coûte, exactement.** Rien de faux, seulement du retard
 de ménage. Aucune règle du domaine ne suppose que le balayage est passé : un

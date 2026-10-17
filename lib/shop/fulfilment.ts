@@ -66,12 +66,27 @@ export interface FulfilmentResult {
    * d'autre. Non vide = un remboursement est dû.
    */
   unfulfillableArticleIds: string[]
+  /**
+   * Les e-mails inscrits par cette vente, à pousser une fois la réponse
+   * partie.
+   *
+   * Remontés à l'appelant au lieu d'être poussés ici, et ce n'est pas un
+   * détail d'organisation : on est dans une transaction. Pousser depuis
+   * l'intérieur ferait partir un message avant que la vente ne soit validée,
+   * et un message parti ne se rembobine pas si la transaction échoue ensuite.
+   *
+   * Seul l'appelant sait qu'il a répondu — c'est donc lui qui appelle
+   * `pousserApresReponse`. S'il ne le fait pas, le cron s'en charge : la file
+   * reste la source de vérité.
+   */
+  emailJobIds: string[]
 }
 
 const NOTHING: FulfilmentResult = {
   applied: false,
   soldArticleIds: [],
   unfulfillableArticleIds: [],
+  emailJobIds: [],
 }
 
 /**
@@ -207,14 +222,20 @@ export async function markOrderPaid(input: {
     // transaction tiendrait des verrous en attendant un tiers, et un message
     // parti ne se rembobine pas si la transaction échoue ensuite. S'ils sont
     // inscrits, c'est que la vente l'est aussi.
-    await enqueue(tx, {
-      type: 'order.confirmation',
-      payload: { orderId: order.id },
-    })
-    await enqueue(tx, {
-      type: 'order.notify-shop',
-      payload: { orderId: order.id },
-    })
+    //
+    // Leurs identifiants remontent pour que l'appelant les pousse APRÈS avoir
+    // répondu : sans cela, la confirmation d'un paiement encaissé à dix heures
+    // partait le lendemain à trois heures du matin, avec le cron.
+    const emailJobIds = [
+      await enqueue(tx, {
+        type: 'order.confirmation',
+        payload: { orderId: order.id },
+      }),
+      await enqueue(tx, {
+        type: 'order.notify-shop',
+        payload: { orderId: order.id },
+      }),
+    ]
 
     // La vente remonte à l'application de gestion, source de vérité de
     // l'inventaire. Elle ne peut pas la deviner : une pièce ne part pas parce
@@ -275,6 +296,7 @@ export async function markOrderPaid(input: {
       applied: true,
       soldArticleIds: [...soldIds],
       unfulfillableArticleIds: unfulfillable,
+      emailJobIds,
     }
   })
 }
@@ -427,7 +449,18 @@ export async function expireOrder(orderId: string): Promise<ExpiryResult> {
 
 export type AdvanceResult =
   | { ok: false; reason: 'not-found' | 'invalid-transition' }
-  | { ok: true; status: OrderStatus }
+  | {
+      ok: true
+      status: OrderStatus
+      /**
+       * L'avis d'expédition inscrit, s'il y en a un — à pousser une fois la
+       * réponse partie. Vide sur les autres transitions, qui n'envoient rien.
+       *
+       * Même raison que sur `FulfilmentResult` : on est dans une transaction,
+       * et un message parti ne se rembobine pas.
+       */
+      emailJobIds: string[]
+    }
 
 /**
  * Fait avancer une commande payée sur son parcours.
@@ -508,6 +541,11 @@ export async function advanceOrder(input: {
       return { ok: false as const, reason: 'invalid-transition' as const }
     }
 
+    // Seule l'expédition écrit un e-mail. Les autres transitions — mise en
+    // préparation, constat de livraison — n'en envoient aucun, et la liste
+    // reste vide : l'appelant n'a alors rien à pousser.
+    const emailJobIds: string[] = []
+
     if (plan.to === 'SHIPPED') {
       if (input.tracking) {
         const packaging = await getShippingConfig(tx)
@@ -538,12 +576,17 @@ export async function advanceOrder(input: {
 
       // L'avis d'expédition. INSCRIT dans la transaction : un e-mail parti ne
       // se rembobine pas si l'écriture échoue ensuite.
-      await enqueue(tx, {
-        type: 'order.shipped',
-        payload: { orderId: order.id },
-      })
+      //
+      // Son identifiant remonte : un numéro de suivi qui n'arrive que le
+      // lendemain matin arrive après le colis sur la moitié des envois.
+      emailJobIds.push(
+        await enqueue(tx, {
+          type: 'order.shipped',
+          payload: { orderId: order.id },
+        }),
+      )
     }
 
-    return { ok: true as const, status: plan.to }
+    return { ok: true as const, status: plan.to, emailJobIds }
   })
 }

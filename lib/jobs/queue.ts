@@ -180,8 +180,10 @@ export async function enqueue(
  * À quoi cela sert, et pourquoi ce n'est pas un contournement du cron
  * ---------------------------------------------------------------------------
  * Le cron ne passe qu’à intervalle, et cet intervalle dépend du plan de
- * l’hébergeur. C'est parfait pour une confirmation de
- * commande, et inacceptable pour un lien de réinitialisation : la personne
+ * l’hébergeur : ici, UNE exécution par jour, à trois heures du matin
+ * (`vercel.json`). C'est inacceptable pour tout ce qu'une personne attend —
+ * un lien de réinitialisation, mais aussi une confirmation de commande ou la
+ * réponse à une offre qui expire en quarante-huit heures. La personne
  * attend devant son écran. Elle recliquerait — et le compteur par adresse est à
  * trois par heure, donc au troisième clic elle serait plafonnée en silence et ne
  * recevrait plus rien du tout. Le remède serait pire que le mal.

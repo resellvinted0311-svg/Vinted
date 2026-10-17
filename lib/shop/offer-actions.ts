@@ -8,6 +8,7 @@ import { mailboxIdentity } from '@/lib/security/mail-identity'
 import { submitOfferSchema, answerCounterSchema } from '@/lib/validation/offers'
 import { ensureCartOwner } from '@/lib/shop/cart'
 import { submitOffer, answerCounterOffer } from '@/lib/shop/offers'
+import { pousserApresReponse } from '@/lib/jobs/push'
 import { getCurrentUser } from '@/lib/auth/session'
 
 /**
@@ -188,6 +189,12 @@ export async function submitOfferAction(
   if (!result.ok) {
     return ERROR(messageKeyFor(result.rejection), result.retryAt)
   }
+
+  // L'accusé de réception et l'avis à la boutique partent MAINTENANT, pas au
+  // prochain passage du cron. Une offre expire en quarante-huit heures : la
+  // boutique ne peut pas apprendre dix-sept heures plus tard qu'elle a une
+  // décision à prendre. Poussés après la réponse — voir `lib/jobs/push.ts`.
+  pousserApresReponse(result.emailJobIds)
 
   // La fiche article affiche l'état de la négociation : sans invalidation, la
   // personne reverrait le formulaire vide après avoir déposé son offre.

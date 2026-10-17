@@ -89,6 +89,18 @@ export type SubmitOfferResult =
       outcome: Extract<OfferVerdict, { ok: true }>['outcome']
       expiresAt: Date
       priceValidUntil: Date | null
+      /**
+       * Les e-mails inscrits, à pousser une fois la réponse partie.
+       *
+       * Une offre expire en quarante-huit heures. Portés par le cron — une
+       * exécution par jour — l'accusé à l'acheteuse ET l'avis à la boutique
+       * arrivaient jusqu'à dix-sept heures après le dépôt : un tiers du délai
+       * de réponse consommé avant que quiconque ait pu lire le message.
+       *
+       * Remontés et non poussés ici : on est dans une transaction, et un
+       * message parti ne se rembobine pas si elle échoue ensuite.
+       */
+      emailJobIds: string[]
     }
 
 /**
@@ -135,7 +147,8 @@ export async function submitOffer(input: {
       },
     })
 
-    if (!article) return { ok: false as const, rejection: 'article-unknown' as const }
+    if (!article)
+      return { ok: false as const, rejection: 'article-unknown' as const }
 
     const mine = ownerWhere(input.owner)
 
@@ -229,19 +242,23 @@ export async function submitOffer(input: {
     // Il part dans les trois cas. Sans lui, une personne sans compte n'a plus
     // aucune trace de ce qu'elle a proposé une fois l'onglet fermé — ni du
     // montant, ni de la date à laquelle une réponse est due.
-    await enqueue(tx, {
-      type: 'offer.acknowledge',
-      payload: { offerId: offer.id },
-    })
+    const emailJobIds = [
+      await enqueue(tx, {
+        type: 'offer.acknowledge',
+        payload: { offerId: offer.id },
+      }),
+    ]
 
     // La boutique n'est prévenue que de ce qui attend une décision. Une offre
     // tranchée sur-le-champ n'appelle aucun geste, et l'annoncer noierait les
     // avis qui, eux, expirent en quarante-huit heures faute de réponse.
     if (!accepted && !rejected) {
-      await enqueue(tx, {
-        type: 'offer.notify-shop',
-        payload: { offerId: offer.id },
-      })
+      emailJobIds.push(
+        await enqueue(tx, {
+          type: 'offer.notify-shop',
+          payload: { offerId: offer.id },
+        }),
+      )
     }
 
     return {
@@ -250,6 +267,7 @@ export async function submitOffer(input: {
       outcome: verdict.outcome,
       expiresAt: verdict.expiresAt,
       priceValidUntil: verdict.priceValidUntil ?? null,
+      emailJobIds,
     }
   })
 }
@@ -399,6 +417,12 @@ export type RespondResult =
       priceValidUntil: Date | null
       /** Sur une contre-offre : la nouvelle offre, en attente côté acheteur. */
       counterOfferId?: string
+      /**
+       * La réponse adressée à l'acheteuse, à pousser une fois la réponse
+       * partie. Le vendeur vient de trancher ; l'apprendre le lendemain matin
+       * laisse une personne sans nouvelle devant une échéance qui court.
+       */
+      emailJobIds: string[]
     }
 
 /**
@@ -585,10 +609,12 @@ export async function respondToOffer(input: {
     // refus au moment précis où l'on propose un prix aurait été pire que le
     // silence. `readOfferEmailData` distingue maintenant `COUNTERED`, et le
     // message porte le montant proposé et la date avant laquelle répondre.
-    await enqueue(tx, {
-      type: 'offer.respond',
-      payload: { offerId: offer.id },
-    })
+    const emailJobIds = [
+      await enqueue(tx, {
+        type: 'offer.respond',
+        payload: { offerId: offer.id },
+      }),
+    ]
 
     return {
       ok: true as const,
@@ -596,6 +622,7 @@ export async function respondToOffer(input: {
       belowFloor,
       priceValidUntil,
       ...(counterOfferId ? { counterOfferId } : {}),
+      emailJobIds,
     }
   })
 }
@@ -609,8 +636,7 @@ export type CounterAnswer = 'accept' | 'decline'
 export type AnswerCounterResult =
   | {
       ok: false
-      reason:
-        /** Aucune ligne de ce nom, ou elle ne lui appartient pas. */
+      reason: /** Aucune ligne de ce nom, ou elle ne lui appartient pas. */
         | 'not-found'
         /** Ce n'est pas une contre-proposition mais une offre qu'elle a faite. */
         | 'not-a-counter'
@@ -714,7 +740,8 @@ export async function answerCounterOffer(input: {
     // en émettant la contre-proposition ; sans cette seconde écriture, la
     // colonne resterait fausse sur la ligne qui porte le prix payé.
     const belowFloor =
-      accepted && isBelowFloor(counter.amountCents, counter.article.floorPriceCents)
+      accepted &&
+      isBelowFloor(counter.amountCents, counter.article.floorPriceCents)
 
     const moved = await tx.$executeRaw`
       UPDATE "Offer"

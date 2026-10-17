@@ -6,6 +6,7 @@ import { redactStripeEvent } from '@/lib/payments/webhook-payload'
 import { stripe, isStripeConfigured } from '@/lib/payments/stripe'
 import { markOrderPaid, expireOrder } from '@/lib/shop/fulfilment'
 import { invaliderPiecesParId } from '@/lib/cache/invalidation'
+import { pousserApresReponse } from '@/lib/jobs/push'
 import { logger } from '@/lib/observability/logger'
 import { captureException } from '@/lib/observability/sentry'
 
@@ -254,6 +255,25 @@ async function handle(event: Stripe.Event): Promise<Record<string, unknown>> {
     d'erreur soit partie.
   */
   await invaliderPiecesParId(result.soldArticleIds)
+
+  /*
+    LA CONFIRMATION DE COMMANDE, tout de suite.
+
+    Elle était inscrite en file et attendait le cron — dont le plan
+    d'hébergement n'autorise qu'une exécution par jour, à trois heures du
+    matin. Un paiement encaissé à dix heures recevait donc son accusé le
+    lendemain : dix-sept heures de silence après un débit par carte, sur une
+    boutique inconnue de l'acheteuse. C'est la demande de remboursement avant
+    même que le colis soit emballé.
+
+    L'avis à la boutique partait en même temps, avec la même conséquence :
+    personne ne savait qu'une pièce était à expédier.
+
+    Poussée APRÈS la réponse, donc hors du délai que Stripe chronomètre avant
+    de considérer l'appel en échec et de le rejouer. La file reste la source de
+    vérité : si ce chemin n'aboutit pas, le cron reprendra les travaux.
+  */
+  pousserApresReponse(result.emailJobIds)
 
   if (result.unfulfillableArticleIds.length > 0) {
     // L'argent est pris et une pièce est partie ailleurs. Consigné bruyamment :

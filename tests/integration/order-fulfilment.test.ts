@@ -58,7 +58,9 @@ afterAll(async () => {
 })
 
 async function makeArticle(suffix: string, weightGrams = 400) {
-  const category = await prisma.category.findFirstOrThrow({ select: { id: true } })
+  const category = await prisma.category.findFirstOrThrow({
+    select: { id: true },
+  })
 
   return prisma.article.create({
     data: {
@@ -152,7 +154,19 @@ describe('avancer une commande', () => {
 
     const result = await advanceOrder({ orderId: order.id, action: 'ship' })
 
-    expect(result).toEqual({ ok: true, status: 'SHIPPED' })
+    /*
+      L'avis d'expédition remonte, et il est UNIQUE.
+
+      Son identifiant est rendu à l'appelant pour qu'il le pousse après avoir
+      répondu : porté par le cron, un numéro de suivi n'arrivait que le
+      lendemain à trois heures du matin — après le colis, sur la moitié des
+      envois.
+    */
+    expect(result).toEqual({
+      ok: true,
+      status: 'SHIPPED',
+      emailJobIds: [expect.any(String)],
+    })
 
     const after = await prisma.order.findUniqueOrThrow({
       where: { id: order.id },
@@ -187,7 +201,10 @@ describe('avancer une commande', () => {
 
     // Et surtout : un seul avis d'expédition inscrit, pas deux.
     const jobs = await prisma.job.count({
-      where: { type: 'order.shipped', payload: { path: ['orderId'], equals: order.id } },
+      where: {
+        type: 'order.shipped',
+        payload: { path: ['orderId'], equals: order.id },
+      },
     })
     expect(jobs).toBe(1)
   })
@@ -270,7 +287,9 @@ describe('avancer une commande', () => {
   it('refuse de reculer une commande livrée', async () => {
     const order = await makeOrder('004', { status: 'DELIVERED' })
 
-    expect(await advanceOrder({ orderId: order.id, action: 'prepare' })).toEqual({
+    expect(
+      await advanceOrder({ orderId: order.id, action: 'prepare' }),
+    ).toEqual({
       ok: false,
       reason: 'invalid-transition',
     })
@@ -289,17 +308,30 @@ describe('avancer une commande', () => {
   it('suit le parcours complet, préparation comprise', async () => {
     const order = await makeOrder('005')
 
-    expect(await advanceOrder({ orderId: order.id, action: 'prepare' })).toEqual({
+    /*
+      Seule l'expédition écrit un e-mail, et le parcours complet est l'endroit
+      où le vérifier : la mise en préparation et le constat de livraison ne
+      préviennent personne. Si l'une d'elles se mettait à inscrire un message,
+      l'acheteuse recevrait trois courriels pour un seul colis.
+    */
+    expect(
+      await advanceOrder({ orderId: order.id, action: 'prepare' }),
+    ).toEqual({
       ok: true,
       status: 'PREPARING',
+      emailJobIds: [],
     })
     expect(await advanceOrder({ orderId: order.id, action: 'ship' })).toEqual({
       ok: true,
       status: 'SHIPPED',
+      emailJobIds: [expect.any(String)],
     })
-    expect(await advanceOrder({ orderId: order.id, action: 'deliver' })).toEqual({
+    expect(
+      await advanceOrder({ orderId: order.id, action: 'deliver' }),
+    ).toEqual({
       ok: true,
       status: 'DELIVERED',
+      emailJobIds: [],
     })
 
     const after = await prisma.order.findUniqueOrThrow({
@@ -320,7 +352,9 @@ describe('la ligne d’expédition', () => {
 
     await advanceOrder({ orderId: order.id, action: 'ship' })
 
-    const shipments = await prisma.shipment.count({ where: { orderId: order.id } })
+    const shipments = await prisma.shipment.count({
+      where: { orderId: order.id },
+    })
     // Toutes les expéditions n'ont pas de numéro. Créer une ligne vide
     // afficherait « suivi disponible » sur un envoi qui n'en a pas.
     expect(shipments).toBe(0)
@@ -370,7 +404,9 @@ describe('la file des commandes à expédier', () => {
     await makeOrder('023', { status: 'CANCELLED', paidAt: null })
     await makeOrder('024', { status: 'PENDING_PAYMENT', paidAt: null })
 
-    const numbers = mine(await listOrdersToFulfil()).map((row) => row.orderNumber)
+    const numbers = mine(await listOrdersToFulfil()).map(
+      (row) => row.orderNumber,
+    )
 
     expect(numbers.sort()).toEqual([`${PREFIX}020`, `${PREFIX}021`])
   })
@@ -382,7 +418,9 @@ describe('la file des commandes à expédier', () => {
     await makeOrder('030', { paidAt: new Date('2026-08-02T09:00:00.000Z') })
     await makeOrder('032', { paidAt: new Date('2026-08-20T09:00:00.000Z') })
 
-    const numbers = mine(await listOrdersToFulfil()).map((row) => row.orderNumber)
+    const numbers = mine(await listOrdersToFulfil()).map(
+      (row) => row.orderNumber,
+    )
 
     expect(numbers).toEqual([`${PREFIX}030`, `${PREFIX}031`, `${PREFIX}032`])
   })

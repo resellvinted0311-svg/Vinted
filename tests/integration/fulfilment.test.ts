@@ -126,6 +126,36 @@ describe('marquer une commande payée', () => {
     expect(result.soldArticleIds).toEqual([article.id])
     expect(result.unfulfillableArticleIds).toEqual([])
 
+    /*
+      Les DEUX e-mails de la vente remontent, et ils désignent de vrais
+      travaux en file.
+
+      Ils sont rendus à l'appelant pour qu'il les pousse une fois la réponse
+      partie. Sans cela ils attendaient le cron — une exécution par jour, à
+      trois heures du matin : un paiement encaissé à dix heures recevait sa
+      confirmation le lendemain, et la boutique apprenait aussi tard qu'une
+      pièce était à emballer.
+
+      Le contenu est vérifié par leur TYPE en base, pas par la position dans
+      la liste : un jour où l'ordre changerait, le test doit continuer à dire
+      la vérité.
+    */
+    expect(result.emailJobIds).toHaveLength(2)
+
+    const travaux = await prisma.job.findMany({
+      where: { id: { in: result.emailJobIds } },
+      select: { type: true, payload: true },
+    })
+    expect(travaux.map((t) => t.type).sort()).toEqual([
+      'order.confirmation',
+      'order.notify-shop',
+    ])
+    for (const travail of travaux) {
+      // La charge utile ne porte qu'un identifiant : ni adresse, ni montant.
+      // Les gabarits relisent la commande à l'exécution.
+      expect(travail.payload).toEqual({ orderId: order.id })
+    }
+
     const after = await prisma.order.findUniqueOrThrow({
       where: { id: order.id },
       select: { status: true, paidAt: true, stripePaymentIntentId: true },
@@ -169,6 +199,10 @@ describe('marquer une commande payée', () => {
     })
 
     expect(replay.applied).toBe(false)
+
+    // Et SURTOUT aucun e-mail : Stripe rejoue volontiers, et deux
+    // confirmations pour un seul paiement font douter d'un double débit.
+    expect(replay.emailJobIds).toEqual([])
 
     const after = await prisma.order.findUniqueOrThrow({
       where: { id: order.id },

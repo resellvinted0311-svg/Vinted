@@ -188,11 +188,10 @@ export async function runJobs(
  * ---------------------------------------------------------------------------
  * Pourquoi ce chemin existe à côté du cron
  * ---------------------------------------------------------------------------
- * Le cron ne passe qu’à intervalle — au mieux quelques minutes, au pire une
- * fois par jour selon le plan de l’hébergeur. Pour un lien de
- * réinitialisation, c'est
- * une éternité : la personne attend devant son écran, ne voit rien arriver, et
- * reclique. Or le compteur par adresse est à trois par heure — au troisième
+ * Le cron ne passe qu’à intervalle — ici une fois par jour, à trois heures du
+ * matin, parce que c'est ce que le plan d'hébergement autorise. Pour tout
+ * message qu'une personne attend, c'est une éternité : elle attend devant son
+ * écran, ne voit rien arriver, et reclique. Or le compteur par adresse est à trois par heure — au troisième
  * clic elle serait plafonnée en silence et ne recevrait plus rien du tout. Une
  * correction de sécurité qui enferme les gens dehors n'est pas une correction.
  *

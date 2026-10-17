@@ -7,6 +7,7 @@ import { respondToOfferSchema } from '@/lib/validation/admin'
 import { isBelowFloor } from '@/lib/domain/offers'
 import { parseAmountToCents } from '@/lib/domain/money'
 import { respondToOffer } from '@/lib/shop/offers'
+import { pousserApresReponse } from '@/lib/jobs/push'
 
 /**
  * Réponse du vendeur à une offre reçue.
@@ -188,6 +189,10 @@ export async function respondToOfferAction(
   })
 
   if (!result.ok) return ERROR(messageKeyFor(result.reason))
+
+  // La réponse à l'acheteuse part maintenant : le vendeur vient de trancher,
+  // et une contre-proposition porte une date avant laquelle répondre.
+  pousserApresReponse(result.emailJobIds)
 
   // La liste doit refléter la décision : sans invalidation, l'offre resterait
   // affichée « en attente » jusqu'au prochain rechargement complet.
