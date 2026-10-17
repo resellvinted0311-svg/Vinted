@@ -552,6 +552,24 @@
     "viewShop": "Voir la boutique",
     "navLabel": "Navigation de la régie",
     "intro": "Ce qui attend une décision. Rien d’autre.",
+    "readiness": {
+      "blockedTitle": "La boutique ne peut pas encore vendre",
+      "partialTitle": "La boutique vend, mais amputée",
+      "blockedIntro": "Les points ci-dessous empêchent une vente, ou empêchent une pièce d’entrer. Tant qu’ils ne sont pas réglés, la boutique s’affiche normalement et refuse pourtant les imports — sans le dire ailleurs qu’ici.",
+      "partialIntro": "Rien n’empêche une vente. Les points ci-dessous privent la boutique de quelque chose, et c’est à vous de décider si cela peut attendre.",
+      "nonBlocking": "n’empêche pas de vendre",
+      "openSettings": "Ouvrir les réglages",
+      "points": {
+        "pricing": "Les réglages de prix sont encore ceux du jeu de démonstration : aucun prix n’est calculé, donc aucun import n’est accepté.",
+        "settings": "Des réglages n’ont aucune ligne en base",
+        "payment": "Le paiement n’est pas configuré : il faut les trois variables, sans quoi une carte pourrait être débitée sans que la commande devienne payée",
+        "legal": "L’identité de l’entreprise n’est pas renseignée : sans elle, aucune preuve d’acceptation des conditions n’est conservée à la vente",
+        "terms": "Les conditions générales ne sont pas publiables : la case du tunnel annonce qu’elles n’existent pas",
+        "mediator": "Aucun médiateur de la consommation n’est renseigné, alors qu’il est obligatoire pour un commerce en ligne français",
+        "email": "Aucun e-mail ne part : ni confirmation à l’acheteuse, ni avis d’expédition à préparer",
+        "storage": "L’hébergement des photos n’est pas configuré : les pièces entreront sans visuel"
+      }
+    },
     "offers": "Offres reçues",
     "offersIntro": "Les propositions en attente, celle qui expire le plus tôt en premier. Une offre sans réponse s’éteint d’elle-même.",
     "pendingCount": "{count, plural, one {# en attente} other {# en attente}}",

@@ -3,6 +3,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 
 import { Link } from '@/lib/i18n/navigation'
 import { Badge } from '@/components/ui/badge'
+import { Notice } from '@/components/ui/notice'
+import { lireEtatMiseEnService } from '@/lib/admin/readiness'
 import { requireAdmin } from '@/lib/auth/session'
 import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 import { countPendingOffers } from '@/lib/db/queries/admin-offers'
@@ -51,18 +53,90 @@ export default async function AdminHomePage({
 
   const t = await getTranslations('admin')
 
-  // En parallèle : deux comptes indépendants, et la production n'accorde qu'une
-  // connexion par instance — les enchaîner doublerait l'attente sans rien
-  // gagner.
-  const [pendingOffers, pendingOrders] = await Promise.all([
+  // En parallèle : trois lectures indépendantes, et la production n'accorde
+  // qu'une connexion par instance — les enchaîner doublerait l'attente sans
+  // rien gagner.
+  const [pendingOffers, pendingOrders, miseEnService] = await Promise.all([
     countPendingOffers(),
     countOrdersToFulfil(),
+    lireEtatMiseEnService(),
   ])
 
   return (
     <div>
       <h1 className="text-2xl">{t('title')}</h1>
       <p className="mt-3 max-w-prose text-sm text-muted">{t('intro')}</p>
+
+      {/*
+        AVANT les files, et c'est le point de tout l'écran.
+
+        Une boutique dont le profil de prix est encore celui du jeu de
+        démonstration refuse tout import par un 503 que personne ne voit : le
+        site s'affiche, le catalogue se parcourt, et la régie annonçait
+        « Rien en attente » sur une boutique dans laquelle rien n'entrait.
+
+        Rien n'est rendu quand tout est prêt : c'est la règle de cet écran, qui
+        ne montre que ce qui attend quelque chose.
+      */}
+      {miseEnService.pret ? null : (
+        <div className="mt-8">
+          <Notice
+            tone={miseEnService.bloque ? 'danger' : 'warning'}
+            role="status"
+            title={
+              miseEnService.bloque
+                ? t('readiness.blockedTitle')
+                : t('readiness.partialTitle')
+            }
+          >
+            <p>
+              {miseEnService.bloque
+                ? t('readiness.blockedIntro')
+                : t('readiness.partialIntro')}
+            </p>
+
+            <ul className="mt-4 flex flex-col gap-2">
+              {miseEnService.points
+                .filter((point) => !point.pret)
+                .map((point) => (
+                  <li key={point.cle} className="text-sm">
+                    <span className="text-ink">
+                      {t(`readiness.points.${point.cle}`)}
+                    </span>
+                    {/*
+                      Le détail est une liste de NOMS — variables
+                      d'environnement absentes, clés de réglage manquantes.
+                      Rendu tel quel, sans traduction : ce sont des
+                      identifiants techniques, et les traduire les rendrait
+                      introuvables.
+                    */}
+                    {point.detail ? (
+                      <span data-numeric className="text-muted">
+                        {' — '}
+                        {point.detail}
+                      </span>
+                    ) : null}
+                    {point.bloquant ? null : (
+                      <span className="text-muted">
+                        {' '}
+                        ({t('readiness.nonBlocking')})
+                      </span>
+                    )}
+                  </li>
+                ))}
+            </ul>
+
+            <p className="mt-4 text-sm">
+              <Link
+                href="/admin/reglages"
+                className="text-ink underline underline-offset-4"
+              >
+                {t('readiness.openSettings')}
+              </Link>
+            </p>
+          </Notice>
+        </div>
+      )}
 
       <ul className="mt-8 divide-y divide-sand border-y-[1.5px] border-rule">
         {/*

@@ -552,6 +552,24 @@
     "viewShop": "View shop",
     "navLabel": "Nawigacja zaplecza",
     "intro": "To, co czeka na decyzję. Nic więcej.",
+    "readiness": {
+      "blockedTitle": "Sklep jeszcze nie może sprzedawać",
+      "partialTitle": "Sklep sprzedaje, ale czegoś brakuje",
+      "blockedIntro": "Poniższe punkty uniemożliwiają sprzedaż albo uniemożliwiają wprowadzenie sztuki. Dopóki nie zostaną załatwione, sklep wygląda normalnie, a jednak odrzuca każdy import — i nie mówi o tym nigdzie poza tym miejscem.",
+      "partialIntro": "Nic nie uniemożliwia sprzedaży. Poniższe punkty pozbawiają sklep czegoś, a to Państwo decydują, czy może to poczekać.",
+      "nonBlocking": "nie uniemożliwia sprzedaży",
+      "openSettings": "Otwórz ustawienia",
+      "points": {
+        "pricing": "Ustawienia cen są jeszcze te z danych pokazowych: żadna cena nie jest obliczana, więc żaden import nie jest przyjmowany.",
+        "settings": "Niektóre ustawienia nie mają żadnego wiersza w bazie",
+        "payment": "Płatność nie jest skonfigurowana: potrzebne są wszystkie trzy zmienne, w przeciwnym razie karta mogłaby zostać obciążona, a zamówienie nigdy nie stałoby się opłacone",
+        "legal": "Tożsamość przedsiębiorstwa nie jest podana: bez niej przy sprzedaży nie jest przechowywany żaden dowód zgody na warunki",
+        "terms": "Ogólnych warunków sprzedaży nie można opublikować: pole przy kasie oznajmia, że nie istnieją",
+        "mediator": "Nie wskazano żadnego mediatora konsumenckiego, choć jest obowiązkowy dla francuskiego handlu internetowego",
+        "email": "Żaden e-mail nie wychodzi: ani potwierdzenie do kupującej, ani powiadomienie o paczce do zapakowania",
+        "storage": "Przechowywanie zdjęć nie jest skonfigurowane: sztuki wejdą bez obrazu"
+      }
+    },
     "offers": "Otrzymane oferty",
     "offersIntro": "Oczekujące propozycje, najpierw ta wygasająca najwcześniej. Oferta bez odpowiedzi gaśnie sama.",
     "pendingCount": "{count, plural, one {# oczekuje} few {# oczekują} many {# oczekuje} other {# oczekuje}}",

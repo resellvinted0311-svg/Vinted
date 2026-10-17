@@ -552,6 +552,24 @@
     "viewShop": "View shop",
     "navLabel": "Navigation der Verwaltung",
     "intro": "Was eine Entscheidung erwartet. Sonst nichts.",
+    "readiness": {
+      "blockedTitle": "Der Laden kann noch nicht verkaufen",
+      "partialTitle": "Der Laden verkauft, aber etwas fehlt",
+      "blockedIntro": "Die folgenden Punkte verhindern einen Verkauf oder verhindern, dass ein Stück importiert wird. Solange sie nicht geregelt sind, sieht der Laden normal aus und verweigert dennoch jeden Import — und sagt es nirgends außer hier.",
+      "partialIntro": "Nichts verhindert einen Verkauf. Die folgenden Punkte nehmen dem Laden etwas, und Sie entscheiden, ob das warten kann.",
+      "nonBlocking": "verhindert den Verkauf nicht",
+      "openSettings": "Einstellungen öffnen",
+      "points": {
+        "pricing": "Die Preiseinstellungen sind noch die der Demonstrationsdaten: es wird kein Preis berechnet, also wird kein Import angenommen.",
+        "settings": "Für einige Einstellungen gibt es keine Zeile in der Datenbank",
+        "payment": "Die Zahlung ist nicht eingerichtet: alle drei Variablen sind erforderlich, sonst könnte eine Karte belastet werden, ohne dass die Bestellung jemals als bezahlt gilt",
+        "legal": "Die Identität des Unternehmens ist nicht angegeben: ohne sie wird bei einem Verkauf kein Nachweis über die Annahme der Bedingungen aufbewahrt",
+        "terms": "Die Allgemeinen Geschäftsbedingungen können nicht veröffentlicht werden: das Kästchen an der Kasse weist darauf hin, dass sie nicht bestehen",
+        "mediator": "Es ist keine Verbraucherschlichtungsstelle angegeben, obwohl sie für einen französischen Online-Handel vorgeschrieben ist",
+        "email": "Es wird keine E-Mail versandt: keine Bestätigung an die Käuferin, kein Hinweis auf ein zu packendes Paket",
+        "storage": "Der Bilderhoster ist nicht eingerichtet: Stücke kommen ohne Bild an"
+      }
+    },
     "offers": "Eingegangene Angebote",
     "offersIntro": "Wartende Angebote, das zuerst ablaufende zuoberst. Ein unbeantwortetes Angebot erlischt von selbst.",
     "pendingCount": "{count, plural, one {# wartend} other {# wartend}}",

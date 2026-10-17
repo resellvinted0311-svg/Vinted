@@ -105,8 +105,15 @@ function adminRoutes(locale = 'fr'): string[] {
 
 async function signIn(page: Page, email: string): Promise<void> {
   await page.goto('/fr/connexion')
-  await page.getByLabel('Adresse e-mail').filter({ visible: true }).first().fill(email)
-  await page.getByLabel('Mot de passe').filter({ visible: true }).fill(SEED_PASSWORD)
+  await page
+    .getByLabel('Adresse e-mail')
+    .filter({ visible: true })
+    .first()
+    .fill(email)
+  await page
+    .getByLabel('Mot de passe')
+    .filter({ visible: true })
+    .fill(SEED_PASSWORD)
   await page.getByRole('button', { name: 'Se connecter' }).click()
   await expect(page).toHaveURL(/\/fr\/compte/)
 }
@@ -171,16 +178,23 @@ test.describe('Accès à la régie', () => {
 })
 
 test.describe('La file des offres', () => {
-  test('montre les chiffres de la décision, et le lien y mène', async ({ page }) => {
+  test('montre les chiffres de la décision, et le lien y mène', async ({
+    page,
+  }) => {
     await page.context().clearCookies()
     await signIn(page, ACCOUNT)
 
     // Le lien existait avant la page : il menait à un 404 depuis l'espace
     // compte.
-    await main(page).getByRole('link', { name: 'Accéder au back-office' }).click()
+    await main(page)
+      .getByRole('link', { name: 'Accéder au back-office' })
+      .click()
     await expect(page).toHaveURL(/\/fr\/admin/)
 
-    await main(page).getByRole('link', { name: 'Offres reçues' }).first().click()
+    await main(page)
+      .getByRole('link', { name: 'Offres reçues' })
+      .first()
+      .click()
     await expect(page).toHaveURL(/\/fr\/admin\/offres/)
 
     await expect(
@@ -194,13 +208,17 @@ test.describe('La file des offres', () => {
     if (await empty.isVisible()) return
 
     await expect(main(page).getByText('Prix plancher').first()).toBeVisible()
-    await expect(main(page).getByText('Écart au plancher').first()).toBeVisible()
+    await expect(
+      main(page).getByText('Écart au plancher').first(),
+    ).toBeVisible()
     await expect(
       main(page).getByRole('button', { name: 'Accepter' }).first(),
     ).toBeVisible()
   })
 
-  test('la page de régie porte la politique de sécurité stricte', async ({ page }) => {
+  test('la page de régie porte la politique de sécurité stricte', async ({
+    page,
+  }) => {
     // Le complément de `csp.spec.ts`, qui ne peut pas couvrir `/admin` : sans
     // session, il serait redirigé vers la connexion et mesurerait les en-têtes
     // de CETTE page-là. C'est pourtant l'écran du site où `unsafe-inline`
@@ -278,7 +296,10 @@ test.describe('Le catalogue depuis la régie', () => {
     // Une catégorie de dernier niveau, prise dans la liste réellement servie :
     // la figer en dur ferait tomber le test au premier changement de taxonomie.
     const category = main(page).getByLabel('Catégorie')
-    const firstOption = await category.locator('option:not([value=""])').first().getAttribute('value')
+    const firstOption = await category
+      .locator('option:not([value=""])')
+      .first()
+      .getAttribute('value')
     await category.selectOption(firstOption ?? '')
 
     const marker = `Pièce de régie ${Date.now()}`
@@ -342,7 +363,12 @@ test.describe('Le catalogue depuis la régie', () => {
     expect(response?.status()).toBe(200)
 
     const html = await page.content()
-    for (const field of ['costCents', 'floorPriceCents', 'internalNotes', 'sourcedFrom']) {
+    for (const field of [
+      'costCents',
+      'floorPriceCents',
+      'internalNotes',
+      'sourcedFrom',
+    ]) {
       expect(html, field).not.toContain(field)
     }
   })
@@ -356,6 +382,26 @@ test.describe('Les réglages métier', () => {
     await signIn(page, ACCOUNT)
 
     await page.goto('/fr/admin')
+
+    /*
+      L'ACCUEIL de la régie doit le dire, et pas seulement l'écran des réglages.
+
+      Le défaut était celui-là : le profil de démonstration fait refuser tout
+      import par un 503 que personne ne voit. Le site s'affichait, le catalogue
+      se parcourait, et cette page annonçait « Rien en attente » sur une
+      boutique dans laquelle rien n'entrait. Il fallait deviner d'ouvrir les
+      réglages pour l'apprendre.
+
+      Vérifié ici et pas dans un test à part : chaque test de ce fichier
+      n'ouvre qu'UNE session, et celui-ci passe déjà par l'accueil.
+    */
+    await expect(
+      main(page).getByText('ne peut pas encore vendre', { exact: false }),
+    ).toBeVisible()
+    await expect(
+      main(page).getByText('aucun import n’est accepté', { exact: false }),
+    ).toBeVisible()
+
     await adminNav(page).getByRole('link', { name: 'Réglages' }).click()
     await expect(page).toHaveURL(/\/fr\/admin\/reglages/)
 
@@ -369,10 +415,16 @@ test.describe('Les réglages métier', () => {
     // Un champ de chaque groupe : leur absence dirait que la liste fermée n'a
     // pas été parcourue, ou qu'une traduction manque — auquel cas next-intl
     // afficherait la clé brute à la place du libellé.
-    await expect(main(page).getByLabel('Marge minimale (centimes)')).toBeVisible()
+    await expect(
+      main(page).getByLabel('Marge minimale (centimes)'),
+    ).toBeVisible()
     await expect(main(page).getByLabel('Majoration du port (%)')).toBeVisible()
-    await expect(main(page).getByLabel('Barème de baisse automatique')).toBeVisible()
-    await expect(main(page).getByLabel('Offre minimale (centimes)')).toBeVisible()
+    await expect(
+      main(page).getByLabel('Barème de baisse automatique'),
+    ).toBeVisible()
+    await expect(
+      main(page).getByLabel('Offre minimale (centimes)'),
+    ).toBeVisible()
 
     // Et l'avertissement, qui n'a pas de raison de disparaître tant que
     // personne n'a enregistré de vraies valeurs. C'est lui qui explique
@@ -398,7 +450,9 @@ test.describe('Les réglages métier', () => {
     await signIn(page, ACCOUNT)
     await page.goto('/fr/admin/reglages')
 
-    const champ = main(page).getByLabel('Zone de référence pour le prix plancher')
+    const champ = main(page).getByLabel(
+      'Zone de référence pour le prix plancher',
+    )
     await expect(champ).toBeVisible()
 
     // Une liste, pas une saisie : c'est la propriété qui porte la garantie.
@@ -419,7 +473,9 @@ test.describe('Les réglages métier', () => {
     expect(choisie).not.toBe('')
   })
 
-  test('n’exposent AUCUN réglage juridique à la modification', async ({ page }) => {
+  test('n’exposent AUCUN réglage juridique à la modification', async ({
+    page,
+  }) => {
     await page.context().clearCookies()
     await signIn(page, ACCOUNT)
     await page.goto('/fr/admin/reglages')
@@ -457,7 +513,10 @@ test.describe('La file des commandes à expédier', () => {
     await signIn(page, ACCOUNT)
 
     await page.goto('/fr/admin')
-    await main(page).getByRole('link', { name: 'Commandes à expédier' }).first().click()
+    await main(page)
+      .getByRole('link', { name: 'Commandes à expédier' })
+      .first()
+      .click()
     await expect(page).toHaveURL(/\/fr\/admin\/commandes/)
 
     await expect(
@@ -487,7 +546,9 @@ test.describe('La file des commandes à expédier', () => {
     await expect(main(page).getByText('Prix plancher')).toHaveCount(0)
     await expect(main(page).getByText('Écart au plancher')).toHaveCount(0)
 
-    const empty = main(page).getByText('Aucune commande n’attend d’être expédiée.')
+    const empty = main(page).getByText(
+      'Aucune commande n’attend d’être expédiée.',
+    )
     if (await empty.isVisible()) {
       // Jamais une page muette : l'état vide doit dire pourquoi il l'est.
       await expect(
@@ -499,11 +560,17 @@ test.describe('La file des commandes à expédier', () => {
     await expect(
       main(page).getByRole('button', { name: 'Marquer expédiée' }).first(),
     ).toBeVisible()
-    await expect(main(page).getByText('Adresse d’expédition').first()).toBeVisible()
+    await expect(
+      main(page).getByText('Adresse d’expédition').first(),
+    ).toBeVisible()
 
     // Le champ de suivi est FACULTATIF : le bouton ne l'attend pas. L'exiger
     // obligerait à inventer un numéro sur un envoi qui n'en a pas.
-    await expect(main(page).getByLabel(/Numéro de suivi/).first()).toBeVisible()
+    await expect(
+      main(page)
+        .getByLabel(/Numéro de suivi/)
+        .first(),
+    ).toBeVisible()
   })
 })
 

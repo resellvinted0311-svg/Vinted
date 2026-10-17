@@ -552,6 +552,24 @@
     "viewShop": "View shop",
     "navLabel": "Back-office navigation",
     "intro": "What is waiting for a decision. Nothing else.",
+    "readiness": {
+      "blockedTitle": "The shop cannot sell yet",
+      "partialTitle": "The shop sells, but something is missing",
+      "blockedIntro": "The items below prevent a sale, or prevent a piece from being imported. Until they are settled, the shop looks normal and yet refuses every import — and says so nowhere but here.",
+      "partialIntro": "Nothing prevents a sale. The items below deprive the shop of something, and it is for you to decide whether that can wait.",
+      "nonBlocking": "does not prevent selling",
+      "openSettings": "Open settings",
+      "points": {
+        "pricing": "The pricing settings are still those of the demonstration data: no price is calculated, so no import is accepted.",
+        "settings": "Some settings have no row in the database",
+        "payment": "Payment is not configured: all three variables are required, otherwise a card could be charged without the order ever becoming paid",
+        "legal": "The company identity is not filled in: without it, no proof that the terms were accepted is kept on a sale",
+        "terms": "The terms of sale cannot be published: the checkout box states that they do not exist",
+        "mediator": "No consumer mediator is named, although one is mandatory for a French online shop",
+        "email": "No e-mail is sent: no confirmation to the buyer, no notice of a parcel to pack",
+        "storage": "Photo hosting is not configured: pieces will arrive without images"
+      }
+    },
     "offers": "Offers received",
     "offersIntro": "Pending proposals, the one expiring soonest first. An offer left unanswered dies on its own.",
     "pendingCount": "{count, plural, one {# waiting} other {# waiting}}",

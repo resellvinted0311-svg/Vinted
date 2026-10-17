@@ -552,6 +552,24 @@
     "viewShop": "View shop",
     "navLabel": "Navegación de gestión",
     "intro": "Lo que espera una decisión. Nada más.",
+    "readiness": {
+      "blockedTitle": "La tienda todavía no puede vender",
+      "partialTitle": "La tienda vende, pero falta algo",
+      "blockedIntro": "Los puntos siguientes impiden una venta, o impiden que entre una pieza. Mientras no se resuelvan, la tienda se muestra con normalidad y sin embargo rechaza cada importación — y no lo dice en ningún otro sitio que aquí.",
+      "partialIntro": "Nada impide una venta. Los puntos siguientes privan a la tienda de algo, y le corresponde a usted decidir si puede esperar.",
+      "nonBlocking": "no impide vender",
+      "openSettings": "Abrir los ajustes",
+      "points": {
+        "pricing": "Los ajustes de precio son todavía los de los datos de demostración: no se calcula ningún precio, así que no se acepta ninguna importación.",
+        "settings": "Algunos ajustes no tienen ninguna fila en la base de datos",
+        "payment": "El pago no está configurado: hacen falta las tres variables, de lo contrario una tarjeta podría ser cargada sin que el pedido llegue nunca a estar pagado",
+        "legal": "La identidad de la empresa no está indicada: sin ella no se conserva ninguna prueba de aceptación de las condiciones en una venta",
+        "terms": "Las condiciones generales no se pueden publicar: la casilla del pago indica que no existen",
+        "mediator": "No se indica ningún mediador de consumo, aunque es obligatorio para un comercio en línea francés",
+        "email": "No sale ningún correo: ni confirmación a la compradora, ni aviso de un paquete que preparar",
+        "storage": "El alojamiento de las fotos no está configurado: las piezas entrarán sin imagen"
+      }
+    },
     "offers": "Ofertas recibidas",
     "offersIntro": "Las propuestas pendientes, primero la que caduca antes. Una oferta sin respuesta se apaga sola.",
     "pendingCount": "{count, plural, one {# pendiente} other {# pendientes}}",

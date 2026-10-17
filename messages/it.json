@@ -552,6 +552,24 @@
     "viewShop": "View shop",
     "navLabel": "Navigazione della gestione",
     "intro": "Ciò che attende una decisione. Nient’altro.",
+    "readiness": {
+      "blockedTitle": "La bottega non può ancora vendere",
+      "partialTitle": "La bottega vende, ma manca qualcosa",
+      "blockedIntro": "I punti seguenti impediscono una vendita, o impediscono a un pezzo di entrare. Finché non sono risolti, la bottega si mostra normalmente e rifiuta comunque ogni importazione — e non lo dice in nessun altro posto che qui.",
+      "partialIntro": "Niente impedisce una vendita. I punti seguenti privano la bottega di qualcosa, e sta a voi decidere se può attendere.",
+      "nonBlocking": "non impedisce di vendere",
+      "openSettings": "Aprire le impostazioni",
+      "points": {
+        "pricing": "Le impostazioni di prezzo sono ancora quelle dei dati dimostrativi: nessun prezzo viene calcolato, quindi nessuna importazione è accettata.",
+        "settings": "Alcune impostazioni non hanno nessuna riga nella base di dati",
+        "payment": "Il pagamento non è configurato: servono tutte e tre le variabili, altrimenti una carta potrebbe essere addebitata senza che l’ordine diventi mai pagato",
+        "legal": "L’identità dell’impresa non è indicata: senza di essa non viene conservata alcuna prova di accettazione delle condizioni in una vendita",
+        "terms": "Le condizioni generali non sono pubblicabili: la casella della cassa annuncia che non esistono",
+        "mediator": "Nessun mediatore del consumo è indicato, benché sia obbligatorio per un commercio online francese",
+        "email": "Nessuna e-mail parte: né conferma all’acquirente, né avviso di un pacco da preparare",
+        "storage": "L’ospitalità delle foto non è configurata: i pezzi entreranno senza immagine"
+      }
+    },
     "offers": "Offerte ricevute",
     "offersIntro": "Le proposte in attesa, prima quella che scade per prima. Un’offerta senza risposta si spegne da sola.",
     "pendingCount": "{count, plural, one {# in attesa} other {# in attesa}}",

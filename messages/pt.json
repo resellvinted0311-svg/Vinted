@@ -552,6 +552,24 @@
     "viewShop": "View shop",
     "navLabel": "Navegação da gestão",
     "intro": "O que aguarda uma decisão. Nada mais.",
+    "readiness": {
+      "blockedTitle": "A loja ainda não pode vender",
+      "partialTitle": "A loja vende, mas falta algo",
+      "blockedIntro": "Os pontos abaixo impedem uma venda, ou impedem a entrada de uma peça. Enquanto não forem resolvidos, a loja apresenta-se normalmente e recusa, ainda assim, cada importação — e não o diz em nenhum outro lugar além deste.",
+      "partialIntro": "Nada impede uma venda. Os pontos abaixo privam a loja de algo, e é a si que cabe decidir se pode esperar.",
+      "nonBlocking": "não impede de vender",
+      "openSettings": "Abrir as definições",
+      "points": {
+        "pricing": "As definições de preço são ainda as dos dados de demonstração: nenhum preço é calculado, logo nenhuma importação é aceite.",
+        "settings": "Algumas definições não têm nenhuma linha na base de dados",
+        "payment": "O pagamento não está configurado: são necessárias as três variáveis, sem o que um cartão poderia ser debitado sem que a encomenda chegasse a ficar paga",
+        "legal": "A identidade da empresa não está preenchida: sem ela não é conservada nenhuma prova de aceitação das condições numa venda",
+        "terms": "As condições gerais não podem ser publicadas: a caixa do pagamento anuncia que não existem",
+        "mediator": "Nenhum mediador de consumo está indicado, embora seja obrigatório para um comércio em linha francês",
+        "email": "Nenhum e-mail parte: nem confirmação à compradora, nem aviso de uma encomenda a embalar",
+        "storage": "O alojamento das fotografias não está configurado: as peças entrarão sem imagem"
+      }
+    },
     "offers": "Propostas recebidas",
     "offersIntro": "As propostas pendentes, primeiro a que expira mais cedo. Uma proposta sem resposta apaga-se sozinha.",
     "pendingCount": "{count, plural, one {# pendente} other {# pendentes}}",

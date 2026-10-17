@@ -552,6 +552,24 @@
     "viewShop": "View shop",
     "navLabel": "Navigatie van het beheer",
     "intro": "Wat op een beslissing wacht. Niets anders.",
+    "readiness": {
+      "blockedTitle": "De winkel kan nog niet verkopen",
+      "partialTitle": "De winkel verkoopt, maar er ontbreekt iets",
+      "blockedIntro": "De punten hieronder verhinderen een verkoop, of verhinderen dat een stuk wordt ingevoerd. Zolang ze niet zijn opgelost, ziet de winkel er normaal uit en weigert hij toch elke invoer — en nergens anders dan hier wordt dat gezegd.",
+      "partialIntro": "Niets verhindert een verkoop. De punten hieronder ontnemen de winkel iets, en u beslist of dat kan wachten.",
+      "nonBlocking": "verhindert het verkopen niet",
+      "openSettings": "Instellingen openen",
+      "points": {
+        "pricing": "De prijsinstellingen zijn nog die van de demonstratiegegevens: er wordt geen prijs berekend, dus wordt geen invoer aanvaard.",
+        "settings": "Sommige instellingen hebben geen rij in de databank",
+        "payment": "De betaling is niet geconfigureerd: alle drie de variabelen zijn nodig, anders kan een kaart worden belast zonder dat de order ooit betaald wordt",
+        "legal": "De identiteit van de onderneming is niet ingevuld: zonder die wordt bij een verkoop geen bewijs van aanvaarding van de voorwaarden bewaard",
+        "terms": "De algemene voorwaarden kunnen niet worden gepubliceerd: het vakje bij het afrekenen meldt dat ze niet bestaan",
+        "mediator": "Er is geen consumentenbemiddelaar vermeld, terwijl die verplicht is voor een Franse webwinkel",
+        "email": "Er wordt geen e-mail verzonden: geen bevestiging aan de koper, geen bericht over een pakket dat moet worden ingepakt",
+        "storage": "De opslag van foto’s is niet geconfigureerd: stukken komen zonder beeld binnen"
+      }
+    },
     "offers": "Ontvangen biedingen",
     "offersIntro": "De wachtende voorstellen, het eerst verlopende bovenaan. Een bod zonder antwoord dooft vanzelf.",
     "pendingCount": "{count, plural, one {# wachtend} other {# wachtend}}",
