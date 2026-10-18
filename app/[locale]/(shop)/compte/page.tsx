@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Link } from '@/lib/i18n/navigation'
 import { signOutAction } from '@/lib/auth/actions'
 import { PAGE_PRIVEE } from '@/lib/seo/metadata'
+import { isNegotiationEnabled } from '@/lib/config/site'
 
 /**
  * Rendu dynamique explicite.
@@ -79,12 +80,17 @@ export default async function AccountPage({
     `/favoris` reste dans la liste : la route existe, hors du dossier `compte`
     parce que les favoris fonctionnent aussi sans compte.
   */
+  // « Mes offres » n'est listé que si la boutique négocie. La page reste
+  // joignable par son adresse — elle dit alors qu'il n'y a rien — mais un lien
+  // vers une fonction que la boutique ne propose pas serait une impasse.
   const sections = [
     { href: '/compte/commandes', label: t('orders') },
-    { href: '/compte/offres', label: t('offers') },
+    ...(isNegotiationEnabled()
+      ? [{ href: '/compte/offres', label: t('offers') }]
+      : []),
     { href: '/favoris', label: t('favorites') },
     { href: '/compte/donnees', label: tp('myData.title') },
-  ] as const
+  ]
 
   return (
     <div className="mx-auto w-full max-w-[60rem] px-4 pb-24 pt-12 sm:px-6">

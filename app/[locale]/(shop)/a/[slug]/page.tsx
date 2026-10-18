@@ -25,7 +25,7 @@ import {
   formatGrams,
 } from '@/lib/utils/format'
 import { locales, localeTags } from '@/lib/i18n/routing'
-import { SITE } from '@/lib/config/site'
+import { SITE, isNegotiationEnabled } from '@/lib/config/site'
 import { serializeJsonLd, absoluteImageUrl } from '@/lib/utils/json-ld'
 
 type Params = Promise<{ locale: string; slug: string }>
@@ -164,7 +164,13 @@ export default async function ArticlePage({ params }: { params: Params }) {
       ?.name ??
     article.category.slug
 
+  // La boutique ne propose pas la négociation pour l'instant : ni formulaire,
+  // ni annonce d'une date d'ouverture — qui promettrait une négociation qui
+  // n'aura pas lieu. Voir `isNegotiationEnabled`.
+  const negociation = isNegotiationEnabled()
+
   const offersOpen =
+    negociation &&
     article.allowOffers &&
     article.offersOpenAt !== null &&
     article.offersOpenAt <= new Date() &&
@@ -314,7 +320,7 @@ export default async function ArticlePage({ params }: { params: Params }) {
                 <div className="mt-2 border-t border-sand pt-4">
                   <OfferForm articleId={article.id} />
                 </div>
-              ) : article.allowOffers && article.offersOpenAt ? (
+              ) : negociation && article.allowOffers && article.offersOpenAt ? (
                 <p className="text-xs text-muted">
                   {t('offersOpenOn', {
                     date: formatDate(article.offersOpenAt, locale),

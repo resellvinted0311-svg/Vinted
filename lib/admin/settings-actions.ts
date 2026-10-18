@@ -5,7 +5,7 @@ import { requireAdmin } from '@/lib/auth/session'
 import { checkRateLimit } from '@/lib/security/rate-limit'
 import { recordAudit } from '@/lib/audit/trail'
 import {
-  EDITABLE_SETTINGS,
+  reglagesEditables,
   parseSettingInput,
   writeSettings,
   type SettingKey,
@@ -88,7 +88,8 @@ export async function updateSettingsAction(
   // `writeSettings` le refuserait, mais après avoir accepté de le considérer.
   const entries: { key: SettingKey; value: unknown }[] = []
 
-  for (const setting of EDITABLE_SETTINGS) {
+  // La même liste que la page affiche — voir `reglagesEditables`.
+  for (const setting of reglagesEditables()) {
     const raw = formData.get(setting.key)
 
     // Une case décochée n'est pas envoyée : c'est le seul champ dont l'absence

@@ -54,6 +54,7 @@ qui ouvre le nom de la base ; dans ce cas, changez le mot de passe.
 | `STRIPE_SECRET_KEY` | **oui pour vendre** | les trois variables Stripe vont ENSEMBLE : avec deux sur trois, le paiement reste éteint |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | **oui pour vendre** | affiche le cadre de saisie de carte. Absente, aucune carte ne peut être saisie |
 | `STRIPE_WEBHOOK_SECRET` | **oui pour vendre** | vérifie l'appel signé qui marque la commande payée. Absente, une carte peut être débitée sans que la commande le devienne |
+| `OFFERS_ENABLED` | non | **négociation éteinte sans elle** — ni formulaire d'offre sur les fiches, ni file d'offres dans la régie, ni réglages de négociation à l'écran, et le serveur refuse toute offre. `1` l'allume ; redéployez ensuite, pour que les fiches en cache se régénèrent |
 | `LOG_LEVEL` | non | `info` par défaut. `debug` pour une enquête, à retirer ensuite : le volume est sans commune mesure |
 
 \* Sans `AUTH_SECRET`, la boutique est entièrement consultable — catalogue,

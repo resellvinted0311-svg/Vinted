@@ -177,10 +177,22 @@ test.describe('Accès à la régie', () => {
   })
 })
 
+/**
+ * La boutique négocie-t-elle ? Lue comme le serveur la lit — voir
+ * `isNegotiationEnabled` et l'en-tête de `phase3-offres.spec.ts`.
+ */
+const NEGOCIATION = process.env.OFFERS_ENABLED?.trim() === '1'
+
 test.describe('La file des offres', () => {
   test('montre les chiffres de la décision, et le lien y mène', async ({
     page,
   }) => {
+    // Négociation éteinte : la file n'est pas proposée, il n'y a pas de lien à
+    // suivre. Son absence est vérifiée dans le test des réglages, qui ouvre
+    // déjà une session — la limite de dix connexions par quart d'heure ne
+    // laisse pas la place d'en ouvrir une de plus.
+    test.skip(!NEGOCIATION, 'négociation éteinte : pas de file d’offres')
+
     await page.context().clearCookies()
     await signIn(page, ACCOUNT)
 
@@ -383,6 +395,14 @@ test.describe('Les réglages métier', () => {
 
     await page.goto('/fr/admin')
 
+    // Négociation éteinte : pas de file d'offres dans la barre de travail. Une
+    // file qui ne peut jamais se remplir n'a rien à y faire.
+    if (!NEGOCIATION) {
+      await expect(
+        adminNav(page).getByRole('link', { name: 'Offres reçues' }),
+      ).toHaveCount(0)
+    }
+
     /*
       L'ACCUEIL de la régie doit le dire, et pas seulement l'écran des réglages.
 
@@ -456,9 +476,13 @@ test.describe('Les réglages métier', () => {
     await expect(
       main(page).getByLabel('Barème de baisse automatique'),
     ).toBeVisible()
-    await expect(
-      main(page).getByLabel('Offre minimale (centimes)'),
-    ).toBeVisible()
+    // La rubrique Négociation n'existe que si la boutique négocie. Éteinte,
+    // son ABSENCE prouve, dans le vrai écran, que la page et l'action lisent
+    // la même liste — `reglagesEditables`. Sans quoi l'enregistrement
+    // réclamerait des champs que la page ne montre plus, et échouerait.
+    const offreMinimale = main(page).getByLabel('Offre minimale (centimes)')
+    if (NEGOCIATION) await expect(offreMinimale).toBeVisible()
+    else await expect(offreMinimale).toHaveCount(0)
 
     // Et l'avertissement, qui n'a pas de raison de disparaître tant que
     // personne n'a enregistré de vraies valeurs. C'est lui qui explique

@@ -19,6 +19,38 @@ function resolveSiteUrl(): string {
  * laisser une page renvoyer une erreur 500 — et surtout plutôt que d'inventer
  * un secret de repli, qui rendrait les sessions falsifiables.
  */
+/**
+ * La négociation est-elle proposée sur ce déploiement ?
+ *
+ * ---------------------------------------------------------------------------
+ * Éteinte par défaut, et c'est une décision de la boutique
+ * ---------------------------------------------------------------------------
+ * Toute la mécanique existe — dépôt d'offre, prix plancher, contre-proposition,
+ * échéances, e-mails, file de la régie. La boutique a choisi de ne pas la
+ * proposer pour l'instant. Elle reste donc en place, testée, et s'allume en
+ * posant `OFFERS_ENABLED=1` puis en redéployant.
+ *
+ * Une variable et non un réglage de la régie : c'est un choix qu'on fait une
+ * fois, pas un nombre qu'on ajuste. Le redéploiement qu'elle demande a un
+ * avantage : il régénère les fiches en cache, qui sinon continueraient de
+ * montrer — ou de cacher — le formulaire jusqu'à leur échéance.
+ *
+ * ---------------------------------------------------------------------------
+ * Ce que l'interrupteur éteint, et ce qu'il laisse
+ * ---------------------------------------------------------------------------
+ * Il empêche toute NOUVELLE offre — le formulaire disparaît des fiches, et le
+ * serveur refuse de son côté, parce qu'un formulaire masqué n'est pas une
+ * protection : une Server Action est un POST que n'importe qui peut former.
+ *
+ * Il laisse se conclure ce qui était en cours si l'on éteint après avoir
+ * allumé : une contre-proposition déjà envoyée peut encore recevoir sa réponse.
+ * Couper une négociation au milieu laisserait une personne devant un prix
+ * promis qu'elle ne peut plus accepter.
+ */
+export function isNegotiationEnabled(): boolean {
+  return process.env.OFFERS_ENABLED?.trim() === '1'
+}
+
 export function isAuthConfigured(): boolean {
   return Boolean(process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET)
 }
@@ -74,7 +106,9 @@ export const LEGAL = {
 
 /** Une valeur légale non renseignée ne doit jamais être remplacée par un texte plausible. */
 export function hasLegalIdentity(): boolean {
-  return Boolean(LEGAL.companyName && LEGAL.siret && LEGAL.address && LEGAL.email)
+  return Boolean(
+    LEGAL.companyName && LEGAL.siret && LEGAL.address && LEGAL.email,
+  )
 }
 
 /**

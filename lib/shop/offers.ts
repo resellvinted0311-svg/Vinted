@@ -5,7 +5,7 @@ import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
 import { getOfferPolicy } from '@/lib/config/settings'
 import { enqueue } from '@/lib/jobs/queue'
-import { SITE } from '@/lib/config/site'
+import { SITE, isNegotiationEnabled } from '@/lib/config/site'
 import type { OfferEmailData } from '@/lib/providers/email/offer'
 import {
   evaluateOffer,
@@ -129,6 +129,18 @@ export async function submitOffer(input: {
   now?: Date
   policy?: OfferPolicy
 }): Promise<SubmitOfferResult> {
+  // EN PREMIER, avant toute lecture. Le formulaire est masqué quand la
+  // négociation est éteinte, mais un formulaire masqué ne protège de rien :
+  // une Server Action est un POST que n'importe qui peut former. Le refus vit
+  // donc ici, dans le chemin que tout dépôt d'offre emprunte.
+  //
+  // Le motif `offers-disabled` existait déjà — pour une pièce que la boutique
+  // a fermée à la négociation — et son message, traduit dans les huit
+  // langues, dit exactement ce qu'il faut : on ne négocie pas cette pièce.
+  if (!isNegotiationEnabled()) {
+    return { ok: false, rejection: 'offers-disabled' }
+  }
+
   const now = input.now ?? new Date()
   const policy = input.policy ?? (await getOfferPolicy())
 

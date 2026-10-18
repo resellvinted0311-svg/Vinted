@@ -5,7 +5,7 @@ import { SettingsForm } from '@/components/admin/settings-form'
 import { requireAdmin } from '@/lib/auth/session'
 import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 import { prisma } from '@/lib/db/client'
-import { EDITABLE_SETTINGS, findMissingSettings } from '@/lib/config/settings'
+import { reglagesEditables, findMissingSettings } from '@/lib/config/settings'
 import { PAGE_PRIVEE } from '@/lib/seo/metadata'
 
 export const dynamic = 'force-dynamic'
@@ -70,7 +70,8 @@ export default async function AdminSettingsPage({
 
   const t = await getTranslations('admin.settings')
 
-  const keys = EDITABLE_SETTINGS.map((field) => field.key)
+  const champs = reglagesEditables()
+  const keys = champs.map((field) => field.key)
 
   /**
    * Trois lectures, et chacune répond à une question différente.
@@ -97,7 +98,7 @@ export default async function AdminSettingsPage({
   const byKey = new Map(rows.map((row) => [row.key, row.value]))
 
   const values: Record<string, string> = {}
-  for (const field of EDITABLE_SETTINGS) {
+  for (const field of champs) {
     values[field.key] = toFormValue(field.kind, byKey.get(field.key))
   }
 
@@ -111,7 +112,7 @@ export default async function AdminSettingsPage({
 
       <div className="mt-8">
         <SettingsForm
-          fields={EDITABLE_SETTINGS}
+          fields={champs}
           values={values}
           profile={profile}
           zones={zones}

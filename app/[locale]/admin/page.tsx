@@ -10,6 +10,7 @@ import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 import { countPendingOffers } from '@/lib/db/queries/admin-offers'
 import { countOrdersToFulfil } from '@/lib/db/queries/admin-orders'
 import { PAGE_PRIVEE } from '@/lib/seo/metadata'
+import { isNegotiationEnabled } from '@/lib/config/site'
 
 export const dynamic = 'force-dynamic'
 
@@ -151,13 +152,22 @@ export default async function AdminHomePage({
           badge={t('ordersPendingCount', { count: pendingOrders })}
           idle={t('nothingPending')}
         />
-        <QueueRow
-          href="/admin/offres"
-          label={t('offers')}
-          count={pendingOffers}
-          badge={t('pendingCount', { count: pendingOffers })}
-          idle={t('nothingPending')}
-        />
+        {/*
+          La file des offres, seulement si la boutique négocie — OU s'il reste
+          des offres en attente. Le second cas est celui d'une négociation
+          éteinte après avoir été allumée : masquer la file laisserait des
+          propositions sans réponse, avec une échéance qui court, et personne
+          pour les voir.
+        */}
+        {isNegotiationEnabled() || pendingOffers > 0 ? (
+          <QueueRow
+            href="/admin/offres"
+            label={t('offers')}
+            count={pendingOffers}
+            badge={t('pendingCount', { count: pendingOffers })}
+            idle={t('nothingPending')}
+          />
+        ) : null}
       </ul>
     </div>
   )

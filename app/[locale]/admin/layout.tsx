@@ -6,7 +6,7 @@ import {
 } from 'next-intl/server'
 
 import { Link } from '@/lib/i18n/navigation'
-import { SITE } from '@/lib/config/site'
+import { SITE, isNegotiationEnabled } from '@/lib/config/site'
 import { requireAdmin } from '@/lib/auth/session'
 import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 
@@ -92,7 +92,11 @@ export default async function AdminLayout({
     // C'est donc le geste qui suit immédiatement une synchronisation.
     { href: '/admin/univers', label: t('audiences.title') },
     { href: '/admin/commandes', label: t('orders') },
-    { href: '/admin/offres', label: t('offers') },
+    // Seulement si la boutique négocie : une file qui ne peut jamais se
+    // remplir n'a rien à faire dans la barre de travail.
+    ...(isNegotiationEnabled()
+      ? [{ href: '/admin/offres', label: t('offers') }]
+      : []),
     { href: '/admin/reglages', label: t('settings.title') },
     // Juste après les réglages : les deux écrans décident ensemble de ce qui
     // est facturé pour un colis — le coût transporteur ici, la majoration là.

@@ -30,15 +30,62 @@ function main(page: Page) {
 }
 
 function offerForm(page: Page) {
-  return main(page).locator('form').filter({ has: page.locator('[name="amountEuros"]') })
+  return main(page)
+    .locator('form')
+    .filter({ has: page.locator('[name="amountEuros"]') })
 }
+
+/**
+ * La boutique négocie-t-elle sur le serveur qu'on teste ?
+ *
+ * Lue comme le serveur la lit — `isNegotiationEnabled`. Playwright charge le
+ * même `.env` que lui : les deux voient la même valeur, et ce fichier teste
+ * donc toujours ce que le serveur sert réellement.
+ *
+ * La négociation est ÉTEINTE par défaut. Les tests du formulaire ne tournent
+ * alors pas — il n'y a rien à tester — et c'est l'ABSENCE qui est vérifiée,
+ * plus bas. Posez `OFFERS_ENABLED=1` dans `.env` pour exercer la mécanique.
+ */
+const NEGOCIATION = process.env.OFFERS_ENABLED?.trim() === '1'
+
+const RAISON_ETEINTE =
+  'négociation éteinte (OFFERS_ENABLED absente) — le formulaire n’existe pas'
 
 /** On repart d'une session neuve : les offres se comptent par personne. */
 async function freshVisitor(page: Page): Promise<void> {
   await page.context().clearCookies()
 }
 
+test.describe('Négociation éteinte — la configuration par défaut', () => {
+  test.skip(NEGOCIATION, 'négociation allumée : voir les tests du formulaire')
+
+  test('aucun formulaire d’offre, même sur une pièce négociable', async ({
+    page,
+  }) => {
+    /*
+      La boutique a choisi de ne pas négocier pour l'instant. Une pièce dont
+      les offres seraient ouvertes ne doit montrer NI formulaire, NI date
+      d'ouverture — qui promettrait une négociation qui n'aura pas lieu.
+
+      La pièce testée est celle qui, allumée, porte le formulaire : c'est le
+      cas où l'absence prouve quelque chose.
+    */
+    await freshVisitor(page)
+    await page.goto(`/fr/a/${SLUG}`)
+
+    await expect(
+      main(page).getByRole('button', { name: /Ajouter au panier/ }),
+    ).toBeVisible()
+    await expect(offerForm(page)).toHaveCount(0)
+    // Le texte EXACT de `offersOpenOn` : une expression qui ne correspond à
+    // rien ferait passer cette assertion sans rien prouver.
+    await expect(main(page).getByText(/Les offres ouvrent le/)).toHaveCount(0)
+  })
+})
+
 test.describe('Le formulaire d’offre', () => {
+  test.skip(!NEGOCIATION, RAISON_ETEINTE)
+
   test('apparaît sur une pièce négociable', async ({ page }) => {
     await freshVisitor(page)
     await page.goto(`/fr/a/${SLUG}`)
@@ -168,6 +215,8 @@ const ACCOUNT = 'client2@nina-diego.test'
 const SEED_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? ''
 
 test.describe('Le registre des offres', () => {
+  test.skip(!NEGOCIATION, RAISON_ETEINTE)
+
   test('n’est pas servi sans session', async ({ page }) => {
     await freshVisitor(page)
     await page.goto('/fr/compte/offres')

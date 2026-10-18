@@ -3,6 +3,7 @@ import 'server-only'
 import { z } from 'zod'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db/client'
+import { isNegotiationEnabled } from '@/lib/config/site'
 import type { OfferPolicy } from '@/lib/domain/offers'
 import type { AutoDropStage, PricingConfig } from '@/lib/domain/pricing'
 
@@ -233,7 +234,8 @@ const SCHEMAS = {
     )
     .max(12)
     .refine(
-      (stages) => new Set(stages.map((stage) => stage.days)).size === stages.length,
+      (stages) =>
+        new Set(stages.map((stage) => stage.days)).size === stages.length,
       { message: 'deux paliers portent la même ancienneté' },
     )
     .refine(
@@ -572,7 +574,11 @@ export const EDITABLE_SETTINGS: readonly EditableSetting[] = [
   { key: 'maxOffersPerArticlePerUser', kind: 'integer', group: 'offers' },
   { key: 'offerCooldownAfterRejectionHours', kind: 'integer', group: 'offers' },
   { key: 'autoAcceptOffersEnabled', kind: 'boolean', group: 'offers' },
-  { key: 'autoAcceptThresholdPercent', kind: 'nullablePercent', group: 'offers' },
+  {
+    key: 'autoAcceptThresholdPercent',
+    kind: 'nullablePercent',
+    group: 'offers',
+  },
 
   { key: 'reservationTtlMinutes', kind: 'integer', group: 'checkout' },
 
@@ -586,6 +592,36 @@ export const EDITABLE_SETTINGS: readonly EditableSetting[] = [
   { key: 'universeImageFemmeUrl', kind: 'imageUrl', group: 'content' },
   { key: 'universeImageHommeUrl', kind: 'imageUrl', group: 'content' },
 ] as const
+
+/**
+ * Les réglages que l'écran propose RÉELLEMENT, sur ce déploiement.
+ *
+ * `EDITABLE_SETTINGS` reste la liste complète et fixe — les invariants qui la
+ * vérifient en ont besoin, et elle décrit ce que la boutique SAIT régler. Cette
+ * fonction-ci répond à une autre question : qu'est-ce qui a un sens à régler
+ * AUJOURD'HUI ?
+ *
+ * Quand la négociation est éteinte, ses huit réglages — délai d'ouverture,
+ * délai de réponse, offre minimale, carence… — ne gouvernent plus rien. Les
+ * montrer obligerait à remplir des champs sans effet, et ferait croire que la
+ * boutique négocie.
+ *
+ * Ils restent en base avec leur valeur, et réapparaissent tels quels le jour où
+ * la négociation est rallumée.
+ *
+ * ---------------------------------------------------------------------------
+ * La page ET l'action passent par ici, et c'est une obligation
+ * ---------------------------------------------------------------------------
+ * L'action d'enregistrement exige chaque champ de la liste qu'elle parcourt :
+ * un champ absent est une requête malformée. Si la page masquait un groupe que
+ * l'action réclamait encore, plus aucun enregistrement ne passerait — donc la
+ * boutique ne pourrait plus quitter le mode démonstration. Les deux lisent donc
+ * la même liste, depuis la même fonction.
+ */
+export function reglagesEditables(): readonly EditableSetting[] {
+  if (isNegotiationEnabled()) return EDITABLE_SETTINGS
+  return EDITABLE_SETTINGS.filter((setting) => setting.group !== 'offers')
+}
 
 const EDITABLE_BY_KEY = new Map(
   EDITABLE_SETTINGS.map((setting) => [setting.key, setting] as const),
