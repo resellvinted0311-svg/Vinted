@@ -199,6 +199,35 @@ C'est `VERCEL_ENV` qui tranche, et elle seule quand elle est présente :
 compris une prévisualisation, et la confondre avec la production rendait chaque
 branche déployée vide.
 
+## 4 sexies. Le premier compte administrateur
+
+**Le seed ne crée aucun compte en production, et aucun écran ne fait d'un compte
+un administrateur.** C'est délibéré — le projet a déjà connu un mot de passe
+publié avec son code, qui a fini par exister en production. Mais sans compte
+administrateur, la régie est inaccessible : pas de Réglages, donc pas de sortie
+du mode démonstration, donc aucun import accepté.
+
+La promotion se fait donc par la base elle-même, une fois :
+
+1. Inscrivez-vous sur la boutique en ligne, comme une cliente, avec votre
+   adresse.
+2. Ouvrez la console SQL de la base de production (Vercel → Storage → votre
+   base → l'éditeur SQL de son fournisseur) et exécutez, adresse **en
+   minuscules** — c'est ainsi qu'elle est enregistrée :
+
+   ```sql
+   UPDATE "User" SET "role" = 'ADMIN' WHERE "email" = 'vous@exemple.fr';
+   ```
+
+3. La console doit répondre **`UPDATE 1`**. `UPDATE 0` veut dire qu'aucun compte
+   ne porte cette adresse : vérifiez l'orthographe, ou que l'inscription a bien
+   abouti.
+4. Déconnectez-vous, reconnectez-vous : « Accéder au back-office » apparaît.
+
+**Pourquoi pas une variable « tel e-mail est administrateur ».** L'inscription ne
+vérifie pas l'adresse. Quiconque s'inscrirait le premier avec la vôtre prendrait
+la régie. La console de la base, elle, n'est ouverte qu'à vous.
+
 ## 5. Comptes de démonstration
 
 Le seed ne crée AUCUN compte en production. En développement et en
