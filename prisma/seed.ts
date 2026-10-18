@@ -1,8 +1,16 @@
-import { PrismaClient, type ArticleCondition, type ArticleStatus } from '@prisma/client'
+import {
+  PrismaClient,
+  type ArticleCondition,
+  type ArticleStatus,
+} from '@prisma/client'
 import { hash } from '@node-rs/argon2'
 import { locales, type Locale } from '../lib/i18n/routing'
 import { computeFloorPriceCents } from '../lib/domain/pricing'
-import { ZONES, RATES, cheapestFrenchCarrierCostCents } from './seed-data/shipping'
+import {
+  ZONES,
+  RATES,
+  cheapestFrenchCarrierCostCents,
+} from './seed-data/shipping'
 import {
   DEMO_PRICING,
   DEMO_SHIPPING_MARKUP_PERCENT,
@@ -12,6 +20,7 @@ import {
   DEMO_COST_RANGE,
   DEMO_SOURCING_PLACES,
 } from './seed-data/fixtures'
+import { estProduction } from './seed-data/environment'
 import {
   CATEGORIES,
   BRANDS,
@@ -310,8 +319,16 @@ async function seedTaxonomy(): Promise<Map<string, string>> {
 
 /** Catégories feuilles : seules elles portent des articles. */
 const LEAF_SLUGS = [
-  't-shirts', 'chemises', 'pulls-sweats', 'jeans-pantalons',
-  'robes', 'vestes-legeres', 'manteaux', 'chaussures', 'accessoires', 'sacs',
+  't-shirts',
+  'chemises',
+  'pulls-sweats',
+  'jeans-pantalons',
+  'robes',
+  'vestes-legeres',
+  'manteaux',
+  'chaussures',
+  'accessoires',
+  'sacs',
 ] as const
 
 /**
@@ -424,7 +441,11 @@ function planArticles(): PlannedArticle[] {
   }
   // 2 drops programmés.
   plan.push({ status: 'SCHEDULED', publishedDaysAgo: null, scheduledInDays: 3 })
-  plan.push({ status: 'SCHEDULED', publishedDaysAgo: null, scheduledInDays: 10 })
+  plan.push({
+    status: 'SCHEDULED',
+    publishedDaysAgo: null,
+    scheduledInDays: 10,
+  })
   // 1 brouillon.
   plan.push({ status: 'DRAFT', publishedDaysAgo: null })
 
@@ -434,6 +455,37 @@ function planArticles(): PlannedArticle[] {
 async function seedArticles(
   categoryIdBySlug: Map<string, string>,
 ): Promise<void> {
+  /*
+    LES PIÈCES DE DÉMONSTRATION NE VONT PAS EN PRODUCTION.
+
+    Le seed posait cinquante vêtements inventés — titres, descriptions, prix,
+    photos — et rien ne les distinguait d'un vrai catalogue une fois en ligne.
+    Mettre en vente des vêtements qui n'existent pas n'est pas un défaut
+    d'affichage : c'est une offre commerciale mensongère, et les premières
+    commandes seraient à rembourser.
+
+    Le choix était pourtant impossible à éviter jusqu'ici : le seed était
+    tout-ou-rien. Sans lui, aucune zone d'expédition n'existe — donc aucun pays
+    au tunnel de commande, donc personne qui puisse commander du tout. Il
+    fallait choisir entre une boutique inutilisable et une boutique peuplée de
+    faux. Avec ce garde, la production reçoit la STRUCTURE et rien d'autre.
+
+    Même règle, même raison et même formulation que pour les comptes de
+    démonstration quelques fonctions plus bas — le garde est partagé, pas
+    recopié.
+  */
+  if (estProduction()) {
+    console.info(
+      '  Articles de démonstration : ignorés (environnement de production)',
+    )
+    console.info(
+      '  → la structure est posée (réglages, expédition, catégories, marques,',
+    )
+    console.info('    compteurs). Le catalogue se remplit par l’import depuis')
+    console.info('    l’application de gestion.')
+    return
+  }
+
   /*
     Les marques viennent du DÉPÔT, jamais de la base.
 
@@ -496,7 +548,13 @@ async function seedArticles(
   const colorKeys = Object.keys(COLORS)
   const defectKeys = Object.keys(DEFECTS)
   const conditions: ArticleCondition[] = [
-    'NEW_WITH_TAGS', 'NEW_WITHOUT_TAGS', 'VERY_GOOD', 'VERY_GOOD', 'GOOD', 'GOOD', 'FAIR',
+    'NEW_WITH_TAGS',
+    'NEW_WITHOUT_TAGS',
+    'VERY_GOOD',
+    'VERY_GOOD',
+    'GOOD',
+    'GOOD',
+    'FAIR',
   ]
 
   for (const [index, planned] of plan.entries()) {
@@ -518,9 +576,7 @@ async function seedArticles(
 
     // Un défaut n'est mentionné que sur les états qui en comportent.
     const defectKey =
-      condition === 'GOOD' || condition === 'FAIR'
-        ? pick(defectKeys)
-        : null
+      condition === 'GOOD' || condition === 'FAIR' ? pick(defectKeys) : null
 
     const sizes = SIZES_BY_SLUG[categorySlug] ?? ['TU']
     const sizeLabel = pick(sizes)
@@ -529,7 +585,10 @@ async function seedArticles(
 
     // Économie de l'article. Le prix de vente doit rester au-dessus du
     // plancher : un article de test déficitaire fausserait les garde-fous.
-    const costCents = randInt(DEMO_COST_RANGE.minCents, DEMO_COST_RANGE.maxCents)
+    const costCents = randInt(
+      DEMO_COST_RANGE.minCents,
+      DEMO_COST_RANGE.maxCents,
+    )
     const floorPriceCents = computeFloorPriceCents(
       {
         costCents,
@@ -704,11 +763,10 @@ async function seedArticles(
  * d'administration serait déposée.
  */
 async function seedUsers(): Promise<void> {
-  if (
-    process.env.VERCEL_ENV === 'production' ||
-    process.env.NODE_ENV === 'production'
-  ) {
-    console.info('  Comptes de démonstration : ignorés (environnement de production)')
+  if (estProduction()) {
+    console.info(
+      '  Comptes de démonstration : ignorés (environnement de production)',
+    )
     return
   }
 

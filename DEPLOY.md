@@ -43,7 +43,7 @@ qui ouvre le nom de la base ; dans ce cas, changez le mot de passe.
 |---|---|---|
 | connexion PostgreSQL | oui | reconnue sous `DATABASE_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL` ou `NEON_DATABASE_URL` |
 | `DIRECT_URL` | non | déduite : `POSTGRES_URL_NON_POOLING`, puis `DATABASE_URL_UNPOOLED`, puis `DATABASE_URL` |
-| `SEED_ON_BUILD` | non | **rien n'est inséré sans `SEED_ON_BUILD=1`**. Le seed se déclenchait auparavant sur un catalogue vide — l'état d'une base neuve — et a peuplé la production sans qu'on le demande |
+| `SEED_ON_BUILD` | non, mais **recommandée au premier déploiement** | rien n'est inséré sans `SEED_ON_BUILD=1`. En production, le seed ne pose que la STRUCTURE — jamais le catalogue de démonstration. Voir §4 quinquies |
 | `NEXT_PUBLIC_SITE_URL` | non | déduite de `VERCEL_PROJECT_PRODUCTION_URL` |
 | `AUTH_SECRET` | non\* | sans elle, la connexion est désactivée proprement ; le reste fonctionne |
 | `AUTH_URL` | **oui** dès que `AUTH_SECRET` est posée | domaine public exact, sans barre finale. `trustHost` est actif : sans cette variable, Auth.js construit ses URL de rappel depuis l'en-tête Host de la requête. Le build de production échoue si elle manque |
@@ -81,9 +81,10 @@ n'est pas visible depuis un déploiement de branche, qui est un Preview. Si le
 build annonce n'avoir trouvé aucune connexion, c'est la première chose à
 vérifier — le log liste alors les noms des variables réellement présentes.
 
-**Ne posez `SEED_ON_BUILD=1` que si vous voulez réellement peupler la base de
-démonstration**, et retirez-la juste après : le seed est idempotent, mais il
-réécrirait les articles de démonstration par-dessus un catalogue réel.
+**`SEED_ON_BUILD=1` est à poser au premier déploiement**, et à retirer ensuite :
+le seed est idempotent, mais il réécrirait les réglages par-dessus les vôtres.
+Ce qu'il pose en production est détaillé en §4 quinquies — ce n'est pas le
+catalogue de démonstration.
 
 ## 4. Ce que fait le build
 
@@ -136,10 +137,45 @@ inacceptable ensuite.
   `Authorization: Bearer $CRON_SECRET`. La route ne demande rien d'autre, et le
   cron quotidien de Vercel reste alors un filet de sécurité.
 
+## 4 quinquies. Ce que le seed pose, et ce qu'il refuse de poser
+
+Le seed distingue deux choses, et la production n'en reçoit qu'une.
+
+**La STRUCTURE, toujours.** Réglages (avec leurs valeurs de démonstration et le
+marqueur `development` qui empêche de vendre dessus), zones et tarifs
+d'expédition, catégories, marques, compteurs de numérotation.
+
+Elle n'est pas facultative : **sans zone d'expédition, aucun pays n'est
+desservi**, la liste du tunnel de commande est vide, et personne ne peut passer
+commande. C'est la raison pour laquelle `SEED_ON_BUILD=1` est à poser au
+premier déploiement.
+
+**La DÉMONSTRATION, jamais en production.** Cinquante vêtements inventés et
+trois comptes de test. Mettre en vente des vêtements qui n'existent pas n'est
+pas un défaut d'affichage : c'est une offre commerciale mensongère, et les
+premières commandes seraient à rembourser.
+
+Le seed le dit dans son log, plutôt que de le faire en silence :
+
+```
+  Articles de démonstration : ignorés (environnement de production)
+  → la structure est posée (réglages, expédition, catégories, marques,
+    compteurs). Le catalogue se remplit par l'import depuis
+    l'application de gestion.
+```
+
+**Les prévisualisations, elles, reçoivent tout.** Une branche déployée porte son
+catalogue et ses comptes de test — sans quoi il n'y aurait rien à y regarder.
+C'est `VERCEL_ENV` qui tranche, et elle seule quand elle est présente :
+`NODE_ENV` vaut `production` pendant le build de tous les environnements, y
+compris une prévisualisation, et la confondre avec la production rendait chaque
+branche déployée vide.
+
 ## 5. Comptes de démonstration
 
-Le seed ne crée AUCUN compte en production, et n'en crée en développement que
-si `SEED_ADMIN_PASSWORD` est renseignée — sans valeur de repli.
+Le seed ne crée AUCUN compte en production. En développement et en
+prévisualisation, il n'en crée que si `SEED_ADMIN_PASSWORD` est renseignée —
+sans valeur de repli.
 
 ```bash
 SEED_ADMIN_PASSWORD="choisissez-un-mot-de-passe-long" pnpm db:seed
