@@ -164,6 +164,24 @@ Le seed le dit dans son log, plutôt que de le faire en silence :
     l'application de gestion.
 ```
 
+**Si votre base les porte déjà** — elle a été déployée avant cette correction —
+un retrait existe :
+
+```bash
+pnpm demo:retirer            # essai à blanc : liste, ne supprime rien
+pnpm demo:retirer --vraiment # supprime
+```
+
+Il ne reconnaît une pièce de démonstration qu'à DEUX marques à la fois : son
+lieu d'approvisionnement fictif (« vide-grenier de Trifouillis » n'est pas un
+endroit) **et** son numéro dans la plage du jeu. Une pièce importée reçoit le
+même format de numéro — `ART-000051` suit `ART-000050` sur le même compteur —
+donc le numéro seul ne distingue rien.
+
+Une pièce qu'une commande référence n'est pas supprimée : la base l'interdit
+(`onDelete: Restrict`), et elle a raison — une ligne comptable doit continuer
+de désigner ce qui a été vendu. Le script les liste à part.
+
 **Les prévisualisations, elles, reçoivent tout.** Une branche déployée porte son
 catalogue et ses comptes de test — sans quoi il n'y aurait rien à y regarder.
 C'est `VERCEL_ENV` qui tranche, et elle seule quand elle est présente :
