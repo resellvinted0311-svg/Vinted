@@ -43,7 +43,7 @@ qui ouvre le nom de la base ; dans ce cas, changez le mot de passe.
 |---|---|---|
 | connexion PostgreSQL | oui | reconnue sous `DATABASE_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL` ou `NEON_DATABASE_URL` |
 | `DIRECT_URL` | non | déduite : `POSTGRES_URL_NON_POOLING`, puis `DATABASE_URL_UNPOOLED`, puis `DATABASE_URL` |
-| `SEED_ON_BUILD` | non, mais **recommandée au premier déploiement** | rien n'est inséré sans `SEED_ON_BUILD=1`. En production, le seed ne pose que la STRUCTURE — jamais le catalogue de démonstration. Voir §4 quinquies |
+| `SEED_ON_BUILD` | **oui au premier déploiement**, et peut rester posée | rien n'est inséré sans `SEED_ON_BUILD=1`. En production, le seed ne pose que la STRUCTURE, et ne réécrit jamais une valeur saisie dans la régie. Voir §4 quinquies |
 | `NEXT_PUBLIC_SITE_URL` | non | déduite de `VERCEL_PROJECT_PRODUCTION_URL` |
 | `AUTH_SECRET` | non\* | sans elle, la connexion est désactivée proprement ; le reste fonctionne |
 | `AUTH_URL` | **oui** dès que `AUTH_SECRET` est posée | domaine public exact, sans barre finale. `trustHost` est actif : sans cette variable, Auth.js construit ses URL de rappel depuis l'en-tête Host de la requête. Le build de production échoue si elle manque |
@@ -81,10 +81,11 @@ n'est pas visible depuis un déploiement de branche, qui est un Preview. Si le
 build annonce n'avoir trouvé aucune connexion, c'est la première chose à
 vérifier — le log liste alors les noms des variables réellement présentes.
 
-**`SEED_ON_BUILD=1` est à poser au premier déploiement**, et à retirer ensuite :
-le seed est idempotent, mais il réécrirait les réglages par-dessus les vôtres.
-Ce qu'il pose en production est détaillé en §4 quinquies — ce n'est pas le
-catalogue de démonstration.
+**`SEED_ON_BUILD=1` est à poser au premier déploiement**, et peut rester posée
+ensuite. En production, le seed crée ce qui manque et ne réécrit jamais une
+valeur modifiable depuis la régie — réglages, prix de port, seuils de gratuité.
+Ce qu'il pose est détaillé en §4 quinquies ; ce n'est pas le catalogue de
+démonstration.
 
 ## 4. Ce que fait le build
 
@@ -144,6 +145,14 @@ Le seed distingue deux choses, et la production n'en reçoit qu'une.
 **La STRUCTURE, toujours.** Réglages (avec leurs valeurs de démonstration et le
 marqueur `development` qui empêche de vendre dessus), zones et tarifs
 d'expédition, catégories, marques, compteurs de numérotation.
+
+**Et sans jamais écraser ce que vous avez saisi.** Le seed réécrivait tout à
+chaque passage, y compris le marqueur de profil, qu'il remettait à
+`development`. Un déploiement lancé avec la variable encore posée effaçait donc
+vos vrais chiffres et faisait refuser tous les imports depuis l'application de
+gestion — sans que rien ne le signale de votre côté. En production, il ne crée
+plus que les lignes absentes ; la structure (noms de zone, pays, libellés,
+délais) reste, elle, mise à jour.
 
 Elle n'est pas facultative : **sans zone d'expédition, aucun pays n'est
 desservi**, la liste du tunnel de commande est vide, et personne ne peut passer

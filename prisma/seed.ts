@@ -169,15 +169,41 @@ async function seedSettings(): Promise<void> {
     { key: 'cgvVersion', value: '2026-01' },
   ]
 
+  /*
+    EN PRODUCTION, LE SEED NE RÉÉCRIT JAMAIS UN RÉGLAGE EXISTANT.
+
+    Il les réécrivait tous, à chaque passage — y compris `settingsProfile`, qu'il
+    remettait à `development`. La conséquence n'était pas un détail : un
+    déploiement lancé avec `SEED_ON_BUILD=1` encore posée effaçait les vrais
+    chiffres saisis dans Réglages, les remplaçait par ceux du jeu de
+    démonstration, et faisait REFUSER tous les imports depuis l'application de
+    gestion. Silencieusement — on ajoutait une pièce dans l'application, elle
+    n'apparaissait jamais sur la boutique.
+
+    La documentation disait « posez la variable, puis retirez-la ». Une sécurité
+    qui repose sur le souvenir de retirer une variable n'en est pas une.
+
+    En production, le seed CRÉE donc ce qui manque — c'est le cas normal d'une
+    base plus ancienne que le code, où un réglage ajouté depuis n'a pas de
+    ligne — et ne touche à rien d'autre. En développement et en
+    prévisualisation, il continue de tout réécrire : la base n'y porte aucune
+    donnée réelle, et c'est ce qui fait qu'une valeur changée dans le jeu de
+    démonstration se propage.
+  */
+  const proteger = estProduction()
+
   for (const setting of settings) {
     await prisma.setting.upsert({
       where: { key: setting.key },
       create: { key: setting.key, value: setting.value as never },
-      update: { value: setting.value as never },
+      update: proteger ? {} : { value: setting.value as never },
     })
   }
 
-  console.info(`  Paramètres : ${settings.length}`)
+  console.info(
+    `  Paramètres : ${settings.length}` +
+      (proteger ? ' (manquants créés, existants laissés intacts)' : ''),
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -186,6 +212,21 @@ async function seedSettings(): Promise<void> {
 
 async function seedShipping(): Promise<void> {
   const zoneIdByCode = new Map<string, string>()
+
+  /*
+    La même règle que pour les réglages, appliquée champ par champ.
+
+    Ce qui se modifie depuis la régie — le PRIX d'un palier, son activation, le
+    seuil de gratuité d'une zone — n'est jamais réécrit en production : c'est
+    là que vivent les vrais tarifs, et l'écran « Tarifs de port » existe pour
+    les y poser. Le seed les réécrivait à chaque passage.
+
+    Ce qui ne se modifie PAS depuis la régie — nom de zone, pays, préfixes
+    postaux, libellé, délais — reste mis à jour partout. Une correction de
+    structure faite dans ce dépôt doit pouvoir atteindre la production ; un
+    tarif saisi en production ne doit jamais être écrasé par ce dépôt.
+  */
+  const proteger = estProduction()
 
   for (const zone of ZONES) {
     const record = await prisma.shippingZone.upsert({
@@ -203,9 +244,12 @@ async function seedShipping(): Promise<void> {
         name: zone.name,
         countries: zone.countries,
         postalPrefixes: zone.postalPrefixes ?? [],
-        freeShippingThresholdCents: zone.freeShippingThresholdCents,
         position: zone.position,
         requiresCustoms: zone.requiresCustoms ?? false,
+        // Modifiable depuis la régie : jamais réécrit en production.
+        ...(proteger
+          ? {}
+          : { freeShippingThresholdCents: zone.freeShippingThresholdCents }),
       },
     })
     zoneIdByCode.set(zone.code, record.id)
@@ -235,11 +279,21 @@ async function seedShipping(): Promise<void> {
         deliveryDaysMax: rate.deliveryDaysMax,
         requiresServicePoint: rate.requiresServicePoint ?? false,
       },
-      update: { priceCents: rate.priceCents },
+      update: {
+        label: rate.label,
+        deliveryDaysMin: rate.deliveryDaysMin,
+        deliveryDaysMax: rate.deliveryDaysMax,
+        requiresServicePoint: rate.requiresServicePoint ?? false,
+        // Le prix se corrige depuis la régie : jamais réécrit en production.
+        ...(proteger ? {} : { priceCents: rate.priceCents }),
+      },
     })
   }
 
-  console.info(`  Zones : ${ZONES.length} · Tarifs : ${RATES.length}`)
+  console.info(
+    `  Zones : ${ZONES.length} · Tarifs : ${RATES.length}` +
+      (proteger ? ' (prix existants laissés intacts)' : ''),
+  )
 }
 
 // ---------------------------------------------------------------------------
