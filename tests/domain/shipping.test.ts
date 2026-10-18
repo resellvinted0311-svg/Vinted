@@ -17,6 +17,12 @@ import { ZONES, RATES } from '@/prisma/seed-data/shipping'
  * Les tests s'appuient sur la grille RÉELLE du seed plutôt que sur des tarifs
  * inventés : une grille de test diverge de la grille de production, et c'est
  * précisément là que se logent les erreurs de palier.
+ *
+ * Elle l'est désormais au sens propre : les tarifs publics de La Poste et de
+ * Mondial Relay pour 2026, avec des paliers propres à chaque transporteur. Les
+ * montants attendus ci-dessous en découlent, et ils bougeront le jour où ces
+ * tarifs seront mis à jour dans le seed — c'est voulu : l'échec rappellera de
+ * vérifier que la nouvelle grille est correctement branchée.
  */
 
 const CONFIG: ShippingConfig = {
@@ -65,7 +71,9 @@ describe('poids du colis', () => {
   it('ajoute l’emballage UNE fois, pas une fois par article', () => {
     // Cinq pièces ne veulent pas dire cinq cartons. Compter l'emballage par
     // article ferait franchir un palier tarifaire pour rien.
-    expect(computeParcelWeightGrams([200, 200, 200, 200, 200], CONFIG)).toBe(1080)
+    expect(computeParcelWeightGrams([200, 200, 200, 200, 200], CONFIG)).toBe(
+      1080,
+    )
   })
 
   it('vaut le seul emballage pour un panier vide', () => {
@@ -94,7 +102,10 @@ describe('majoration', () => {
     // Garde reprise de la version supprimée de `pricing.ts` : ce n'est pas une
     // remise sur le port, c'est un réglage saisi de travers.
     expect(() =>
-      computeChargedShippingCents(420, { ...CONFIG, shippingMarkupPercent: -10 }),
+      computeChargedShippingCents(420, {
+        ...CONFIG,
+        shippingMarkupPercent: -10,
+      }),
     ).toThrow()
   })
 
@@ -103,11 +114,17 @@ describe('majoration', () => {
     // de 10 % vaut 1,10 €. En flottant, 1 × 1.1 donne 1.1000000000000001, donc
     // 111 après Math.ceil, donc 1,20 € après arrondi à la dizaine.
     expect(
-      computeChargedShippingCents(100, { ...CONFIG, shippingMarkupPercent: 10 }),
+      computeChargedShippingCents(100, {
+        ...CONFIG,
+        shippingMarkupPercent: 10,
+      }),
     ).toBe(110)
 
     expect(
-      computeChargedShippingCents(700, { ...CONFIG, shippingMarkupPercent: 10 }),
+      computeChargedShippingCents(700, {
+        ...CONFIG,
+        shippingMarkupPercent: 10,
+      }),
     ).toBe(770)
   })
 })
@@ -136,7 +153,10 @@ describe('résolution de zone', () => {
     ['98700', 'Polynésie française'],
     ['98600', 'Wallis-et-Futuna'],
   ])('%s (%s) part en outre-mer', (postalCode) => {
-    const resolved = resolveShippingZone({ countryCode: 'FR', postalCode }, zones)
+    const resolved = resolveShippingZone(
+      { countryCode: 'FR', postalCode },
+      zones,
+    )
     expect(resolved.ok && resolved.zone.code).toBe('FR_DOM')
   })
 
@@ -187,43 +207,55 @@ describe('résolution de zone', () => {
 
 describe('paliers de poids', () => {
   it('retient le palier le plus étroit qui couvre le poids', () => {
-    // 200 g + 80 g d'emballage = 280 g → palier 500 g, point relais à 420.
+    // 200 g + 80 g d'emballage = 280 g → palier 500 g, point relais à 415.
+    //
+    // Et non le palier 250 g de Colissimo (549) : 280 g ne tient plus dedans.
+    // Chaque transporteur garde ses propres paliers, et c'est cette forme-là
+    // — réelle — que ce test exerce.
     const result = quote({ articleWeightsGrams: [200] })
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.quote.options[0]?.carrierCostCents).toBe(420)
+    expect(result.quote.options[0]?.carrierCostCents).toBe(415)
   })
 
   it('bascule au palier suivant à la borne exacte', () => {
     // 420 g + 80 = 500 g : couvert par le palier 500.
     const at = quote({ articleWeightsGrams: [420] })
-    expect(at.ok && at.quote.options[0]?.carrierCostCents).toBe(420)
+    expect(at.ok && at.quote.options[0]?.carrierCostCents).toBe(415)
 
-    // 421 g + 80 = 501 g : le palier 500 ne couvre plus.
+    // 421 g + 80 = 501 g : le palier 500 ne couvre plus, le relais passe au
+    // palier 1 kg.
     const over = quote({ articleWeightsGrams: [421] })
-    expect(over.ok && over.quote.options[0]?.carrierCostCents).toBe(480)
+    expect(over.ok && over.quote.options[0]?.carrierCostCents).toBe(599)
   })
 
   it('refuse un poids hors grille au lieu d’extrapoler', () => {
     // Aucune règle de trois, aucun repli sur le palier le plus lourd, aucun
     // découpage automatique en plusieurs colis : c'est une décision
     // commerciale, pas un calcul.
-    const result = quote({ articleWeightsGrams: [6000] })
+    //
+    // Au-delà de 30 kg, la limite de Colissimo — le palier le plus lourd de la
+    // France. La grille fictive s'arrêtait à 5 kg ; les vraies grilles vont
+    // bien plus loin, ce qui couvre enfin un panier de plusieurs manteaux.
+    const result = quote({ articleWeightsGrams: [31000] })
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.failure.reason).toBe('WEIGHT_NOT_COVERED')
     expect(
       result.failure.reason === 'WEIGHT_NOT_COVERED' &&
         result.failure.maxCoveredGrams,
-    ).toBe(5000)
+    ).toBe(30000)
   })
 })
 
 describe('franchise de port', () => {
   it('n’offre rien sous le seuil', () => {
+    // Relais 415 majoré de 20 % = 498, arrondi au dixième supérieur : 500.
     const result = quote({ subtotalCents: 3999 })
-    expect(result.ok && result.quote.options[0]?.chargedCents).toBe(510)
-    expect(result.ok && result.quote.options[0]?.freeShippingApplied).toBe(false)
+    expect(result.ok && result.quote.options[0]?.chargedCents).toBe(500)
+    expect(result.ok && result.quote.options[0]?.freeShippingApplied).toBe(
+      false,
+    )
   })
 
   it('offre l’option la moins chère à partir du seuil exact', () => {
@@ -235,7 +267,7 @@ describe('franchise de port', () => {
     expect(cheapest?.chargedCents).toBe(0)
     expect(cheapest?.freeShippingApplied).toBe(true)
     // Le prix plein reste exposé : c'est lui qu'on barre à l'affichage.
-    expect(cheapest?.fullChargedCents).toBe(510)
+    expect(cheapest?.fullChargedCents).toBe(500)
   })
 
   it('facture la DIFFÉRENCE sur une option plus chère', () => {
@@ -246,9 +278,9 @@ describe('franchise de port', () => {
     if (!result.ok) return
 
     const home = result.quote.options.find((o) => o.serviceCode === 'COL_HOME')
-    // Domicile 560 → 680 plein ; relais 420 → 510 offert ; reste 170.
-    expect(home?.fullChargedCents).toBe(680)
-    expect(home?.chargedCents).toBe(170)
+    // Domicile 759 → 920 plein ; relais 415 → 500 offert ; reste 420.
+    expect(home?.fullChargedCents).toBe(920)
+    expect(home?.chargedCents).toBe(420)
     expect(home?.freeShippingApplied).toBe(false)
   })
 
@@ -258,7 +290,9 @@ describe('franchise de port', () => {
       destination: { countryCode: 'FR', postalCode: '20000' },
       subtotalCents: 50_000,
     })
-    expect(result.ok && result.quote.options[0]?.chargedCents).toBeGreaterThan(0)
+    expect(result.ok && result.quote.options[0]?.chargedCents).toBeGreaterThan(
+      0,
+    )
   })
 
   it('applique le seuil EU1, distinct de celui de France', () => {
@@ -281,7 +315,7 @@ describe('plafond de remboursement du port', () => {
     // L221-24 du code de la consommation : le remboursement des frais de
     // livraison est plafonné au mode standard le moins onéreux proposé.
     const paye = quote({ subtotalCents: 1000 })
-    expect(paye.ok && paye.quote.standardChargedCents).toBe(510)
+    expect(paye.ok && paye.quote.standardChargedCents).toBe(500)
 
     const offert = quote({ subtotalCents: 4000 })
     expect(offert.ok && offert.quote.standardChargedCents).toBe(0)
