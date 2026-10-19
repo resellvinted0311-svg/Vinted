@@ -271,6 +271,69 @@ const COLISSIMO_UE = [
   [30000, 8799],
 ] as const
 
+/**
+ * L'ANCIENNE grille, fictive — gardée pour la reconnaître, jamais pour la poser.
+ *
+ * ---------------------------------------------------------------------------
+ * Pourquoi elle est encore là
+ * ---------------------------------------------------------------------------
+ * Une base de production semée avant le passage aux tarifs réels porte cette
+ * grille. Et le seed, en production, ne réécrit plus jamais un prix existant —
+ * c'est la protection qui empêche d'écraser ce que la régie a saisi.
+ *
+ * Les deux règles, ensemble, produisaient le pire : une grille MÉLANGÉE. Les
+ * nouveaux paliers créés à côté des anciens, les prix fictifs conservés comme
+ * s'ils avaient été choisis, et des paliers disparus de la vraie grille — le
+ * point relais à 2 kg facturé 5,90 €, celui de 5 kg à 8,90 € — toujours
+ * proposés, toujours trop bas. Un manteau de 4,5 kg partait à 8,90 € de port
+ * pour 15,99 € de coût.
+ *
+ * Le seed ne peut pas distinguer « valeur fictive qu'il a posée lui-même » de
+ * « valeur réelle saisie par quelqu'un » — sauf en comparant à ce qu'il avait
+ * posé. D'où cette table : une ligne dont le prix est EXACTEMENT celui-ci n'a
+ * été touchée par personne, et peut être remplacée sans rien écraser.
+ *
+ * À supprimer quand plus aucune base ne porte l'ancienne grille.
+ */
+const ANCIENS_PALIERS = [500, 1000, 2000, 5000] as const
+
+function ancienne(
+  zoneCode: string,
+  carrierCode: string,
+  serviceCode: string,
+  prix: readonly [number, number, number, number],
+): Array<{
+  zoneCode: string
+  carrierCode: string
+  serviceCode: string
+  maxWeightGrams: number
+  priceCents: number
+}> {
+  return ANCIENS_PALIERS.map((maxWeightGrams, index) => ({
+    zoneCode,
+    carrierCode,
+    serviceCode,
+    maxWeightGrams,
+    priceCents: prix[index] as number,
+  }))
+}
+
+export const ANCIENNE_GRILLE_FICTIVE = [
+  ...ancienne('FR', 'mondial_relay', 'MR_RELAY', [420, 480, 590, 890]),
+  ...ancienne('FR', 'colissimo', 'COL_HOME', [560, 680, 820, 1320]),
+  ...ancienne('FR_CORSE', 'colissimo', 'COL_HOME', [720, 880, 1090, 1690]),
+  ...ancienne('FR_DOM', 'colissimo', 'COL_HOME', [1450, 1890, 2590, 4200]),
+  ...ancienne('EU1', 'mondial_relay', 'MR_RELAY', [650, 760, 950, 1450]),
+  ...ancienne('EU1', 'colissimo', 'COL_HOME', [980, 1180, 1450, 2200]),
+  ...ancienne('EU2', 'colissimo', 'COL_HOME', [1290, 1550, 1950, 2950]),
+  ...ancienne(
+    'EUROPE_NON_EU',
+    'colissimo',
+    'COL_HOME',
+    [1590, 1920, 2450, 3800],
+  ),
+]
+
 export const RATES: RateSeed[] = [
   // ---- France métropolitaine ---------------------------------------------
   /*

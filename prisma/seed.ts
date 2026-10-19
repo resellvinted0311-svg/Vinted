@@ -9,6 +9,7 @@ import { computeFloorPriceCents } from '../lib/domain/pricing'
 import {
   ZONES,
   RATES,
+  ANCIENNE_GRILLE_FICTIVE,
   cheapestFrenchCarrierCostCents,
 } from './seed-data/shipping'
 import {
@@ -21,6 +22,7 @@ import {
   DEMO_SOURCING_PLACES,
 } from './seed-data/fixtures'
 import { estProduction } from './seed-data/environment'
+import { inventorierDemonstration } from '../lib/admin/demonstration'
 import {
   CATEGORIES,
   BRANDS,
@@ -210,6 +212,120 @@ async function seedSettings(): Promise<void> {
 // Expédition
 // ---------------------------------------------------------------------------
 
+/**
+ * Remplace l'ancienne grille fictive là où PERSONNE n'y a touché.
+ *
+ * ---------------------------------------------------------------------------
+ * Le défaut que cette fonction ferme
+ * ---------------------------------------------------------------------------
+ * En production, le seed ne réécrit jamais un prix existant — sans quoi il
+ * écraserait ce que la régie a saisi. Mais une base semée avant le passage aux
+ * tarifs réels porte l'ancienne grille, fictive et trop basse. Les deux règles
+ * ensemble laissaient une grille MÉLANGÉE : prix fictifs conservés comme s'ils
+ * avaient été choisis, nouveaux paliers créés à côté, et des paliers disparus
+ * de la vraie grille toujours proposés. Le point relais 5 kg à 8,90 € couvrait
+ * encore un colis de 4,5 kg qui en coûte 15,99.
+ *
+ * ---------------------------------------------------------------------------
+ * La règle : un prix EXACTEMENT fictif n'a été choisi par personne
+ * ---------------------------------------------------------------------------
+ * Pour chaque ligne de l'ancienne grille :
+ *
+ *  - prix différent de l'ancien fictif → quelqu'un l'a saisi dans la régie :
+ *    on n'y touche pas, ni pour la corriger ni pour la retirer ;
+ *  - prix identique, palier présent dans la vraie grille → le vrai prix le
+ *    remplace ;
+ *  - prix identique, palier ABSENT de la vraie grille → la ligne est
+ *    supprimée. C'est le cas des paliers Mondial Relay 2 kg et 5 kg en France,
+ *    et de Mondial Relay vers l'UE, dont aucune grille fiable n'a pu être
+ *    relevée.
+ *
+ * Supprimée et non désactivée : aucune commande ne référence une ligne de
+ * tarif — le transporteur et le montant sont recopiés sur la commande — et une
+ * ligne désactivée resterait affichée dans la régie, à côté de la vraie, comme
+ * une option qu'on pourrait rallumer.
+ *
+ * Sans effet sur une base neuve : il n'y a rien à reconnaître. Et sans effet au
+ * second passage : une fois remplacé, un prix n'est plus le fictif.
+ */
+async function reconcilierAncienneGrille(
+  zoneIdByCode: Map<string, string>,
+): Promise<void> {
+  const cle = (r: {
+    zoneCode: string
+    carrierCode: string
+    serviceCode: string
+    maxWeightGrams: number
+  }) => `${r.zoneCode}|${r.carrierCode}|${r.serviceCode}|${r.maxWeightGrams}`
+
+  const vraiPrix = new Map(RATES.map((rate) => [cle(rate), rate.priceCents]))
+
+  let remplaces = 0
+  let retires = 0
+  let preserves = 0
+
+  for (const ancien of ANCIENNE_GRILLE_FICTIVE) {
+    const zoneId = zoneIdByCode.get(ancien.zoneCode)
+    if (!zoneId) continue
+
+    const ligne = await prisma.shippingRate.findUnique({
+      where: {
+        zoneId_carrierCode_serviceCode_maxWeightGrams: {
+          zoneId,
+          carrierCode: ancien.carrierCode,
+          serviceCode: ancien.serviceCode,
+          maxWeightGrams: ancien.maxWeightGrams,
+        },
+      },
+      select: { id: true, priceCents: true },
+    })
+
+    if (!ligne) continue
+
+    const nouveau = vraiPrix.get(cle(ancien))
+
+    /*
+      DÉJÀ au vrai prix : un passage précédent l'a remplacé, ou les deux
+      grilles se trouvent d'accord sur ce palier. Rien à faire, et surtout rien
+      à annoncer.
+
+      Testé AVANT la comparaison au fictif, et ce n'est pas un détail : sans
+      cela, un second déploiement comptait les vingt-cinq lignes remplacées au
+      premier comme « saisies dans la régie et conservées ». Le comportement
+      était juste, le journal mentait — et un journal qui ment sur ce qu'a fait
+      un déploiement est un journal qu'on cesse de lire.
+    */
+    if (nouveau !== undefined && ligne.priceCents === nouveau) continue
+
+    if (ligne.priceCents !== ancien.priceCents) {
+      preserves += 1
+      continue
+    }
+
+    if (nouveau === undefined) {
+      await prisma.shippingRate.delete({ where: { id: ligne.id } })
+      retires += 1
+    } else {
+      await prisma.shippingRate.update({
+        where: { id: ligne.id },
+        data: { priceCents: nouveau },
+      })
+      remplaces += 1
+    }
+  }
+
+  // Dit seulement quand le passage a RÉELLEMENT changé quelque chose. Les
+  // prix conservés ne sont annoncés qu'à cette occasion : les répéter à chaque
+  // déploiement noierait la seule ligne qui compte — celle où la grille a
+  // bougé.
+  if (remplaces + retires > 0) {
+    console.info(
+      `  Ancienne grille fictive : ${remplaces} prix remplacé(s), ` +
+        `${retires} palier(s) retiré(s), ${preserves} saisi(s) dans la régie et conservé(s)`,
+    )
+  }
+}
+
 async function seedShipping(): Promise<void> {
   const zoneIdByCode = new Map<string, string>()
 
@@ -254,6 +370,8 @@ async function seedShipping(): Promise<void> {
     })
     zoneIdByCode.set(zone.code, record.id)
   }
+
+  await reconcilierAncienneGrille(zoneIdByCode)
 
   for (const rate of RATES) {
     const zoneId = zoneIdByCode.get(rate.zoneCode)
@@ -532,6 +650,42 @@ async function seedArticles(
     console.info(
       '  Articles de démonstration : ignorés (environnement de production)',
     )
+
+    /*
+      ET RETIRÉS, s'il en reste d'un semis antérieur.
+
+      Le seed n'en pose plus en production — mais une base semée avant cette
+      règle les porte encore, et ils y sont EN VENTE : des vêtements inventés,
+      qu'on ne distingue pas des vrais une fois en ligne. Ne pas les poser ne
+      suffit donc pas ; il faut aussi retirer ce qui a été posé.
+
+      La reconnaissance est celle de `pnpm demo:retirer`, et c'est voulu : DEUX
+      marques à la fois — un lieu d'approvisionnement fictif ET un numéro dans
+      la plage du jeu. Une pièce importée depuis l'application de gestion
+      reçoit le même format de numéro, donc le numéro seul ne distingue rien.
+
+      Une pièce qu'une commande référence n'est jamais supprimée : la base
+      l'interdit, et elle a raison. Elle est seulement nommée dans le journal
+      de déploiement — une vente de vêtement inventé appelle un remboursement,
+      et c'est une décision humaine.
+    */
+    const { retirables, bloquees } = await inventorierDemonstration({}, prisma)
+
+    if (retirables.length > 0) {
+      const { count } = await prisma.article.deleteMany({
+        where: { id: { in: retirables.map((piece) => piece.id) } },
+      })
+      console.info(
+        `  → ${count} article(s) de démonstration d’un semis antérieur retiré(s)`,
+      )
+    }
+    for (const piece of bloquees) {
+      console.warn(
+        `  → ${piece.sku} est un article de démonstration COMMANDÉ : conservé, ` +
+          'un remboursement est peut-être dû',
+      )
+    }
+
     console.info(
       '  → la structure est posée (réglages, expédition, catégories, marques,',
     )
