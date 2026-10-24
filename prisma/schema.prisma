@@ -892,6 +892,13 @@ model ReturnRequest {
   reason  String
   comment String?
 
+  /// Rétractation en ligne : le nom tel que la personne l'a saisi dans la
+  /// fonction « Renoncer au contrat ici ». Il fait partie du CONTENU de la
+  /// déclaration, que l'accusé de réception doit reprendre (directive
+  /// 2011/83, art. 11 bis) — d'où une colonne, et non une relecture du nom de
+  /// facturation, qui peut différer. Effacé avec l'identité de la commande.
+  declaredName String?
+
   status ReturnStatus @default(REQUESTED)
 
   labelUrl       String?

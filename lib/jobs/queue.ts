@@ -121,6 +121,25 @@ export type JobType =
    * défait cette précaution un étage plus bas.
    */
   | 'auth.password-reset'
+  /**
+   * Accusé de réception d'une rétractation en ligne, à la personne.
+   *
+   * C'est une OBLIGATION, pas une politesse : la fonction de rétractation doit
+   * confirmer sans délai, sur support durable, le contenu de la déclaration,
+   * sa date et son heure (directive 2011/83, art. 11 bis). Différé pour la
+   * même raison que le lien de réinitialisation : la page répond la même
+   * chose que la commande existe ou non, et l'attente d'un envoi trahirait ce
+   * que la phrase tait.
+   */
+  | 'withdrawal.acknowledge'
+  /**
+   * Avis à la boutique : une rétractation vient d'être déclarée.
+   *
+   * Le délai de remboursement court à partir de cet instant — quatorze jours
+   * au plus. Une déclaration que personne ne lit est un remboursement en
+   * retard, donc majoré de plein droit.
+   */
+  | 'withdrawal.notify-shop'
 
 export interface JobRecord {
   id: string

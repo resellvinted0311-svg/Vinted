@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
-import { SITE, LEGAL } from '@/lib/config/site'
+import { SITE, LEGAL, rcsMention } from '@/lib/config/site'
 import { LocaleSwitcher } from './locale-switcher'
 
 export async function SiteFooter() {
@@ -101,7 +101,19 @@ export async function SiteFooter() {
         </div>
 
         <div className="data mt-8 flex flex-col gap-1 border-t border-sand pt-6 text-xs text-muted">
-          <p>{t('withdrawalNotice')}</p>
+          <p>
+            {t('withdrawalNotice')}{' '}
+            {/* La fonction de rétractation en ligne, sur CHAQUE page : la loi
+                la veut « facilement accessible » pendant tout le délai, avec
+                une mention claire — « renoncer au contrat ici ». Une page de
+                plus dans un menu ne l'est pas. */}
+            <Link
+              href="/retractation"
+              className="text-ink underline underline-offset-2"
+            >
+              {t('withdrawOnline')}
+            </Link>
+          </p>
 
           {/* Mention obligatoire en franchise en base de TVA. */}
           {LEGAL.vatExempt ? <p>{t('vatNotice')}</p> : null}
@@ -128,7 +140,13 @@ export async function SiteFooter() {
             </p>
           ) : null}
 
-          {LEGAL.siret ? <p>SIRET {LEGAL.siret}</p> : null}
+          {/* Sur un site, une société affiche « RCS » suivi de la ville du
+              greffe et de son SIREN (code de commerce, art. R123-237). */}
+          {LEGAL.siret ? (
+            <p>
+              {LEGAL.rcsCity ? `${rcsMention()} — ` : ''}SIRET {LEGAL.siret}
+            </p>
+          ) : null}
         </div>
       </div>
     </footer>

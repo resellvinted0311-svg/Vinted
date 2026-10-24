@@ -97,6 +97,19 @@ function addressLines(shipping: OrderEmailData['shipping']): string[] {
   )
 }
 
+/**
+ * Le lien vers la rétractation en ligne, numéro prérempli.
+ *
+ * La confirmation se contentait de dire que « le formulaire est sur le
+ * site ». La fonction de rétractation doit être facilement accessible pendant
+ * tout le délai : le lien direct, dans le message qu'on garde, l'est.
+ * L'adresse e-mail n'y figure pas — elle n'a rien à faire dans une URL.
+ */
+function withdrawalUrl(data: OrderEmailData): string {
+  const query = new URLSearchParams({ commande: data.orderNumber })
+  return `${SITE.url}/${data.locale}/retractation?${query.toString()}`
+}
+
 /** Confirmation adressée à l'acheteuse, dans SA langue. */
 export async function buildOrderConfirmation(
   data: OrderEmailData,
@@ -137,7 +150,7 @@ export async function buildOrderConfirmation(
     ...(data.invoiceNumber
       ? [t('invoice', { number: data.invoiceNumber }), '']
       : []),
-    t('withdrawal'),
+    t('withdrawal', { url: withdrawalUrl(data) }),
     '',
     t('signature', { shop: SITE.name }),
   ].join('\n')
@@ -160,7 +173,7 @@ export async function buildOrderConfirmation(
     ...(data.invoiceNumber
       ? [`<p>${escapeHtml(t('invoice', { number: data.invoiceNumber }))}</p>`]
       : []),
-    `<p>${escapeHtml(t('withdrawal'))}</p>`,
+    `<p>${escapeHtml(t('withdrawal', { url: withdrawalUrl(data) }))}</p>`,
     `<p>${escapeHtml(t('signature', { shop: SITE.name }))}</p>`,
   ].join('')
 

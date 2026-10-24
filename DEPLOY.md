@@ -56,6 +56,12 @@ qui ouvre le nom de la base ; dans ce cas, changez le mot de passe.
 | `STRIPE_WEBHOOK_SECRET` | **oui pour vendre** | vérifie l'appel signé qui marque la commande payée. Absente, une carte peut être débitée sans que la commande le devienne |
 | `OFFERS_ENABLED` | non | **négociation éteinte sans elle** — ni formulaire d'offre sur les fiches, ni file d'offres dans la régie, ni réglages de négociation à l'écran, et le serveur refuse toute offre. `1` l'allume ; redéployez ensuite, pour que les fiches en cache se régénèrent |
 | `LOG_LEVEL` | non | `info` par défaut. `debug` pour une enquête, à retirer ensuite : le volume est sans commune mesure |
+| `RESEND_API_KEY` | **oui pour vendre** | sans elle, aucun e-mail ne part : ni confirmation de commande, ni accusé de rétractation, ni avis à la boutique |
+| `EMAIL_FROM` | **oui pour vendre** | `Nina & Diego <bonjour@…>`, sur un domaine VÉRIFIÉ chez Resend. Une adresse `resend.dev` ou `example.com` n'écrit à personne : le panneau de mise en service le signale |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | pour les photos | les trois ensemble. Le nom est lu au build (`next.config.ts`) : redéployer après l'avoir posé |
+| `LEGAL_COMPANY_NAME`, `LEGAL_FORM`, `LEGAL_CAPITAL`, `LEGAL_SIRET`, `LEGAL_RCS_CITY`, `LEGAL_ADDRESS`, `LEGAL_EMAIL`, `LEGAL_PHONE`, `LEGAL_PUBLICATION_DIRECTOR` | **oui pour vendre** | les neuf ensemble : sans elles, ni mentions légales, ni CGV opposables, ni factures (LCEN art. 1-1 ; code de commerce art. R123-237). `LEGAL_EMAIL` reçoit aussi les avis de commande et de rétractation, et peut être posée seule |
+| `LEGAL_VAT_NUMBER` | non | seulement si la société a un numéro de TVA intracommunautaire |
+| `LEGAL_MEDIATOR_NAME`, `LEGAL_MEDIATOR_ADDRESS`, `LEGAL_MEDIATOR_URL` | **oui pour vendre** | nom, adresse postale et site du médiateur, exigés tous les trois (L612-1 du code de la consommation) ; affichés dans les mentions légales ET les CGV |
 
 \* Sans `AUTH_SECRET`, la boutique est entièrement consultable — catalogue,
 recherche, favoris — mais **connexion et inscription sont refusées**, et les
@@ -264,7 +270,11 @@ Phases 4 à 8 non réalisées. En conséquence, sur le déploiement :
   parce que rien ne peut le constater. Le jour où un transporteur sera branché,
   il recevra nom, adresse et téléphone — donc il devra entrer dans la liste des
   sous-traitants, avec son contrat (`docs/rgpd.md`) ;
-- aucune messagerie, aucun retour, aucun avis ;
+- aucune messagerie, aucun avis. Des retours, seule la **rétractation en
+  ligne** existe (`/retractation`, « Renoncer au contrat ici », obligatoire
+  depuis le 19 juin 2026) : la déclaration est enregistrée, un accusé de
+  réception part, la boutique est prévenue et la file des commandes l'affiche.
+  Le remboursement se fait à la main depuis Stripe ;
 - la newsletter n'est pas branchée : `User.marketingConsent` est un simple
   booléen, et `NewsletterSubscriber` — qui porte la preuve du consentement et
   le jeton de désinscription **obligatoire** de l'article L34-5 du CPCE —
@@ -281,7 +291,11 @@ panier, le paiement Stripe avec factures et e-mails, la négociation (dépôt,
 registre au compte, prix payable, contre-proposition), la baisse automatique
 des prix, le suivi
 d'expédition de la commande payée jusqu'à la livraison, et la synchronisation
-avec l'application de gestion dans les deux sens.
+avec l'application de gestion. Dans un seul sens en pratique : la boutique sait
+annoncer ses ventes, mais SuiviVinted n'a aucun point d'entrée pour les
+recevoir — voir `docs/mise-en-service.md`, « Décision en attente ».
+
+**Ce qui reste à faire avant de vendre, dans l'ordre : `docs/mise-en-service.md`.**
 
 ## 7. Décisions laissées ouvertes, à trancher un jour
 

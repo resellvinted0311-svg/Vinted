@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/lib/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { Notice } from '@/components/ui/notice'
+import { WITHDRAWABLE_STATUSES } from '@/lib/shop/withdrawal'
 import { readCartOwner } from '@/lib/shop/cart'
 import { getOrder } from '@/lib/db/queries/orders'
 import { OrderDetailView } from '@/components/shop/order/order-detail-view'
@@ -46,6 +47,7 @@ export default async function OrderDetailPage({
   setRequestLocale(locale)
 
   const t = await getTranslations('order')
+  const tf = await getTranslations('footer')
   const owner = await readCartOwner()
   const order = owner ? await getOrder(owner, orderNumber) : null
 
@@ -74,6 +76,22 @@ export default async function OrderDetailPage({
           <Button asChild variant="outline" size="sm">
             <Link href={`/commande/suivi/${order.orderNumber}/facture`}>
               {t('viewInvoice')}
+            </Link>
+          </Button>
+        ) : null}
+
+        {/* La rétractation en ligne, là où l'on regarde sa commande. Le
+            numéro est prérempli ; l'adresse, jamais — elle ne voyage pas
+            dans une URL. */}
+        {WITHDRAWABLE_STATUSES.includes(order.status) ? (
+          <Button asChild variant="outline" size="sm">
+            <Link
+              href={{
+                pathname: '/retractation',
+                query: { commande: order.orderNumber },
+              }}
+            >
+              {tf('withdrawOnline')}
             </Link>
           </Button>
         ) : null}

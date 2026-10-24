@@ -16,8 +16,8 @@ import type { Invoice } from '@/lib/shop/invoice'
  * ---------------------------------------------------------------------------
  * Aucune valeur n'est inventée
  * ---------------------------------------------------------------------------
- * Dénomination, SIRET, adresse et mention de TVA viennent de la configuration
- * légale. `buildInvoice` REFUSE d'émettre si l'une manque — une facture sans
+ * Dénomination, forme et capital, RCS et SIRET, siège et mention de TVA
+ * viennent de la configuration légale. `buildInvoice` REFUSE d'émettre si l'une manque — une facture sans
  * dénomination ni SIRET n'est pas incomplète, elle est sans valeur.
  *
  * La mention de franchise en base de TVA n'apparaît que si le régime est
@@ -54,10 +54,24 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
         <div className="text-right text-xs text-muted">
           <p className="label-reg text-ink">{t('seller')}</p>
           <p className="mt-1 text-ink">{invoice.seller.name}</p>
+          <p>
+            {t('legalForm', {
+              form: invoice.seller.legalForm,
+              capital: invoice.seller.shareCapital,
+            })}
+          </p>
           <p className="whitespace-pre-line">{invoice.seller.address}</p>
           <p data-numeric className="data mt-1">
+            {invoice.seller.rcs}
+          </p>
+          <p data-numeric className="data">
             {t('siret', { siret: invoice.seller.siret })}
           </p>
+          {invoice.seller.vatNumber ? (
+            <p data-numeric className="data">
+              {t('vatNumber', { number: invoice.seller.vatNumber })}
+            </p>
+          ) : null}
           <p>{invoice.seller.email}</p>
         </div>
       </header>
@@ -109,7 +123,10 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
           </thead>
           <tbody>
             {invoice.lines.map((line, index) => (
-              <tr key={`${line.reference ?? line.label}-${index}`} className="border-b border-sand">
+              <tr
+                key={`${line.reference ?? line.label}-${index}`}
+                className="border-b border-sand"
+              >
                 <td className="py-2.5 text-ink">{line.label}</td>
                 <td className="data py-2.5 text-xs text-muted">
                   {line.reference ?? ''}
@@ -156,9 +173,7 @@ export function InvoiceDocument({ invoice }: { invoice: Invoice }) {
       </section>
 
       <footer className="border-t border-sand pt-6 text-xs text-muted">
-        {invoice.seller.vatNotice ? (
-          <p>{invoice.seller.vatNotice}</p>
-        ) : null}
+        {invoice.seller.vatNotice ? <p>{invoice.seller.vatNotice}</p> : null}
 
         {invoice.paidAt ? (
           <p className="mt-1">

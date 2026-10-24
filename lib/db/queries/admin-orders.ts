@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db/client'
 import { availableActions, needsFulfilment } from '@/lib/domain/fulfilment'
 import type { FulfilmentAction } from '@/lib/domain/fulfilment'
 import { readPostalAddress, formatAddressLines } from '@/lib/domain/address'
+import { WITHDRAWAL_REASON } from '@/lib/shop/withdrawal'
 
 /**
  * Les commandes à expédier, vues du côté de la boutique.
@@ -65,6 +66,16 @@ const fulfilmentOrderSelect = {
     orderBy: { createdAt: 'desc' },
     take: 1,
   },
+  // La PREMIÈRE rétractation déclarée : c'est elle qui fait courir le délai de
+  // remboursement. Lue ici parce que cet écran est la file des colis à
+  // préparer — et qu'un colis rétracté avant son départ ne doit pas partir
+  // sans qu'on ait répondu.
+  returns: {
+    where: { reason: WITHDRAWAL_REASON },
+    select: { requestedAt: true },
+    orderBy: { requestedAt: 'asc' },
+    take: 1,
+  },
 } satisfies Prisma.OrderSelect
 
 type FulfilmentOrderRow = Prisma.OrderGetPayload<{
@@ -93,6 +104,8 @@ export interface AdminOrderEntry {
   /** Les gestes possibles depuis l'état courant — jamais devinés dans la vue. */
   actions: FulfilmentAction[]
   tracking: { number: string | null; url: string | null } | null
+  /** Date de la rétractation en ligne, s'il y en a une. */
+  withdrawalRequestedAt: Date | null
 }
 
 function toEntry(row: FulfilmentOrderRow): AdminOrderEntry {
@@ -125,6 +138,7 @@ function toEntry(row: FulfilmentOrderRow): AdminOrderEntry {
     tracking: shipment
       ? { number: shipment.trackingNumber, url: shipment.trackingUrl }
       : null,
+    withdrawalRequestedAt: row.returns[0]?.requestedAt ?? null,
   }
 }
 
@@ -146,9 +160,9 @@ const PENDING_STATUSES = Object.values(OrderStatus).filter(needsFulfilment)
  * commande — c'est un geste rare, et l'imposer dans cette file la remplirait de
  * lignes sur lesquelles il n'y a rien à faire.
  */
-export async function listOrdersToFulfil(
-  { limit = 100 }: { limit?: number } = {},
-): Promise<AdminOrderEntry[]> {
+export async function listOrdersToFulfil({
+  limit = 100,
+}: { limit?: number } = {}): Promise<AdminOrderEntry[]> {
   const rows = await prisma.order.findMany({
     where: { status: { in: [...PENDING_STATUSES] } },
     // La plus ancienne d'abord. Voir l'en-tête.
@@ -183,5 +197,7 @@ export async function getOrderForFulfilment(
 
 /** Combien de commandes attendent d'être expédiées. Sert au tableau de bord. */
 export async function countOrdersToFulfil(): Promise<number> {
-  return prisma.order.count({ where: { status: { in: [...PENDING_STATUSES] } } })
+  return prisma.order.count({
+    where: { status: { in: [...PENDING_STATUSES] } },
+  })
 }

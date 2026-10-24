@@ -2,7 +2,7 @@ import 'server-only'
 
 import { findMissingSettings, getSetting } from '@/lib/config/settings'
 import { areTermsPublished } from '@/lib/config/pages'
-import { hasLegalIdentity, hasMediator } from '@/lib/config/site'
+import { missingLegalKeys, missingMediatorKeys } from '@/lib/config/site'
 import { missingStripeKeys } from '@/lib/payments/stripe'
 import { isEmailConfigured, usesTestSender } from '@/lib/providers/email/send'
 import { isStorageConfigured } from '@/lib/providers/storage'
@@ -90,6 +90,8 @@ export async function lireEtatMiseEnService(): Promise<EtatMiseEnService> {
   ])
 
   const clesStripeAbsentes = missingStripeKeys()
+  const identiteAbsente = missingLegalKeys()
+  const mediateurAbsent = missingMediatorKeys()
 
   const points: PointMiseEnService[] = [
     /*
@@ -140,8 +142,13 @@ export async function lireEtatMiseEnService(): Promise<EtatMiseEnService> {
         en préparation.
       */
       cle: 'legal',
-      pret: hasLegalIdentity(),
+      pret: identiteAbsente.length === 0,
       bloquant: true,
+      // Neuf variables désormais, pour une société : sans leurs noms, on
+      // chercherait laquelle manque en relisant la documentation.
+      ...(identiteAbsente.length > 0
+        ? { detail: identiteAbsente.join(', ') }
+        : {}),
     },
     {
       cle: 'terms',
@@ -153,8 +160,11 @@ export async function lireEtatMiseEnService(): Promise<EtatMiseEnService> {
       // code de la consommation), mais il ne bloque aucun mécanisme : la
       // boutique encaisserait sans lui. On le dit sans mentir sur sa nature.
       cle: 'mediator',
-      pret: hasMediator(),
+      pret: mediateurAbsent.length === 0,
       bloquant: false,
+      ...(mediateurAbsent.length > 0
+        ? { detail: mediateurAbsent.join(', ') }
+        : {}),
     },
     {
       // Non bloquant au sens strict — une commande s'enregistre sans e-mail —

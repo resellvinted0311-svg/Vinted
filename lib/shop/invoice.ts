@@ -2,7 +2,7 @@ import 'server-only'
 
 import type { Prisma } from '@prisma/client'
 import { readPostalAddress, type PostalAddress } from '@/lib/domain/address'
-import { LEGAL, SITE, hasLegalIdentity } from '@/lib/config/site'
+import { LEGAL, SITE, hasLegalIdentity, rcsMention } from '@/lib/config/site'
 
 /**
  * Facturation.
@@ -47,8 +47,9 @@ const INVOICE_DIGITS = 6
 export class LegalIdentityMissingError extends Error {
   constructor() {
     super(
-      'Identité légale incomplète : une facture ne peut pas être émise sans ' +
-        'dénomination, SIRET et adresse.',
+      'Identité légale incomplète : une facture ne peut pas être émise ' +
+        'sans dénomination, forme et capital, SIRET et RCS, ni adresse du ' +
+        'siège.',
     )
     this.name = 'LegalIdentityMissingError'
   }
@@ -120,8 +121,19 @@ export interface Invoice {
 
   seller: {
     name: string
+    /**
+     * « SAS au capital de 1 000 € ». Mention exigée sur la facture d'une
+     * société (code de commerce, art. R123-237 ; F31808).
+     */
+    legalForm: string
+    shareCapital: string
+    /** Adresse du SIÈGE SOCIAL. */
     address: string
     siret: string
+    /** « RCS <ville du greffe> <SIREN> ». */
+    rcs: string
+    /** Numéro de TVA intracommunautaire, s'il existe. */
+    vatNumber: string | null
     email: string
     /** Mention obligatoire en franchise en base de TVA. */
     vatNotice: string | null
@@ -188,8 +200,12 @@ export function buildInvoice(order: InvoiceSource): Invoice {
 
     seller: {
       name: LEGAL.companyName,
+      legalForm: LEGAL.legalForm,
+      shareCapital: LEGAL.shareCapital,
       address: LEGAL.address,
       siret: LEGAL.siret,
+      rcs: rcsMention(),
+      vatNumber: LEGAL.vatNumber || null,
       email: LEGAL.email,
       vatNotice: LEGAL.vatExempt ? LEGAL.vatExemptionNotice : null,
     },

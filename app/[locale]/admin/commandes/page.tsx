@@ -8,6 +8,7 @@ import { handleAdminAuthError } from '@/lib/auth/admin-guard'
 import { listOrdersToFulfil } from '@/lib/db/queries/admin-orders'
 import { formatPrice, formatDate } from '@/lib/utils/format'
 import { PAGE_PRIVEE } from '@/lib/seo/metadata'
+import { Notice } from '@/components/ui/notice'
 
 export const dynamic = 'force-dynamic'
 
@@ -97,6 +98,16 @@ export default async function AdminOrdersPage({
                 La date de paiement, pas celle de création : c'est à partir
                 d'elle que l'attente court, et c'est elle qui ordonne la file.
               */}
+              {order.withdrawalRequestedAt ? (
+                <Notice tone="warning" role="status">
+                  <p>
+                    {t('withdrawalRequested', {
+                      date: formatDate(order.withdrawalRequestedAt, locale),
+                    })}
+                  </p>
+                </Notice>
+              ) : null}
+
               {order.paidAt ? (
                 <p className="text-xs text-muted">
                   {t('paidOn', { date: formatDate(order.paidAt, locale) })}

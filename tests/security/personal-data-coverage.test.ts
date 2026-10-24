@@ -152,11 +152,19 @@ const MODELES_PERSONNELS: Record<string, Entree> = {
     statut: 'pas-encore-ecrit',
     aTrancher: 'texte libre écrit par une personne, et pièces jointes',
   },
+  /**
+   * Branché par la rétractation en ligne, et tranché à ce moment-là.
+   *
+   * La question posée ici — « suit-il la durée comptable de la commande, ou
+   * une durée propre au litige ? » — a reçu sa réponse : la commande. La
+   * déclaration est le point de départ d'un remboursement, donc d'une
+   * écriture ; elle s'efface avec l'identité de la commande et part avec
+   * elle. Le texte libre (`comment`) n'est écrit par aucun chemin à ce jour.
+   */
   ReturnRequest: {
-    statut: 'pas-encore-ecrit',
-    aTrancher:
-      'texte libre. Suit-il la durée comptable de la commande, ou une durée ' +
-      'propre au litige ?',
+    statut: 'declare',
+    sousLaCle: 'withdrawals',
+    ecriture: 'directe',
   },
   Review: {
     statut: 'pas-encore-ecrit',
@@ -193,7 +201,10 @@ const MODELES_PERSONNELS: Record<string, Entree> = {
 
 /** Les modèles réellement présents dans le schéma. */
 function modelesDuSchema(): string[] {
-  const schema = readFileSync(join(process.cwd(), 'prisma', 'schema.prisma'), 'utf8')
+  const schema = readFileSync(
+    join(process.cwd(), 'prisma', 'schema.prisma'),
+    'utf8',
+  )
   return [...schema.matchAll(/^model\s+(\w+)\s*\{/gm)].map((m) => m[1]!)
 }
 
@@ -234,7 +245,10 @@ function accesseur(modele: string): string {
  * l'article 15 lit `review` sans que cela fasse de la boutique un traitement
  * d'avis clients. Et `delete` non plus : c'est même l'inverse.
  */
-function estEcrit(modele: string, sources: { file: string; code: string }[]): string[] {
+function estEcrit(
+  modele: string,
+  sources: { file: string; code: string }[],
+): string[] {
   const nom = accesseur(modele)
   const motif = new RegExp(
     `\\b(?:prisma|tx|client|db)\\s*\\.\\s*${nom}\\s*\\.\\s*(?:create|createMany|upsert|update|updateMany)\\b`,
@@ -254,7 +268,9 @@ describe('couverture des données personnelles', () => {
     // couvrirait un modèle qui n'existe plus tout en laissant le vrai à
     // découvert.
     const duSchema = new Set(modelesDuSchema())
-    const inconnus = Object.keys(MODELES_PERSONNELS).filter((m) => !duSchema.has(m))
+    const inconnus = Object.keys(MODELES_PERSONNELS).filter(
+      (m) => !duSchema.has(m),
+    )
 
     expect(
       inconnus,

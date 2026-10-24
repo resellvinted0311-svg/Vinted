@@ -232,6 +232,34 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
       'd’effacement du compte. Une durée propre, plus courte, reste à fixer.',
   },
   {
+    /**
+     * La rétractation en ligne — « Renoncer au contrat ici ».
+     *
+     * ---------------------------------------------------------------------
+     * Pourquoi une obligation légale, et pourquoi la durée de la commande
+     * ---------------------------------------------------------------------
+     * La fonction est imposée (directive 2011/83, art. 11 bis ; L221-21 du
+     * code de la consommation) : on ne la propose pas, on la doit. Ce qu'elle
+     * conserve — le nom déclaré et l'instant de la déclaration — est la preuve
+     * qu'un droit a été exercé, et le point de départ d'un remboursement, donc
+     * d'une écriture comptable. Elle vit et meurt avec la commande à laquelle
+     * elle se rattache : effacée avec son identité, purgée avec elle.
+     *
+     * Une déclaration qui ne correspond à aucune commande n'est PAS conservée
+     * (voir `lib/shop/withdrawal.ts`) : ce registre ne couvre que des lignes
+     * rattachées à un contrat réel.
+     */
+    key: 'withdrawals',
+    tables: ['ReturnRequest'],
+    basis: 'legal-obligation',
+    retentionDays: ACCOUNTING_RETENTION_DAYS,
+    retentionReason:
+      'Preuve de l’exercice du droit de rétractation et point de départ du ' +
+      'remboursement : suit la commande, pièce comptable conservée dix ans ' +
+      '(article L123-22 du code de commerce). Le nom déclaré s’efface avec ' +
+      'l’identité de la commande.',
+  },
+  {
     // Déclaré à part, parce que la justification n'est PAS la même. Confondre
     // les deux revenait à couvrir un abandon par une obligation comptable qui
     // ne le concerne pas — et à annoncer dix ans là où rien ne les fonde.

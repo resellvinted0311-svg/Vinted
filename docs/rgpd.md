@@ -497,7 +497,6 @@ d'écriture aujourd'hui.
 | Modèle | Données personnelles qu'il portera | À trancher avant de le brancher |
 | --- | --- | --- |
 | `Conversation`, `Message` | `guestEmail`, `body` (texte libre), `attachments` | Durée de conservation d'une conversation, sort des pièces jointes, et ce qu'il advient des messages à l'effacement du compte |
-| `ReturnRequest` | `comment` (texte libre) | Suit-il la durée comptable de la commande, ou une durée propre au litige ? |
 | `ShipmentEvent` | `raw` (réponse brute du transporteur) | Le `raw` d'un transporteur contient nom et adresse : à caviarder à l'écriture, comme les événements de paiement. Aucun transporteur n'est branché, donc rien ne l'écrit encore |
 | `Review` | `rating`, `body` (texte libre) | Un avis publié survit-il à l'effacement du compte, sous pseudonyme ? Aujourd'hui l'effacement l'emporte |
 | `SizeAlert` | Critères de recherche, `maxPriceCents` | Effacée avec le compte. Reste à inscrire au registre le jour où elle notifie |
@@ -537,6 +536,16 @@ faille, c'est une déclaration inexacte — exactement dans le sens que ce docum
 reproche aux politiques rédigées à la main. `Address` a été retirée de l'entrée
 « orders » ; elle y reviendra le jour où le carnet existera, et le test tombera
 pour l'exiger.
+
+`ReturnRequest` a quitté ce tableau avec la rétractation en ligne (« Renoncer
+au contrat ici », obligatoire depuis le 19 juin 2026). La question qu'il
+posait — durée comptable de la commande, ou durée propre au litige ? — est
+tranchée : la commande. La déclaration est le point de départ d'un
+remboursement, donc d'une écriture. Entrée `withdrawals` au registre ; nom
+déclaré et date dans l'export ; nom effacé avec l'identité de la commande, à la
+demande comme à l'échéance (`stripWithdrawalNames`). Une déclaration qui ne
+correspond à aucune commande n'est pas conservée. Le texte libre `comment`
+n'est écrit par aucun chemin.
 
 `Shipment` a quitté ce tableau : elle est écrite depuis que l'expédition
 existe. Son volet est complet — entrée `shipments` au registre, numéro de suivi

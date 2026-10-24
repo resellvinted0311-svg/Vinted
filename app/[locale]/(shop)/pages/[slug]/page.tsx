@@ -1,12 +1,17 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { Link } from '@/lib/i18n/navigation'
 import {
+  HOSTING,
   LEGAL,
   SITE,
   hasLegalIdentity,
   hasMediator,
   isNegotiationEnabled,
+  missingLegalKeys,
+  missingMediatorKeys,
+  rcsMention,
 } from '@/lib/config/site'
 import {
   isPlaceholderPage,
@@ -191,6 +196,42 @@ function sectionsCgv() {
   )
 }
 
+/**
+ * Les coordonnées du médiateur, ou l'aveu qu'elles manquent.
+ *
+ * Écrites aux DEUX endroits où la loi les veut : les mentions légales et les
+ * conditions de vente elles-mêmes. Les CGV se contentaient d'y renvoyer ; or
+ * le texte demande que le nom, l'adresse postale et le site du médiateur
+ * figurent « sur son site internet ainsi que sur ses documents commerciaux
+ * (CGV et bons de commande) » (F33338, vérifiée le 16 octobre 2026). Un seul
+ * rendu pour les deux, pour qu'ils ne divergent jamais.
+ */
+function Mediateur() {
+  if (!hasMediator()) {
+    return (
+      <span className="text-warning">
+        Adhésion à un médiateur de la consommation non encore renseignée (manque
+        : {missingMediatorKeys().join(', ')}). Elle est obligatoire avant toute
+        vente.
+      </span>
+    )
+  }
+
+  return (
+    <>
+      {LEGAL.mediatorName}, {LEGAL.mediatorAddress} —{' '}
+      <a
+        href={LEGAL.mediatorUrl}
+        className="underline underline-offset-4"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {LEGAL.mediatorUrl}
+      </a>
+    </>
+  )
+}
+
 export default async function StaticPage({ params }: { params: Params }) {
   const { locale, slug } = await params
   setRequestLocale(locale)
@@ -242,17 +283,50 @@ export default async function StaticPage({ params }: { params: Params }) {
 
         {slug === 'mentions-legales' ? (
           hasLegalIdentity() ? (
+            /*
+              L'ordre suit celui de la loi (LCEN, art. 1-1 I) : l'éditeur et
+              son immatriculation, le directeur de la publication, puis
+              l'hébergeur. Chaque ligne est une mention exigée — aucune n'est
+              là pour faire sérieux.
+            */
             <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
               <dt className="text-muted">Éditeur</dt>
-              <dd>{LEGAL.companyName}</dd>
-              <dt className="text-muted">SIRET</dt>
-              <dd data-numeric>{LEGAL.siret}</dd>
-              <dt className="text-muted">Adresse</dt>
+              <dd>
+                {LEGAL.companyName}, {LEGAL.legalForm} au capital de{' '}
+                {LEGAL.shareCapital}
+              </dd>
+              <dt className="text-muted">Siège social</dt>
               <dd>{LEGAL.address}</dd>
+              <dt className="text-muted">Immatriculation</dt>
+              <dd data-numeric>
+                {rcsMention()} — SIRET {LEGAL.siret}
+              </dd>
+              {LEGAL.vatNumber ? (
+                <>
+                  <dt className="text-muted">TVA intracommunautaire</dt>
+                  <dd data-numeric>{LEGAL.vatNumber}</dd>
+                </>
+              ) : null}
+              <dt className="text-muted">Téléphone</dt>
+              <dd data-numeric>
+                <a
+                  href={`tel:${LEGAL.phone.replace(/[^\d+]/g, '')}`}
+                  className="underline underline-offset-4"
+                >
+                  {LEGAL.phone}
+                </a>
+              </dd>
               <dt className="text-muted">Contact</dt>
               <dd>{LEGAL.email}</dd>
+              <dt className="text-muted">Directeur de la publication</dt>
+              <dd>{LEGAL.publicationDirector}</dd>
               <dt className="text-muted">TVA</dt>
               <dd>{LEGAL.vatExemptionNotice}</dd>
+              <dt className="text-muted">Hébergeur</dt>
+              <dd>
+                {HOSTING.name}, {HOSTING.address} — {HOSTING.phone} —{' '}
+                {HOSTING.url}
+              </dd>
               {/* Le médiateur est TOUJOURS affiché, y compris absent.
                   L'omettre en silence laissait publier des mentions légales
                   présentées comme complètes alors qu'il leur manquait un
@@ -260,24 +334,14 @@ export default async function StaticPage({ params }: { params: Params }) {
                   consommation). */}
               <dt className="text-muted">{t('mediator')}</dt>
               <dd>
-                {hasMediator() ? (
-                  <>
-                    {LEGAL.mediatorName}
-                    {LEGAL.mediatorUrl ? ` — ${LEGAL.mediatorUrl}` : ''}
-                  </>
-                ) : (
-                  <span className="text-warning">
-                    Adhésion à un médiateur de la consommation non encore
-                    renseignée. Elle est obligatoire avant toute vente.
-                  </span>
-                )}
+                <Mediateur />
               </dd>
             </dl>
           ) : (
             <p className="rounded-card border-[1.5px] border-warning bg-paper-raised p-4 text-muted">
               Les mentions légales seront publiées dès que l’identité de
-              l’entreprise sera renseignée (LEGAL_COMPANY_NAME, LEGAL_SIRET,
-              LEGAL_ADDRESS, LEGAL_EMAIL). Aucune valeur n’est inventée ici.
+              l’entreprise sera complète. Il manque :{' '}
+              {missingLegalKeys().join(', ')}. Aucune valeur n’est inventée ici.
             </p>
           )
         ) : null}
@@ -285,6 +349,17 @@ export default async function StaticPage({ params }: { params: Params }) {
         {slug === 'retours' ? (
           <>
             <p>{t('withdrawalNotice')}</p>
+            {/* La voie la plus simple d'abord : en ligne, sans rien recopier,
+                avec un accusé de réception immédiat. Le formulaire type reste
+                plus bas pour qui préfère l'écrit. */}
+            <p>
+              <Link
+                href="/retractation"
+                className="text-ink underline underline-offset-4"
+              >
+                {t('withdrawOnline')}
+              </Link>
+            </p>
             <p className="text-muted">
               Le remboursement comprend les frais de livraison aller au tarif
               standard. Les frais de retour restent à la charge de l’acheteur,
@@ -362,6 +437,19 @@ export default async function StaticPage({ params }: { params: Params }) {
                 </a>
                 <br />
                 <br />
+                {/* Le téléphone est une mention obligatoire d'une société
+                    (LCEN, art. 1-1 I 2°) : il figure là où l'on cherche à
+                    joindre la boutique, pas seulement dans les mentions. */}
+                <span className="text-muted">{t('contactPhoneLabel')}</span>
+                <br />
+                <a
+                  href={`tel:${LEGAL.phone.replace(/[^\d+]/g, '')}`}
+                  className="underline underline-offset-4"
+                >
+                  {LEGAL.phone}
+                </a>
+                <br />
+                <br />
                 <span className="text-muted">{t('contactAddressLabel')}</span>
                 <br />
                 {LEGAL.companyName}
@@ -405,6 +493,28 @@ export default async function StaticPage({ params }: { params: Params }) {
                       reservation: reglages?.reservationTtlMinutes ?? 0,
                     })}
                   </p>
+
+                  {/*
+                    Le vendeur est NOMMÉ dans le contrat, pas seulement
+                    désigné par renvoi : ses coordonnées font partie des
+                    informations à donner avant la commande (L111-1 et L221-5
+                    du code de la consommation), téléphone compris depuis la
+                    directive 2019/2161. Un renvoi vers une autre page ne vaut
+                    que tant que cette page est complète.
+                  */}
+                  {cle === 'seller' ? (
+                    <p className="text-muted">
+                      {LEGAL.companyName}, {LEGAL.legalForm} au capital de{' '}
+                      {LEGAL.shareCapital} — {LEGAL.address} — {rcsMention()} —{' '}
+                      {LEGAL.phone} — {LEGAL.email}
+                    </p>
+                  ) : null}
+
+                  {cle === 'claims' ? (
+                    <p className="text-muted">
+                      {t('mediator')} : <Mediateur />
+                    </p>
+                  ) : null}
                 </section>
               ))}
             </>
@@ -417,10 +527,10 @@ export default async function StaticPage({ params }: { params: Params }) {
             */
             <p className="rounded-card border-[1.5px] border-warning bg-paper-raised p-4 text-muted">
               Les conditions générales sont rédigées, mais elles ne sont pas
-              publiées tant que l’identité de l’entreprise n’est pas renseignée
-              (LEGAL_COMPANY_NAME, LEGAL_SIRET, LEGAL_ADDRESS, LEGAL_EMAIL) : un
-              contrat de vente désigne un vendeur. Aucune acceptation n’est
-              enregistrée d’ici là.
+              publiées tant que l’identité de l’entreprise n’est pas complète
+              (il manque : {missingLegalKeys().join(', ')}) : un contrat de
+              vente désigne un vendeur. Aucune acceptation n’est enregistrée
+              d’ici là.
             </p>
           )
         ) : null}

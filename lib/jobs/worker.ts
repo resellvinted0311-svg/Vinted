@@ -27,6 +27,12 @@ import {
   type OfferEmailData,
 } from '@/lib/providers/email/offer'
 import { readOfferEmailData } from '@/lib/shop/offers'
+import {
+  readWithdrawalEmailData,
+  sendShopWithdrawalNotice,
+  sendWithdrawalAcknowledgement,
+  type WithdrawalEmailData,
+} from '@/lib/providers/email/withdrawal'
 import { fetchArticleImages } from '@/lib/sync/images'
 import { runSyncNotify } from '@/lib/sync/webhook'
 
@@ -53,6 +59,9 @@ import { runSyncNotify } from '@/lib/sync/webhook'
  */
 
 const orderJobPayload = z.object({ orderId: z.string().min(1).max(64) })
+const withdrawalJobPayload = z.object({
+  returnRequestId: z.string().min(1).max(64),
+})
 const offerJobPayload = z.object({ offerId: z.string().min(1).max(64) })
 
 /**
@@ -284,6 +293,12 @@ async function runOne(job: JobRecord): Promise<string | null> {
     case 'auth.password-reset':
       await runPasswordResetEmail(job)
       return null
+    case 'withdrawal.acknowledge':
+      await runWithdrawalEmail(job, sendWithdrawalAcknowledgement)
+      return null
+    case 'withdrawal.notify-shop':
+      await runWithdrawalEmail(job, sendShopWithdrawalNotice)
+      return null
     case 'sync.notify':
       // Une pièce effacée ou détachée de l'application renvoie `false` : le
       // travail est terminé, pas en échec. Tout le reste — application
@@ -384,6 +399,30 @@ async function runPasswordResetEmail(job: JobRecord): Promise<void> {
     url: request.url,
     expires: request.expiresAt,
   })
+}
+
+/**
+ * Les deux messages d'une rétractation en ligne.
+ *
+ * Même patron que les e-mails de commande : la charge utile ne porte qu'un
+ * identifiant de déclaration, le nom et l'adresse se relisent à l'exécution.
+ */
+async function runWithdrawalEmail(
+  job: JobRecord,
+  send: (data: WithdrawalEmailData) => Promise<void>,
+): Promise<void> {
+  const parsed = withdrawalJobPayload.safeParse(job.payload)
+  if (!parsed.success) {
+    throw new Error(`Charge utile invalide pour ${job.type}`)
+  }
+
+  const data = await readWithdrawalEmailData(parsed.data.returnRequestId)
+
+  // Déclaration disparue — commande effacée entre-temps : rien à envoyer, et
+  // rien à réessayer.
+  if (!data) return
+
+  await send(data)
 }
 
 async function runOrderEmail(

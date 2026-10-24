@@ -110,6 +110,24 @@ async function stripShipmentTracking(
   return result.count
 }
 
+/**
+ * Retire le nom déclaré des rétractations d'un ensemble de commandes.
+ *
+ * La déclaration reste — sa date est le point de départ d'un remboursement,
+ * donc d'une écriture comptable — mais le nom que la personne a saisi part
+ * avec l'identité de la commande. Le garder serait effacer le nom de
+ * facturation d'un côté et en conserver une copie de l'autre.
+ */
+async function stripWithdrawalNames(
+  tx: Prisma.TransactionClient,
+  where: Prisma.OrderWhereInput,
+): Promise<void> {
+  await tx.returnRequest.updateMany({
+    where: { order: where, declaredName: { not: null } },
+    data: { declaredName: null },
+  })
+}
+
 async function stripPhonesFromOrders(
   tx: Prisma.TransactionClient,
   where: Prisma.OrderWhereInput,
@@ -175,7 +193,10 @@ async function deleteUnlinkedRows(
   // Sont épargnées celles qui justifient le prix d'une facture : le montant
   // porté sur une pièce comptable doit rester explicable.
   await tx.offer.deleteMany({
-    where: { userId, orderItems: { none: { order: { paidAt: { not: null } } } } },
+    where: {
+      userId,
+      orderItems: { none: { order: { paidAt: { not: null } } } },
+    },
   })
 
   if (email) {
@@ -345,6 +366,8 @@ export async function anonymizeUser(
     // destination du colis : le laisser reviendrait à effacer l'adresse d'un
     // côté et à en garder la clé de l'autre.
     await stripShipmentTracking(tx, ownedIds)
+
+    await stripWithdrawalNames(tx, ownedIds)
 
     await tx.user.update({
       where: { id: userId },
@@ -585,6 +608,7 @@ export async function anonymizeExpiredOrders(
     // PRÉPARATION. Un tunnel abandonné n'a donc jamais d'expédition — l'écrire
     // quand même y serait du code que rien ne peut atteindre.
     await stripShipmentTracking(tx, { id: { in: expired.map((o) => o.id) } })
+    await stripWithdrawalNames(tx, { id: { in: expired.map((o) => o.id) } })
   })
 
   return expired.length

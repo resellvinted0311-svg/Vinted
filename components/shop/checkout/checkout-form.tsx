@@ -296,6 +296,11 @@ export function CheckoutForm({
               Le montant du bouton vient du devis, pas d'une addition écrite
               ici. Tant que le port est inconnu, le bouton ne promet aucun
               montant — il ne dit pas « 0,00 € », il ne dit rien.
+
+              Le libellé, lui, est imposé : le bouton qui confirme la commande
+              doit porter « commande avec obligation de paiement » ou une
+              formule sans ambiguïté (L221-14 du code de la consommation,
+              F23455). « Commander » seul ne disait pas qu'on s'engage à payer.
             */}
             {quote && selection
               ? t('placeOrder', {

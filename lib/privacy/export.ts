@@ -147,6 +147,17 @@ export async function exportPersonalData(
               unitPriceCents: true,
             },
           },
+          // Les rétractations déclarées, avec le nom tel qu'il a été saisi :
+          // c'est une donnée que la personne nous a confiée, elle doit figurer
+          // dans la copie qu'on lui remet.
+          returns: {
+            select: {
+              reason: true,
+              status: true,
+              declaredName: true,
+              requestedAt: true,
+            },
+          },
           /**
            * L'expédition, quand elle a eu lieu.
            *

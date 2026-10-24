@@ -213,6 +213,33 @@ describe('effacement d’un compte', () => {
     expect(order.customerNote).toBeNull()
   })
 
+  it('efface le nom déclaré d’une rétractation, et garde sa date', async () => {
+    // La déclaration est le point de départ d'un remboursement : elle reste.
+    // Le nom que la personne y a saisi, lui, part avec l'identité de la
+    // commande — sinon on effacerait le nom de facturation d'un côté pour en
+    // garder une copie de l'autre.
+    const user = await makeUser('retractation')
+    const order = await makeOrder(user.id, 'cmd-retractation')
+    const demande = await prisma.returnRequest.create({
+      data: {
+        orderId: order.id,
+        orderItemIds: [],
+        reason: 'withdrawal',
+        declaredName: 'Camille Exemple',
+      },
+      select: { id: true, requestedAt: true },
+    })
+
+    await eraseAccount(user.id)
+
+    const apres = await prisma.returnRequest.findUniqueOrThrow({
+      where: { id: demande.id },
+      select: { declaredName: true, requestedAt: true },
+    })
+    expect(apres.declaredName).toBeNull()
+    expect(apres.requestedAt).toEqual(demande.requestedAt)
+  })
+
   it('ne laisse aucune donnée personnelle sur la ligne conservée', async () => {
     const user = await makeUser('identite')
     await makeOrder(user.id, 'cmd-2')

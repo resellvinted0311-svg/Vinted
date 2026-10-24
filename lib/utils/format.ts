@@ -23,7 +23,9 @@ export function discountPercent(
   comparePriceCents: number | null,
 ): number | null {
   if (!comparePriceCents || comparePriceCents <= priceCents) return null
-  return Math.round(((comparePriceCents - priceCents) / comparePriceCents) * 100)
+  return Math.round(
+    ((comparePriceCents - priceCents) / comparePriceCents) * 100,
+  )
 }
 
 export function formatDate(date: Date, locale: string): string {
@@ -32,6 +34,23 @@ export function formatDate(date: Date, locale: string): string {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: 'Europe/Paris',
+  }).format(date)
+}
+
+/**
+ * Date ET heure, à l'heure de Paris.
+ *
+ * Pour les rares écrits où l'heure fait foi — l'accusé de réception d'une
+ * rétractation doit dire quand elle a été reçue, pas seulement quel jour.
+ * Fixée sur Paris, comme `formatDate` : c'est l'heure du vendeur, la même pour
+ * toutes les langues, et le serveur ne tourne pas forcément dans ce fuseau.
+ */
+export function formatDateTime(date: Date, locale: string): string {
+  const tag = localeTags[locale as Locale] ?? localeTags.fr
+  return new Intl.DateTimeFormat(tag, {
+    dateStyle: 'long',
+    timeStyle: 'short',
     timeZone: 'Europe/Paris',
   }).format(date)
 }
