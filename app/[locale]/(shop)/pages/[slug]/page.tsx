@@ -1,7 +1,13 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
-import { LEGAL, SITE, hasLegalIdentity, hasMediator } from '@/lib/config/site'
+import {
+  LEGAL,
+  SITE,
+  hasLegalIdentity,
+  hasMediator,
+  isNegotiationEnabled,
+} from '@/lib/config/site'
 import {
   isPlaceholderPage,
   isPageSlug,
@@ -164,6 +170,26 @@ const SECTIONS_CGV = [
   'data',
   'law',
 ] as const
+
+/**
+ * Les sections réellement publiées, numérotées à l'affichage.
+ *
+ * La section des propositions de prix décrivait un mécanisme que la boutique
+ * n'offre pas : la négociation est éteinte. Un contrat qui annonce une faculté
+ * que l'acheteur ne trouve nulle part est un contrat qui se contredit — et
+ * c'est le texte, pas le site, que l'on oppose en cas de litige.
+ *
+ * Le numéro vient du rang, et non plus du titre traduit : retirer une section
+ * laissait sinon un trou dans la numérotation (4, puis 6), dans huit langues.
+ *
+ * Le rendu est prérendu au build : rallumer la négociation demande un
+ * redéploiement, comme pour les fiches.
+ */
+function sectionsCgv() {
+  return SECTIONS_CGV.filter(
+    (cle) => cle !== 'offers' || isNegotiationEnabled(),
+  )
+}
 
 export default async function StaticPage({ params }: { params: Params }) {
   const { locale, slug } = await params
@@ -367,9 +393,11 @@ export default async function StaticPage({ params }: { params: Params }) {
 
               <p>{tl('terms.intro')}</p>
 
-              {SECTIONS_CGV.map((cle) => (
+              {sectionsCgv().map((cle, rang) => (
                 <section key={cle} className="mt-4 flex flex-col gap-2">
-                  <h2 className="text-lg">{tl(`terms.${cle}Title`)}</h2>
+                  <h2 className="text-lg">
+                    {rang + 1}. {tl(`terms.${cle}Title`)}
+                  </h2>
                   <p className="text-muted">
                     {tl(`terms.${cle}Body`, {
                       response: reglages?.offerResponseHours ?? 0,
