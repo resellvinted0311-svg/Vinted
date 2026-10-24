@@ -3,6 +3,7 @@ import 'server-only'
 import { createTranslator } from 'next-intl'
 import { SITE, LEGAL } from '@/lib/config/site'
 import { loadMessages } from '@/lib/i18n/messages'
+import { isSyncOutboundConfigured } from '@/lib/sync/outbound'
 import { formatPrice } from '@/lib/utils/format'
 import { sendEmail, type EmailMessage } from './send'
 
@@ -201,6 +202,24 @@ export function buildShopNotification(data: OrderEmailData): EmailMessage {
     ...addressLines(data.shipping),
     '',
     `Contact : ${data.email}`,
+    /*
+      Sans remontée configurée, l'application de gestion ignore la vente : la
+      pièce y reste « en vente », et son annonce Vinted avec elle. La même
+      pièce peut alors partir deux fois — une ici, une là-bas — et l'une des
+      deux acheteuses ne sera jamais livrée.
+
+      Le rappel vit dans CET avis parce que c'est le seul message que la
+      boutique lit au moment où la pièce part. Il disparaît de lui-même le
+      jour où la remontée est branchée.
+    */
+    ...(isSyncOutboundConfigured()
+      ? []
+      : [
+          '',
+          'À faire maintenant : retirez ces pièces de Vinted et marquez-les',
+          'vendues dans SuiviVinted. Ni l’un ni l’autre n’est prévenu',
+          'automatiquement d’une vente faite sur la boutique.',
+        ]),
   ].join('\n')
 
   return {
@@ -214,11 +233,15 @@ export function buildShopNotification(data: OrderEmailData): EmailMessage {
   }
 }
 
-export async function sendOrderConfirmation(data: OrderEmailData): Promise<void> {
+export async function sendOrderConfirmation(
+  data: OrderEmailData,
+): Promise<void> {
   await sendEmail(await buildOrderConfirmation(data))
 }
 
-export async function sendShopNotification(data: OrderEmailData): Promise<void> {
+export async function sendShopNotification(
+  data: OrderEmailData,
+): Promise<void> {
   if (!LEGAL.email) {
     // Sans adresse de boutique renseignée, on ne devine pas un destinataire.
     throw new Error(
@@ -344,6 +367,8 @@ export async function buildShipmentNotice(
   }
 }
 
-export async function sendShipmentNotice(data: ShipmentEmailData): Promise<void> {
+export async function sendShipmentNotice(
+  data: ShipmentEmailData,
+): Promise<void> {
   await sendEmail(await buildShipmentNotice(data))
 }

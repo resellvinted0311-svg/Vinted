@@ -237,4 +237,40 @@ describe('avis à la boutique', () => {
     // Répondre à l'avis répond à l'acheteuse.
     expect(message.replyTo).toBe('acheteuse@exemple.fr')
   })
+
+  it('rappelle de retirer les pièces ailleurs tant que l’application n’est pas prévenue', () => {
+    /*
+      Le défaut visé : une pièce vendue ici reste « en vente » dans
+      l'application de gestion et sur Vinted. Sans ce rappel, rien ne
+      signalait qu'il fallait la retirer — et elle pouvait partir deux fois.
+    */
+    const sauvegarde = {
+      url: process.env.SYNC_WEBHOOK_URL,
+      secret: process.env.SYNC_WEBHOOK_SECRET,
+    }
+    const restaurer = () => {
+      for (const [nom, valeur] of [
+        ['SYNC_WEBHOOK_URL', sauvegarde.url],
+        ['SYNC_WEBHOOK_SECRET', sauvegarde.secret],
+      ] as const) {
+        if (valeur === undefined) delete process.env[nom]
+        else process.env[nom] = valeur
+      }
+    }
+
+    try {
+      delete process.env.SYNC_WEBHOOK_URL
+      delete process.env.SYNC_WEBHOOK_SECRET
+      expect(buildShopNotification(BASE).text).toContain('retirez ces pièces')
+
+      // Branchée, la remontée prévient l'application : le rappel se tait.
+      process.env.SYNC_WEBHOOK_URL = 'https://application.test/api/boutique'
+      process.env.SYNC_WEBHOOK_SECRET = 'secret-de-test'
+      expect(buildShopNotification(BASE).text).not.toContain(
+        'retirez ces pièces',
+      )
+    } finally {
+      restaurer()
+    }
+  })
 })

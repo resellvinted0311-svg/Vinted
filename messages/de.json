@@ -567,6 +567,7 @@
         "terms": "Die Allgemeinen Geschäftsbedingungen können nicht veröffentlicht werden: das Kästchen an der Kasse weist darauf hin, dass sie nicht bestehen",
         "mediator": "Es ist keine Verbraucherschlichtungsstelle angegeben, obwohl sie für einen französischen Online-Handel vorgeschrieben ist",
         "email": "Es wird keine E-Mail versandt: keine Bestätigung an die Käuferin, kein Hinweis auf ein zu packendes Paket",
+        "emailSender": "Die Absenderadresse (EMAIL_FROM) erreicht niemanden: Testdomain, Beispieldomain oder unlesbare Adresse. Sie muss auf Ihrer eigenen, bei Resend verifizierten Domain liegen",
         "storage": "Der Bilderhoster ist nicht eingerichtet: Stücke kommen ohne Bild an"
       }
     },

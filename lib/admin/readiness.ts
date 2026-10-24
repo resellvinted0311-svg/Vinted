@@ -4,7 +4,7 @@ import { findMissingSettings, getSetting } from '@/lib/config/settings'
 import { areTermsPublished } from '@/lib/config/pages'
 import { hasLegalIdentity, hasMediator } from '@/lib/config/site'
 import { missingStripeKeys } from '@/lib/payments/stripe'
-import { isEmailConfigured } from '@/lib/providers/email/send'
+import { isEmailConfigured, usesTestSender } from '@/lib/providers/email/send'
 import { isStorageConfigured } from '@/lib/providers/storage'
 
 /**
@@ -162,6 +162,14 @@ export async function lireEtatMiseEnService(): Promise<EtatMiseEnService> {
       // ni la boutique de ce qu'elle doit emballer.
       cle: 'email',
       pret: isEmailConfigured(),
+      bloquant: false,
+    },
+    {
+      // Les deux variables posées ne suffisent pas : avec l'adresse d'essai de
+      // Resend ou celle de `.env.example`, aucune acheteuse n'est jamais
+      // jointe, et le point précédent se croirait réglé.
+      cle: 'emailSender',
+      pret: !usesTestSender(),
       bloquant: false,
     },
     {

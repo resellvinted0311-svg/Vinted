@@ -111,6 +111,55 @@ describe('le paiement', () => {
   })
 })
 
+describe('l’adresse d’expédition', () => {
+  /*
+    Les deux variables de la messagerie posées, le point « email » se dit prêt.
+    Mais avec l'adresse d'essai de Resend, qui n'écrit qu'au titulaire du
+    compte, ou avec celle de `.env.example`, aucune acheteuse n'est jointe :
+    chaque confirmation échoue dans la file, et rien d'autre ne le dit.
+  */
+  async function avecExpediteur(valeur: string | undefined) {
+    const sauvegarde = process.env.EMAIL_FROM
+    if (valeur === undefined) delete process.env.EMAIL_FROM
+    else process.env.EMAIL_FROM = valeur
+    try {
+      return point(await lireEtatMiseEnService(), 'emailSender')
+    } finally {
+      if (sauvegarde === undefined) delete process.env.EMAIL_FROM
+      else process.env.EMAIL_FROM = sauvegarde
+    }
+  }
+
+  it('refuse le domaine d’essai et celui d’exemple, sous toutes leurs formes', async () => {
+    for (const adresse of [
+      'onboarding@resend.dev',
+      'Nina & Diego <onboarding@resend.dev>',
+      'Nina & Diego <bonjour@example.com>',
+      'bonjour@mail.EXAMPLE.org',
+      // Illisible : Resend la refuse de la même façon.
+      'Nina & Diego',
+    ]) {
+      expect((await avecExpediteur(adresse)).pret, adresse).toBe(false)
+    }
+  })
+
+  it('accepte une adresse sur un vrai domaine', async () => {
+    expect(
+      (await avecExpediteur('Nina & Diego <bonjour@ninaetdiego.fr>')).pret,
+    ).toBe(true)
+    // Un domaine qui CONTIENT « example » sans en être un n'est pas visé.
+    expect((await avecExpediteur('vente@monexample.com')).pret).toBe(true)
+  })
+
+  it('ne redit pas l’absence, déjà signalée par le point « email »', async () => {
+    expect((await avecExpediteur(undefined)).pret).toBe(true)
+  })
+
+  it('ne bloque pas la vente : une commande s’enregistre sans e-mail', async () => {
+    expect((await avecExpediteur('onboarding@resend.dev')).bloquant).toBe(false)
+  })
+})
+
 describe('ce qui empêche de vendre, et ce qui ampute seulement', () => {
   it('distingue les deux, sans les confondre', async () => {
     const etat = await lireEtatMiseEnService()

@@ -567,6 +567,7 @@
         "terms": "The terms of sale cannot be published: the checkout box states that they do not exist",
         "mediator": "No consumer mediator is named, although one is mandatory for a French online shop",
         "email": "No e-mail is sent: no confirmation to the buyer, no notice of a parcel to pack",
+        "emailSender": "The sender address (EMAIL_FROM) reaches no one: test domain, example domain or unreadable address. It must use your own domain, verified with Resend",
         "storage": "Photo hosting is not configured: pieces will arrive without images"
       }
     },

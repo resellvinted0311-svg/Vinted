@@ -567,6 +567,7 @@
         "terms": "Ogólnych warunków sprzedaży nie można opublikować: pole przy kasie oznajmia, że nie istnieją",
         "mediator": "Nie wskazano żadnego mediatora konsumenckiego, choć jest obowiązkowy dla francuskiego handlu internetowego",
         "email": "Żaden e-mail nie wychodzi: ani potwierdzenie do kupującej, ani powiadomienie o paczce do zapakowania",
+        "emailSender": "Adres nadawcy (EMAIL_FROM) do nikogo nie dociera: domena testowa, przykładowa lub nieczytelny adres. Musi być w Twojej własnej domenie, zweryfikowanej w Resend",
         "storage": "Przechowywanie zdjęć nie jest skonfigurowane: sztuki wejdą bez obrazu"
       }
     },

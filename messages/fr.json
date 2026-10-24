@@ -567,6 +567,7 @@
         "terms": "Les conditions générales ne sont pas publiables : la case du tunnel annonce qu’elles n’existent pas",
         "mediator": "Aucun médiateur de la consommation n’est renseigné, alors qu’il est obligatoire pour un commerce en ligne français",
         "email": "Aucun e-mail ne part : ni confirmation à l’acheteuse, ni avis d’expédition à préparer",
+        "emailSender": "L’adresse d’expédition (EMAIL_FROM) n’écrit à personne : domaine d’essai, domaine d’exemple ou adresse illisible. Elle doit être sur votre propre domaine, vérifié chez Resend",
         "storage": "L’hébergement des photos n’est pas configuré : les pièces entreront sans visuel"
       }
     },

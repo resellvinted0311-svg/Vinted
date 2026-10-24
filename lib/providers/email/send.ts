@@ -39,6 +39,46 @@ export function isEmailConfigured(): boolean {
 }
 
 /**
+ * Les domaines d'expédition qui n'atteignent aucune acheteuse.
+ *
+ * `resend.dev` est le domaine d'essai de Resend : il n'écrit qu'à l'adresse du
+ * compte Resend lui-même et répond 403 à tout autre destinataire. Les domaines
+ * `example.*` sont réservés : personne ne peut les vérifier, et `example.com`
+ * est justement la valeur que porte `.env.example`.
+ */
+const TEST_SENDER_DOMAINS = [
+  'resend.dev',
+  'example.com',
+  'example.org',
+  'example.net',
+] as const
+
+/**
+ * L'adresse d'expédition est-elle de celles qui n'écrivent à personne ?
+ *
+ * Le défaut évité : `isEmailConfigured()` répond oui dès que les deux
+ * variables existent. Avec une adresse d'essai, chaque confirmation de
+ * commande échouait chez Resend, était retentée, puis abandonnée dans la file
+ * — pendant que l'écran de mise en service annonçait la messagerie prête.
+ *
+ * Une adresse illisible compte aussi : Resend la refuse de la même façon.
+ * Sans `EMAIL_FROM`, la réponse est non — c'est `isEmailConfigured()` qui
+ * signale déjà l'absence, et la dire deux fois serait du bruit.
+ */
+export function usesTestSender(): boolean {
+  const from = process.env.EMAIL_FROM?.trim()
+  if (!from) return false
+
+  // « Nina & Diego <bonjour@domaine.fr> » ou « bonjour@domaine.fr ».
+  const domain = /@([^\s<>@]+)>?$/.exec(from)?.[1]?.toLowerCase()
+  if (!domain) return true
+
+  return TEST_SENDER_DOMAINS.some(
+    (test) => domain === test || domain.endsWith(`.${test}`),
+  )
+}
+
+/**
  * Masque une adresse destinée à un journal.
  *
  * En développement, la base pointe parfois sur des données réelles, et une

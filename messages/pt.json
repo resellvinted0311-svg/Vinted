@@ -567,6 +567,7 @@
         "terms": "As condições gerais não podem ser publicadas: a caixa do pagamento anuncia que não existem",
         "mediator": "Nenhum mediador de consumo está indicado, embora seja obrigatório para um comércio em linha francês",
         "email": "Nenhum e-mail parte: nem confirmação à compradora, nem aviso de uma encomenda a embalar",
+        "emailSender": "O endereço de envio (EMAIL_FROM) não chega a ninguém: domínio de teste, domínio de exemplo ou endereço ilegível. Deve estar no seu próprio domínio, verificado na Resend",
         "storage": "O alojamento das fotografias não está configurado: as peças entrarão sem imagem"
       }
     },

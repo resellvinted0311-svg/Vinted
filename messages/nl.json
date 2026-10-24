@@ -567,6 +567,7 @@
         "terms": "De algemene voorwaarden kunnen niet worden gepubliceerd: het vakje bij het afrekenen meldt dat ze niet bestaan",
         "mediator": "Er is geen consumentenbemiddelaar vermeld, terwijl die verplicht is voor een Franse webwinkel",
         "email": "Er wordt geen e-mail verzonden: geen bevestiging aan de koper, geen bericht over een pakket dat moet worden ingepakt",
+        "emailSender": "Het afzenderadres (EMAIL_FROM) bereikt niemand: testdomein, voorbeelddomein of onleesbaar adres. Het moet op uw eigen domein staan, geverifieerd bij Resend",
         "storage": "De opslag van foto’s is niet geconfigureerd: stukken komen zonder beeld binnen"
       }
     },

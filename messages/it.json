@@ -567,6 +567,7 @@
         "terms": "Le condizioni generali non sono pubblicabili: la casella della cassa annuncia che non esistono",
         "mediator": "Nessun mediatore del consumo è indicato, benché sia obbligatorio per un commercio online francese",
         "email": "Nessuna e-mail parte: né conferma all’acquirente, né avviso di un pacco da preparare",
+        "emailSender": "L’indirizzo del mittente (EMAIL_FROM) non raggiunge nessuno: dominio di prova, dominio di esempio o indirizzo illeggibile. Deve essere sul vostro dominio, verificato su Resend",
         "storage": "L’ospitalità delle foto non è configurata: i pezzi entreranno senza immagine"
       }
     },
