@@ -32,9 +32,15 @@ Règles qui valent pour chaque étape :
   (mentions légales, CGV, factures), coordonnées complètes du médiateur, bloc
   hébergeur, fonction de rétractation en ligne « Renoncer au contrat ici »
   (obligatoire depuis le 19 juin 2026), bouton « Commander avec obligation de
-  paiement », CGV mises à jour (plateforme européenne de litiges retirée,
-  fermée le 20 juillet 2025 ; garantie des biens d'occasion ; délai de
-  remboursement).
+  paiement », CGV en version **2026-10** (plateforme européenne de litiges
+  retirée, fermée le 20 juillet 2025 ; encadré réglementaire des garanties
+  légales recopié de l'annexe de l'article D211-2 ; règle des biens
+  d'occasion ; délai de remboursement).
+- Rétractation en ligne : une déclaration faite avec une autre adresse que
+  celle de la commande est gardée, et l'avis à la boutique le signale en
+  majuscules. **Faire confirmer à l'adresse de la commande avant d'annuler ou
+  de rembourser** : un tiers ne peut pas se rétracter à la place de
+  l'acheteur. L'accusé part toujours vers l'adresse de la commande.
 
 ## Étape A — maintenant, sans attendre la société
 
@@ -149,7 +155,7 @@ factures :
 | `LEGAL_ADDRESS` | adresse du siège social |
 | `LEGAL_EMAIL` | déjà posée en A2 |
 | `LEGAL_PHONE` | un numéro où joindre la boutique (exigé par la loi) |
-| `LEGAL_PUBLICATION_DIRECTOR` | nom de la personne responsable du contenu publié |
+| `LEGAL_PUBLICATION_DIRECTOR` | le **président** de la SAS (son représentant légal — c'est la loi, pas un choix) |
 
 `LEGAL_VAT_NUMBER` : seulement si la société a un numéro de TVA
 intracommunautaire.

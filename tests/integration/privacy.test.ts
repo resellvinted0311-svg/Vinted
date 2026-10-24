@@ -226,6 +226,7 @@ describe('effacement d’un compte', () => {
         orderItemIds: [],
         reason: 'withdrawal',
         declaredName: 'Camille Exemple',
+        declaredEmail: 'camille@ailleurs.test',
       },
       select: { id: true, requestedAt: true },
     })
@@ -234,9 +235,10 @@ describe('effacement d’un compte', () => {
 
     const apres = await prisma.returnRequest.findUniqueOrThrow({
       where: { id: demande.id },
-      select: { declaredName: true, requestedAt: true },
+      select: { declaredName: true, declaredEmail: true, requestedAt: true },
     })
     expect(apres.declaredName).toBeNull()
+    expect(apres.declaredEmail).toBeNull()
     expect(apres.requestedAt).toEqual(demande.requestedAt)
   })
 

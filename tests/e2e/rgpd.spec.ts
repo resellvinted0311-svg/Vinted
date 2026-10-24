@@ -47,7 +47,9 @@ test.describe('Information des personnes', () => {
     await expect(
       page.getByText('Vos commandes payées et vos factures'),
     ).toBeVisible()
-    await expect(page.getByText('Obligation légale')).toBeVisible()
+    // `.first()` ici aussi : la rétractation en ligne est, comme la commande
+    // payée, une obligation légale — deux lignes portent ce fondement.
+    await expect(page.getByText('Obligation légale').first()).toBeVisible()
     // `.first()` et non le libellé seul : plusieurs traitements affichent
     // désormais dix ans — la commande payée, et l'expédition qui la suit. Une
     // correspondance unique était une hypothèse sur le CONTENU du registre,

@@ -257,7 +257,7 @@ export const PROCESSING_REGISTER: readonly Processing[] = [
       'Preuve de l’exercice du droit de rétractation et point de départ du ' +
       'remboursement : suit la commande, pièce comptable conservée dix ans ' +
       '(article L123-22 du code de commerce). Le nom déclaré s’efface avec ' +
-      'l’identité de la commande.',
+      'l’identité de la commande, avec l’adresse déclarée.',
   },
   {
     // Déclaré à part, parce que la justification n'est PAS la même. Confondre

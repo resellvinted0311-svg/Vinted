@@ -114,8 +114,8 @@ async function stripShipmentTracking(
  * Retire le nom déclaré des rétractations d'un ensemble de commandes.
  *
  * La déclaration reste — sa date est le point de départ d'un remboursement,
- * donc d'une écriture comptable — mais le nom que la personne a saisi part
- * avec l'identité de la commande. Le garder serait effacer le nom de
+ * donc d'une écriture comptable — mais le nom et l'adresse que la personne a
+ * saisis partent avec l'identité de la commande. Le garder serait effacer le nom de
  * facturation d'un côté et en conserver une copie de l'autre.
  */
 async function stripWithdrawalNames(
@@ -123,8 +123,11 @@ async function stripWithdrawalNames(
   where: Prisma.OrderWhereInput,
 ): Promise<void> {
   await tx.returnRequest.updateMany({
-    where: { order: where, declaredName: { not: null } },
-    data: { declaredName: null },
+    where: {
+      order: where,
+      OR: [{ declaredName: { not: null } }, { declaredEmail: { not: null } }],
+    },
+    data: { declaredName: null, declaredEmail: null },
   })
 }
 

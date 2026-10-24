@@ -29,9 +29,10 @@ const INITIAL: WithdrawalState = { status: 'idle' }
  * ---------------------------------------------------------------------------
  * La confirmation est au conditionnel, et c'est voulu
  * ---------------------------------------------------------------------------
- * « Si ces informations correspondent à une commande » : la page ne dit
- * jamais si un couple numéro + adresse existe. Voir `lib/shop/withdrawal.ts`.
- * L'instant affiché vient du serveur, pas du téléphone.
+ * « Si ce numéro correspond à une commande » : la page ne dit
+ * jamais si un numéro correspond à une commande. Voir `lib/shop/withdrawal.ts`.
+ * L'instant affiché vient du serveur, pas du téléphone. Et elle ne promet
+ * pas d'écrire à l'adresse saisie : l'accusé part vers celle de la commande.
  */
 export function WithdrawalForm({
   initialOrderNumber,
@@ -54,7 +55,7 @@ export function WithdrawalForm({
             date: formatDateTime(new Date(state.submittedAt), locale),
           })}
         </p>
-        <p className="mt-2">{t('sentDetail', { email: state.email })}</p>
+        <p className="mt-2">{t('sentDetail')}</p>
         <p className="mt-2 text-muted">{t('sentHelp')}</p>
       </Notice>
     )
@@ -62,6 +63,9 @@ export function WithdrawalForm({
 
   const erreur =
     state.status === 'error' ? t(`errors.${state.messageKey}`) : undefined
+  // Rendus après une erreur : React réinitialise le formulaire à chaque envoi,
+  // et sans eux une faute de frappe effaçait les trois champs.
+  const saisi = state.status === 'error' ? state.values : undefined
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -77,6 +81,7 @@ export function WithdrawalForm({
         <FieldLabel>{t('fields.name')}</FieldLabel>
         <Input
           name="name"
+          defaultValue={saisi?.name}
           autoComplete="name"
           minLength={2}
           maxLength={120}
@@ -88,7 +93,7 @@ export function WithdrawalForm({
         <FieldLabel>{t('fields.orderNumber')}</FieldLabel>
         <Input
           name="orderNumber"
-          defaultValue={initialOrderNumber}
+          defaultValue={saisi?.orderNumber ?? initialOrderNumber}
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}
@@ -102,6 +107,7 @@ export function WithdrawalForm({
         <Input
           name="email"
           type="email"
+          defaultValue={saisi?.email}
           autoComplete="email"
           inputMode="email"
           required

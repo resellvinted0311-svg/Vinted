@@ -898,6 +898,10 @@ model ReturnRequest {
   /// 2011/83, art. 11 bis) — d'où une colonne, et non une relecture du nom de
   /// facturation, qui peut différer. Effacé avec l'identité de la commande.
   declaredName String?
+  /// L'adresse que la personne a saisie. Elle peut différer de celle de la
+  /// commande : la déclaration est alors gardée, et la boutique fait confirmer
+  /// avant d'agir. Effacée avec l'identité de la commande.
+  declaredEmail String?
 
   status ReturnStatus @default(REQUESTED)
 

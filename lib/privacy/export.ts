@@ -155,6 +155,7 @@ export async function exportPersonalData(
               reason: true,
               status: true,
               declaredName: true,
+              declaredEmail: true,
               requestedAt: true,
             },
           },

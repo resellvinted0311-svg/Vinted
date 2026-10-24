@@ -2,7 +2,7 @@ import 'server-only'
 
 import type { Prisma } from '@prisma/client'
 import { readPostalAddress, type PostalAddress } from '@/lib/domain/address'
-import { LEGAL, SITE, hasLegalIdentity, rcsMention } from '@/lib/config/site'
+import { LEGAL, SITE, hasInvoiceIdentity, rcsMention } from '@/lib/config/site'
 
 /**
  * Facturation.
@@ -183,7 +183,7 @@ export interface InvoiceSource {
  * refuser de l'émettre que d'en publier une qui ne vaut rien.
  */
 export function buildInvoice(order: InvoiceSource): Invoice {
-  if (!hasLegalIdentity()) throw new LegalIdentityMissingError()
+  if (!hasInvoiceIdentity()) throw new LegalIdentityMissingError()
 
   if (!order.invoiceNumber) {
     throw new Error(

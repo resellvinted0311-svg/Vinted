@@ -205,16 +205,14 @@ function sectionsCgv() {
  * figurent « sur son site internet ainsi que sur ses documents commerciaux
  * (CGV et bons de commande) » (F33338, vérifiée le 16 octobre 2026). Un seul
  * rendu pour les deux, pour qu'ils ne divergent jamais.
+ *
+ * L'aveu d'absence est fourni par l'appelant : les mentions légales sont en
+ * français, les CGV dans la langue de la page, et un avertissement français au
+ * milieu de conditions allemandes ne dirait rien à personne.
  */
-function Mediateur() {
+function Mediateur({ absent }: { absent: string }) {
   if (!hasMediator()) {
-    return (
-      <span className="text-warning">
-        Adhésion à un médiateur de la consommation non encore renseignée (manque
-        : {missingMediatorKeys().join(', ')}). Elle est obligatoire avant toute
-        vente.
-      </span>
-    )
+    return <span className="text-warning">{absent}</span>
   }
 
   return (
@@ -334,7 +332,9 @@ export default async function StaticPage({ params }: { params: Params }) {
                   consommation). */}
               <dt className="text-muted">{t('mediator')}</dt>
               <dd>
-                <Mediateur />
+                <Mediateur
+                  absent={`Adhésion à un médiateur de la consommation non encore renseignée (manque : ${missingMediatorKeys().join(', ')}). Elle est obligatoire avant toute vente.`}
+                />
               </dd>
             </dl>
           ) : (
@@ -504,15 +504,41 @@ export default async function StaticPage({ params }: { params: Params }) {
                   */}
                   {cle === 'seller' ? (
                     <p className="text-muted">
-                      {LEGAL.companyName}, {LEGAL.legalForm} au capital de{' '}
-                      {LEGAL.shareCapital} — {LEGAL.address} — {rcsMention()} —{' '}
-                      {LEGAL.phone} — {LEGAL.email}
+                      {tl('terms.sellerIdentity', {
+                        name: LEGAL.companyName,
+                        form: LEGAL.legalForm,
+                        capital: LEGAL.shareCapital,
+                        address: LEGAL.address,
+                        rcs: rcsMention(),
+                        phone: LEGAL.phone,
+                        email: LEGAL.email,
+                      })}
                     </p>
+                  ) : null}
+
+                  {/*
+                    L'encadré des garanties légales, imposé MOT POUR MOT : « les
+                    conditions générales [...] comportent un encadré [...]
+                    conformément aux modèles annexés » (code de la
+                    consommation, art. D211-2, annexe A). Une paraphrase ne
+                    suffit pas — la première version des CGV en était une, et
+                    elle ouvrait la réduction du prix ou la résolution dans moins
+                    de cas que la loi. Le texte français est vérifié contre
+                    l'annexe par `tests/domain/garanties-encadre.test.ts`.
+                  */}
+                  {cle === 'warranty' ? (
+                    <div
+                      role="note"
+                      className="whitespace-pre-line rounded-card border-[1.5px] border-rule bg-paper-raised p-4 text-sm text-ink"
+                    >
+                      {tl('terms.warrantyBox')}
+                    </div>
                   ) : null}
 
                   {cle === 'claims' ? (
                     <p className="text-muted">
-                      {t('mediator')} : <Mediateur />
+                      {t('mediator')} :{' '}
+                      <Mediateur absent={tl('terms.mediatorMissing')} />
                     </p>
                   ) : null}
                 </section>

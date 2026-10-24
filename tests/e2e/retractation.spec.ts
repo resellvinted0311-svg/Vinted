@@ -42,15 +42,19 @@ test('la réponse ne dit pas si la commande existe', async ({ page }) => {
 
   await page.getByLabel('Nom et prénom').fill('Camille Exemple')
   await page
-    .getByLabel('Adresse e-mail utilisée pour la commande')
+    .getByLabel('Votre adresse e-mail')
     .fill('personne@exemple.test')
   await page.getByRole('button', { name: 'Confirmer la rétractation' }).click()
 
   const confirmation = page.getByRole('status')
   await expect(confirmation).toContainText('Rétractation transmise')
-  // Au conditionnel : la même phrase, que la commande existe ou non.
+  // Au conditionnel : la même phrase, que la commande existe ou non. Et elle
+  // ne promet pas d'écrire à l'adresse saisie — l'accusé part vers celle de la
+  // commande.
   await expect(confirmation).toContainText(
-    'Si ces informations correspondent à une commande',
+    'Si ce numéro correspond à une commande',
   )
-  await expect(confirmation).toContainText('personne@exemple.test')
+  await expect(confirmation).not.toContainText('personne@exemple.test')
+  // L'heure de la déclaration, avec son fuseau : c'est la preuve.
+  await expect(confirmation).toContainText(/UTC[+−-]\d/)
 })

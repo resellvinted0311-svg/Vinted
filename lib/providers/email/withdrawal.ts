@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db/client'
 import { LEGAL, SITE } from '@/lib/config/site'
 import { loadMessages } from '@/lib/i18n/messages'
 import { formatDate, formatDateTime } from '@/lib/utils/format'
+import { apresJours, apresJoursOuvrable } from '@/lib/domain/delais'
 import { sendEmail, type EmailMessage } from './send'
 
 /**
@@ -23,11 +24,27 @@ import { sendEmail, type EmailMessage } from './send'
 /** Délai légal, en jours, pour renvoyer les pièces et pour rembourser. */
 const DELAI_JOURS = 14
 
+/**
+ * Les statuts où la commande n'est pas encore partie.
+ *
+ * Ils changent tout le message. Une acheteuse qui se rétracte avant
+ * l'expédition n'a rien à renvoyer, et le remboursement ne peut pas être
+ * différé « jusqu'à la récupération des biens » — la boutique les a encore.
+ * La première version lui demandait pourtant de renvoyer des pièces jamais
+ * reçues, et annonçait à la boutique un report qui n'existe pas : en le
+ * suivant, elle aurait attendu un retour qui ne viendrait jamais, et
+ * remboursé en retard.
+ */
+const PAS_ENCORE_PARTIE = new Set(['PAID', 'PREPARING'])
+
 export interface WithdrawalEmailData {
   orderNumber: string
   locale: string
+  /** L'adresse DE LA COMMANDE : c'est là, et seulement là, que part l'accusé. */
   email: string
   declaredName: string
+  /** L'adresse saisie dans la déclaration. Peut différer de la précédente. */
+  declaredEmail: string
   /** L'instant de la PREMIÈRE déclaration : c'est lui qui fait courir les délais. */
   requestedAt: Date
   orderStatus: string
@@ -48,6 +65,7 @@ export async function readWithdrawalEmailData(
     where: { id: returnRequestId },
     select: {
       declaredName: true,
+      declaredEmail: true,
       requestedAt: true,
       order: {
         select: {
@@ -68,6 +86,7 @@ export async function readWithdrawalEmailData(
     locale: demande.order.locale,
     email: demande.order.email,
     declaredName: demande.declaredName ?? '',
+    declaredEmail: demande.declaredEmail ?? demande.order.email,
     requestedAt: demande.requestedAt,
     orderStatus: demande.order.status,
     lines: demande.order.items.map((item) => item.titleSnapshot),
@@ -83,10 +102,6 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;')
 }
 
-function plusJours(date: Date, jours: number): Date {
-  return new Date(date.getTime() + jours * 24 * 60 * 60_000)
-}
-
 /** Accusé de réception, à la personne, dans la langue de sa commande. */
 export async function buildWithdrawalAcknowledgement(
   data: WithdrawalEmailData,
@@ -99,40 +114,51 @@ export async function buildWithdrawalAcknowledgement(
   })
 
   const recue = formatDateTime(data.requestedAt, data.locale)
-  // Sans adresse de boutique renseignée, on ne devine pas où renvoyer : on
-  // désigne la page qui la portera.
-  const retour = LEGAL.address
-    ? t('returnTo', { address: `${LEGAL.companyName}, ${LEGAL.address}` })
-    : t('returnToLegalNotice')
+  const remboursementAuPlusTard = formatDate(
+    apresJours(data.requestedAt, DELAI_JOURS),
+    data.locale,
+  )
 
   const contenu = [
     `${t('order')} : ${data.orderNumber}`,
     `${t('declaredBy')} : ${data.declaredName}`,
-    `${t('address')} : ${data.email}`,
+    `${t('address')} : ${data.declaredEmail}`,
     `${t('receivedAt')} : ${recue}`,
   ]
+
+  const ensuite = PAS_ENCORE_PARTIE.has(data.orderStatus)
+    ? [
+        t('notShipped'),
+        t('refundNotShipped', { date: remboursementAuPlusTard }),
+      ]
+    : [
+        t('returnWithin', {
+          // Reporté au premier jour ouvrable : ce report profite à qui doit
+          // agir avant l'échéance. Voir `lib/domain/delais.ts`.
+          date: formatDate(
+            apresJoursOuvrable(data.requestedAt, DELAI_JOURS),
+            data.locale,
+          ),
+        }),
+        // Sans adresse de boutique renseignée, on ne devine pas où renvoyer :
+        // on désigne la page qui la portera.
+        LEGAL.address
+          ? t('returnTo', { address: `${LEGAL.companyName}, ${LEGAL.address}` })
+          : t('returnToLegalNotice'),
+        t('returnCost'),
+        t('refund', { date: remboursementAuPlusTard }),
+      ]
 
   const blocs: { titre?: string; lignes: string[] }[] = [
     { lignes: [t('greeting')] },
     { lignes: [t('intro')] },
     { lignes: contenu },
     { titre: t('items'), lignes: data.lines.map((line) => `- ${line}`) },
-    {
-      titre: t('nextTitle'),
-      lignes: [
-        t('returnWithin', {
-          days: DELAI_JOURS,
-          date: formatDate(
-            plusJours(data.requestedAt, DELAI_JOURS),
-            data.locale,
-          ),
-        }),
-        retour,
-        t('returnCost'),
-        t('refund', { days: DELAI_JOURS }),
-      ],
-    },
-    { lignes: [t('keep')] },
+    { titre: t('nextTitle'), lignes: ensuite },
+    // Toujours, et pas seulement quand l'adresse diffère : connaître un
+    // numéro et une adresse ne prouve pas qu'on est l'acheteuse. Celle qui
+    // reçoit cet accusé sans avoir rien demandé doit savoir quoi faire.
+    { lignes: [t('notYou'), t('keep')] },
     { lignes: [t('signature', { shop: SITE.name })] },
   ]
 
@@ -166,33 +192,49 @@ export async function buildWithdrawalAcknowledgement(
  *
  * En français et sans mise en forme, comme l'avis « commande à préparer ». Il
  * dit surtout CE QUI COURT : l'échéance du remboursement, que la boutique ne
- * doit pas avoir à recalculer.
+ * doit pas avoir à recalculer. Elle est donnée sans report de week-end : on
+ * s'engage sur la date la plus tôt.
  */
 export function buildShopWithdrawalNotice(
   data: WithdrawalEmailData,
 ): EmailMessage {
   const recue = formatDateTime(data.requestedAt, 'fr')
-  const echeance = formatDate(plusJours(data.requestedAt, DELAI_JOURS), 'fr')
-  const pasEncorePartie =
-    data.orderStatus === 'PAID' || data.orderStatus === 'PREPARING'
+  const echeance = formatDate(apresJours(data.requestedAt, DELAI_JOURS), 'fr')
+  const pasEncorePartie = PAS_ENCORE_PARTIE.has(data.orderStatus)
+  const adresseDifferente = data.declaredEmail !== data.email
 
   const text = [
     `Rétractation déclarée en ligne pour la commande ${data.orderNumber}.`,
     '',
     `Déclarée par : ${data.declaredName}`,
-    `Adresse : ${data.email}`,
-    `Reçue le : ${recue} (heure de Paris)`,
+    `Adresse indiquée : ${data.declaredEmail}`,
+    `Reçue le : ${recue}`,
     '',
+    ...(adresseDifferente
+      ? [
+          `ATTENTION : l’adresse indiquée n’est pas celle de la commande (${data.email}).`,
+          'Un tiers ne peut pas se rétracter à la place de la personne qui a commandé :',
+          'faites confirmer à l’adresse de la commande avant d’annuler ou de rembourser.',
+          'L’accusé de réception est parti à l’adresse de la commande, pas à celle indiquée.',
+          '',
+        ]
+      : []),
     'Pièces :',
     ...data.lines.map((line) => `- ${line}`),
     '',
-    pasEncorePartie
-      ? 'La commande n’est pas encore partie : ne l’expédiez pas sans avoir répondu.'
-      : 'La commande est partie : attendez le retour des pièces.',
-    `Remboursement dû au plus tard le ${echeance}, frais de livraison aller compris au tarif standard.`,
-    'Il peut être différé jusqu’à la réception des pièces ou de la preuve de leur expédition, la première des deux.',
+    ...(pasEncorePartie
+      ? [
+          'La commande n’est pas encore partie : ne l’expédiez pas.',
+          `Remboursement intégral, port compris, au plus tard le ${echeance}.`,
+        ]
+      : [
+          'La commande est partie : attendez le retour des pièces.',
+          `Remboursement dû au plus tard le ${echeance}, frais de livraison aller compris au tarif standard.`,
+          'Il peut être différé jusqu’à la réception des pièces ou de la preuve de leur expédition, la première des deux.',
+        ]),
     '',
-    'Un accusé de réception est parti à l’adresse ci-dessus.',
+    'Aucune date n’est contrôlée à l’enregistrement : vérifiez que la rétractation',
+    'tombe dans les quatorze jours suivant la réception.',
   ].join('\n')
 
   return {
@@ -200,6 +242,8 @@ export function buildShopWithdrawalNotice(
     subject: `Rétractation — commande ${data.orderNumber}`,
     text,
     html: `<pre>${escapeHtml(text)}</pre>`,
+    // Répondre à l'avis répond à l'adresse DE LA COMMANDE : c'est celle qu'on
+    // sait appartenir à l'acheteuse, et celle à qui faire confirmer.
     replyTo: data.email,
   }
 }

@@ -65,6 +65,7 @@ const { runJobNow } = await import('@/lib/jobs/worker')
 
 /** Une plage de numéros qu'aucune vraie commande n'atteindra avant 2099. */
 const PREFIXE = 'CMD-2099-99'
+const RENVOI_PERMIS = { resendAllowed: true }
 const EMAIL = 'retractation@nina-diego.test'
 
 async function nettoyer(): Promise<void> {
@@ -159,7 +160,10 @@ describe('l’enregistrement', () => {
   it('enregistre la déclaration et inscrit l’accusé ET l’avis à la boutique', async () => {
     const { id, orderNumber } = await commande('PAID')
 
-    const { jobIds } = await recordWithdrawal(declaration(orderNumber))
+    const { jobIds } = await recordWithdrawal(
+      declaration(orderNumber),
+      RENVOI_PERMIS,
+    )
 
     const demandes = await prisma.returnRequest.findMany({
       where: { orderId: id },
@@ -193,7 +197,7 @@ describe('l’enregistrement', () => {
     // La date de la PREMIÈRE déclaration fait courir le remboursement : une
     // seconde qui l'écraserait le repousserait d'autant.
     const { id, orderNumber } = await commande('SHIPPED')
-    await recordWithdrawal(declaration(orderNumber))
+    await recordWithdrawal(declaration(orderNumber), RENVOI_PERMIS)
     const premiere = await prisma.returnRequest.findFirstOrThrow({
       where: { orderId: id },
       select: { id: true, requestedAt: true },
@@ -201,6 +205,7 @@ describe('l’enregistrement', () => {
 
     const { jobIds } = await recordWithdrawal(
       declaration(orderNumber, { name: 'Autre Nom' }),
+      RENVOI_PERMIS,
     )
 
     const demandes = await prisma.returnRequest.findMany({
@@ -216,21 +221,86 @@ describe('l’enregistrement', () => {
     expect(travaux.map((t) => t.type)).toEqual(['withdrawal.acknowledge'])
   })
 
-  it('n’écrit RIEN quand l’adresse ne correspond pas', async () => {
+  it('garde une déclaration faite depuis une AUTRE adresse — et n’écrit qu’à celle de la commande', async () => {
+    /*
+      La première version la jetait : quelqu'un qui écrit depuis une autre
+      boîte que celle de sa commande perdait sa rétractation sans le savoir,
+      alors que la loi lui laisse choisir où recevoir l'accusé (D221-5 c).
+
+      L'accusé part vers l'adresse DE LA COMMANDE, jamais vers l'adresse
+      saisie : l'envoyer à n'importe quelle adresse tapée remettrait le contenu
+      d'une commande à qui devine un numéro. La boutique est avertie de l'écart.
+    */
     const { id, orderNumber } = await commande('PAID')
+    const AILLEURS = 'quelquun@ailleurs.test'
 
     const { jobIds } = await recordWithdrawal(
-      declaration(orderNumber, { email: 'quelquun@ailleurs.test' }),
+      declaration(orderNumber, { email: AILLEURS }),
+      RENVOI_PERMIS,
     )
 
+    const demande = await prisma.returnRequest.findFirstOrThrow({
+      where: { orderId: id },
+      select: { declaredEmail: true },
+    })
+    expect(demande.declaredEmail).toBe(AILLEURS)
+
+    for (const job of jobIds) await runJobNow(job)
+
+    expect(envoyes.some((m) => m.to === AILLEURS)).toBe(false)
+    expect(envoyes.some((m) => m.to === EMAIL)).toBe(true)
+    const avis = envoyes.find((m) => m.to === 'boutique@nina-diego.test')
+    expect(avis!.text).toContain('n’est pas celle de la commande')
+  })
+
+  it('enregistre et accuse la PREMIÈRE déclaration même plafond atteint', async () => {
+    // Trois essais avec un mauvais numéro épuisaient le plafond par adresse,
+    // et la vraie déclaration, la quatrième, était jetée sous « transmise ».
+    // Le plafond ne borne que les renvois : la première part toujours.
+    const { id, orderNumber } = await commande('SHIPPED')
+
+    const { jobIds } = await recordWithdrawal(declaration(orderNumber), {
+      resendAllowed: false,
+    })
+
+    expect(await prisma.returnRequest.count({ where: { orderId: id } })).toBe(1)
+    expect(jobIds).toHaveLength(2)
+  })
+
+  it('ne renvoie pas l’accusé d’une déclaration existante une fois le plafond atteint', async () => {
+    const { orderNumber } = await commande('SHIPPED')
+    await recordWithdrawal(declaration(orderNumber), RENVOI_PERMIS)
+
+    const { jobIds } = await recordWithdrawal(declaration(orderNumber), {
+      resendAllowed: false,
+    })
+
     expect(jobIds).toEqual([])
-    expect(await prisma.returnRequest.count({ where: { orderId: id } })).toBe(0)
+  })
+
+  it('ne crée qu’UNE déclaration pour deux envois simultanés', async () => {
+    // Un double clic, deux onglets : sans verrou sur la commande, chacun lisait
+    // « aucune déclaration » et en créait une, avec deux avis à la boutique.
+    const { id, orderNumber } = await commande('SHIPPED')
+
+    await Promise.all([
+      recordWithdrawal(declaration(orderNumber), RENVOI_PERMIS),
+      recordWithdrawal(declaration(orderNumber), RENVOI_PERMIS),
+    ])
+
+    expect(await prisma.returnRequest.count({ where: { orderId: id } })).toBe(1)
+    expect(
+      await prisma.job.count({ where: { type: 'withdrawal.notify-shop' } }),
+    ).toBe(1)
   })
 
   it('n’écrit rien pour une commande jamais payée : il n’y a pas de contrat', async () => {
     const { id, orderNumber } = await commande('PENDING_PAYMENT')
 
-    const { jobIds } = await recordWithdrawal(declaration(orderNumber))
+    const { jobIds } = await recordWithdrawal(
+      declaration(orderNumber),
+      RENVOI_PERMIS,
+    )
 
     expect(jobIds).toEqual([])
     expect(await prisma.returnRequest.count({ where: { orderId: id } })).toBe(0)
@@ -240,7 +310,10 @@ describe('l’enregistrement', () => {
 describe('les messages', () => {
   it('l’accusé reprend le contenu, la date et l’heure — et échappe le HTML', async () => {
     const { orderNumber } = await commande('PAID')
-    const { jobIds } = await recordWithdrawal(declaration(orderNumber))
+    const { jobIds } = await recordWithdrawal(
+      declaration(orderNumber),
+      RENVOI_PERMIS,
+    )
 
     for (const id of jobIds) await runJobNow(id)
 
@@ -252,16 +325,43 @@ describe('les messages', () => {
     expect(accuse!.text).toContain(orderNumber)
     // L'heure, et pas seulement le jour : « 24 octobre 2026 à 10:32 ».
     expect(accuse!.text).toMatch(/\d{1,2}:\d{2}/)
-    expect(accuse!.text).toContain('12 rue du Registre')
     // Un titre venu de la base ne casse pas le message.
     expect(accuse!.html).toContain('Veste &lt;en&gt; laine')
     expect(accuse!.html).not.toContain('<en>')
 
+    // Le fuseau est écrit : la preuve ne doit pas dépendre de celui du lecteur.
+    expect(accuse!.text).toMatch(/UTC[+−-]\d/)
+    expect(accuse!.text).toContain('pas à l’origine de cette déclaration')
+
+    // Pas encore partie : rien à renvoyer, et aucun report du remboursement —
+    // la boutique a encore les pièces.
+    expect(accuse!.text).toContain('ne sera pas expédiée')
+    expect(accuse!.text).not.toContain('Renvoyez les pièces')
+    expect(accuse!.text).not.toContain('différé')
+
     const avis = envoyes.find((m) => m.to === 'boutique@nina-diego.test')
     expect(avis, 'avis à la boutique non envoyé').toBeDefined()
-    // Payée mais pas encore partie : la consigne qui compte.
     expect(avis!.text).toContain('ne l’expédiez pas')
-    expect(avis!.text).toContain('Remboursement dû au plus tard le')
+    expect(avis!.text).toContain('Remboursement intégral')
+    expect(avis!.text).not.toContain('différé')
+  })
+
+  it('pour une commande partie, l’accusé dit où et quand renvoyer', async () => {
+    const { orderNumber } = await commande('SHIPPED')
+    const { jobIds } = await recordWithdrawal(
+      declaration(orderNumber),
+      RENVOI_PERMIS,
+    )
+
+    for (const id of jobIds) await runJobNow(id)
+
+    const accuse = envoyes.find((m) => m.to === EMAIL)
+    expect(accuse!.text).toContain('Renvoyez les pièces au plus tard le')
+    expect(accuse!.text).toContain('12 rue du Registre')
+    expect(accuse!.text).toContain('différé')
+
+    const avis = envoyes.find((m) => m.to === 'boutique@nina-diego.test')
+    expect(avis!.text).toContain('attendez le retour des pièces')
   })
 })
 
@@ -306,6 +406,27 @@ describe('l’action publique', () => {
       formulaire({ ...declaration('pas-un-numero'), name: 'X' }),
     )
 
-    expect(etat).toEqual({ status: 'error', messageKey: 'invalid' })
+    // L'erreur rend ce qui a été saisi : React vide le formulaire à chaque
+    // envoi, et une faute de frappe effaçait les trois champs.
+    expect(etat).toEqual({
+      status: 'error',
+      messageKey: 'invalid',
+      values: { name: 'X', orderNumber: 'pas-un-numero', email: EMAIL },
+    })
+  })
+
+  it('refuse un nom porteur d’un lien ou de lignes supplémentaires', async () => {
+    // Il est recopié dans un e-mail signé par le domaine de la boutique.
+    for (const name of [
+      'Camille https://exemple.test/rembourser',
+      'Camille\nReçue le : 2 octobre\nRemboursement à confirmer : www.exemple.test',
+      'Camille\u202eelliX',
+    ]) {
+      const etat = await submitWithdrawalAction(
+        { status: 'idle' },
+        formulaire({ ...declaration(`${PREFIXE}0001`), name }),
+      )
+      expect(etat.status, name).toBe('error')
+    }
   })
 })

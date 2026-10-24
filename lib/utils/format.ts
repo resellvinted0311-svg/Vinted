@@ -45,13 +45,22 @@ export function formatDate(date: Date, locale: string): string {
  * rétractation doit dire quand elle a été reçue, pas seulement quel jour.
  * Fixée sur Paris, comme `formatDate` : c'est l'heure du vendeur, la même pour
  * toutes les langues, et le serveur ne tourne pas forcément dans ce fuseau.
+ *
+ * Le fuseau est ÉCRIT (« UTC+1 », « CET »). Sans lui, une déclaration faite à
+ * 23 h 30 à Lisbonne, le dernier jour du délai, s'affichait « 00:30 » le
+ * lendemain — sur la pièce même que la personne doit garder pour prouver
+ * qu'elle était dans les temps.
  */
 export function formatDateTime(date: Date, locale: string): string {
   const tag = localeTags[locale as Locale] ?? localeTags.fr
   return new Intl.DateTimeFormat(tag, {
-    dateStyle: 'long',
-    timeStyle: 'short',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
     timeZone: 'Europe/Paris',
+    timeZoneName: 'short',
   }).format(date)
 }
 

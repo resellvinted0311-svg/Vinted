@@ -25,8 +25,30 @@ export const orderNumberSchema = z
   .toUpperCase()
   .regex(/^CMD-\d{4}-\d{6}$/)
 
+/**
+ * Le nom déclaré.
+ *
+ * Il est recopié tel quel dans un e-mail signé par le domaine de la boutique.
+ * Un champ libre y faisait passer des sauts de ligne et des liens : « Camille
+ * \nReçue le : 2 octobre\nRemboursement à confirmer : https://… » se lisait
+ * comme une ligne de l'accusé. Les espaces sont donc ramenés à un seul, et un
+ * caractère de contrôle ou une adresse web refusent la saisie — un nom n'en
+ * contient jamais.
+ */
+export const declaredNameSchema = z
+  .string()
+  .transform((value) => value.replace(/\s+/g, ' ').trim())
+  .pipe(
+    z
+      .string()
+      .min(2)
+      .max(120)
+      .refine((value) => !/[\p{Cc}\p{Cf}]/u.test(value))
+      .refine((value) => !/(:\/\/|www\.)/i.test(value)),
+  )
+
 export const withdrawalSchema = z.object({
-  name: z.string().trim().min(2).max(120),
+  name: declaredNameSchema,
   orderNumber: orderNumberSchema,
   email: emailSchema,
   locale: localeSchema,

@@ -541,10 +541,12 @@ pour l'exiger.
 au contrat ici », obligatoire depuis le 19 juin 2026). La question qu'il
 posait — durée comptable de la commande, ou durée propre au litige ? — est
 tranchée : la commande. La déclaration est le point de départ d'un
-remboursement, donc d'une écriture. Entrée `withdrawals` au registre ; nom
-déclaré et date dans l'export ; nom effacé avec l'identité de la commande, à la
-demande comme à l'échéance (`stripWithdrawalNames`). Une déclaration qui ne
-correspond à aucune commande n'est pas conservée. Le texte libre `comment`
+remboursement, donc d'une écriture. Entrée `withdrawals` au registre ; nom et
+adresse déclarés, et date, dans l'export ; nom et adresse effacés avec
+l'identité de la commande, à la demande comme à l'échéance
+(`stripWithdrawalNames`). Une déclaration dont le numéro ne correspond à
+aucune commande n'est pas conservée ; celle dont seule l'adresse diffère l'est,
+pour que la boutique fasse confirmer. Le texte libre `comment`
 n'est écrit par aucun chemin.
 
 `Shipment` a quitté ce tableau : elle est écrite depuis que l'expédition

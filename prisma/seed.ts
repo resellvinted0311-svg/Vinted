@@ -22,6 +22,7 @@ import {
   DEMO_SOURCING_PLACES,
 } from './seed-data/fixtures'
 import { estProduction } from './seed-data/environment'
+import { CGV_VERSION } from '../lib/config/pages'
 import { inventorierDemonstration } from '../lib/admin/demonstration'
 import {
   CATEGORIES,
@@ -115,7 +116,7 @@ function daysFromNow(days: number): Date {
 // ---------------------------------------------------------------------------
 
 async function seedSettings(): Promise<void> {
-  const settings: { key: string; value: unknown }[] = [
+  const settings: { key: string; value: unknown; duCode?: boolean }[] = [
     { key: 'packagingWeightGrams', value: DEMO_PACKAGING_WEIGHT_GRAMS },
     { key: 'shippingMarkupPercent', value: DEMO_SHIPPING_MARKUP_PERCENT },
     { key: 'reservationTtlMinutes', value: 15 },
@@ -168,7 +169,9 @@ async function seedSettings(): Promise<void> {
       },
     },
 
-    { key: 'cgvVersion', value: '2026-01' },
+    // Appartient au CODE, pas à la boutique : réécrite à chaque passage, même
+    // en production. Voir `CGV_VERSION`.
+    { key: 'cgvVersion', value: CGV_VERSION, duCode: true },
   ]
 
   /*
@@ -198,7 +201,8 @@ async function seedSettings(): Promise<void> {
     await prisma.setting.upsert({
       where: { key: setting.key },
       create: { key: setting.key, value: setting.value as never },
-      update: proteger ? {} : { value: setting.value as never },
+      update:
+        proteger && !setting.duCode ? {} : { value: setting.value as never },
     })
   }
 

@@ -122,7 +122,11 @@ export const LEGAL = {
   address: process.env.LEGAL_ADDRESS ?? '',
   email: process.env.LEGAL_EMAIL ?? '',
   phone: process.env.LEGAL_PHONE ?? '',
-  /** Nom de la personne physique qui répond de ce qui est publié. */
+  /**
+   * Le directeur de la publication. Pour une société, c'est son représentant
+   * légal — le président d'une SAS (loi n° 82-652, art. 93-2) : ce n'est pas
+   * un choix.
+   */
   publicationDirector: process.env.LEGAL_PUBLICATION_DIRECTOR ?? '',
   /**
    * Numéro de TVA intracommunautaire. FACULTATIF : une société en franchise
@@ -211,6 +215,24 @@ export function missingLegalKeys(): string[] {
 /** Une valeur légale non renseignée ne doit jamais être remplacée par un texte plausible. */
 export function hasLegalIdentity(): boolean {
   return missingLegalKeys().length === 0
+}
+
+/**
+ * Ce qu'une FACTURE exige du vendeur, et rien de plus.
+ *
+ * Les mentions d'une facture de société ne sont pas celles d'un site : le
+ * téléphone et le directeur de la publication sont exigés par la LCEN sur les
+ * pages, pas par le code de commerce sur la facture (F31808). Les exiger ici —
+ * ce que faisait le premier jet, en réutilisant `hasLegalIdentity()` — aurait
+ * laissé partir des commandes PAYÉES sans numéro de facture, pour une ligne
+ * qui n'y figure même pas.
+ */
+const IDENTITE_FACTURE = IDENTITE_LEGALE.filter(
+  ([champ]) => champ !== 'phone' && champ !== 'publicationDirector',
+)
+
+export function hasInvoiceIdentity(): boolean {
+  return absentes(IDENTITE_FACTURE).length === 0
 }
 
 /**

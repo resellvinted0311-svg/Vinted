@@ -33,11 +33,25 @@ import { recordWithdrawal } from './withdrawal'
  * ne dit rien d'une commande, seulement de la connexion qui insiste.
  */
 
+/**
+ * Ce qui a été saisi, rendu tel quel en cas d'erreur.
+ *
+ * React 19 réinitialise un formulaire après chaque action, réussie ou non : sans
+ * ces valeurs, une seule faute de frappe effaçait les trois champs — et une
+ * personne qui exerce un droit dans un délai compté recommençait tout.
+ */
+export interface WithdrawalValues {
+  name: string
+  orderNumber: string
+  email: string
+}
+
 export type WithdrawalState =
   | { status: 'idle' }
   | {
       status: 'error'
       messageKey: 'invalid' | 'rateLimited' | 'securityUnavailable'
+      values: WithdrawalValues
     }
   /**
    * Transmise. Volontairement indistinct de « rien ne correspond ».
@@ -46,7 +60,7 @@ export type WithdrawalState =
    * que la personne pourra opposer, et elles ne doivent pas dépendre de
    * l'horloge de son téléphone.
    */
-  | { status: 'sent'; submittedAt: string; email: string }
+  | { status: 'sent'; submittedAt: string }
 
 /**
  * Plancher de temps de la réponse, en millisecondes.
@@ -64,14 +78,23 @@ export async function submitWithdrawalAction(
   return withTimeFloor(RESPONSE_FLOOR_MS, () => submitWithdrawal(formData))
 }
 
+function texte(formData: FormData, nom: string): string {
+  const valeur = formData.get(nom)
+  return typeof valeur === 'string' ? valeur.slice(0, 254) : ''
+}
+
 async function submitWithdrawal(formData: FormData): Promise<WithdrawalState> {
+  const values: WithdrawalValues = {
+    name: texte(formData, 'name'),
+    orderNumber: texte(formData, 'orderNumber'),
+    email: texte(formData, 'email'),
+  }
+
   const parsed = withdrawalSchema.safeParse({
-    name: formData.get('name'),
-    orderNumber: formData.get('orderNumber'),
-    email: formData.get('email'),
+    ...values,
     locale: formData.get('locale'),
   })
-  if (!parsed.success) return { status: 'error', messageKey: 'invalid' }
+  if (!parsed.success) return { status: 'error', messageKey: 'invalid', values }
 
   const byOrigin = await rateLimitOutcome({
     key: `withdrawal:${await clientFingerprint()}`,
@@ -84,20 +107,26 @@ async function submitWithdrawal(formData: FormData): Promise<WithdrawalState> {
       status: 'error',
       messageKey:
         byOrigin === 'limited' ? 'rateLimited' : 'securityUnavailable',
+      values,
     }
   }
 
   const sent: WithdrawalState = {
     status: 'sent',
     submittedAt: new Date().toISOString(),
-    email: parsed.data.email,
   }
 
-  // Par adresse aussi, et pour la raison de « mot de passe oublié » : un parc
-  // de connexions suffirait sinon à noyer la boîte d'une acheteuse sous des
-  // accusés légitimement signés par notre domaine. Au-delà, on répond comme
-  // si de rien n'était — et rien ne part.
-  const byAddress = await checkRateLimit({
+  // Par adresse aussi, pour la raison de « mot de passe oublié » : un parc de
+  // connexions suffirait sinon à noyer la boîte d'une acheteuse sous des
+  // accusés légitimement signés par notre domaine.
+  //
+  // Ce plafond borne les RENVOIS d'accusé, jamais l'enregistrement. La
+  // première version sortait ici avant d'écrire quoi que ce soit : trois
+  // essais avec un mauvais numéro, puis le bon, et la quatrième déclaration —
+  // la vraie — était jetée sous « Rétractation transmise ». Le compteur est
+  // consulté dans tous les cas, pour que le travail fait ne dépende pas de
+  // l'issue.
+  const resendAllowed = await checkRateLimit({
     key: `withdrawal-mail:${pseudonymize({
       purpose: 'rate-limit:withdrawal-email',
       value: mailboxIdentity(parsed.data.email),
@@ -107,9 +136,8 @@ async function submitWithdrawal(formData: FormData): Promise<WithdrawalState> {
     windowSeconds: 3600,
     sensitive: true,
   })
-  if (!byAddress) return sent
 
-  const { jobIds } = await recordWithdrawal(parsed.data)
+  const { jobIds } = await recordWithdrawal(parsed.data, { resendAllowed })
   pousserApresReponse(jobIds)
 
   return sent

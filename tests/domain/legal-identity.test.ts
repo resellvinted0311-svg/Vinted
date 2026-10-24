@@ -172,6 +172,19 @@ describe('la facture d’une société', () => {
     expect(facture.seller.vatNumber).toBeNull()
   })
 
+  it('ne dépend ni du téléphone ni du directeur de la publication', async () => {
+    // Exigés sur le site par la LCEN, pas sur une facture : une commande
+    // payée doit recevoir son numéro même si ces deux lignes manquent.
+    const site = await charger({
+      ...COMPLETE,
+      LEGAL_PHONE: '',
+      LEGAL_PUBLICATION_DIRECTOR: '',
+    })
+
+    expect(site.hasLegalIdentity()).toBe(false)
+    expect(site.hasInvoiceIdentity()).toBe(true)
+  })
+
   it('refuse d’être émise tant que l’identité de la société est incomplète', async () => {
     await charger({ ...COMPLETE, LEGAL_CAPITAL: '' })
     const { buildInvoice, LegalIdentityMissingError } =

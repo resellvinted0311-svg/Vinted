@@ -74,38 +74,52 @@ export interface WithdrawalOutcome {
 /**
  * Enregistre une déclaration de rétractation, ou ne fait rien.
  *
- * Trois issues, indiscernables pour l'appelant :
- *  - le couple correspond à une commande rétractable : la déclaration est
+ * Quatre issues, indiscernables pour l'appelant :
+ *  - le numéro désigne une commande rétractable : la déclaration est
  *    enregistrée, l'accusé de réception et l'avis à la boutique sont inscrits ;
+ *  - idem, mais l'adresse saisie n'est PAS celle de la commande : la
+ *    déclaration est enregistrée quand même, et marquée par l'adresse déclarée.
+ *    La jeter — ce que faisait la première version — perdait sans trace la
+ *    rétractation de quelqu'un qui écrit depuis une autre boîte que celle de
+ *    sa commande, alors que la loi lui laisse choisir où recevoir l'accusé
+ *    (D221-5 c). L'accusé part vers l'adresse DE LA COMMANDE, jamais vers
+ *    l'adresse saisie : l'envoyer à n'importe quelle adresse tapée remettrait
+ *    le contenu d'une commande à qui devine un numéro. La boutique est
+ *    prévenue de l'écart et fait confirmer avant d'annuler ou de rembourser —
+ *    un tiers ne peut pas exercer le droit d'un autre ;
  *  - une déclaration existe déjà pour cette commande : rien n'est réécrit, et
- *    l'accusé repart, avec la date de la PREMIÈRE déclaration — c'est elle qui
- *    a fait courir les délais. La personne qui le cherche dans ses indésirables
- *    le retrouve ; la boutique n'est pas prévenue deux fois ;
+ *    l'accusé repart si le plafond par adresse le permet, avec la date de la
+ *    PREMIÈRE déclaration — c'est elle qui a fait courir les délais. La
+ *    boutique n'est pas prévenue deux fois ;
  *  - rien ne correspond : rien n'est écrit.
+ *
+ * Le premier accusé d'une commande part TOUJOURS, quel que soit le plafond :
+ * il n'y en a qu'un par commande, il ne peut donc noyer personne, et c'est une
+ * obligation. Le plafond ne borne que les RENVOIS.
  */
 export async function recordWithdrawal(
   input: WithdrawalInput,
+  { resendAllowed }: { resendAllowed: boolean },
 ): Promise<WithdrawalOutcome> {
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
       where: { orderNumber: input.orderNumber },
       select: {
         id: true,
-        email: true,
         status: true,
         items: { select: { id: true } },
       },
     })
 
-    // L'adresse est comparée telle que le tunnel l'a enregistrée : en
-    // minuscules, comme `emailSchema` la rend des deux côtés.
-    if (
-      !order ||
-      order.email !== input.email ||
-      !WITHDRAWABLE_STATUSES.includes(order.status)
-    ) {
+    if (!order || !WITHDRAWABLE_STATUSES.includes(order.status)) {
       return { jobIds: [] }
     }
+
+    // Verrou sur la commande : deux envois simultanés — un double clic, deux
+    // onglets — liraient sinon « aucune déclaration » chacun de leur côté et
+    // en créeraient deux, avec deux avis à la boutique. Le second attend le
+    // premier, puis trouve sa déclaration.
+    await tx.$queryRaw`SELECT 1 FROM "Order" WHERE "id" = ${order.id} FOR UPDATE`
 
     const existante = await tx.returnRequest.findFirst({
       where: { orderId: order.id, reason: WITHDRAWAL_REASON },
@@ -114,6 +128,7 @@ export async function recordWithdrawal(
     })
 
     if (existante) {
+      if (!resendAllowed) return { jobIds: [] }
       const ack = await enqueue(tx, {
         type: 'withdrawal.acknowledge',
         payload: { returnRequestId: existante.id },
@@ -127,6 +142,7 @@ export async function recordWithdrawal(
         orderItemIds: order.items.map((item) => item.id),
         reason: WITHDRAWAL_REASON,
         declaredName: input.name,
+        declaredEmail: input.email,
       },
       select: { id: true },
     })

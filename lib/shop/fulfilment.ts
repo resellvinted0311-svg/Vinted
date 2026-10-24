@@ -8,7 +8,7 @@ import {
   normalizeTrackingNumber,
   type FulfilmentAction,
 } from '@/lib/domain/fulfilment'
-import { hasLegalIdentity } from '@/lib/config/site'
+import { hasInvoiceIdentity } from '@/lib/config/site'
 import { allocateInvoiceNumber } from '@/lib/shop/invoice'
 import { enqueue } from '@/lib/jobs/queue'
 import { recordAudit } from '@/lib/audit/trail'
@@ -210,7 +210,7 @@ export async function markOrderPaid(input: {
     // dénomination ni SIRET ne vaut rien, et consommer un numéro pour un
     // document sans valeur ferait un trou dans la suite le jour où on le
     // corrigerait.
-    if (hasLegalIdentity()) {
+    if (hasInvoiceIdentity()) {
       const invoiceNumber = await allocateInvoiceNumber(tx)
       await tx.order.update({
         where: { id: order.id },

@@ -110,3 +110,23 @@ export function isPlaceholderPage(slug: string): boolean {
 export function areTermsPublished(): boolean {
   return !isPlaceholderPage('cgv') && hasLegalIdentity()
 }
+
+/**
+ * La version du TEXTE des conditions générales, telle qu'elle est enregistrée
+ * comme preuve d'acceptation sur chaque commande.
+ *
+ * Elle vit ici, à côté du texte, et non dans la régie : une version se change
+ * en publiant de nouvelles conditions, pas dans un formulaire. Le seed la
+ * pose en production à chaque déploiement — c'est la seule valeur de réglage
+ * qu'il réécrit, parce qu'elle appartient au code et non à la boutique.
+ *
+ * `tests/domain/cgv-version.test.ts` échoue si le texte français des CGV
+ * change sans que cette version change avec lui : une preuve qui désignerait
+ * un texte que personne n'a jamais pu lire est exactement ce que ce fichier
+ * existe pour empêcher.
+ *
+ * 2026-10 : identité d'une société, médiateur dans le contrat, encadré des
+ * garanties légales (D211-2), rétractation en ligne, délai de remboursement,
+ * plateforme européenne de litiges retirée.
+ */
+export const CGV_VERSION = '2026-10'
